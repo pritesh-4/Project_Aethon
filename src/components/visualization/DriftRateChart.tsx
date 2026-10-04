@@ -6,30 +6,30 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts'
+} from 'recharts';
 
 export interface DriftDataPoint {
-  timeOffsetSec: number
-  frequencyOffsetHz: number
-  snr: number
+  timeOffsetSec: number;
+  frequencyOffsetHz: number;
+  snr: number;
 }
 
 interface DriftRateChartProps {
-  data?: DriftDataPoint[]
-  height?: number
-  driftRateHzPerSec?: number
+  data?: DriftDataPoint[];
+  height?: number;
+  driftRateHzPerSec?: number;
 }
 
 const DEFAULT_DRIFT: DriftDataPoint[] = Array.from({ length: 20 }, (_, i) => {
-  const time = i * 15 // 15s intervals
-  const driftRate = -0.32 // -0.32 Hz/s
-  const drift = driftRate * time + (Math.random() - 0.5) * 0.4
+  const time = i * 15; // 15s intervals
+  const driftRate = -0.32; // -0.32 Hz/s
+  const drift = driftRate * time + (Math.random() - 0.5) * 0.4;
   return {
     timeOffsetSec: time,
     frequencyOffsetHz: Number(drift.toFixed(2)),
     snr: Number((18.5 + (Math.random() - 0.5) * 1.8).toFixed(1)),
-  }
-})
+  };
+});
 
 export function DriftRateChart({
   data = DEFAULT_DRIFT,
@@ -67,17 +67,19 @@ export function DriftRateChart({
             />
             <Tooltip
               content={({ active, payload }) => {
-                if (!active || !payload || !payload.length) return null
-                const pt = payload[0].payload as DriftDataPoint
+                if (!active || !payload || !payload.length) return null;
+                const pt = payload[0].payload as DriftDataPoint;
                 return (
                   <div className="rounded border border-emerald-900/80 bg-slate-900/95 p-2 shadow-xl backdrop-blur-md">
-                    <p className="text-[10px] uppercase text-slate-400">Cadence Step: {pt.timeOffsetSec}s</p>
+                    <p className="text-[10px] uppercase text-slate-400">
+                      Cadence Step: {pt.timeOffsetSec}s
+                    </p>
                     <p className="font-semibold text-emerald-300">
                       Offset: {pt.frequencyOffsetHz} Hz
                     </p>
                     <p className="text-slate-300">SNR: {pt.snr} dB</p>
                   </div>
-                )
+                );
               }}
             />
             <Line
@@ -92,5 +94,5 @@ export function DriftRateChart({
         </ResponsiveContainer>
       </div>
     </div>
-  )
+  );
 }

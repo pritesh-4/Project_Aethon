@@ -1,8 +1,8 @@
-import { PageHeader } from '@/components/layout/PageHeader.tsx'
-import { PageTransition } from '@/components/ui/motion.tsx'
-import { Badge } from '@/components/ui/Badge.tsx'
-import { StatMetric } from '@/components/ui/StatMetric.tsx'
-import { Cpu, Layers, GitBranch, Zap, ShieldCheck, Database } from 'lucide-react'
+import { PageHeader } from '@/components/layout/PageHeader.tsx';
+import { PageTransition } from '@/components/ui/motion.tsx';
+import { Badge } from '@/components/ui/Badge.tsx';
+import { StatMetric } from '@/components/ui/StatMetric.tsx';
+import { Cpu, Layers, GitBranch, Zap, ShieldCheck, Database } from 'lucide-react';
 
 export default function ModelPage() {
   return (
@@ -63,7 +63,8 @@ export default function ModelPage() {
             </div>
             <h4 className="font-bold text-slate-200">Polyphase Channelization</h4>
             <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
-              Decomposes wideband gigahertz baseband telemetry into 3.8 Hz fine channels. Produces dynamic spectrogram waterfalls (Time × Frequency × Polarization).
+              Decomposes wideband gigahertz baseband telemetry into 3.8 Hz fine channels. Produces
+              dynamic spectrogram waterfalls (Time × Frequency × Polarization).
             </p>
           </div>
 
@@ -74,7 +75,8 @@ export default function ModelPage() {
             </div>
             <h4 className="font-bold text-slate-200">Doppler Invariance Transform</h4>
             <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
-              Normalizes for Earth's sidereal rotation and barycentric orbital velocities via fast Taylor-tree tree de-drifting kernels up to ±20 Hz/s.
+              Normalizes for Earth's sidereal rotation and barycentric orbital velocities via fast
+              Taylor-tree tree de-drifting kernels up to ±20 Hz/s.
             </p>
           </div>
 
@@ -85,7 +87,8 @@ export default function ModelPage() {
             </div>
             <h4 className="font-bold text-slate-200">Spectral Self-Attention</h4>
             <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
-              12 multi-head attention blocks process patches of spectral waterfalls to map noise entropy versus coherent, non-natural information structures.
+              12 multi-head attention blocks process patches of spectral waterfalls to map noise
+              entropy versus coherent, non-natural information structures.
             </p>
           </div>
 
@@ -96,7 +99,8 @@ export default function ModelPage() {
             </div>
             <h4 className="font-bold text-slate-200">Contrastive RFI Rejection</h4>
             <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
-              Signals detected in multi-dish off-target beams are mathematically quarantined as terrestrial interference, leaving pure celestial candidates.
+              Signals detected in multi-dish off-target beams are mathematically quarantined as
+              terrestrial interference, leaving pure celestial candidates.
             </p>
           </div>
         </div>
@@ -138,7 +142,9 @@ export default function ModelPage() {
                 <td className="py-2.5 text-slate-400">14.6 ms</td>
               </tr>
               <tr>
-                <td className="py-2.5 font-bold text-slate-200">Dispersed Fast Radio Burst (FRB)</td>
+                <td className="py-2.5 font-bold text-slate-200">
+                  Dispersed Fast Radio Burst (FRB)
+                </td>
                 <td className="py-2.5">95,000</td>
                 <td className="py-2.5 text-emerald-400">99.1%</td>
                 <td className="py-2.5 text-emerald-400">98.2%</td>
@@ -158,5 +164,5 @@ export default function ModelPage() {
         </div>
       </div>
     </PageTransition>
-  )
+  );
 }

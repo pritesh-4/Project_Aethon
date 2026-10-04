@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 /**
  * Telescope Target Celestial Coordinates (Equatorial coordinate system)
@@ -7,20 +7,14 @@ export const CelestialCoordinatesSchema = z.object({
   ra: z.string().describe('Right Ascension (e.g., 19h 50m 47s)'),
   dec: z.string().describe('Declination (e.g., +08° 52′ 06″)'),
   constellation: z.string().optional(),
-})
-export type CelestialCoordinates = z.infer<typeof CelestialCoordinatesSchema>
+});
+export type CelestialCoordinates = z.infer<typeof CelestialCoordinatesSchema>;
 
 /**
  * Radio Signal Domain Schema
  */
-export const SignalStatusSchema = z.enum([
-  'raw',
-  'candidate',
-  'verified',
-  'rfi_noise',
-  'anomaly',
-])
-export type SignalStatus = z.infer<typeof SignalStatusSchema>
+export const SignalStatusSchema = z.enum(['raw', 'candidate', 'verified', 'rfi_noise', 'anomaly']);
+export type SignalStatus = z.infer<typeof SignalStatusSchema>;
 
 export const SignalSchema = z.object({
   id: z.string().min(1),
@@ -34,8 +28,8 @@ export const SignalSchema = z.object({
   telescope: z.string(),
   status: SignalStatusSchema,
   metadata: z.record(z.string(), z.unknown()).optional(),
-})
-export type Signal = z.infer<typeof SignalSchema>
+});
+export type Signal = z.infer<typeof SignalSchema>;
 
 /**
  * Astronomical Observation Session Schema
@@ -54,8 +48,8 @@ export const ObservationSchema = z.object({
   dataQualityScore: z.number().min(0).max(100),
   channelCount: z.number().int().positive().optional(),
   fileSizeBytes: z.number().int().positive().optional(),
-})
-export type Observation = z.infer<typeof ObservationSchema>
+});
+export type Observation = z.infer<typeof ObservationSchema>;
 
 /**
  * Deep Space Anomaly Detection Schema
@@ -67,8 +61,8 @@ export const AnomalyClassificationSchema = z.enum([
   'rfi_terrestrial',
   'instrumental_glitch',
   'ambient_noise',
-])
-export type AnomalyClassification = z.infer<typeof AnomalyClassificationSchema>
+]);
+export type AnomalyClassification = z.infer<typeof AnomalyClassificationSchema>;
 
 export const AnomalyResultSchema = z.object({
   signalId: z.string(),
@@ -78,8 +72,8 @@ export const AnomalyResultSchema = z.object({
   detectedFeatures: z.array(z.string()),
   driftConsistency: z.number().min(0).max(1),
   entropyScore: z.number().optional(),
-})
-export type AnomalyResult = z.infer<typeof AnomalyResultSchema>
+});
+export type AnomalyResult = z.infer<typeof AnomalyResultSchema>;
 
 /**
  * Candidate Signal Priority Item
@@ -90,8 +84,8 @@ export const CandidateSignalSchema = SignalSchema.extend({
   priorityRank: z.enum(['low', 'medium', 'high', 'critical']),
   mlModelVersion: z.string(),
   flaggedBy: z.string().optional(),
-})
-export type CandidateSignal = z.infer<typeof CandidateSignalSchema>
+});
+export type CandidateSignal = z.infer<typeof CandidateSignalSchema>;
 
 /**
  * ML Model Inference & Architecture Prediction
@@ -104,8 +98,8 @@ export const ModelPredictionSchema = z.object({
   probabilities: z.record(z.string(), z.number()),
   featureImportance: z.record(z.string(), z.number()).optional(),
   embeddingVector: z.array(z.number()).optional(),
-})
-export type ModelPrediction = z.infer<typeof ModelPredictionSchema>
+});
+export type ModelPrediction = z.infer<typeof ModelPredictionSchema>;
 
 /**
  * Detailed Signal Spectral Analysis Data Point
@@ -114,8 +108,8 @@ export const SpectrumDataPointSchema = z.object({
   frequencyMHz: z.number(),
   amplitudeDb: z.number(),
   phaseRad: z.number().optional(),
-})
-export type SpectrumDataPoint = z.infer<typeof SpectrumDataPointSchema>
+});
+export type SpectrumDataPoint = z.infer<typeof SpectrumDataPointSchema>;
 
 /**
  * Full Signal Deep Analysis Result
@@ -135,5 +129,5 @@ export const AnalysisResultSchema = z.object({
     })
   ),
   scientificNotes: z.string().optional(),
-})
-export type AnalysisResult = z.infer<typeof AnalysisResultSchema>
+});
+export type AnalysisResult = z.infer<typeof AnalysisResultSchema>;

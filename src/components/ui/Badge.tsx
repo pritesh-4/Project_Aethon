@@ -1,9 +1,9 @@
-import type { HTMLAttributes, ReactNode } from 'react'
-import { cn } from '@/lib/utils.ts'
+import type { HTMLAttributes, ReactNode } from 'react';
+import { cn } from '@/lib/utils.ts';
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: 'cyan' | 'emerald' | 'amber' | 'rose' | 'slate' | 'outline'
-  children: ReactNode
+  variant?: 'cyan' | 'emerald' | 'amber' | 'rose' | 'slate' | 'outline';
+  children: ReactNode;
 }
 
 export function Badge({ variant = 'slate', className, children, ...props }: BadgeProps) {
@@ -14,7 +14,7 @@ export function Badge({ variant = 'slate', className, children, ...props }: Badg
     rose: 'bg-rose-950/60 text-rose-300 border-rose-800/60 hover:border-rose-500/80',
     slate: 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-slate-700',
     outline: 'bg-transparent text-slate-400 border-slate-800 hover:border-slate-600',
-  }
+  };
 
   return (
     <span
@@ -27,5 +27,5 @@ export function Badge({ variant = 'slate', className, children, ...props }: Badg
     >
       {children}
     </span>
-  )
+  );
 }

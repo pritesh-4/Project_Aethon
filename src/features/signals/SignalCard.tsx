@@ -1,11 +1,11 @@
-import { Link } from 'react-router'
-import { Radio, ArrowUpRight } from 'lucide-react'
-import { Badge } from '@/components/ui/Badge.tsx'
-import type { CandidateSignal } from '@/types/index.ts'
-import { formatFrequency, formatSNR } from '@/lib/utils.ts'
+import { Link } from 'react-router';
+import { Radio, ArrowUpRight } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge.tsx';
+import type { CandidateSignal } from '@/types/index.ts';
+import { formatFrequency, formatSNR } from '@/lib/utils.ts';
 
 interface SignalCardProps {
-  signal: CandidateSignal
+  signal: CandidateSignal;
 }
 
 export function SignalCard({ signal }: SignalCardProps) {
@@ -14,17 +14,20 @@ export function SignalCard({ signal }: SignalCardProps) {
     high: 'amber',
     medium: 'cyan',
     low: 'slate',
-  }
+  };
 
-  const statusLabelMap: Record<CandidateSignal['status'], { label: string; variant: 'emerald' | 'amber' | 'rose' | 'cyan' | 'slate' }> = {
+  const statusLabelMap: Record<
+    CandidateSignal['status'],
+    { label: string; variant: 'emerald' | 'amber' | 'rose' | 'cyan' | 'slate' }
+  > = {
     verified: { label: 'VERIFIED CANDIDATE', variant: 'emerald' },
     candidate: { label: 'TECHNOSIGNATURE CANDIDATE', variant: 'cyan' },
     anomaly: { label: 'SPECTRAL ANOMALY', variant: 'amber' },
     rfi_noise: { label: 'TERRESTRIAL RFI', variant: 'slate' },
     raw: { label: 'RAW TELEMETRY', variant: 'slate' },
-  }
+  };
 
-  const statusInfo = statusLabelMap[signal.status]
+  const statusInfo = statusLabelMap[signal.status];
 
   return (
     <div className="group relative rounded-lg border border-slate-800/90 bg-slate-950/70 p-4 font-mono transition-all hover:border-cyan-800/80 hover:bg-slate-900/50 shadow-md">
@@ -65,7 +68,10 @@ export function SignalCard({ signal }: SignalCardProps) {
         <div>
           <span className="text-[10px] uppercase text-slate-400">Drift Rate</span>
           <p className="text-slate-300">
-            {signal.driftRateHzPerSec > 0 ? `+${signal.driftRateHzPerSec}` : signal.driftRateHzPerSec} Hz/s
+            {signal.driftRateHzPerSec > 0
+              ? `+${signal.driftRateHzPerSec}`
+              : signal.driftRateHzPerSec}{' '}
+            Hz/s
           </p>
         </div>
 
@@ -87,5 +93,5 @@ export function SignalCard({ signal }: SignalCardProps) {
         </Link>
       </div>
     </div>
-  )
+  );
 }

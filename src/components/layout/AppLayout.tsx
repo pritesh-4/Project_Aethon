@@ -1,7 +1,7 @@
-import { Outlet } from 'react-router'
-import { Toaster } from 'sonner'
-import { Navbar } from '@/components/navigation/Navbar.tsx'
-import { Activity, ShieldCheck, Database, Radio } from 'lucide-react'
+import { Outlet } from 'react-router';
+import { Toaster } from 'sonner';
+import { Navbar } from '@/components/navigation/Navbar.tsx';
+import { Activity, ShieldCheck, Database, Radio } from 'lucide-react';
 
 export function AppLayout() {
   return (
@@ -62,5 +62,5 @@ export function AppLayout() {
         }}
       />
     </div>
-  )
+  );
 }

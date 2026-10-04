@@ -1,10 +1,10 @@
-import { Link } from 'react-router'
-import { Radio, Activity, Compass, ShieldAlert, Cpu, ArrowRight, Zap, Target } from 'lucide-react'
-import { Button } from '@/components/ui/Button.tsx'
-import { Badge } from '@/components/ui/Badge.tsx'
-import { StatMetric } from '@/components/ui/StatMetric.tsx'
-import { SpectrumChart } from '@/components/visualization/SpectrumChart.tsx'
-import { PageTransition } from '@/components/ui/motion.tsx'
+import { Link } from 'react-router';
+import { Radio, Activity, Compass, ShieldAlert, Cpu, ArrowRight, Zap, Target } from 'lucide-react';
+import { Button } from '@/components/ui/Button.tsx';
+import { Badge } from '@/components/ui/Badge.tsx';
+import { StatMetric } from '@/components/ui/StatMetric.tsx';
+import { SpectrumChart } from '@/components/visualization/SpectrumChart.tsx';
+import { PageTransition } from '@/components/ui/motion.tsx';
 
 export default function LandingPage() {
   return (
@@ -23,12 +23,14 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-100 font-sans leading-tight">
-            Autonomous Discovery of <span className="text-cyan-400 font-mono">Deep-Space</span> Radio Anomalies
+            Autonomous Discovery of <span className="text-cyan-400 font-mono">Deep-Space</span>{' '}
+            Radio Anomalies
           </h1>
 
           <p className="mt-4 text-base sm:text-lg text-slate-400 leading-relaxed font-sans">
             AETHON deploys deep neural transformer encoders and real-time Doppler drift filtering
-            across terabytes of high-cadence radio telescope telemetry to isolate anomalous technosignature candidates from terrestrial interference.
+            across terabytes of high-cadence radio telescope telemetry to isolate anomalous
+            technosignature candidates from terrestrial interference.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -125,7 +127,8 @@ export default function LandingPage() {
             Ultra-Wideband Channelization
           </h3>
           <p className="mt-2 text-xs text-slate-400 leading-relaxed font-sans">
-            Polyphase filterbanks split raw gigabit I/Q telemetry streams into millions of 3.8 Hz channels, capturing faint narrow-band transmissions.
+            Polyphase filterbanks split raw gigabit I/Q telemetry streams into millions of 3.8 Hz
+            channels, capturing faint narrow-band transmissions.
           </p>
         </div>
 
@@ -137,7 +140,8 @@ export default function LandingPage() {
             Transformer Anomaly Isolation
           </h3>
           <p className="mt-2 text-xs text-slate-400 leading-relaxed font-sans">
-            Multi-head self-attention models learn the background cosmic noise distribution and isolate non-stochastic, carrier-modulated transients.
+            Multi-head self-attention models learn the background cosmic noise distribution and
+            isolate non-stochastic, carrier-modulated transients.
           </p>
         </div>
 
@@ -149,10 +153,11 @@ export default function LandingPage() {
             Doppler Drift Verification
           </h3>
           <p className="mt-2 text-xs text-slate-400 leading-relaxed font-sans">
-            Automatic tracking of topocentric orbital accelerations ensures signals originate from celestial coordinates rather than low-Earth orbit satellites.
+            Automatic tracking of topocentric orbital accelerations ensures signals originate from
+            celestial coordinates rather than low-Earth orbit satellites.
           </p>
         </div>
       </section>
     </PageTransition>
-  )
+  );
 }

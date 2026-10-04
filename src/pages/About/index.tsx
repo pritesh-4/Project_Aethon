@@ -1,7 +1,7 @@
-import { PageHeader } from '@/components/layout/PageHeader.tsx'
-import { PageTransition } from '@/components/ui/motion.tsx'
-import { Badge } from '@/components/ui/Badge.tsx'
-import { Telescope, Radio, Terminal, Award } from 'lucide-react'
+import { PageHeader } from '@/components/layout/PageHeader.tsx';
+import { PageTransition } from '@/components/ui/motion.tsx';
+import { Badge } from '@/components/ui/Badge.tsx';
+import { Telescope, Radio, Terminal, Award } from 'lucide-react';
 
 export default function AboutPage() {
   return (
@@ -22,10 +22,17 @@ export default function AboutPage() {
               The Deep-Space Signal Challenge
             </h3>
             <p className="text-sm text-slate-300 leading-relaxed font-sans">
-              Modern radio telescopes such as the 100-meter Green Bank Telescope and the 64-dish MeerKAT array collect hundreds of gigabytes of raw spectral data per second. Traditional heuristic thresholding algorithms (like TurboSETI) struggle under the immense deluge of terrestrial radio frequency interference (RFI) caused by low-Earth orbit satellite constellations, aircraft transponders, and mobile cellular networks.
+              Modern radio telescopes such as the 100-meter Green Bank Telescope and the 64-dish
+              MeerKAT array collect hundreds of gigabytes of raw spectral data per second.
+              Traditional heuristic thresholding algorithms (like TurboSETI) struggle under the
+              immense deluge of terrestrial radio frequency interference (RFI) caused by low-Earth
+              orbit satellite constellations, aircraft transponders, and mobile cellular networks.
             </p>
             <p className="text-sm text-slate-300 leading-relaxed font-sans">
-              <strong>AETHON</strong> introduces a deep neural framework trained directly on spectral waterfall matrices. By decoupling topocentric orbital drift from intrinsic carrier frequency modulation, AETHON separates terrestrial interference from true celestial candidates with unprecedented sensitivity.
+              <strong>AETHON</strong> introduces a deep neural framework trained directly on
+              spectral waterfall matrices. By decoupling topocentric orbital drift from intrinsic
+              carrier frequency modulation, AETHON separates terrestrial interference from true
+              celestial candidates with unprecedented sensitivity.
             </p>
           </section>
 
@@ -40,28 +47,34 @@ export default function AboutPage() {
               <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 space-y-1">
                 <span className="text-cyan-400 font-bold">1420.405 MHz (The Water Hole)</span>
                 <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
-                  The neutral hydrogen line (21 cm). Because hydrogen is the most abundant element in the cosmos, astrophysicists hypothesize advanced civilizations choose this frequency as a universal beacon.
+                  The neutral hydrogen line (21 cm). Because hydrogen is the most abundant element
+                  in the cosmos, astrophysicists hypothesize advanced civilizations choose this
+                  frequency as a universal beacon.
                 </p>
               </div>
 
               <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 space-y-1">
                 <span className="text-emerald-400 font-bold">Doppler Drift Rate (Δf/Δt)</span>
                 <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
-                  A signal originating from a transmitter situated on an exoplanet orbiting a distant star undergoes frequency shifts due to relative orbital and rotational accelerations, creating a distinct linear drift.
+                  A signal originating from a transmitter situated on an exoplanet orbiting a
+                  distant star undergoes frequency shifts due to relative orbital and rotational
+                  accelerations, creating a distinct linear drift.
                 </p>
               </div>
 
               <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 space-y-1">
                 <span className="text-amber-400 font-bold">Terrestrial RFI Rejection</span>
                 <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
-                  Signals present across all telescope beam pointings are flagged as terrestrial local leakage, preventing false alarms and focusing compute on spatial anomalies.
+                  Signals present across all telescope beam pointings are flagged as terrestrial
+                  local leakage, preventing false alarms and focusing compute on spatial anomalies.
                 </p>
               </div>
 
               <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 space-y-1">
                 <span className="text-cyan-400 font-bold">Polyphase Filterbanks (PFB)</span>
                 <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
-                  Splits broad bandwidths into millions of narrow sub-channels with minimal spectral leakage, crucial for detecting coherent continuous-wave carriers.
+                  Splits broad bandwidths into millions of narrow sub-channels with minimal spectral
+                  leakage, crucial for detecting coherent continuous-wave carriers.
                 </p>
               </div>
             </div>
@@ -114,11 +127,13 @@ export default function AboutPage() {
               <span className="font-bold uppercase tracking-wider">Scientific Alignment</span>
             </div>
             <p className="text-slate-400 font-sans text-xs leading-relaxed">
-              Designed to interface with standard astronomical open data formats including SIGPROC Filterbank (.fil), HDF5 (.h5), and FITS standards from Breakthrough Listen open archives.
+              Designed to interface with standard astronomical open data formats including SIGPROC
+              Filterbank (.fil), HDF5 (.h5), and FITS standards from Breakthrough Listen open
+              archives.
             </p>
           </div>
         </div>
       </div>
     </PageTransition>
-  )
+  );
 }

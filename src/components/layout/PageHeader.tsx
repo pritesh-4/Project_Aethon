@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export interface PageHeaderProps {
-  title: string
-  subtitle?: string
-  badge?: ReactNode
-  actions?: ReactNode
-  category?: string
+  title: string;
+  subtitle?: string;
+  badge?: ReactNode;
+  actions?: ReactNode;
+  category?: string;
 }
 
 export function PageHeader({
@@ -35,8 +35,10 @@ export function PageHeader({
           )}
         </div>
 
-        {actions && <div className="flex items-center gap-3 self-start md:self-center">{actions}</div>}
+        {actions && (
+          <div className="flex items-center gap-3 self-start md:self-center">{actions}</div>
+        )}
       </div>
     </div>
-  )
+  );
 }

@@ -7,30 +7,30 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-} from 'recharts'
-import type { SpectrumDataPoint } from '@/types/index.ts'
+} from 'recharts';
+import type { SpectrumDataPoint } from '@/types/index.ts';
 
 interface SpectrumChartProps {
-  data?: SpectrumDataPoint[]
-  height?: number
-  centerFrequencyMHz?: number
-  highlightMarkerMHz?: number
-  markerLabel?: string
-  showHydrogenLine?: boolean
+  data?: SpectrumDataPoint[];
+  height?: number;
+  centerFrequencyMHz?: number;
+  highlightMarkerMHz?: number;
+  markerLabel?: string;
+  showHydrogenLine?: boolean;
 }
 
 // Default synthetic baseline spectrum centered around the 1.420 GHz Hydrogen Line
 const DEFAULT_SPECTRUM: SpectrumDataPoint[] = Array.from({ length: 60 }, (_, i) => {
-  const freq = 1420.0 + i * 0.015
+  const freq = 1420.0 + i * 0.015;
   // Add Gaussian peak near 1420.405 MHz (HI line)
-  const distFromPeak = Math.abs(freq - 1420.405)
-  const peak = Math.exp(-Math.pow(distFromPeak / 0.04, 2)) * 18.5
-  const noise = (Math.random() - 0.5) * 1.5 - 85
+  const distFromPeak = Math.abs(freq - 1420.405);
+  const peak = Math.exp(-Math.pow(distFromPeak / 0.04, 2)) * 18.5;
+  const noise = (Math.random() - 0.5) * 1.5 - 85;
   return {
     frequencyMHz: Number(freq.toFixed(4)),
     amplitudeDb: Number((noise + peak).toFixed(2)),
-  }
-})
+  };
+});
 
 export function SpectrumChart({
   data = DEFAULT_SPECTRUM,
@@ -90,8 +90,8 @@ export function SpectrumChart({
 
             <Tooltip
               content={({ active, payload }) => {
-                if (!active || !payload || !payload.length) return null
-                const item = payload[0].payload as SpectrumDataPoint
+                if (!active || !payload || !payload.length) return null;
+                const item = payload[0].payload as SpectrumDataPoint;
                 return (
                   <div className="rounded border border-cyan-900/80 bg-slate-900/95 p-2 shadow-xl backdrop-blur-md">
                     <p className="text-[10px] uppercase text-slate-400">Telescope Channel</p>
@@ -99,10 +99,11 @@ export function SpectrumChart({
                       {item.frequencyMHz.toFixed(4)} MHz
                     </p>
                     <p className="mt-0.5 text-slate-200">
-                      Power: <span className="text-emerald-400 font-bold">{item.amplitudeDb} dBm</span>
+                      Power:{' '}
+                      <span className="text-emerald-400 font-bold">{item.amplitudeDb} dBm</span>
                     </p>
                   </div>
-                )
+                );
               }}
             />
 
@@ -147,5 +148,5 @@ export function SpectrumChart({
         </ResponsiveContainer>
       </div>
     </div>
-  )
+  );
 }

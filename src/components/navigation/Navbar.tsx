@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react'
-import { NavLink, useLocation } from 'react-router'
-import { Radio, Activity, Cpu, Compass, Info, Disc } from 'lucide-react'
-import { PulseIndicator } from '@/components/ui/motion.tsx'
-import { Badge } from '@/components/ui/Badge.tsx'
-import { formatTelemetryTime } from '@/lib/utils.ts'
+import { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router';
+import { Radio, Activity, Cpu, Compass, Info, Disc } from 'lucide-react';
+import { PulseIndicator } from '@/components/ui/motion.tsx';
+import { Badge } from '@/components/ui/Badge.tsx';
+import { formatTelemetryTime } from '@/lib/utils.ts';
 
 interface NavRoute {
-  name: string
-  path: string
-  icon: typeof Radio
-  badge?: string
+  name: string;
+  path: string;
+  icon: typeof Radio;
+  badge?: string;
 }
 
 const ROUTES: NavRoute[] = [
@@ -18,18 +18,18 @@ const ROUTES: NavRoute[] = [
   { name: 'Discover', path: '/discover', icon: Radio },
   { name: 'ML Model', path: '/model', icon: Cpu },
   { name: 'About', path: '/about', icon: Info },
-]
+];
 
 export function Navbar() {
-  const [time, setTime] = useState<string>(formatTelemetryTime())
-  const location = useLocation()
+  const [time, setTime] = useState<string>(formatTelemetryTime());
+  const location = useLocation();
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTime(formatTelemetryTime())
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
+      setTime(formatTelemetryTime());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
@@ -79,11 +79,11 @@ export function Navbar() {
 
           <nav className="hidden md:flex items-center gap-1 ml-4 font-mono text-xs">
             {ROUTES.map((route) => {
-              const Icon = route.icon
+              const Icon = route.icon;
               const isActive =
                 route.path === '/'
                   ? location.pathname === '/'
-                  : location.pathname.startsWith(route.path)
+                  : location.pathname.startsWith(route.path);
 
               return (
                 <NavLink
@@ -101,7 +101,7 @@ export function Navbar() {
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
                   )}
                 </NavLink>
-              )
+              );
             })}
           </nav>
         </div>
@@ -121,26 +121,28 @@ export function Navbar() {
       {/* Mobile nav row */}
       <div className="flex md:hidden border-t border-slate-900 px-2 py-1.5 overflow-x-auto gap-1 font-mono text-xs">
         {ROUTES.map((route) => {
-          const Icon = route.icon
+          const Icon = route.icon;
           const isActive =
             route.path === '/'
               ? location.pathname === '/'
-              : location.pathname.startsWith(route.path)
+              : location.pathname.startsWith(route.path);
 
           return (
             <NavLink
               key={route.path}
               to={route.path}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded whitespace-nowrap ${
-                isActive ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/80' : 'text-slate-400'
+                isActive
+                  ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/80'
+                  : 'text-slate-400'
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
               <span>{route.name}</span>
             </NavLink>
-          )
+          );
         })}
       </div>
     </header>
-  )
+  );
 }

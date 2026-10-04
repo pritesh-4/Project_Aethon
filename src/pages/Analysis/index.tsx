@@ -1,56 +1,48 @@
-import { useParams, Link } from 'react-router'
-import { PageHeader } from '@/components/layout/PageHeader.tsx'
-import { PageTransition } from '@/components/ui/motion.tsx'
-import { Badge } from '@/components/ui/Badge.tsx'
-import { Button } from '@/components/ui/Button.tsx'
-import { StatMetric } from '@/components/ui/StatMetric.tsx'
-import { SpectrumChart } from '@/components/visualization/SpectrumChart.tsx'
-import { DriftRateChart } from '@/components/visualization/DriftRateChart.tsx'
-import { SAMPLE_CANDIDATES } from '@/features/signals/sample-data.ts'
-import { formatFrequency, formatSNR } from '@/lib/utils.ts'
-import {
-  ArrowLeft,
-  CheckCircle,
-  XCircle,
-  Download,
-  Compass,
-  Cpu,
-  Radio,
-} from 'lucide-react'
-import { toast } from 'sonner'
+import { useParams, Link } from 'react-router';
+import { PageHeader } from '@/components/layout/PageHeader.tsx';
+import { PageTransition } from '@/components/ui/motion.tsx';
+import { Badge } from '@/components/ui/Badge.tsx';
+import { Button } from '@/components/ui/Button.tsx';
+import { StatMetric } from '@/components/ui/StatMetric.tsx';
+import { SpectrumChart } from '@/components/visualization/SpectrumChart.tsx';
+import { DriftRateChart } from '@/components/visualization/DriftRateChart.tsx';
+import { SAMPLE_CANDIDATES } from '@/features/signals/sample-data.ts';
+import { formatFrequency, formatSNR } from '@/lib/utils.ts';
+import { ArrowLeft, CheckCircle, XCircle, Download, Compass, Cpu, Radio } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AnalysisPage() {
-  const { signalId } = useParams<{ signalId: string }>()
+  const { signalId } = useParams<{ signalId: string }>();
 
   // Find candidate by ID or fall back to primary sample candidate
   const signal =
     SAMPLE_CANDIDATES.find((s) => s.id.toLowerCase() === signalId?.toLowerCase()) ||
-    SAMPLE_CANDIDATES[0]
+    SAMPLE_CANDIDATES[0];
 
   const confirmCandidate = () => {
     toast.success(`Signal ${signal.id} Marked as Verified Technosignature Candidate`, {
       description: 'Dispatched to Breakthrough Listen & SETI Institute alert queue.',
-    })
-  }
+    });
+  };
 
   const rejectAsRfi = () => {
     toast.error(`Signal ${signal.id} Flagged as Terrestrial RFI`, {
       description: 'Transferred to terrestrial transmitter interference fingerprint library.',
-    })
-  }
+    });
+  };
 
   const exportTelemetry = () => {
     const jsonBlob = new Blob([JSON.stringify(signal, null, 2)], {
       type: 'application/json',
-    })
-    const url = URL.createObjectURL(jsonBlob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${signal.id}-telemetry.json`
-    link.click()
-    URL.revokeObjectURL(url)
-    toast.info(`Exported telemetry JSON for ${signal.id}`)
-  }
+    });
+    const url = URL.createObjectURL(jsonBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${signal.id}-telemetry.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.info(`Exported telemetry JSON for ${signal.id}`);
+  };
 
   return (
     <PageTransition className="space-y-6">
@@ -120,7 +112,9 @@ export default function AnalysisPage() {
         />
         <StatMetric
           label="Drift Rate"
-          value={signal.driftRateHzPerSec > 0 ? `+${signal.driftRateHzPerSec}` : signal.driftRateHzPerSec}
+          value={
+            signal.driftRateHzPerSec > 0 ? `+${signal.driftRateHzPerSec}` : signal.driftRateHzPerSec
+          }
           unit="Hz/s"
           subtext="Topocentric Doppler shift"
           status="warning"
@@ -145,10 +139,7 @@ export default function AnalysisPage() {
           />
         </div>
         <div className="space-y-2">
-          <DriftRateChart
-            height={280}
-            driftRateHzPerSec={signal.driftRateHzPerSec}
-          />
+          <DriftRateChart height={280} driftRateHzPerSec={signal.driftRateHzPerSec} />
         </div>
       </div>
 
@@ -226,11 +217,12 @@ export default function AnalysisPage() {
             </div>
 
             <p className="pt-2 text-[11px] text-slate-400 border-t border-slate-900 leading-relaxed font-sans">
-              Model notes: Significant negative Doppler drift (-0.32 Hz/s) matches orbital motion of Proxima b around Proxima Centauri with high confidence. Low terrestrial correlation.
+              Model notes: Significant negative Doppler drift (-0.32 Hz/s) matches orbital motion of
+              Proxima b around Proxima Centauri with high confidence. Low terrestrial correlation.
             </p>
           </div>
         </div>
       </div>
     </PageTransition>
-  )
+  );
 }

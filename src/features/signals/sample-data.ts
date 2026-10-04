@@ -1,4 +1,4 @@
-import type { CandidateSignal } from '@/types/index.ts'
+import type { CandidateSignal } from '@/types/index.ts';
 
 export const SAMPLE_CANDIDATES: CandidateSignal[] = [
   {
@@ -81,4 +81,4 @@ export const SAMPLE_CANDIDATES: CandidateSignal[] = [
       constellation: 'Taurus',
     },
   },
-]
+];

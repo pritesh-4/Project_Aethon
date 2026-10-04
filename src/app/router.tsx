@@ -1,13 +1,13 @@
-import { createBrowserRouter, RouterProvider } from 'react-router'
-import { AppLayout } from '@/components/layout/AppLayout.tsx'
-import LandingPage from '@/pages/Landing/index.tsx'
-import ObservatoryPage from '@/pages/Observatory/index.tsx'
-import DiscoverPage from '@/pages/Discover/index.tsx'
-import AnalysisPage from '@/pages/Analysis/index.tsx'
-import ModelPage from '@/pages/Model/index.tsx'
-import AboutPage from '@/pages/About/index.tsx'
+import { createBrowserRouter, RouterProvider } from 'react-router';
+import { AppLayout } from '@/components/layout/AppLayout.tsx';
+import LandingPage from '@/pages/Landing/index.tsx';
+import ObservatoryPage from '@/pages/Observatory/index.tsx';
+import DiscoverPage from '@/pages/Discover/index.tsx';
+import AnalysisPage from '@/pages/Analysis/index.tsx';
+import ModelPage from '@/pages/Model/index.tsx';
+import AboutPage from '@/pages/About/index.tsx';
 
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: '/',
     element: <AppLayout />,
@@ -42,8 +42,8 @@ export const router = createBrowserRouter([
       },
     ],
   },
-])
+]);
 
 export function AppRouter() {
-  return <RouterProvider router={router} />
+  return <RouterProvider router={router} />;
 }

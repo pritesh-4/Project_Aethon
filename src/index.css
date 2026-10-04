@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-obs-bg: #030712;
@@ -21,8 +21,9 @@
   --color-obs-critical: #f43f5e;
   --color-obs-info: #0ea5e9;
 
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans:
+    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 :root {
@@ -46,7 +47,7 @@ body {
 
 /* Subtle scientific observatory grid backdrop */
 .observatory-grid-bg {
-  background-image: 
+  background-image:
     linear-gradient(to right, rgba(14, 165, 233, 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(14, 165, 233, 0.03) 1px, transparent 1px);
   background-size: 32px 32px;

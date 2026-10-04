@@ -37,7 +37,7 @@ AETHON operates not as a static catalog classifier, but as an **automated discov
 
 ## 2. The Problem Statement
 
-**Challenge Context:** AstroNITR World Space Week 2026 — *Rocket Revolution: Discovering Unknown Radio Signals*
+**Challenge Context:** AstroNITR World Space Week 2026 — _Rocket Revolution: Discovering Unknown Radio Signals_
 
 In observational radio astronomy, discovery pipelines face three fundamental hurdles:
 
@@ -116,12 +116,15 @@ flowchart TD
 ## 5. Machine Learning Methodology
 
 ### 5.1 Why Supervised Learning Fails in Open Discovery
+
 Supervised deep neural networks excel at closed-world classification tasks (e.g., distinguishing a known pulsar from Gaussian white noise). However, under open-ended astronomical discovery:
+
 - Unobserved natural phenomena (e.g., exotic neutron star magnetospheres, anomalous plasma masers) lack training exemplars.
 - Technosignature candidates may take unpredictable forms across the spectrotemporal plane.
 - Classifiers trained with fixed softmax outputs will assign an arbitrary, erroneous classification to anomalous inputs with artificially inflated confidence.
 
 ### 5.2 Unsupervised & Self-Supervised Representation Learning
+
 AETHON adopts self-supervised and unsupervised representation learning:
 
 1. **Masked Spectrogram Autoencoding:**
@@ -138,15 +141,15 @@ AETHON adopts self-supervised and unsupervised representation learning:
 
 ### 5.3 Methodological Implementation Status
 
-| Technique / Model Component | Status | Architectural Role |
-| :--- | :--- | :--- |
-| **Zod Schema Contracts & Validation** | **Implemented** | Type-safe candidate signal data model, observation records, and inference predictions |
-| **Interactive FFT & Drift Visualizer** | **Implemented** | High-precision Recharts spectral power distribution & topocentric drift visualization |
-| **Filterbank Upload & Intake Flow** | **Implemented** | Client-side intake buffer supporting `.fil`, `.h5`, `.fits`, `.csv` with simulated inference |
-| **Candidate Prioritization & Filtering** | **Implemented** | Dynamic sorting by anomaly score, SNR, frequency band, and verification state |
-| **Self-Supervised Transformer Backbone** | *Architected (Target)* | 12-layer spectral vision transformer for spectrotemporal patch encoding |
-| **Taylor-Tree Doppler De-drifting** | *Architected (Target)* | Accelerated de-dispersion and Doppler search over acceleration space $[-20, +20]\text{ Hz/s}$ |
-| **Contrastive Sidelobe RFI Filter** | *Architected (Target)* | Multi-beam spatial coincidence comparator |
+| Technique / Model Component              | Status                 | Architectural Role                                                                            |
+| :--------------------------------------- | :--------------------- | :-------------------------------------------------------------------------------------------- |
+| **Zod Schema Contracts & Validation**    | **Implemented**        | Type-safe candidate signal data model, observation records, and inference predictions         |
+| **Interactive FFT & Drift Visualizer**   | **Implemented**        | High-precision Recharts spectral power distribution & topocentric drift visualization         |
+| **Filterbank Upload & Intake Flow**      | **Implemented**        | Client-side intake buffer supporting `.fil`, `.h5`, `.fits`, `.csv` with simulated inference  |
+| **Candidate Prioritization & Filtering** | **Implemented**        | Dynamic sorting by anomaly score, SNR, frequency band, and verification state                 |
+| **Self-Supervised Transformer Backbone** | _Architected (Target)_ | 12-layer spectral vision transformer for spectrotemporal patch encoding                       |
+| **Taylor-Tree Doppler De-drifting**      | _Architected (Target)_ | Accelerated de-dispersion and Doppler search over acceleration space $[-20, +20]\text{ Hz/s}$ |
+| **Contrastive Sidelobe RFI Filter**      | _Architected (Target)_ | Multi-beam spatial coincidence comparator                                                     |
 
 ---
 
@@ -202,6 +205,7 @@ To avoid treating anomaly detection as an opaque black box, AETHON proposes a co
 $$\mathcal{S}_{\text{candidate}} = w_1 \cdot \mathcal{A}_{\text{morph}} + w_2 \cdot \mathcal{C}_{\text{drift}} + w_3 \cdot \mathcal{P}_{\text{time}} - w_4 \cdot \mathcal{R}_{\text{RFI}}$$
 
 Where:
+
 - $\mathcal{A}_{\text{morph}}$ (**Morphological Outlier Metric**): Latent-space distance from nearest known baseline emission cluster.
 - $\mathcal{C}_{\text{drift}}$ (**Doppler Coherence**): Measure of linearity and adherence to non-zero physical topocentric drift rates ($\dot{f} \neq 0$).
 - $\mathcal{P}_{\text{time}}$ (**Persistence / SNR Margin**): Temporal stability of the signal exceeding local thermal noise floor ($>10\text{ dB}$).
@@ -214,16 +218,17 @@ Where:
 
 The AETHON frontend is designed with the aesthetic and functional rigor of **aerospace telemetry instrumentation and deep-space mission control**:
 
-| Route | Page Module | Scientific Purpose |
-| :--- | :--- | :--- |
-| `/` | **Landing / Mission** | Mission briefing, active aperture frequency status, primary architectural pillars |
-| `/observatory` | **Observatory Console** | Live dual telemetry: FFT Spectral Power Distribution (1420.405 MHz HI reference) and Doppler Drift Cadence ($\Delta f / \Delta t$) with real-time stream controls |
-| `/discover` | **Discovery Feed** | Ingestion portal for `.fil`, `.h5`, `.fits`, `.csv` data files; priority-ranked candidate discovery queue |
-| `/analysis/:signalId` | **Signal Dossier** | Full deep-dive analytical view: celestial coordinates (RA/DEC), model classification probabilities, signal export (JSON), and verification controls |
-| `/model` | **ML Architecture** | Technical breakdown of the 4-stage neural pipeline, attention encoders, and synthetic benchmark matrix |
-| `/about` | **Scientific Context** | Theoretical foundations: the Hydrogen line, Doppler drift kinematics, and terrestrial RFI mitigation |
+| Route                 | Page Module             | Scientific Purpose                                                                                                                                                |
+| :-------------------- | :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                   | **Landing / Mission**   | Mission briefing, active aperture frequency status, primary architectural pillars                                                                                 |
+| `/observatory`        | **Observatory Console** | Live dual telemetry: FFT Spectral Power Distribution (1420.405 MHz HI reference) and Doppler Drift Cadence ($\Delta f / \Delta t$) with real-time stream controls |
+| `/discover`           | **Discovery Feed**      | Ingestion portal for `.fil`, `.h5`, `.fits`, `.csv` data files; priority-ranked candidate discovery queue                                                         |
+| `/analysis/:signalId` | **Signal Dossier**      | Full deep-dive analytical view: celestial coordinates (RA/DEC), model classification probabilities, signal export (JSON), and verification controls               |
+| `/model`              | **ML Architecture**     | Technical breakdown of the 4-stage neural pipeline, attention encoders, and synthetic benchmark matrix                                                            |
+| `/about`              | **Scientific Context**  | Theoretical foundations: the Hydrogen line, Doppler drift kinematics, and terrestrial RFI mitigation                                                              |
 
 ### Visual Design Tokens
+
 - **Color Palette:** Deep-space obsidian (`#030712`), console surface slate (`#080d1a`, `#0d1527`), hairline structural borders (`#172338`).
 - **Accents:** Hydrogen-line cyan (`#06b6d4`), sky blue (`#38bdf8`), telemetry emerald (`#10b981`), anomaly rose (`#f43f5e`).
 - **Typography:** Dual pairing with `JetBrains Mono` for frequency numbers and telemetry metrics, paired with `Inter` for technical documentation.
@@ -234,6 +239,7 @@ The AETHON frontend is designed with the aesthetic and functional rigor of **aer
 ## 10. Technology Stack
 
 ### Frontend & Telemetry Interface
+
 - **Core Framework:** [React 19](https://react.dev/) + [TypeScript 5.x](https://www.typescriptlang.org/)
 - **Build Engine:** [Vite 8](https://vite.dev/)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) with native `@tailwindcss/vite` integration
@@ -246,6 +252,7 @@ The AETHON frontend is designed with the aesthetic and functional rigor of **aer
 - **File Upload:** [React Dropzone](https://react-dropzone.js.org/)
 
 ### Backend & Machine Learning (Target Architecture)
+
 - **Runtime:** Python 3.11+
 - **Numerical Processing:** NumPy, SciPy, Astropy
 - **Deep Learning:** PyTorch / TensorRT
@@ -256,21 +263,27 @@ The AETHON frontend is designed with the aesthetic and functional rigor of **aer
 ## 11. Project Setup & Local Deployment
 
 ### Prerequisites
+
 - [Node.js](https://nodejs.org/) (v18.0.0 or higher recommended)
 - [npm](https://www.npmjs.com/) (v9.0.0 or higher)
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/pritesh-4/Project_Aethon.git
 cd Project_Aethon
 ```
 
 ### 2. Configure Environment Variables
+
 Copy the sample environment configuration file:
+
 ```bash
 cp .env.example .env
 ```
+
 Default environment parameters:
+
 ```env
 # AETHON Radio Signal Observatory Environment Configuration
 VITE_API_BASE_URL=http://localhost:8000/api
@@ -278,21 +291,27 @@ VITE_TELEMETRY_WS_URL=ws://localhost:8000/ws/telemetry
 ```
 
 ### 3. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 4. Start the Local Observatory Console
+
 ```bash
 npm run dev
 ```
+
 Open your browser and navigate to:
+
 ```
 http://localhost:5173/
 ```
 
 ### 5. Production Build & Typecheck
+
 To validate strict TypeScript types and compile the optimized production bundle:
+
 ```bash
 npm run build
 ```
@@ -349,10 +368,18 @@ Aethon/
 │   ├── main.tsx                # React DOM entrypoint
 │   └── index.css               # Tailwind CSS v4 tokens & observatory styles
 │
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # Authoritative GitHub Actions CI workflow
+├── .husky/
+│   └── pre-commit              # Git pre-commit hook triggering lint-staged
+├── .lintstagedrc.js            # Path-normalized staged file linter & formatter
+├── .prettierignore             # Prettier ignore patterns
+├── .prettierrc                 # Project Prettier formatting rules
 ├── .env.example                # Sample environment variables
-├── eslint.config.js            # ESLint flat configuration
+├── eslint.config.js            # ESLint flat configuration (ESLint 10 + Prettier)
 ├── index.html                  # HTML entrypoint with JetBrains Mono / Inter fonts
-├── package.json                # Project dependencies & scripts
+├── package.json                # Project dependencies, scripts & Husky hooks
 ├── tsconfig.app.json           # Strict client TypeScript configuration
 ├── tsconfig.json               # TypeScript project references
 ├── tsconfig.node.json          # Node configuration for Vite
@@ -361,7 +388,52 @@ Aethon/
 
 ---
 
-## 13. Future Roadmap
+## 13. Quality Assurance & CI/CD Pipeline
+
+To ensure scientific software reliability and prevent regressions, AETHON enforces a two-tier quality control architecture:
+
+```
+Developer Workspace                    Remote Verification
+───────────────────                    ───────────────────
+git commit                             git push / PR
+    ↓                                      ↓
+Husky (.husky/pre-commit)              GitHub Actions (.github/workflows/ci.yml)
+    ↓                                      ↓
+lint-staged                            ubuntu-latest (Node.js 22)
+    ↓                                      ↓
+ESLint (--fix)                         npm ci
+    ↓                                      ↓
+Prettier (--write)                     npm run format:check (Prettier validation)
+    ↓                                      ↓
+Commit Allowed / Blocked               npm run lint (ESLint code correctness)
+                                           ↓
+                                       npm run typecheck (Strict TypeScript tsc -b)
+                                           ↓
+                                       npm run build (Production Vite compilation)
+                                           ↓
+                                       CI Status: PASS / FAIL
+```
+
+- **Prettier:** Deterministic code formatting across TypeScript, TSX, CSS, JSON, and Markdown.
+- **ESLint:** Code correctness, React 19 hooks verification, and dead-code detection.
+- **TypeScript (`tsc -b`):** Full static type checking in strict mode across project references.
+- **Husky + lint-staged:** Fast local pre-commit gate that formats staged files and blocks commits with lint errors.
+- **GitHub Actions:** Authoritative cloud CI runner enforcing all quality checks before code can be merged into `main`.
+
+### Quality Gate Commands
+
+```bash
+npm run format          # Automatically format all files with Prettier
+npm run format:check    # Verify compliance with Prettier formatting rules
+npm run lint            # Run ESLint across codebase
+npm run typecheck       # Perform strict TypeScript typecheck
+npm run build           # Verify production build compilation
+npm run check           # Run complete multi-step quality gate locally
+```
+
+---
+
+## 14. Future Roadmap
 
 1. **Backend Integration:** Connect real-time WebSocket telemetry to a Python FastAPI backend wrapping PyTorch inference models.
 2. **Astropy Integration:** Direct ingestion and celestial coordinate transformation (`astropy.coordinates.SkyCoord`) for automated catalog cross-matching (SIMBAD, Gaia, ATNF Pulsar Database).
@@ -370,11 +442,12 @@ Aethon/
 
 ---
 
-## 14. Acknowledgments & Scientific Attribution
+## 15. Acknowledgments & Scientific Attribution
 
-Project AETHON was developed for the **AstroNITR World Space Week 2026 — Rocket Revolution** AI/ML Hackathon challenge (*"Discovering Unknown Radio Signals"*).
+Project AETHON was developed for the **AstroNITR World Space Week 2026 — Rocket Revolution** AI/ML Hackathon challenge (_"Discovering Unknown Radio Signals"_).
 
 Scientific inspiration and methodology acknowledge open-source research and data formats pioneered by:
+
 - **Breakthrough Listen Initiative** (UC Berkeley SETI Research Center)
 - **The SETI Institute**
 - **Green Bank Observatory** (National Science Foundation)
@@ -383,6 +456,6 @@ Scientific inspiration and methodology acknowledge open-source research and data
 
 ---
 
-## 15. License
+## 16. License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.

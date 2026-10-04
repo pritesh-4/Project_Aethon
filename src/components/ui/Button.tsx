@@ -1,11 +1,11 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import { cn } from '@/lib/utils.ts'
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { cn } from '@/lib/utils.ts';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
-  size?: 'sm' | 'md' | 'lg'
-  icon?: ReactNode
-  isLoading?: boolean
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
+  icon?: ReactNode;
+  isLoading?: boolean;
 }
 
 export function Button({
@@ -22,7 +22,7 @@ export function Button({
     sm: 'px-2.5 py-1 text-xs gap-1.5',
     md: 'px-3.5 py-1.5 text-sm gap-2',
     lg: 'px-5 py-2.5 text-base gap-2.5',
-  }
+  };
 
   const variantStyles = {
     primary:
@@ -35,7 +35,7 @@ export function Button({
       'bg-transparent hover:bg-slate-800/60 text-slate-400 hover:text-slate-200 border border-transparent',
     danger:
       'bg-rose-950/70 hover:bg-rose-900/90 text-rose-200 border border-rose-800/70 active:scale-[0.98]',
-  }
+  };
 
   return (
     <button
@@ -55,5 +55,5 @@ export function Button({
       )}
       {children}
     </button>
-  )
+  );
 }
