@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { PageHeader } from '@/components/layout/PageHeader.tsx';
 import { PageTransition } from '@/components/ui/motion.tsx';
 import { Badge } from '@/components/ui/Badge.tsx';
+import { SegmentedControl } from '@/components/ui/SegmentedControl.tsx';
 import { SignalCard } from '@/features/signals/SignalCard.tsx';
 import { SAMPLE_CANDIDATES } from '@/features/signals/sample-data.ts';
 import { UploadCloud, Search, Filter, CheckCircle2 } from 'lucide-react';
@@ -90,16 +91,16 @@ export default function DiscoverPage() {
       {/* File Upload Zone */}
       <div
         {...getRootProps()}
-        className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-all cursor-pointer ${
+        className={`relative flex flex-col items-center justify-center rounded-[2px] border-2 border-dashed p-8 text-center transition-all cursor-pointer ${
           isDragActive
             ? 'border-cyan-400 bg-cyan-950/30'
-            : 'border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-900/40'
+            : 'border-slate-800 bg-[#040814]/70 hover:border-slate-700 hover:bg-[#070d1e]/80'
         }`}
       >
         <input {...getInputProps()} />
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-cyan-900/60 bg-cyan-950/40 text-cyan-400 mb-3 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-          <UploadCloud className="h-6 w-6" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-[2px] border border-cyan-900/60 bg-cyan-950/40 text-cyan-400 mb-3 shadow-[0_0_12px_rgba(6,182,212,0.18)]">
+          <UploadCloud className="h-5 w-5" />
         </div>
 
         <h3 className="text-base font-semibold text-slate-100 font-sans">
@@ -113,9 +114,9 @@ export default function DiscoverPage() {
         </p>
 
         {uploadedFileName && (
-          <div className="mt-3 flex items-center gap-2 rounded bg-slate-900 px-3 py-1 font-mono text-xs text-cyan-300 border border-slate-700">
+          <div className="mt-3 flex items-center gap-2 rounded-[2px] bg-slate-900 px-3 py-1 font-mono text-xs text-cyan-300 border border-slate-700">
             {isProcessing ? (
-              <span className="h-3 w-3 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
+              <span className="h-3 w-3 rounded-none border border-cyan-400 border-t-transparent animate-spin" />
             ) : (
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
             )}
@@ -126,34 +127,35 @@ export default function DiscoverPage() {
       </div>
 
       {/* Search and Filters Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/80 p-3 font-mono text-xs">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-3 rounded-[2px] border border-slate-800 bg-[#040814]/90 p-3 font-mono text-xs">
+        <div className="relative w-full lg:w-80">
+          <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-500" />
           <input
             type="text"
-            placeholder="Search signal ID, target, or coordinates..."
+            placeholder="Search signal ID, target, coordinates..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded border border-slate-700 bg-slate-900 pl-8 pr-3 py-1.5 text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+            className="w-full h-8 rounded-[2px] border border-slate-700/80 bg-slate-950 pl-8 pr-3 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 tracking-wider"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <span className="text-slate-400 flex items-center gap-1">
-            <Filter className="h-3.5 w-3.5" />
-            Priority:
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
+          <span className="text-[11px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <Filter className="h-3.5 w-3.5 text-cyan-500" />
+            FILTER:
           </span>
-          <select
+          <SegmentedControl
+            options={[
+              { value: 'all', label: 'ALL', badge: candidates.length },
+              { value: 'critical', label: 'CRITICAL' },
+              { value: 'high', label: 'HIGH' },
+              { value: 'medium', label: 'MEDIUM' },
+              { value: 'low', label: 'RFI' },
+            ]}
             value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
-            className="rounded border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-slate-200 focus:border-cyan-500 focus:outline-none"
-          >
-            <option value="all">All Priorities ({candidates.length})</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low (Filtered RFI)</option>
-          </select>
+            onChange={(val) => setFilterPriority(val)}
+            size="sm"
+          />
         </div>
       </div>
 

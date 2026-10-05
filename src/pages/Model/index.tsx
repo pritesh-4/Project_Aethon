@@ -49,14 +49,14 @@ export default function ModelPage() {
       </div>
 
       {/* Neural Pipeline Flow */}
-      <div className="rounded-xl border border-slate-800/80 bg-slate-950/80 p-6 backdrop-blur-sm">
+      <div className="rounded-[2px] border border-slate-800/80 bg-[#040814]/90 p-6">
         <h3 className="text-lg font-bold font-sans text-slate-100 flex items-center gap-2 mb-4">
           <Layers className="h-5 w-5 text-cyan-400" />
           End-to-End Signal Processing & Anomaly Pipeline
         </h3>
 
         <div className="grid md:grid-cols-4 gap-4 text-xs font-mono">
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-2">
+          <div className="rounded-[2px] border border-slate-800 bg-slate-900/60 p-4 space-y-2">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[10px] text-cyan-400">STAGE 01</span>
               <Database className="h-4 w-4 text-slate-400" />
@@ -68,7 +68,7 @@ export default function ModelPage() {
             </p>
           </div>
 
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-2">
+          <div className="rounded-[2px] border border-slate-800 bg-slate-900/60 p-4 space-y-2">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[10px] text-cyan-400">STAGE 02</span>
               <GitBranch className="h-4 w-4 text-slate-400" />
@@ -80,7 +80,7 @@ export default function ModelPage() {
             </p>
           </div>
 
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-2">
+          <div className="rounded-[2px] border border-slate-800 bg-slate-900/60 p-4 space-y-2">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[10px] text-cyan-400">STAGE 03</span>
               <Cpu className="h-4 w-4 text-cyan-400" />
@@ -92,7 +92,7 @@ export default function ModelPage() {
             </p>
           </div>
 
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-2">
+          <div className="rounded-[2px] border border-slate-800 bg-slate-900/60 p-4 space-y-2">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[10px] text-cyan-400">STAGE 04</span>
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
@@ -107,7 +107,7 @@ export default function ModelPage() {
       </div>
 
       {/* Model Benchmark Table */}
-      <div className="rounded-xl border border-slate-800/80 bg-slate-950/80 p-6 backdrop-blur-sm font-mono text-xs">
+      <div className="rounded-[2px] border border-slate-800/80 bg-[#040814]/90 p-6 font-mono text-xs">
         <h3 className="text-base font-bold font-sans text-slate-100 mb-3">
           Synthetic Injection & Validation Benchmarks
         </h3>

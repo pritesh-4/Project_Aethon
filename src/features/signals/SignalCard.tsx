@@ -30,10 +30,10 @@ export function SignalCard({ signal }: SignalCardProps) {
   const statusInfo = statusLabelMap[signal.status];
 
   return (
-    <div className="group relative rounded-lg border border-slate-800/90 bg-slate-950/70 p-4 font-mono transition-all hover:border-cyan-800/80 hover:bg-slate-900/50 shadow-md">
+    <div className="group relative rounded-[2px] border border-slate-800/90 bg-[#040814]/90 p-4 font-mono transition-all hover:border-cyan-800/80 hover:bg-[#070d1e]/80">
       <div className="flex items-start justify-between gap-2 border-b border-slate-900 pb-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded border border-slate-800 bg-slate-900 text-cyan-400 group-hover:border-cyan-500/50">
+          <div className="flex h-7 w-7 items-center justify-center rounded-[2px] border border-slate-800 bg-slate-900 text-cyan-400 group-hover:border-cyan-500/50">
             <Radio className="h-3.5 w-3.5" />
           </div>
           <div>

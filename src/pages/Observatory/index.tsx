@@ -67,14 +67,16 @@ export default function ObservatoryPage() {
       />
 
       {/* Instrumentation Control Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/80 p-3 text-xs font-mono">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[2px] border border-slate-800 bg-[#040814]/90 p-3 text-xs font-mono">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-slate-400">TELESCOPE:</span>
+            <span className="text-slate-500 uppercase tracking-wider text-[10px] font-semibold">
+              APERTURE:
+            </span>
             <select
               value={selectedTelescope}
               onChange={(e) => setSelectedTelescope(e.target.value)}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200 focus:border-cyan-500 focus:outline-none"
+              className="h-7 rounded-[2px] border border-slate-700/80 bg-slate-950 px-2 py-0.5 text-xs text-slate-200 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 tracking-wider"
             >
               <option value="Green Bank Telescope (100m)">Green Bank Telescope (100m)</option>
               <option value="MeerKAT Radio Array (64-Dish)">MeerKAT Radio Array (64-Dish)</option>
@@ -85,11 +87,13 @@ export default function ObservatoryPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-slate-400">BAND:</span>
+            <span className="text-slate-500 uppercase tracking-wider text-[10px] font-semibold">
+              SPECTRAL BAND:
+            </span>
             <select
               value={selectedBand}
               onChange={(e) => setSelectedBand(e.target.value)}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200 focus:border-cyan-500 focus:outline-none"
+              className="h-7 rounded-[2px] border border-slate-700/80 bg-slate-950 px-2 py-0.5 text-xs text-slate-200 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 tracking-wider"
             >
               <option value="L-Band (1.42 GHz)">L-Band (1.42 GHz HI Line)</option>
               <option value="S-Band (2.3 GHz)">S-Band (2.3 GHz Deep Space)</option>
@@ -98,15 +102,17 @@ export default function ObservatoryPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-slate-400">
+        <div className="flex items-center gap-3 text-[11px] text-slate-400">
           <span>
-            SYS TEMP: <strong className="text-cyan-400">18.4 K</strong>
+            SYS TEMP: <strong className="text-cyan-400 font-normal">18.4 K</strong>
           </span>
+          <span className="text-slate-700">|</span>
           <span>
-            ELEV: <strong className="text-slate-200">54.2°</strong>
+            ELEV: <strong className="text-slate-200 font-normal">54.2°</strong>
           </span>
+          <span className="text-slate-700">|</span>
           <span>
-            AZ: <strong className="text-slate-200">182.1°</strong>
+            AZ: <strong className="text-slate-200 font-normal">182.1°</strong>
           </span>
         </div>
       </div>

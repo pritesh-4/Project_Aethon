@@ -16,7 +16,7 @@ export default function AboutPage() {
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           {/* Scientific Context */}
-          <section className="rounded-xl border border-slate-800/80 bg-slate-950/80 p-6 space-y-4">
+          <section className="rounded-[2px] border border-slate-800/80 bg-[#040814]/90 p-6 space-y-4">
             <h3 className="text-lg font-bold font-sans text-slate-100 flex items-center gap-2">
               <Telescope className="h-5 w-5 text-cyan-400" />
               The Deep-Space Signal Challenge
@@ -37,14 +37,14 @@ export default function AboutPage() {
           </section>
 
           {/* Key Astronomical Concepts */}
-          <section className="rounded-xl border border-slate-800/80 bg-slate-950/80 p-6 space-y-4">
+          <section className="rounded-[2px] border border-slate-800/80 bg-[#040814]/90 p-6 space-y-4">
             <h3 className="text-lg font-bold font-sans text-slate-100 flex items-center gap-2">
               <Radio className="h-5 w-5 text-cyan-400" />
               Astrophysical Core Principles
             </h3>
 
             <div className="grid sm:grid-cols-2 gap-4 text-xs font-mono">
-              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 space-y-1">
+              <div className="rounded-[2px] border border-slate-800 bg-slate-900/50 p-4 space-y-1">
                 <span className="text-cyan-400 font-bold">1420.405 MHz (The Water Hole)</span>
                 <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
                   The neutral hydrogen line (21 cm). Because hydrogen is the most abundant element
@@ -53,7 +53,7 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 space-y-1">
+              <div className="rounded-[2px] border border-slate-800 bg-slate-900/50 p-4 space-y-1">
                 <span className="text-emerald-400 font-bold">Doppler Drift Rate (Δf/Δt)</span>
                 <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
                   A signal originating from a transmitter situated on an exoplanet orbiting a
@@ -62,7 +62,7 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 space-y-1">
+              <div className="rounded-[2px] border border-slate-800 bg-slate-900/50 p-4 space-y-1">
                 <span className="text-amber-400 font-bold">Terrestrial RFI Rejection</span>
                 <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
                   Signals present across all telescope beam pointings are flagged as terrestrial
@@ -70,7 +70,7 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 space-y-1">
+              <div className="rounded-[2px] border border-slate-800 bg-slate-900/50 p-4 space-y-1">
                 <span className="text-cyan-400 font-bold">Polyphase Filterbanks (PFB)</span>
                 <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
                   Splits broad bandwidths into millions of narrow sub-channels with minimal spectral
