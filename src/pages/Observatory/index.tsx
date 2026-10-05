@@ -6,12 +6,9 @@ import { toast } from 'sonner';
 import type { ObservationStatus } from './types.ts';
 import { MOCK_OBSERVATIONS } from './data/mockObservations.ts';
 import { ObservatoryHeader } from './components/ObservatoryHeader.tsx';
-import { ObservationControls } from './components/ObservationControls.tsx';
 import { SignalViewport } from './components/SignalViewport.tsx';
-import { TelemetryStrip } from './components/TelemetryStrip.tsx';
-import { AnomalyPanel } from './components/AnomalyPanel.tsx';
-import { PipelineStatus } from './components/PipelineStatus.tsx';
 import { CandidateAlert } from './components/CandidateAlert.tsx';
+import { ObservatoryDetails } from './components/ObservatoryDetails.tsx';
 
 export default function ObservatoryPage() {
   const [selectedObsId, setSelectedObsId] = useState<string>(MOCK_OBSERVATIONS[0].id);
@@ -53,9 +50,7 @@ export default function ObservatoryPage() {
     setStatus('IDLE');
     setScanProgress(0);
     setIsPaused(false);
-    toast.info(`Observation record ${id} loaded into receiver buffer`, {
-      description: 'Aperture channelization and coordinate frames synchronized.',
-    });
+    toast.info(`Observation ${id} loaded`);
   };
 
   // State Machine Trigger: Run Analysis Flow
@@ -86,9 +81,7 @@ export default function ObservatoryPage() {
         } else {
           // Step 3: ANOMALY DETECTED
           setStatus('ANOMALY_DETECTED');
-          toast.success(`Anomalous Signal Isolated [${currentObservation.id}]`, {
-            description: `Peak SNR: +${currentObservation.snrDb} dB | Anomaly Index: ${currentObservation.anomaly.indexPercent}%`,
-          });
+          toast.success(`Candidate event detected in ${currentObservation.id}`);
 
           // Step 4: CANDIDATE READY (after brief verification delay)
           safeTimeout(() => {
@@ -101,24 +94,10 @@ export default function ObservatoryPage() {
     }, 600);
   }, [status, currentObservation, clearAllTimeouts, safeTimeout]);
 
-  // Handle Load Observation action
-  const handleLoadObservation = () => {
-    if (scanTimerRef.current) cancelAnimationFrame(scanTimerRef.current);
-    clearAllTimeouts();
-    setStatus('LOADING');
-    setScanProgress(0);
-    safeTimeout(() => {
-      setStatus('IDLE');
-      toast.success(`Observation ${currentObservation.id} buffer reloaded`, {
-        description: `${currentObservation.windowDuration} elapsed integration ready for analysis.`,
-      });
-    }, 500);
-  };
-
   // Handle Pause / Resume toggle
   const handleTogglePause = () => {
     setIsPaused(!isPaused);
-    toast(isPaused ? 'Observatory playback resumed' : 'Observatory playback paused');
+    toast(isPaused ? 'Observation resumed' : 'Observation paused');
   };
 
   // Handle Reset to IDLE
@@ -128,12 +107,12 @@ export default function ObservatoryPage() {
     setStatus('IDLE');
     setScanProgress(0);
     setIsPaused(false);
-    toast('Observatory pipeline reset to initial standby state');
+    toast('Observation reset');
   };
 
   return (
     <PageTransition className="space-y-4">
-      {/* 1. Top Observatory Technical Header */}
+      {/* 1. Unified Observatory Header & Action Bar */}
       <ObservatoryHeader
         observationId={currentObservation.id}
         status={status}
@@ -141,20 +120,13 @@ export default function ObservatoryPage() {
         telescope={currentObservation.telescope}
         observationList={MOCK_OBSERVATIONS.map((o) => ({ id: o.id, name: o.name }))}
         onSelectObservation={handleSelectObservation}
-      />
-
-      {/* 2. Observation Instrument Controls */}
-      <ObservationControls
-        observation={currentObservation}
-        status={status}
         isPaused={isPaused}
-        onLoadObservation={handleLoadObservation}
         onStartAnalysis={handleStartAnalysis}
         onTogglePause={handleTogglePause}
         onReset={handleReset}
       />
 
-      {/* 3. Primary Signal Viewport (The Dominant Scientific Hero) */}
+      {/* 2. Primary Signal Viewport (The Dominant Scientific Hero) */}
       <SignalViewport
         observation={currentObservation}
         status={status}
@@ -162,28 +134,15 @@ export default function ObservatoryPage() {
         scanProgress={scanProgress}
       />
 
-      {/* 4. Horizontal Telemetry Strip */}
-      <TelemetryStrip observation={currentObservation} />
-
-      {/* 5. Restrained Candidate Event Banner (Appears on Anomaly / Candidate Detection) */}
+      {/* 3. Candidate Event Alert Banner (Conditional on Detection) */}
       <AnimatePresence>
         {(status === 'ANOMALY_DETECTED' || status === 'CANDIDATE_READY') && (
           <CandidateAlert observation={currentObservation} />
         )}
       </AnimatePresence>
 
-      {/* 6. Analytical Section: Anomaly Panel + Processing Pipeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left: Anomaly Panel (7 cols) */}
-        <div className="lg:col-span-7">
-          <AnomalyPanel observation={currentObservation} status={status} />
-        </div>
-
-        {/* Right: Processing Pipeline (5 cols) */}
-        <div className="lg:col-span-5">
-          <PipelineStatus status={status} />
-        </div>
-      </div>
+      {/* 4. Supporting Information Group: 3 Key Metrics + Progressive Diagnostics */}
+      <ObservatoryDetails observation={currentObservation} status={status} />
     </PageTransition>
   );
 }

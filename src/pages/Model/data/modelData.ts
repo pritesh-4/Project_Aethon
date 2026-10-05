@@ -171,7 +171,7 @@ export const TECHNICAL_SECTIONS: TechnicalDetailSection[] = [
   {
     id: 'tech-1',
     title: 'Data Representation & Calibration',
-    tag: 'SPECTRAL TELEMETRY',
+    tag: 'Spectral representation',
     summary:
       'Mathematical transformation of complex baseband receiver voltages into calibrated spectrotemporal density matrices.',
     formalDefinition:
@@ -201,7 +201,7 @@ export const TECHNICAL_SECTIONS: TechnicalDetailSection[] = [
   {
     id: 'tech-2',
     title: 'Feature Space & Embedding Manifold',
-    tag: 'LATENT ENCODING',
+    tag: 'Latent encoding',
     summary:
       'Unsupervised projection of spectrogram patches into a 512-dimensional hyperspherical latent space.',
     formalDefinition:
@@ -231,7 +231,7 @@ export const TECHNICAL_SECTIONS: TechnicalDetailSection[] = [
   {
     id: 'tech-3',
     title: 'Anomaly Formulation & Divergence Calculation',
-    tag: 'ANOMALY DETECTOR',
+    tag: 'Anomaly scoring',
     summary:
       'Quantitative measurement of structural deviation from the learned background distribution of astrophysical noise.',
     formalDefinition:
@@ -260,8 +260,8 @@ export const TECHNICAL_SECTIONS: TechnicalDetailSection[] = [
   },
   {
     id: 'tech-4',
-    title: 'Candidate Prioritization & Ranking Engine',
-    tag: 'TRIAGE PROTOCOL',
+    title: 'Candidate Prioritization & Ranking',
+    tag: 'Candidate prioritization',
     summary:
       'Composite multi-factor ranking algorithm prioritizing candidate signals for human scientific follow-up.',
     formalDefinition:
@@ -271,17 +271,17 @@ export const TECHNICAL_SECTIONS: TechnicalDetailSection[] = [
     ],
     parameters: [
       {
-        name: 'CRITICAL Priority',
+        name: 'Critical priority',
         spec: 'P ≥ 0.850',
         description: 'Immediate alert trigger for secondary telescope verification queue',
       },
       {
-        name: 'HIGH Priority',
+        name: 'High priority',
         spec: '0.700 ≤ P < 0.850',
         description: 'Candidate prioritized for detailed human researcher review',
       },
       {
-        name: 'MEDIUM Priority',
+        name: 'Medium priority',
         spec: '0.500 ≤ P < 0.700',
         description: 'Candidate archived with observational flags for batch retrospective analysis',
       },

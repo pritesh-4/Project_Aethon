@@ -11,12 +11,12 @@ interface TelemetryOverlayProps {
 }
 
 const SECTIONS = [
-  { id: 0, code: '01', title: 'THE UNKNOWN' },
-  { id: 1, code: '02', title: 'THE PROBLEM' },
-  { id: 2, code: '03', title: 'THE SIGNAL' },
-  { id: 3, code: '04', title: 'THE INTELLIGENCE' },
-  { id: 4, code: '05', title: 'THE DISCOVERY' },
-  { id: 5, code: '06', title: 'ENTER THE OBSERVATORY' },
+  { id: 0, code: '01', title: 'Context' },
+  { id: 1, code: '02', title: 'Data Volume' },
+  { id: 2, code: '03', title: 'Signal Anomaly' },
+  { id: 3, code: '04', title: 'Representation' },
+  { id: 4, code: '05', title: 'Candidate Event' },
+  { id: 5, code: '06', title: 'Observatory' },
 ];
 
 export function TelemetryOverlay({
@@ -42,121 +42,103 @@ export function TelemetryOverlay({
   const progressPercent = Math.min(100, Math.max(0, Math.round(progress * 100)));
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-40 flex flex-col justify-between p-4 sm:p-6 text-slate-400 font-mono text-[11px] select-none">
-      {/* Top Observatory Telemetry Bar */}
-      <div className="flex items-center justify-between border-b border-slate-900/80 pb-3 bg-gradient-to-b from-[#02040a]/90 to-transparent backdrop-blur-[2px]">
-        {/* Left: Location & System Identity */}
+    <div className="pointer-events-none fixed inset-0 z-40 flex flex-col justify-between p-4 sm:p-6 text-[#7F8B95] font-sans text-xs select-none">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between border-b border-[#172230] pb-3 bg-[#06080B]/80">
+        {/* Left: Identity */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-slate-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="tracking-widest font-semibold text-xs text-slate-100">AETHON</span>
-            <span className="text-[10px] text-slate-500 font-normal hidden sm:inline">
-              // EXPERIMENTAL OBSERVATORY
+          <div className="flex items-center gap-2 text-[#E6EDF2]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+            <span className="font-semibold text-xs tracking-wider">AETHON</span>
+            <span className="text-[11px] text-[#7F8B95] font-normal hidden sm:inline">
+              Signal Discovery
             </span>
           </div>
 
-          <span className="text-slate-700 hidden sm:inline">|</span>
+          <span className="text-[#243345] hidden sm:inline">|</span>
 
-          <span className="text-slate-400 hidden md:inline">GBT-100M [38°25′59″N 79°50′23″W]</span>
-
-          <span className="text-slate-700 hidden lg:inline">|</span>
-
-          <span className="text-cyan-400/90 hidden lg:inline">FREQ: 1420.4057 MHz [H I]</span>
+          <span className="text-[11px] text-[#7F8B95] hidden md:inline">
+            Demonstration Environment
+          </span>
         </div>
 
-        {/* Right: UTC Timestamp, Sound synthesis toggle, Direct Console Link */}
+        {/* Right: Audio toggle & Direct Console Link */}
         <div className="flex items-center gap-3 pointer-events-auto">
-          <span className="text-slate-400 tabular-nums hidden sm:inline">{time}</span>
+          <span className="text-[#7F8B95] font-mono text-[11px] tabular-nums hidden sm:inline">
+            {time}
+          </span>
 
           <button
             onClick={handleToggleAudio}
-            title={
-              isAudioActive ? 'Mute Receiver Atmosphere' : 'Synthesize 1420 MHz Receiver Audio'
-            }
-            className="flex items-center gap-1 px-2 py-1 rounded border border-slate-800 bg-slate-950/70 hover:border-slate-700 hover:text-slate-200 transition-colors text-[10px]"
+            title={isAudioActive ? 'Mute Sonification' : 'Enable Sonification'}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] border border-[#172230] bg-[#10161D] hover:border-[#243345] hover:text-[#E6EDF2] transition-colors text-xs cursor-pointer"
           >
             {isAudioActive ? (
               <>
-                <Volume2 className="h-3 w-3 text-cyan-400" />
-                <span className="text-cyan-300">AUDIO ACTIVE</span>
+                <Volume2 className="h-3.5 w-3.5 text-[#5BD8F5]" />
+                <span className="text-[#5BD8F5]">Audio on</span>
               </>
             ) : (
               <>
-                <VolumeX className="h-3 w-3 text-slate-500" />
-                <span className="text-slate-500">AUDIO OFF</span>
+                <VolumeX className="h-3.5 w-3.5 text-[#7F8B95]" />
+                <span className="text-[#7F8B95]">Audio off</span>
               </>
             )}
           </button>
 
           <Link
             to="/observatory"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-cyan-800/60 bg-cyan-950/30 text-cyan-300 hover:bg-cyan-900/40 hover:border-cyan-500/50 transition-colors text-[10px]"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] border border-[#5BD8F5]/40 bg-[#10161D] text-[#5BD8F5] hover:border-[#5BD8F5] transition-colors text-xs"
           >
-            <Activity className="h-3 w-3" />
-            <span className="hidden sm:inline">CONSOLE</span>
-            <ArrowRight className="h-2.5 w-2.5 opacity-70" />
+            <Activity className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Observatory</span>
+            <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
       </div>
 
-      {/* Side Narrative Index & Scrub Navigator (Desktop) */}
+      {/* Side Narrative Index (Desktop) */}
       <div className="pointer-events-auto hidden md:flex flex-col gap-1 fixed left-6 top-1/2 -translate-y-1/2 z-30">
-        <div className="text-[9px] tracking-widest text-slate-400 mb-1 font-semibold">
-          MISSION SEQUENCE
-        </div>
+        <div className="text-[10px] text-[#7F8B95] mb-1 font-medium">Sections</div>
         {SECTIONS.map((sec, index) => {
           const isActive = currentSectionIndex === index;
           return (
             <button
               key={sec.id}
               onClick={() => onNavigateToSection(index)}
-              className={`flex items-center gap-2.5 py-1 text-left transition-all group ${
-                isActive
-                  ? 'text-cyan-300 font-semibold pl-1'
-                  : 'text-slate-400 hover:text-slate-300'
+              className={`flex items-center gap-2.5 py-1 text-left transition-all group cursor-pointer ${
+                isActive ? 'text-[#5BD8F5] font-medium pl-1' : 'text-[#7F8B95] hover:text-[#E6EDF2]'
               }`}
             >
               <span
                 className={`h-1.5 w-1.5 rounded-full transition-all ${
-                  isActive
-                    ? 'bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)] scale-125'
-                    : 'bg-slate-700 group-hover:bg-slate-500'
+                  isActive ? 'bg-[#5BD8F5] scale-110' : 'bg-[#243345] group-hover:bg-[#7F8B95]'
                 }`}
               />
-              <span className="text-[10px] tracking-wider">{sec.code}</span>
-              <span
-                className={`text-[10px] tracking-widest transition-opacity ${isActive ? 'opacity-100' : 'opacity-60 group-hover:opacity-100'}`}
-              >
-                {sec.title}
-              </span>
+              <span className="font-mono text-[10px]">{sec.code}</span>
+              <span className="text-xs">{sec.title}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Bottom Telemetry & Scroll Progress Indicator */}
-      <div className="flex items-center justify-between border-t border-slate-900/80 pt-3 bg-gradient-to-t from-[#02040a]/90 to-transparent backdrop-blur-[2px]">
-        {/* Left: Scroll cue */}
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-400 tracking-wider">
-            SCROLL NAVIGATION // STAGE {SECTIONS[currentSectionIndex]?.code}
-          </span>
-          <span className="text-slate-400 hidden sm:inline">•</span>
-          <span className="text-[10px] text-slate-400 hidden sm:inline">
-            {SECTIONS[currentSectionIndex]?.title}
+      {/* Bottom Progress Bar */}
+      <div className="flex items-center justify-between border-t border-[#172230] pt-3 bg-[#06080B]/80">
+        <div className="flex items-center gap-2 text-xs text-[#7F8B95]">
+          <span>
+            {SECTIONS[currentSectionIndex]?.code} • {SECTIONS[currentSectionIndex]?.title}
           </span>
         </div>
 
-        {/* Right: Telemetry progress percentage */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-400">TELEMETRY SCAN:</span>
-          <div className="w-24 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+          <span className="text-xs text-[#7F8B95]">Progress</span>
+          <div className="w-20 h-1 bg-[#10161D] rounded-full overflow-hidden border border-[#172230]">
             <div
-              className="h-full bg-cyan-400 transition-all duration-150"
+              className="h-full bg-[#5BD8F5] transition-all duration-150"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <span className="text-cyan-400 tabular-nums w-8 text-right font-medium">
+          <span className="text-[#5BD8F5] font-mono tabular-nums text-xs font-medium w-8 text-right">
             {progressPercent}%
           </span>
         </div>

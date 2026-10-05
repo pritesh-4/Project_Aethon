@@ -11,18 +11,14 @@ export function AnomalyPanel({ observation, status }: AnomalyPanelProps) {
   const anomaly = observation.anomaly;
 
   // Segmented meter renderer (12 discrete instrumentation segments)
-  const renderSegmentedMeter = (
-    percent: number,
-    colorType: 'cyan' | 'amber' | 'emerald' | 'rose'
-  ) => {
+  const renderSegmentedMeter = (percent: number, colorType: 'cyan' | 'amber' | 'neutral') => {
     const totalSegments = 12;
     const activeSegments = isAnalyzed ? Math.round((percent / 100) * totalSegments) : 0;
 
     const activeColorMap = {
-      cyan: 'bg-[#66E3FF] shadow-[0_0_6px_rgba(102,227,255,0.4)]',
-      amber: 'bg-[#FFB84D] shadow-[0_0_6px_rgba(255,184,77,0.4)]',
-      emerald: 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.4)]',
-      rose: 'bg-[#FF5E5E] shadow-[0_0_6px_rgba(255,94,94,0.4)]',
+      cyan: 'bg-[#5BD8F5]',
+      amber: 'bg-[#E8AE50]',
+      neutral: 'bg-[#7F8B95]',
     };
 
     return (
@@ -30,8 +26,8 @@ export function AnomalyPanel({ observation, status }: AnomalyPanelProps) {
         {Array.from({ length: totalSegments }).map((_, i) => (
           <div
             key={i}
-            className={`h-2 flex-1 rounded-[1px] transition-colors duration-300 ${
-              i < activeSegments ? activeColorMap[colorType] : 'bg-slate-800/80'
+            className={`h-1.5 flex-1 rounded-sm transition-colors duration-300 ${
+              i < activeSegments ? activeColorMap[colorType] : 'bg-[#1C2630]'
             }`}
           />
         ))}
@@ -40,37 +36,35 @@ export function AnomalyPanel({ observation, status }: AnomalyPanelProps) {
   };
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-4 font-mono select-none flex flex-col justify-between">
+    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none flex flex-col justify-between">
       <div>
         {/* Panel Header */}
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+        <div className="flex items-center justify-between border-b border-[#1C2630] pb-2.5">
           <div className="flex items-center gap-2">
-            <Zap className="h-3.5 w-3.5 text-[#66E3FF]" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-              ANOMALY ANALYSIS
-            </h3>
+            <Zap className="h-3.5 w-3.5 text-[#5BD8F5]" />
+            <h3 className="text-xs font-semibold text-[#E6EDF2]">Anomaly assessment</h3>
           </div>
-          <span className="text-[10px] text-[#84929C] uppercase tracking-wider">
-            {isAnalyzed ? 'EVALUATION COMPLETE' : 'AWAITING EVALUATION'}
+          <span className="text-[11px] text-[#7F8B95]">
+            {isAnalyzed ? 'Evaluated' : 'Awaiting evaluation'}
           </span>
         </div>
 
         {/* Analytical Statement */}
-        <div className="mt-3 rounded-[2px] border border-slate-800 bg-[#05070A]/70 p-2.5 text-[11px] text-[#84929C] leading-relaxed">
+        <div className="mt-3 rounded border border-[#1C2630] bg-[#06080B] p-2.5 text-[11px] text-[#7F8B95] leading-relaxed">
           {isAnalyzed ? (
             <div className="flex items-start gap-2">
-              <span className="text-[#66E3FF] text-xs">◈</span>
+              <span className="text-[#5BD8F5] text-xs">◈</span>
               <span>
-                AETHON isolated a candidate feature deviating from background Gaussian noise and
-                known celestial baselines (reconstruction residual Δ &gt; 4.8σ).
+                Isolated candidate feature deviating from background Gaussian noise and known
+                celestial baselines (reconstruction residual Δ &gt; 4.8σ).
               </span>
             </div>
           ) : (
-            <div className="flex items-start gap-2 text-slate-500">
-              <span className="text-slate-600 text-xs">◈</span>
+            <div className="flex items-start gap-2 text-[#7F8B95]">
+              <span className="text-[#7F8B95] text-xs">◈</span>
               <span>
-                Run analysis to compute variational latent embedding distance, RFI probability, and
-                temporal persistence.
+                Run analysis to compute latent embedding distance, interference probability, and
+                persistence.
               </span>
             </div>
           )}
@@ -79,75 +73,65 @@ export function AnomalyPanel({ observation, status }: AnomalyPanelProps) {
         {/* 4 Discrete Anomaly Metrics */}
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* 1. Anomaly Index */}
-          <div className="rounded-[2px] border border-slate-800/60 bg-[#080D1A]/60 p-2.5">
+          <div className="rounded border border-[#1C2630] bg-[#10161D] p-2.5">
             <div className="flex items-baseline justify-between">
-              <span className="text-[10px] text-[#84929C] uppercase tracking-wider">
-                ANOMALY INDEX
-              </span>
-              <span className="text-xs font-bold text-[#66E3FF]">
-                {isAnalyzed ? `${anomaly.indexPercent.toFixed(1)}%` : '--- %'}
+              <span className="text-[11px] text-[#7F8B95]">Anomaly index</span>
+              <span className="text-xs font-semibold font-mono text-[#5BD8F5]">
+                {isAnalyzed ? `${anomaly.indexPercent.toFixed(1)}%` : '—'}
               </span>
             </div>
             {renderSegmentedMeter(anomaly.indexPercent, 'cyan')}
-            <span className="block mt-1 text-[9px] text-slate-500">
-              Deviance from expected Gaussian baseline
+            <span className="block mt-1 text-[10px] text-[#7F8B95]">
+              Deviance from expected baseline
             </span>
           </div>
 
           {/* 2. Known Pattern Similarity */}
-          <div className="rounded-[2px] border border-slate-800/60 bg-[#080D1A]/60 p-2.5">
+          <div className="rounded border border-[#1C2630] bg-[#10161D] p-2.5">
             <div className="flex items-baseline justify-between">
-              <span className="text-[10px] text-[#84929C] uppercase tracking-wider">
-                KNOWN PATTERN SIMILARITY
-              </span>
-              <span className="text-xs font-bold text-slate-300">
-                {isAnalyzed ? `${anomaly.knownPatternSimilarityPercent.toFixed(1)}%` : '--- %'}
+              <span className="text-[11px] text-[#7F8B95]">Known pattern similarity</span>
+              <span className="text-xs font-semibold font-mono text-[#E6EDF2]">
+                {isAnalyzed ? `${anomaly.knownPatternSimilarityPercent.toFixed(1)}%` : '—'}
               </span>
             </div>
-            {renderSegmentedMeter(anomaly.knownPatternSimilarityPercent, 'emerald')}
-            <span className="block mt-1 text-[9px] text-slate-500">
-              Cross-correlation with known pulsar/FRB library
+            {renderSegmentedMeter(anomaly.knownPatternSimilarityPercent, 'neutral')}
+            <span className="block mt-1 text-[10px] text-[#7F8B95]">
+              Cross-correlation with pulsar library
             </span>
           </div>
 
           {/* 3. Interference Probability */}
-          <div className="rounded-[2px] border border-slate-800/60 bg-[#080D1A]/60 p-2.5">
+          <div className="rounded border border-[#1C2630] bg-[#10161D] p-2.5">
             <div className="flex items-baseline justify-between">
-              <span className="text-[10px] text-[#84929C] uppercase tracking-wider">
-                INTERFERENCE PROBABILITY
-              </span>
+              <span className="text-[11px] text-[#7F8B95]">Interference estimate</span>
               <span
-                className={`text-xs font-bold ${
-                  anomaly.interferenceProbabilityPercent < 15
-                    ? 'text-emerald-400'
-                    : 'text-[#FFB84D]'
+                className={`text-xs font-semibold font-mono ${
+                  anomaly.interferenceProbabilityPercent < 15 ? 'text-[#5BD8F5]' : 'text-[#E8AE50]'
                 }`}
               >
-                {isAnalyzed ? `${anomaly.interferenceProbabilityPercent.toFixed(1)}%` : '--- %'}
+                {isAnalyzed ? `${anomaly.interferenceProbabilityPercent.toFixed(1)}%` : '—'}
               </span>
             </div>
             {renderSegmentedMeter(
               anomaly.interferenceProbabilityPercent,
-              anomaly.interferenceProbabilityPercent < 15 ? 'emerald' : 'amber'
+              anomaly.interferenceProbabilityPercent < 15 ? 'cyan' : 'amber'
             )}
-            <span className="block mt-1 text-[9px] text-slate-500">
-              Satellite & terrestrial transmitter overlap score
+            <span className="block mt-1 text-[10px] text-[#7F8B95]">
+              Satellite and terrestrial overlap score
             </span>
           </div>
 
           {/* 4. Persistence */}
-          <div className="rounded-[2px] border border-slate-800/60 bg-[#080D1A]/60 p-2.5">
+          <div className="rounded border border-[#1C2630] bg-[#10161D] p-2.5">
             <div className="flex items-baseline justify-between">
-              <span className="text-[10px] text-[#84929C] uppercase tracking-wider">
-                PERSISTENCE
-              </span>
-              <span className="text-xs font-bold text-emerald-400">
-                {isAnalyzed ? `${anomaly.persistencePercent.toFixed(1)}%` : '--- %'}
+              <span className="text-[11px] text-[#7F8B95]">Signal persistence</span>
+              <span className="text-xs font-semibold font-mono text-[#5BD8F5]">
+                {isAnalyzed ? `${anomaly.persistencePercent.toFixed(1)}%` : '—'}
               </span>
             </div>
-            {renderSegmentedMeter(anomaly.persistencePercent, 'emerald')}
-            <span className="block mt-1 text-[9px] text-slate-500">
-              Coherence across multi-cadence integration
+            {renderSegmentedMeter(anomaly.persistencePercent, 'cyan')}
+            <span className="block mt-1 text-[10px] text-[#7F8B95]">
+              Coherence across observation window
             </span>
           </div>
         </div>
@@ -155,9 +139,9 @@ export function AnomalyPanel({ observation, status }: AnomalyPanelProps) {
 
       {/* Classification Tag Footer */}
       {isAnalyzed && (
-        <div className="mt-4 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[10px]">
-          <span className="text-[#84929C] uppercase">PRELIMINARY TAXONOMY:</span>
-          <span className="rounded-[1px] border border-cyan-800/70 bg-cyan-950/40 px-2 py-0.5 font-semibold text-[#66E3FF] uppercase tracking-wider">
+        <div className="mt-4 pt-2.5 border-t border-[#1C2630] flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="text-[#7F8B95]">Preliminary classification:</span>
+          <span className="rounded border border-[#5BD8F5]/30 bg-[#5BD8F5]/10 px-2 py-0.5 text-xs font-medium text-[#5BD8F5]">
             {anomaly.classificationLabel}
           </span>
         </div>

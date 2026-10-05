@@ -8,45 +8,44 @@ export function ModelFlowVisualizer() {
   const steps = [
     {
       id: 'raw',
-      title: '01 // RAW BASEBAND VOLTAGES',
+      title: '01 · Baseband voltages',
       visualType: 'waveform',
       preview: '~~~~~~~~~~~~ ∿∿∿∿∿∿ ~~~~~~~~~~~~',
-      spec: 'Complex I(t) + jQ(t) sampled at 25.0 MSPS Nyquist rate',
-      detail: 'High-frequency digitization directly from antenna cryogenic receiver feeds.',
+      spec: 'Complex I(t) + jQ(t) sampled at 25.0 MSps',
+      detail: 'High-frequency digitization directly from antenna receiver feeds.',
     },
     {
       id: 'spectrogram',
-      title: '02 // SPECTROTEMPORAL WATERFALL',
+      title: '02 · Spectrogram',
       visualType: 'spectrogram',
       preview: '░░░████░░░░░░░░███░░░░░░░░▒▒▒▒░░',
       spec: 'STFT Matrix S(t, f) [Time × Freq × Intensity]',
-      detail:
-        '3.81 Hz fine frequency channelization exposes negative Doppler drift slope df/dt = -0.32 Hz/s.',
+      detail: '3.81 Hz frequency channelization reveals Doppler drift slope df/dt = -0.32 Hz/s.',
     },
     {
       id: 'vector',
-      title: '03 // DENSE FEATURE EMBEDDING',
+      title: '03 · Latent embedding',
       visualType: 'vector',
       preview: '[ +0.142, -0.891, +0.433, +0.718, ... z₅₁₂ ]',
-      spec: 'z ∈ ℝ⁵¹² normalized to unit hypersphere ||z||₂ = 1.0',
+      spec: 'z ∈ ℝ⁵¹² normalized to unit sphere',
       detail:
         'Self-supervised encoder maps structural morphology into continuous geometric coordinates.',
     },
     {
       id: 'latent',
-      title: '04 // REPRESENTATION MANIFOLD',
+      title: '04 · Manifold space',
       visualType: 'space',
-      preview: '• • • • • •     [ × CANDIDATE AET-04721 ]',
-      spec: 'Cosine distance d(z, μ_known) = 0.918 (Outlier)',
+      preview: '• • • • • •     [ × Candidate AET-04721 ]',
+      spec: 'Cosine distance d(z, μ_known) = 0.918',
       detail:
-        'Candidate event is topologically isolated away from the dense background noise manifold.',
+        'Candidate event is topologically separated from the learned background noise manifold.',
     },
     {
       id: 'score',
-      title: '05 // ANOMALY INDEX & TRIAGE',
+      title: '05 · Anomaly index',
       visualType: 'score',
-      preview: 'ANOMALY INDEX: 0.947 // PRIORITY: HIGH',
-      spec: 'Triage weight P = 0.884 → Dispatched to Scientific Queue',
+      preview: 'Anomaly index: 0.947 · Priority: High',
+      spec: 'Triage weight P = 0.884 → Queued for scientific review',
       detail:
         'Observation is prioritized for human scientific review; automated pipeline does not declare discovery.',
     },
@@ -62,13 +61,11 @@ export function ModelFlowVisualizer() {
   }, [isPlaying, steps.length]);
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-5 font-mono select-none">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-3 mb-4 gap-2">
+    <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-5 font-mono select-none">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#1C2630] pb-3 mb-4 gap-2">
         <div className="flex items-center gap-2">
-          <Cpu className="h-4 w-4 text-[#66E3FF]" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            TRANSFORMATION FLOW: FROM VOLTAGES TO ANOMALY INDEX
-          </h2>
+          <Cpu className="h-4 w-4 text-[#5BD8F5]" />
+          <h2 className="text-xs font-medium text-[#E6EDF2]">Transformation flow</h2>
         </div>
 
         {/* Stepper Controls */}
@@ -76,17 +73,17 @@ export function ModelFlowVisualizer() {
           <button
             type="button"
             onClick={() => setIsPlaying(!isPlaying)}
-            className="flex items-center gap-1 rounded-[1px] border border-slate-800 bg-[#05070A] px-2 py-0.5 text-slate-300 hover:border-slate-600 cursor-pointer"
+            className="flex items-center gap-1 rounded-[1px] border border-[#1C2630] bg-[#06080B] px-2 py-0.5 text-[#7F8B95] hover:text-[#E6EDF2] cursor-pointer"
           >
             {isPlaying ? (
               <>
-                <Pause className="h-3 w-3 text-amber-400" />
-                <span>PAUSE</span>
+                <Pause className="h-3 w-3 text-[#E8AE50]" />
+                <span>Pause</span>
               </>
             ) : (
               <>
-                <Play className="h-3 w-3 text-emerald-400" />
-                <span>PLAY</span>
+                <Play className="h-3 w-3 text-[#5BD8F5]" />
+                <span>Play</span>
               </>
             )}
           </button>
@@ -96,10 +93,10 @@ export function ModelFlowVisualizer() {
               setActiveStep(0);
               setIsPlaying(true);
             }}
-            className="flex items-center gap-1 rounded-[1px] border border-slate-800 bg-[#05070A] px-2 py-0.5 text-slate-400 hover:text-slate-200 cursor-pointer"
+            className="flex items-center gap-1 rounded-[1px] border border-[#1C2630] bg-[#06080B] px-2 py-0.5 text-[#7F8B95] hover:text-[#E6EDF2] cursor-pointer"
           >
             <RotateCcw className="h-3 w-3" />
-            <span>RESET</span>
+            <span>Reset</span>
           </button>
         </div>
       </div>
@@ -120,34 +117,30 @@ export function ModelFlowVisualizer() {
               }}
               className={`text-left rounded-[2px] border p-3 flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden ${
                 isCurrent
-                  ? 'border-[#66E3FF] bg-[#06b6d4]/10 shadow-[0_0_12px_rgba(102,227,255,0.15)] text-[#EAF4F7]'
+                  ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#E6EDF2]'
                   : isPassed
-                    ? 'border-slate-700/80 bg-[#05070A]/80 text-slate-300'
-                    : 'border-slate-800/80 bg-[#05070A]/40 text-slate-500 opacity-60'
+                    ? 'border-[#1C2630] bg-[#06080B] text-[#7F8B95]'
+                    : 'border-[#1C2630]/60 bg-[#06080B]/40 text-[#7F8B95]/60'
               }`}
             >
-              {isCurrent && (
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#66E3FF] shadow-[0_0_8px_rgba(102,227,255,0.8)]" />
-              )}
-
               <div>
                 <span
-                  className={`text-[9px] font-bold uppercase tracking-wider block mb-1 ${
-                    isCurrent ? 'text-[#66E3FF]' : 'text-slate-500'
+                  className={`text-[9px] font-medium block mb-1 ${
+                    isCurrent ? 'text-[#5BD8F5]' : 'text-[#7F8B95]'
                   }`}
                 >
                   {step.title}
                 </span>
 
                 {/* Micro Visual Preview */}
-                <div className="rounded-[1px] border border-slate-800 bg-slate-950 p-2 my-2 text-center text-[10px] font-mono tracking-wider overflow-hidden truncate">
+                <div className="rounded-[1px] border border-[#1C2630] bg-[#06080B] p-2 my-2 text-center text-[10px] font-mono tracking-wider overflow-hidden truncate">
                   <span
                     className={
                       isCurrent
-                        ? 'text-[#66E3FF] font-semibold'
+                        ? 'text-[#5BD8F5] font-medium'
                         : isPassed
-                          ? 'text-slate-300'
-                          : 'text-slate-600'
+                          ? 'text-[#E6EDF2]'
+                          : 'text-[#7F8B95]'
                     }
                   >
                     {step.preview}
@@ -155,8 +148,8 @@ export function ModelFlowVisualizer() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-800/80 pt-2 mt-1">
-                <span className="block text-[9px] text-[#84929C] font-mono leading-tight">
+              <div className="border-t border-[#1C2630] pt-2 mt-1">
+                <span className="block text-[9px] text-[#7F8B95] font-mono leading-tight">
                   {step.spec}
                 </span>
               </div>
@@ -166,18 +159,16 @@ export function ModelFlowVisualizer() {
       </div>
 
       {/* Active Step Diagnostic Breakdown */}
-      <div className="mt-4 rounded-[2px] border border-cyan-800/60 bg-[#05070A] p-4 text-xs font-mono">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-2 mb-2">
+      <div className="mt-4 rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4 text-xs font-mono">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#1C2630] pb-2 mb-2">
           <div className="flex items-center gap-2">
-            <span className="text-[#66E3FF] font-bold">STAGE {activeStep + 1} OF 5</span>
-            <span className="text-slate-600">//</span>
-            <span className="font-bold text-[#EAF4F7] uppercase tracking-wider">
-              {steps[activeStep].title}
-            </span>
+            <span className="text-[#5BD8F5] font-medium">Stage {activeStep + 1} of 5</span>
+            <span className="text-[#7F8B95]">·</span>
+            <span className="font-medium text-[#E6EDF2]">{steps[activeStep].title}</span>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">{steps[activeStep].spec}</span>
+          <span className="text-[10px] text-[#7F8B95] font-mono">{steps[activeStep].spec}</span>
         </div>
-        <p className="text-xs text-slate-300 font-sans leading-relaxed">
+        <p className="text-xs text-[#7F8B95] font-sans leading-relaxed">
           {steps[activeStep].detail}
         </p>
       </div>

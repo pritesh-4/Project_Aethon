@@ -9,18 +9,19 @@ export function AppLayout() {
   // Landing Page: preserve full-bleed scroll narrative intact
   if (isLanding) {
     return (
-      <div className="min-h-screen bg-[#05070A] text-[#EAF4F7] flex flex-col font-sans selection:bg-[#66E3FF]/30 selection:text-[#66E3FF]">
+      <div className="min-h-screen bg-[#06080B] text-[#E6EDF2] flex flex-col font-sans selection:bg-[#5BD8F5]/20 selection:text-[#5BD8F5]">
         <Outlet />
         <Toaster
           theme="dark"
           position="bottom-right"
           toastOptions={{
             style: {
-              background: '#0A0E13',
-              border: '1px solid #172338',
-              color: '#EAF4F7',
-              fontFamily: 'monospace',
-              fontSize: '12px',
+              background: '#10161D',
+              border: '1px solid #172230',
+              color: '#E6EDF2',
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '13px',
+              borderRadius: '4px',
             },
           }}
         />
@@ -37,11 +38,12 @@ export function AppLayout() {
         position="bottom-right"
         toastOptions={{
           style: {
-            background: '#0A0E13',
-            border: '1px solid #172338',
-            color: '#EAF4F7',
-            fontFamily: 'monospace',
-            fontSize: '12px',
+            background: '#10161D',
+            border: '1px solid #172230',
+            color: '#E6EDF2',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '13px',
+            borderRadius: '4px',
           },
         }}
       />

@@ -8,23 +8,18 @@ export interface AnalysisPipelineProps {
 
 export function AnalysisPipeline({ activeStage, onSelectStage }: AnalysisPipelineProps) {
   const stages: { id: PipelineStageId; index: string; label: string; icon: typeof Radio }[] = [
-    { id: 'observation', index: '01', label: 'OBSERVATION', icon: Radio },
-    { id: 'preprocessing', index: '02', label: 'PREPROCESSING', icon: Filter },
-    { id: 'transform', index: '03', label: 'TIME–FREQUENCY', icon: Waves },
-    { id: 'representation', index: '04', label: 'REPRESENTATION', icon: Cpu },
-    { id: 'anomaly', index: '05', label: 'ANOMALY ANALYSIS', icon: Zap },
-    { id: 'candidate_score', index: '06', label: 'CANDIDATE SCORE', icon: Award },
+    { id: 'observation', index: '01', label: 'Observation', icon: Radio },
+    { id: 'preprocessing', index: '02', label: 'Preprocessing', icon: Filter },
+    { id: 'transform', index: '03', label: 'Time–frequency', icon: Waves },
+    { id: 'representation', index: '04', label: 'Representation', icon: Cpu },
+    { id: 'anomaly', index: '05', label: 'Anomaly analysis', icon: Zap },
+    { id: 'candidate_score', index: '06', label: 'Candidate score', icon: Award },
   ];
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-3 font-mono select-none">
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-2.5">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
-          ANALYTICAL PIPELINE TRACE
-        </span>
-        <span className="text-[9px] text-[#84929C]">
-          SELECT STAGE TO INSPECT DIAGNOSTIC EVIDENCE
-        </span>
+    <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-3 font-mono select-none">
+      <div className="flex items-center justify-between border-b border-[#1C2630] pb-2 mb-2.5">
+        <span className="text-[10px] font-medium text-[#7F8B95]">Pipeline stages</span>
       </div>
 
       {/* Horizontal Interactive Stage Selector */}
@@ -40,20 +35,18 @@ export function AnalysisPipeline({ activeStage, onSelectStage }: AnalysisPipelin
               onClick={() => onSelectStage(st.id)}
               className={`flex flex-col items-start gap-1 rounded-[2px] border p-2 text-left transition-all cursor-pointer ${
                 isSelected
-                  ? 'border-[#66E3FF] bg-[#06b6d4]/10 shadow-[0_0_12px_rgba(102,227,255,0.15)] text-[#EAF4F7]'
-                  : 'border-slate-800 bg-[#05070A]/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#E6EDF2]'
+                  : 'border-[#1C2630] bg-[#06080B] text-[#7F8B95] hover:border-[#7F8B95] hover:text-[#E6EDF2]'
               }`}
             >
               <div className="flex w-full items-center justify-between">
-                <span className="text-[9px] font-semibold text-slate-500 font-mono">
-                  {st.index}
-                </span>
-                <Icon className={`h-3 w-3 ${isSelected ? 'text-[#66E3FF]' : 'text-slate-500'}`} />
+                <span className="text-[9px] text-[#7F8B95] font-mono">{st.index}</span>
+                <Icon className={`h-3 w-3 ${isSelected ? 'text-[#5BD8F5]' : 'text-[#7F8B95]'}`} />
               </div>
 
               <span
-                className={`text-[11px] font-bold tracking-wider uppercase truncate w-full ${
-                  isSelected ? 'text-[#66E3FF]' : ''
+                className={`text-[11px] font-medium truncate w-full ${
+                  isSelected ? 'text-[#5BD8F5]' : 'text-[#E6EDF2]'
                 }`}
               >
                 {st.label}
@@ -61,11 +54,9 @@ export function AnalysisPipeline({ activeStage, onSelectStage }: AnalysisPipelin
 
               <div className="flex items-center gap-1 mt-0.5">
                 <span
-                  className={`h-1 w-1 rounded-none ${
-                    isSelected ? 'bg-emerald-400' : 'bg-slate-600'
-                  }`}
+                  className={`h-1 w-1 rounded-full ${isSelected ? 'bg-[#5BD8F5]' : 'bg-[#1C2630]'}`}
                 />
-                <span className="text-[9px] text-slate-500 font-mono uppercase">COMPLETE</span>
+                <span className="text-[9px] text-[#7F8B95] font-mono">Complete</span>
               </div>
             </button>
           );

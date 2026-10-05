@@ -9,18 +9,16 @@ export function PatternComparison({ record }: PatternComparisonProps) {
   const comp = record.comparison;
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-4 font-mono select-none">
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-3">
+    <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-4 font-mono select-none">
+      <div className="flex items-center justify-between border-b border-[#1C2630] pb-2 mb-3">
         <div className="flex items-center gap-1.5">
-          <GitCompare className="h-3.5 w-3.5 text-[#66E3FF]" />
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            PATTERN COMPARISON & MORPHOLOGICAL DIVERGENCE
-          </h4>
+          <GitCompare className="h-3.5 w-3.5 text-[#5BD8F5]" />
+          <h4 className="text-xs font-medium text-[#E6EDF2]">Pattern comparison and divergence</h4>
         </div>
 
         <div className="flex items-center gap-1.5 text-[10px]">
-          <span className="text-[#84929C] uppercase">DIVERGENCE //</span>
-          <span className="font-bold text-[#FFB84D] uppercase">
+          <span className="text-[#7F8B95]">Divergence:</span>
+          <span className="font-medium text-[#E8AE50]">
             {comp.divergenceDegree} ({comp.cosineDistance.toFixed(3)})
           </span>
         </div>
@@ -28,52 +26,51 @@ export function PatternComparison({ record }: PatternComparisonProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         {/* Left: Current Observation */}
-        <div className="rounded-[2px] border border-cyan-800/70 bg-[#05070A] p-3 space-y-2">
-          <div className="flex items-center justify-between text-[10px] text-[#66E3FF] font-semibold uppercase">
-            <span>CURRENT OBSERVATION</span>
+        <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-3 space-y-2">
+          <div className="flex items-center justify-between text-[10px] text-[#5BD8F5] font-medium">
+            <span>Current observation</span>
             <span>{record.candidateId}</span>
           </div>
 
           {/* Micro Spectrogram Representation */}
-          <div className="h-14 w-full rounded-[1px] bg-slate-950 border border-slate-800 relative flex items-center justify-center overflow-hidden">
-            <span className="text-[10px] text-[#66E3FF] font-mono tracking-widest">
+          <div className="h-14 w-full rounded-[1px] bg-[#06080B] border border-[#1C2630] relative flex items-center justify-center overflow-hidden">
+            <span className="text-[10px] text-[#5BD8F5] font-mono tracking-widest">
               ───╲────────────╲───
             </span>
-            <span className="absolute bottom-1 right-2 text-[8px] text-slate-500 font-mono">
+            <span className="absolute bottom-1 right-2 text-[8px] text-[#7F8B95] font-mono">
               df/dt: {record.driftRateHzPerSec.toFixed(2)} Hz/s
             </span>
           </div>
 
-          <p className="text-[11px] text-[#EAF4F7] font-sans">{comp.observedSignature}</p>
+          <p className="text-[11px] text-[#E6EDF2] font-sans">{comp.observedSignature}</p>
         </div>
 
         {/* Right: Nearest Known Pattern */}
-        <div className="rounded-[2px] border border-slate-800 bg-[#05070A] p-3 space-y-2">
-          <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold uppercase">
-            <span>NEAREST KNOWN PATTERN</span>
+        <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-3 space-y-2">
+          <div className="flex items-center justify-between text-[10px] text-[#7F8B95] font-medium">
+            <span>Nearest reference pattern</span>
             <span>{comp.catalogReference}</span>
           </div>
 
           {/* Micro Pulsar Profile Representation */}
-          <div className="h-14 w-full rounded-[1px] bg-slate-950 border border-slate-800 relative flex items-center justify-center overflow-hidden">
-            <span className="text-[10px] text-slate-400 font-mono tracking-widest">
+          <div className="h-14 w-full rounded-[1px] bg-[#06080B] border border-[#1C2630] relative flex items-center justify-center overflow-hidden">
+            <span className="text-[10px] text-[#7F8B95] font-mono tracking-widest">
               ░░▒▓██▓▒░░░░░░▒▓██▓▒░░
             </span>
-            <span className="absolute bottom-1 right-2 text-[8px] text-slate-500 font-mono">
-              COSINE DISTANCE: {comp.cosineDistance.toFixed(3)}
+            <span className="absolute bottom-1 right-2 text-[8px] text-[#7F8B95] font-mono">
+              Cosine distance: {comp.cosineDistance.toFixed(3)}
             </span>
           </div>
 
-          <p className="text-[11px] text-slate-300 font-sans">{comp.nearestKnownPattern}</p>
+          <p className="text-[11px] text-[#7F8B95] font-sans">{comp.nearestKnownPattern}</p>
         </div>
       </div>
 
-      <div className="mt-3 rounded-[1px] border border-slate-800/80 bg-[#05070A]/80 px-2.5 py-1.5 text-[10px] text-[#84929C] leading-normal flex items-start gap-1.5">
-        <ArrowRightLeft className="h-3 w-3 text-cyan-400 shrink-0 mt-0.5" />
+      <div className="mt-3 rounded-[1px] border border-[#1C2630] bg-[#06080B] px-2.5 py-1.5 text-[10px] text-[#7F8B95] leading-normal flex items-start gap-1.5">
+        <ArrowRightLeft className="h-3 w-3 text-[#5BD8F5] shrink-0 mt-0.5" />
         <span>
-          The candidate is not simply an anomaly in isolation; it demonstrates significant
-          mathematical divergence relative to learned manifolds of all known astrophysical and
-          terrestrial transmitters.
+          Signal representation demonstrates measurable divergence relative to learned distributions
+          of known astrophysical signals and common interference patterns.
         </span>
       </div>
     </div>

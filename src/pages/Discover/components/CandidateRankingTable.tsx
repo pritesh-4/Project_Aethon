@@ -22,55 +22,53 @@ export function CandidateRankingTable({
     switch (priority) {
       case 'HIGH':
         return (
-          <span className="rounded-[1px] border border-cyan-800/80 bg-cyan-950/60 px-1.5 py-0.2 text-[10px] font-bold text-[#66E3FF] uppercase tracking-wider">
-            HIGH
+          <span className="rounded border border-[#E8AE50]/40 bg-[#E8AE50]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#E8AE50]">
+            High
           </span>
         );
       case 'MEDIUM':
         return (
-          <span className="rounded-[1px] border border-amber-800/80 bg-amber-950/60 px-1.5 py-0.2 text-[10px] font-bold text-[#FFB84D] uppercase tracking-wider">
-            MEDIUM
+          <span className="rounded border border-[#7F8B95]/40 bg-[#7F8B95]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#7F8B95]">
+            Medium
           </span>
         );
       case 'LOW':
         return (
-          <span className="rounded-[1px] border border-slate-800 bg-slate-900/80 px-1.5 py-0.2 text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            LOW
+          <span className="rounded border border-[#1C2630] bg-[#10161D] px-1.5 py-0.5 text-[10px] font-medium text-[#7F8B95]">
+            Low
           </span>
         );
     }
   };
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-4 font-mono select-none">
+    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none">
       {/* Table Header Strip */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5 mb-3">
+      <div className="flex items-center justify-between border-b border-[#1C2630] pb-2.5 mb-3">
         <div className="flex items-center gap-2">
-          <ListFilter className="h-3.5 w-3.5 text-[#66E3FF]" />
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            ISOLATED CANDIDATE EVENTS RANKING
-          </h4>
+          <ListFilter className="h-3.5 w-3.5 text-[#5BD8F5]" />
+          <h4 className="text-xs font-semibold text-[#E6EDF2]">Candidate events</h4>
         </div>
 
-        <div className="text-[10px] text-[#84929C]">RANKED BY LATENT ANOMALY RESIDUAL</div>
+        <div className="text-[11px] text-[#7F8B95]">Ranked by anomaly residual</div>
       </div>
 
       {/* Responsive Scientific Data Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-800 text-[10px] uppercase text-[#84929C]">
-              <th className="py-2 px-3 font-semibold">RANK</th>
-              <th className="py-2 px-3 font-semibold">IDENTIFIER</th>
-              <th className="py-2 px-3 font-semibold text-right">ANOMALY INDEX</th>
-              <th className="py-2 px-3 font-semibold text-right">PERSISTENCE</th>
-              <th className="py-2 px-3 font-semibold text-right">KNOWN SIMILARITY</th>
-              <th className="py-2 px-3 font-semibold text-right">RFI RISK</th>
-              <th className="py-2 px-3 font-semibold text-center">INVESTIGATION PRIORITY</th>
-              <th className="py-2 px-3 font-semibold text-right">ACTION</th>
+            <tr className="border-b border-[#1C2630] text-[11px] text-[#7F8B95]">
+              <th className="py-2 px-3 font-medium">Rank</th>
+              <th className="py-2 px-3 font-medium">Candidate</th>
+              <th className="py-2 px-3 font-medium text-right">Anomaly index</th>
+              <th className="py-2 px-3 font-medium text-right">Persistence</th>
+              <th className="py-2 px-3 font-medium text-right">Known similarity</th>
+              <th className="py-2 px-3 font-medium text-right">Interference risk</th>
+              <th className="py-2 px-3 font-medium text-center">Priority</th>
+              <th className="py-2 px-3 font-medium text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/50">
+          <tbody className="divide-y divide-[#1C2630]/60">
             {displayedCandidates.map((cand) => {
               const isSelected = cand.id === selectedCandidateId;
 
@@ -87,24 +85,24 @@ export function CandidateRankingTable({
                       onSelectCandidate(cand);
                     }
                   }}
-                  className={`transition-colors cursor-pointer focus:outline-none focus:bg-[#06b6d4]/15 ${
+                  className={`transition-colors cursor-pointer focus:outline-none ${
                     isSelected
-                      ? 'bg-[#06b6d4]/10 text-[#EAF4F7]'
-                      : 'hover:bg-[#10161D]/60 text-slate-300'
+                      ? 'bg-[#5BD8F5]/10 text-[#E6EDF2]'
+                      : 'hover:bg-[#10161D] text-[#7F8B95]'
                   }`}
                 >
-                  <td className="py-2.5 px-3 font-semibold text-slate-500">0{cand.rank}</td>
-                  <td className="py-2.5 px-3 font-bold text-[#66E3FF]">{cand.id}</td>
-                  <td className="py-2.5 px-3 font-bold text-right text-[#66E3FF]">
+                  <td className="py-2.5 px-3 font-mono text-[#7F8B95]">0{cand.rank}</td>
+                  <td className="py-2.5 px-3 font-semibold font-mono text-[#5BD8F5]">{cand.id}</td>
+                  <td className="py-2.5 px-3 font-semibold font-mono text-right text-[#5BD8F5]">
                     {cand.anomalyIndex.toFixed(3)}
                   </td>
-                  <td className="py-2.5 px-3 text-right text-emerald-400">
+                  <td className="py-2.5 px-3 font-mono text-right text-[#E6EDF2]">
                     {(cand.persistence * 100).toFixed(1)}%
                   </td>
-                  <td className="py-2.5 px-3 text-right text-slate-400">
+                  <td className="py-2.5 px-3 font-mono text-right text-[#7F8B95]">
                     {(cand.knownSimilarity * 100).toFixed(1)}%
                   </td>
-                  <td className="py-2.5 px-3 text-right text-slate-400">
+                  <td className="py-2.5 px-3 font-mono text-right text-[#7F8B95]">
                     {(cand.rfiRisk * 100).toFixed(1)}%
                   </td>
                   <td className="py-2.5 px-3 text-center">{getPriorityBadge(cand.priority)}</td>
@@ -115,7 +113,7 @@ export function CandidateRankingTable({
                         size="sm"
                         icon={<ExternalLink className="h-3 w-3" />}
                       >
-                        INVESTIGATE
+                        Inspect
                       </Button>
                     </Link>
                   </td>

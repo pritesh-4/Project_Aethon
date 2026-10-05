@@ -93,15 +93,15 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
 
       // Background
-      ctx.fillStyle = '#03060C';
+      ctx.fillStyle = '#06080B';
       ctx.fillRect(0, 0, width, height);
 
       // Plot Box
-      ctx.fillStyle = '#050913';
+      ctx.fillStyle = '#0B0F14';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Grid
-      ctx.strokeStyle = 'rgba(23, 35, 56, 0.6)';
+      ctx.strokeStyle = 'rgba(28, 38, 48, 0.6)';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -180,11 +180,11 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
         const ah = plotH * 0.42;
 
         ctx.save();
-        ctx.fillStyle = 'rgba(102, 227, 255, 0.05)';
+        ctx.fillStyle = 'rgba(91, 216, 245, 0.05)';
         ctx.fillRect(ax, ay, aw, ah);
 
         const cornerSize = 6;
-        ctx.strokeStyle = current.status === 'review' ? '#FFB84D' : '#66E3FF';
+        ctx.strokeStyle = current.status === 'review' ? '#E8AE50' : '#5BD8F5';
         ctx.lineWidth = 1.2;
 
         // Top-left
@@ -217,9 +217,9 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
 
         // Anomaly Label
         ctx.font = '8px "JetBrains Mono", monospace';
-        ctx.fillStyle = current.status === 'review' ? '#FFB84D' : '#66E3FF';
+        ctx.fillStyle = current.status === 'review' ? '#E8AE50' : '#5BD8F5';
         ctx.textAlign = 'left';
-        ctx.fillText(`ANOMALOUS REGION`, ax + 4, ay - 3);
+        ctx.fillText(`Anomalous region`, ax + 4, ay - 3);
 
         ctx.textAlign = 'right';
         ctx.fillText(`df/dt = ${driftSlope.toFixed(2)} Hz/s`, ax + aw - 4, ay - 3);
@@ -227,12 +227,12 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
       }
 
       // Outer Border
-      ctx.strokeStyle = '#172338';
+      ctx.strokeStyle = '#1C2630';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Axis Ticks
-      ctx.fillStyle = '#84929C';
+      ctx.fillStyle = '#7F8B95';
       ctx.font = '8px "JetBrains Mono", monospace';
 
       // Left Frequency Axis
@@ -249,7 +249,7 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
       // Docked Signal Trace Line
       const traceY = paddingTop + plotH + 17;
       ctx.save();
-      ctx.strokeStyle = hasAnomaly ? '#38BDF8' : '#475569';
+      ctx.strokeStyle = hasAnomaly ? '#5BD8F5' : '#475569';
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let x = 0; x <= plotW; x += 2) {
@@ -275,21 +275,21 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
   }, [observation]);
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#05070A] overflow-hidden select-none font-mono">
+    <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] overflow-hidden select-none font-mono">
       {/* Viewport Header */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 bg-[#0A0E13] px-3 py-1 text-[10px] text-[#84929C]">
-        <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-slate-200">
-          <Activity className="h-3 w-3 text-[#66E3FF]" />
-          SPECTRAL MORPHOLOGY PREVIEW
+      <div className="flex items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] px-3 py-1.5 text-[10px] text-[#7F8B95]">
+        <span className="flex items-center gap-1.5 font-medium text-slate-200">
+          <Activity className="h-3 w-3 text-[#5BD8F5]" />
+          Spectral morphology
         </span>
 
         <button
           type="button"
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1 rounded-[1px] border px-1.5 py-0.5 text-[9px] uppercase font-mono tracking-wider transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-1 rounded-[1px] border px-1.5 py-0.5 text-[9px] font-mono transition-colors cursor-pointer ${
             isAudioActive
-              ? 'border-[#66E3FF] bg-[#66E3FF]/15 text-[#66E3FF]'
-              : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
+              ? 'border-[#5BD8F5] bg-[#5BD8F5]/15 text-[#5BD8F5]'
+              : 'border-[#1C2630] bg-[#10161D] text-slate-400 hover:text-slate-200'
           }`}
         >
           {isAudioActive ? (
@@ -297,11 +297,11 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
           ) : (
             <VolumeX className="h-2.5 w-2.5" />
           )}
-          <span>{isAudioActive ? 'AUDIO ACTIVE' : 'SONIFY'}</span>
+          <span>{isAudioActive ? 'Audio active' : 'Sonify'}</span>
         </button>
       </div>
 
-      <div ref={containerRef} className="relative h-[150px] w-full bg-[#03060C]">
+      <div ref={containerRef} className="relative h-[150px] w-full bg-[#06080B]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>
     </div>

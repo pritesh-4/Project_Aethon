@@ -36,7 +36,7 @@ export function ArchiveToolbar({
   };
 
   return (
-    <div className="border-b border-slate-800/80 bg-[#0A0E13] px-4 py-3 sm:px-6 select-none font-mono">
+    <div className="border-b border-[#1C2630] bg-[#0B0F14] px-4 py-3 sm:px-6 select-none font-mono">
       <div className="flex flex-col gap-3">
         {/* Top Line: Search Input & Result Count */}
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
@@ -48,14 +48,14 @@ export function ArchiveToolbar({
               type="text"
               value={filters.searchQuery}
               onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
-              placeholder="SEARCH ARCHIVE [ OBSERVATION ID / FREQUENCY / DATE / CANDIDATE ]"
-              className="h-8 w-full rounded-[2px] border border-slate-800 bg-[#05070A] pl-9 pr-8 text-xs text-[#EAF4F7] placeholder:text-slate-600 focus:border-[#66E3FF]/70 focus:outline-none focus:ring-1 focus:ring-[#66E3FF]/30 transition-colors uppercase font-mono"
+              placeholder="Search observations (ID, frequency, target)..."
+              className="h-8 w-full rounded-[2px] border border-[#1C2630] bg-[#06080B] pl-9 pr-8 text-xs text-[#E6EDF2] placeholder:text-slate-600 focus:border-[#5BD8F5]/70 focus:outline-none focus:ring-1 focus:ring-[#5BD8F5]/30 transition-colors font-mono"
             />
             {filters.searchQuery && (
               <button
                 type="button"
                 onClick={() => onFilterChange({ ...filters, searchQuery: '' })}
-                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-500 hover:text-[#EAF4F7] transition-colors"
+                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-500 hover:text-[#E6EDF2] transition-colors"
                 title="Clear search"
               >
                 <X className="h-3.5 w-3.5" />
@@ -63,10 +63,10 @@ export function ArchiveToolbar({
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-[10px] text-[#84929C] justify-between sm:justify-end">
+          <div className="flex items-center gap-3 text-[10px] text-[#7F8B95] justify-between sm:justify-end">
             <div>
-              <span>REGISTRY RECORDS: </span>
-              <span className="font-semibold text-[#EAF4F7] tabular-nums">{filteredCount}</span>
+              <span>Observations: </span>
+              <span className="font-semibold text-[#E6EDF2] tabular-nums">{filteredCount}</span>
               <span className="text-slate-600"> / </span>
               <span className="tabular-nums text-slate-500">{totalRecords}</span>
             </div>
@@ -75,38 +75,35 @@ export function ArchiveToolbar({
               <button
                 type="button"
                 onClick={resetFilters}
-                className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors underline-offset-2 hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1 text-[10px] text-[#5BD8F5] hover:text-[#5BD8F5]/80 transition-colors underline-offset-2 hover:underline cursor-pointer"
               >
                 <RotateCcw className="h-2.5 w-2.5" />
-                <span>RESET FILTERS</span>
+                <span>Reset filters</span>
               </button>
             )}
           </div>
         </div>
 
         {/* Bottom Line: Filters & Sorting Controls */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-slate-900/80 text-[11px]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-[#1C2630]/60 text-[11px]">
           {/* Filter Group Label */}
-          <div className="hidden md:flex items-center gap-1.5 text-slate-500 text-[10px] uppercase tracking-wider">
+          <div className="hidden md:flex items-center gap-1.5 text-slate-500 text-[10px]">
             <Filter className="h-3 w-3" />
-            <span>FILTER:</span>
+            <span>Filter:</span>
           </div>
 
           {/* DATE Filter */}
           <div className="flex items-center gap-1.5">
-            <label
-              htmlFor="filter-date"
-              className="text-[10px] uppercase tracking-wider text-slate-500"
-            >
-              DATE
+            <label htmlFor="filter-date" className="text-[10px] text-slate-500">
+              Date
             </label>
             <select
               id="filter-date"
               value={filters.dateFilter}
               onChange={(e) => onFilterChange({ ...filters, dateFilter: e.target.value })}
-              className="h-7 rounded-[2px] border border-slate-800 bg-[#05070A] px-2 text-[10px] text-[#EAF4F7] focus:border-[#66E3FF]/70 focus:outline-none uppercase font-mono cursor-pointer"
+              className="h-7 rounded-[2px] border border-[#1C2630] bg-[#06080B] px-2 text-[10px] text-[#E6EDF2] focus:border-[#5BD8F5]/70 focus:outline-none font-mono cursor-pointer"
             >
-              <option value="ALL">ALL DATES</option>
+              <option value="ALL">All dates</option>
               {availableDates.map((date) => (
                 <option key={date} value={date}>
                   {date}
@@ -117,11 +114,8 @@ export function ArchiveToolbar({
 
           {/* STATUS Filter */}
           <div className="flex items-center gap-1.5">
-            <label
-              htmlFor="filter-status"
-              className="text-[10px] uppercase tracking-wider text-slate-500"
-            >
-              STATUS
+            <label htmlFor="filter-status" className="text-[10px] text-slate-500">
+              Status
             </label>
             <select
               id="filter-status"
@@ -132,24 +126,21 @@ export function ArchiveToolbar({
                   statusFilter: e.target.value as ArchiveStatus | 'ALL',
                 })
               }
-              className="h-7 rounded-[2px] border border-slate-800 bg-[#05070A] px-2 text-[10px] text-[#EAF4F7] focus:border-[#66E3FF]/70 focus:outline-none uppercase font-mono cursor-pointer"
+              className="h-7 rounded-[2px] border border-[#1C2630] bg-[#06080B] px-2 text-[10px] text-[#E6EDF2] focus:border-[#5BD8F5]/70 focus:outline-none font-mono cursor-pointer"
             >
-              <option value="ALL">ALL STATUSES</option>
-              <option value="review">REVIEW REQUIRED</option>
-              <option value="candidate">CANDIDATE FOUND</option>
-              <option value="analyzed">ANALYZED</option>
-              <option value="archived">ARCHIVED</option>
-              <option value="error">ANALYSIS FAILED</option>
+              <option value="ALL">All statuses</option>
+              <option value="review">Under review</option>
+              <option value="candidate">Candidate event</option>
+              <option value="analyzed">Analyzed</option>
+              <option value="archived">Archived</option>
+              <option value="error">Failed</option>
             </select>
           </div>
 
           {/* ANOMALY Filter */}
           <div className="flex items-center gap-1.5">
-            <label
-              htmlFor="filter-anomaly"
-              className="text-[10px] uppercase tracking-wider text-slate-500"
-            >
-              ANOMALY
+            <label htmlFor="filter-anomaly" className="text-[10px] text-slate-500">
+              Anomaly
             </label>
             <select
               id="filter-anomaly"
@@ -160,22 +151,19 @@ export function ArchiveToolbar({
                   anomalyFilter: e.target.value as ArchiveFilterState['anomalyFilter'],
                 })
               }
-              className="h-7 rounded-[2px] border border-slate-800 bg-[#05070A] px-2 text-[10px] text-[#EAF4F7] focus:border-[#66E3FF]/70 focus:outline-none uppercase font-mono cursor-pointer"
+              className="h-7 rounded-[2px] border border-[#1C2630] bg-[#06080B] px-2 text-[10px] text-[#E6EDF2] focus:border-[#5BD8F5]/70 focus:outline-none font-mono cursor-pointer"
             >
-              <option value="ALL">ANY</option>
-              <option value="ANOMALOUS">ANOMALOUS (&gt;0)</option>
-              <option value="HIGH">HIGH ANOMALY (&ge;10)</option>
-              <option value="NONE">NO ANOMALY (0)</option>
+              <option value="ALL">All</option>
+              <option value="ANOMALOUS">Anomalous (&gt;0)</option>
+              <option value="HIGH">High anomaly (&ge;10)</option>
+              <option value="NONE">None (0)</option>
             </select>
           </div>
 
           {/* PRIORITY Filter */}
           <div className="flex items-center gap-1.5">
-            <label
-              htmlFor="filter-priority"
-              className="text-[10px] uppercase tracking-wider text-slate-500"
-            >
-              PRIORITY
+            <label htmlFor="filter-priority" className="text-[10px] text-slate-500">
+              Priority
             </label>
             <select
               id="filter-priority"
@@ -186,12 +174,12 @@ export function ArchiveToolbar({
                   priorityFilter: e.target.value as ArchiveFilterState['priorityFilter'],
                 })
               }
-              className="h-7 rounded-[2px] border border-slate-800 bg-[#05070A] px-2 text-[10px] text-[#EAF4F7] focus:border-[#66E3FF]/70 focus:outline-none uppercase font-mono cursor-pointer"
+              className="h-7 rounded-[2px] border border-[#1C2630] bg-[#06080B] px-2 text-[10px] text-[#E6EDF2] focus:border-[#5BD8F5]/70 focus:outline-none font-mono cursor-pointer"
             >
-              <option value="ALL">ALL</option>
-              <option value="HIGH">HIGH PRIORITY</option>
-              <option value="MEDIUM">MEDIUM</option>
-              <option value="LOW">LOW</option>
+              <option value="ALL">All</option>
+              <option value="HIGH">High priority</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
             </select>
           </div>
 
@@ -202,10 +190,10 @@ export function ArchiveToolbar({
           <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
             <label
               htmlFor="sort-archive"
-              className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-slate-500"
+              className="flex items-center gap-1 text-[10px] text-slate-500"
             >
               <ArrowUpDown className="h-2.5 w-2.5" />
-              <span>SORT:</span>
+              <span>Sort:</span>
             </label>
             <select
               id="sort-archive"
@@ -213,13 +201,13 @@ export function ArchiveToolbar({
               onChange={(e) =>
                 onFilterChange({ ...filters, sortBy: e.target.value as ArchiveSortOption })
               }
-              className="h-7 rounded-[2px] border border-slate-800 bg-[#05070A] px-2 text-[10px] text-[#EAF4F7] focus:border-[#66E3FF]/70 focus:outline-none uppercase font-mono cursor-pointer"
+              className="h-7 rounded-[2px] border border-[#1C2630] bg-[#06080B] px-2 text-[10px] text-[#E6EDF2] focus:border-[#5BD8F5]/70 focus:outline-none font-mono cursor-pointer"
             >
-              <option value="newest">MOST RECENT</option>
-              <option value="oldest">OLDEST FIRST</option>
-              <option value="anomalyIndex">ANOMALY INDEX</option>
-              <option value="candidateCount">CANDIDATE COUNT</option>
-              <option value="priority">INVESTIGATION PRIORITY</option>
+              <option value="newest">Most recent</option>
+              <option value="oldest">Oldest first</option>
+              <option value="anomalyIndex">Anomaly index</option>
+              <option value="candidateCount">Candidate count</option>
+              <option value="priority">Investigation priority</option>
             </select>
           </div>
         </div>

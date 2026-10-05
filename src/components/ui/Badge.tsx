@@ -9,32 +9,32 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 export function Badge({ variant = 'slate', dot, className, children, ...props }: BadgeProps) {
   const variantStyles = {
-    cyan: 'bg-cyan-950/60 text-cyan-300 border-cyan-800/70',
-    emerald: 'bg-emerald-950/60 text-emerald-300 border-emerald-800/70',
-    amber: 'bg-amber-950/60 text-amber-300 border-amber-800/70',
-    rose: 'bg-rose-950/60 text-rose-300 border-rose-800/70',
-    slate: 'bg-slate-900/80 text-slate-300 border-slate-800',
-    outline: 'bg-transparent text-slate-400 border-slate-800',
+    cyan: 'bg-[#0E1A22] text-[#5BD8F5] border-[#5BD8F5]/30',
+    emerald: 'bg-[#10161D] text-[#E6EDF2] border-[#172230]',
+    amber: 'bg-[#1C160E] text-[#E8AE50] border-[#E8AE50]/30',
+    rose: 'bg-[#1C1111] text-[#D95C5C] border-[#D95C5C]/30',
+    slate: 'bg-[#10161D] text-[#7F8B95] border-[#172230]',
+    outline: 'bg-transparent text-[#7F8B95] border-[#172230]',
   };
 
   const dotColors = {
-    nominal: 'bg-emerald-400',
-    warning: 'bg-amber-400',
-    critical: 'bg-rose-400',
-    calibrating: 'bg-cyan-400 animate-pulse',
-    active: 'bg-cyan-400',
+    nominal: 'bg-[#7F8B95]',
+    warning: 'bg-[#E8AE50]',
+    critical: 'bg-[#D95C5C]',
+    calibrating: 'bg-[#5BD8F5]',
+    active: 'bg-[#5BD8F5]',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[1px] text-[10px] font-mono font-medium border tracking-wider uppercase select-none transition-colors',
+        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-sans font-medium border select-none transition-colors',
         variantStyles[variant],
         className
       )}
       {...props}
     >
-      {dot && <span className={cn('h-1 w-1 shrink-0 rounded-none', dotColors[dot])} />}
+      {dot && <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', dotColors[dot])} />}
       {children}
     </span>
   );

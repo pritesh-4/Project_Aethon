@@ -70,7 +70,7 @@ export function Tooltip({
             transition={{ duration: 0.15, ease: 'easeOut' }}
             role="tooltip"
             className={cn(
-              'pointer-events-none absolute z-50 whitespace-nowrap rounded-[2px] border border-slate-800 bg-[#0A0E13] px-2 py-0.5 font-mono text-[10px] font-medium tracking-widest text-[#EAF4F7] uppercase shadow-[0_4px_16px_rgba(0,0,0,0.6)] select-none',
+              'pointer-events-none absolute z-50 whitespace-nowrap rounded-[4px] border border-[#243345] bg-[#10161D] px-2.5 py-1 font-sans text-xs text-[#E6EDF2] tracking-normal select-none shadow-md',
               positionStyles[position],
               className
             )}

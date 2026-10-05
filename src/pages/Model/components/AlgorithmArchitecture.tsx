@@ -53,81 +53,71 @@ export function AlgorithmArchitecture() {
   ];
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-5 font-mono select-none">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-3 mb-4 gap-2">
+    <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-5 font-mono select-none">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#1C2630] pb-3 mb-4 gap-2">
         <div className="flex items-center gap-2">
-          <Cpu className="h-4 w-4 text-[#66E3FF]" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            ALGORITHM ARCHITECTURE: PRODUCTION DEPLOYED VS RESEARCH EXTENSIONS
-          </h2>
+          <Cpu className="h-4 w-4 text-[#5BD8F5]" />
+          <h2 className="text-xs font-medium text-[#E6EDF2]">Algorithm architecture</h2>
         </div>
-        <span className="text-[10px] text-[#84929C] uppercase">
-          STRICT DATA & CAPABILITY HONESTY
-        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs">
         {/* Left Column: Currently Implemented Methods */}
-        <div className="rounded-[2px] border border-cyan-800/70 bg-[#05070A] p-4 space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <div className="flex items-center gap-1.5 text-emerald-400 font-bold uppercase text-xs">
+        <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-[#1C2630] pb-2">
+            <div className="flex items-center gap-1.5 text-[#5BD8F5] font-medium text-xs">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>CURRENT IMPLEMENTATION</span>
+              <span>Implemented methods</span>
             </div>
-            <span className="text-[9px] text-emerald-400 font-semibold uppercase">
-              ACTIVE IN ENGINE
-            </span>
+            <span className="text-[9px] text-[#5BD8F5] font-mono">Active</span>
           </div>
 
-          <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
-            The algorithms currently powering the observatory triage pipeline in this repository.
+          <p className="text-[11px] text-[#7F8B95] font-sans leading-relaxed">
+            Signal processing and statistical methods powering the current prototype pipeline.
           </p>
 
           <div className="space-y-2.5 pt-1">
             {currentMethods.map((m) => (
               <div
                 key={m.name}
-                className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-2.5 space-y-1"
+                className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-2.5 space-y-1"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-200 text-[11px]">{m.name}</span>
-                  <span className="text-[9px] text-[#66E3FF] font-mono">DEPLOYED</span>
+                  <span className="font-medium text-[#E6EDF2] text-[11px]">{m.name}</span>
+                  <span className="text-[9px] text-[#5BD8F5] font-mono">Active</span>
                 </div>
-                <div className="text-[10px] text-[#84929C] font-mono">{m.spec}</div>
-                <p className="text-[10px] text-slate-400 font-sans leading-relaxed">{m.desc}</p>
+                <div className="text-[10px] text-[#7F8B95] font-mono">{m.spec}</div>
+                <p className="text-[10px] text-[#7F8B95] font-sans leading-relaxed">{m.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Right Column: Research Extensions */}
-        <div className="rounded-[2px] border border-slate-800 bg-[#05070A] p-4 space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <div className="flex items-center gap-1.5 text-amber-400 font-bold uppercase text-xs">
+        <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-[#1C2630] pb-2">
+            <div className="flex items-center gap-1.5 text-[#E8AE50] font-medium text-xs">
               <FlaskConical className="h-3.5 w-3.5" />
-              <span>RESEARCH EXTENSIONS</span>
+              <span>Research extensions</span>
             </div>
-            <span className="text-[9px] text-amber-400 font-semibold uppercase">
-              PLANNED ROADMAP
-            </span>
+            <span className="text-[9px] text-[#E8AE50] font-mono">Roadmap</span>
           </div>
 
-          <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
-            Theoretical machine-learning methods under active conceptual evaluation. These are not
-            claimed as deployed production algorithms in the current build.
+          <p className="text-[11px] text-[#7F8B95] font-sans leading-relaxed">
+            Machine learning architectures under evaluation for future integration.
           </p>
 
           <div className="space-y-2.5 pt-1">
             {researchExtensions.map((m) => (
               <div
                 key={m.name}
-                className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-2.5 space-y-1"
+                className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-2.5 space-y-1"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-300 text-[11px]">{m.name}</span>
-                  <span className="text-[9px] text-amber-500 font-mono">FUTURE SPEC</span>
+                  <span className="font-medium text-[#E6EDF2] text-[11px]">{m.name}</span>
+                  <span className="text-[9px] text-[#E8AE50] font-mono">Planned</span>
                 </div>
-                <p className="text-[10px] text-slate-400 font-sans leading-relaxed">{m.desc}</p>
+                <p className="text-[10px] text-[#7F8B95] font-sans leading-relaxed">{m.desc}</p>
               </div>
             ))}
           </div>

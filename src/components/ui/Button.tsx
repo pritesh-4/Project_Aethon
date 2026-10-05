@@ -36,26 +36,24 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const isPrimary = variant === 'primary';
-  const showCorners = cornerAccents ?? isPrimary;
-
+  void cornerAccents;
   const sizeStyles = {
-    sm: 'h-7 px-3 text-[11px] gap-1.5',
-    md: 'h-8 px-4 text-xs gap-2',
-    lg: 'h-9 px-5 text-xs gap-2.5',
+    sm: 'h-7 px-2.5 text-xs gap-1.5',
+    md: 'h-8 px-3.5 text-xs gap-2',
+    lg: 'h-9 px-4 text-sm gap-2.5',
   };
 
   const variantStyles: Record<ButtonVariant, string> = {
     primary:
-      'bg-[#0A0E13] text-[#EAF4F7] border border-[#66E3FF]/70 hover:border-[#66E3FF] hover:bg-[#10161D] hover:shadow-[0_0_12px_rgba(102,227,255,0.22)] active:bg-[#05070A]',
+      'bg-[#10161D] text-[#5BD8F5] border border-[#5BD8F5]/60 hover:bg-[#15202B] hover:border-[#5BD8F5] active:bg-[#0B0F14]',
     secondary:
-      'bg-[#0A0E13] text-[#84929C] border border-slate-800 hover:border-slate-700 hover:text-[#EAF4F7] hover:bg-[#10161D] active:bg-[#05070A]',
+      'bg-[#10161D] text-[#E6EDF2] border border-[#172230] hover:border-[#243345] hover:bg-[#151D26] active:bg-[#0B0F14]',
     outline:
-      'bg-transparent text-[#EAF4F7] border border-slate-700/80 hover:border-[#66E3FF]/70 hover:text-[#66E3FF] hover:bg-[#10161D]/40 active:bg-[#05070A]',
+      'bg-transparent text-[#E6EDF2] border border-[#172230] hover:border-[#243345] hover:bg-[#10161D]/50 active:bg-[#0B0F14]',
     ghost:
-      'bg-transparent text-[#84929C] border border-transparent hover:text-[#EAF4F7] hover:bg-[#10161D]/50 hover:border-slate-800/60',
+      'bg-transparent text-[#7F8B95] border border-transparent hover:text-[#E6EDF2] hover:bg-[#10161D]/60',
     danger:
-      'bg-[#0A0E13] text-[#FF5E5E] border border-[#FF5E5E]/60 hover:border-[#FF5E5E] hover:bg-rose-950/30 hover:text-rose-200 active:bg-[#05070A]',
+      'bg-[#10161D] text-[#D95C5C] border border-[#D95C5C]/40 hover:border-[#D95C5C] hover:bg-[#1C1111] active:bg-[#0B0F14]',
   };
 
   const isDisabled = disabled || state === 'loading';
@@ -63,9 +61,9 @@ export function Button({
   return (
     <button
       className={cn(
-        'group relative inline-flex items-center justify-center rounded-[4px] font-mono font-medium tracking-wider uppercase transition-all duration-200 select-none outline-none cursor-pointer',
-        'focus-visible:ring-1 focus-visible:ring-[#66E3FF] focus-visible:ring-offset-1 focus-visible:ring-offset-[#05070A]',
-        'active:translate-y-[1px] disabled:opacity-40 disabled:pointer-events-none disabled:active:translate-y-0',
+        'group relative inline-flex items-center justify-center rounded-[4px] font-sans font-medium text-xs tracking-normal transition-colors duration-150 select-none outline-none cursor-pointer',
+        'focus-visible:ring-1 focus-visible:ring-[#5BD8F5] focus-visible:ring-offset-1 focus-visible:ring-offset-[#06080B]',
+        'disabled:opacity-40 disabled:pointer-events-none',
         sizeStyles[size],
         variantStyles[variant],
         className
@@ -73,36 +71,26 @@ export function Button({
       disabled={isDisabled}
       {...props}
     >
-      {/* Restrained Corner Accents for Technical Instrumentation */}
-      {showCorners && (
-        <>
-          <span className="pointer-events-none absolute -left-[1px] -top-[1px] h-1 w-1 border-l border-t border-[#66E3FF]" />
-          <span className="pointer-events-none absolute -right-[1px] -top-[1px] h-1 w-1 border-r border-t border-[#66E3FF]" />
-          <span className="pointer-events-none absolute -left-[1px] -bottom-[1px] h-1 w-1 border-l border-b border-[#66E3FF]" />
-          <span className="pointer-events-none absolute -right-[1px] -bottom-[1px] h-1 w-1 border-r border-b border-[#66E3FF]" />
-        </>
-      )}
-
       {/* State: Loading */}
       {state === 'loading' && (
-        <span className="inline-flex items-center gap-1.5 text-cyan-300">
-          <span>{loadingText || children || 'RUNNING ANALYSIS'}</span>
+        <span className="inline-flex items-center gap-1.5 text-[#5BD8F5]">
+          <span>{loadingText || children || 'Loading...'}</span>
           <span className="inline-block animate-spin font-sans text-xs">◌</span>
         </span>
       )}
 
       {/* State: Success */}
       {state === 'success' && (
-        <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold">
-          <span>{successText || 'ANALYSIS COMPLETE'}</span>
+        <span className="inline-flex items-center gap-1.5 text-[#5BD8F5]">
+          <span>{successText || 'Complete'}</span>
           <Check className="h-3.5 w-3.5" />
         </span>
       )}
 
       {/* State: Error */}
       {state === 'error' && (
-        <span className="inline-flex items-center gap-1.5 text-[#FF5E5E] font-semibold">
-          <span>{errorText || 'ANALYSIS FAILED'}</span>
+        <span className="inline-flex items-center gap-1.5 text-[#D95C5C]">
+          <span>{errorText || 'Error'}</span>
           <X className="h-3.5 w-3.5" />
         </span>
       )}
@@ -111,28 +99,24 @@ export function Button({
       {state === 'idle' && (
         <>
           {icon && iconPosition === 'left' && (
-            <span className="shrink-0 transition-transform duration-200 group-hover:scale-105">
-              {icon}
-            </span>
+            <span className="shrink-0 transition-transform duration-150">{icon}</span>
           )}
 
           <div className="flex flex-col items-start leading-tight">
             <span>{children}</span>
             {metadata && (
-              <span className="text-[9px] text-[#84929C] font-normal tracking-tight -mt-0.5 group-hover:text-slate-400">
+              <span className="text-[10px] text-[#7F8B95] font-mono font-normal tracking-tight -mt-0.5">
                 {metadata}
               </span>
             )}
           </div>
 
           {icon && iconPosition === 'right' && (
-            <span className="shrink-0 transition-transform duration-200 group-hover:scale-105">
-              {icon}
-            </span>
+            <span className="shrink-0 transition-transform duration-150">{icon}</span>
           )}
 
           {withArrow && (
-            <ArrowRight className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:translate-x-[2px]" />
+            <ArrowRight className="h-3.5 w-3.5 shrink-0 transition-transform duration-150 group-hover:translate-x-[2px]" />
           )}
         </>
       )}

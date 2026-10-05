@@ -284,57 +284,53 @@ export function SignalAnalysisViewport({
         ctx.lineTo(bx + bw - 10, by + bh - 14);
         ctx.stroke();
 
-        // Micro telemetry label
-        ctx.font = '9px "JetBrains Mono", monospace';
-        ctx.fillStyle = currentStage === 'complete' ? '#10B981' : '#66E3FF';
+        // Micro label
+        ctx.font = '10px Inter, sans-serif';
+        ctx.fillStyle = '#5BD8F5';
         ctx.textAlign = 'left';
         ctx.fillText(
-          currentStage === 'complete' ? 'CANDIDATE EVENT ISOLATED' : 'ANOMALY RESIDUAL Δ > 4.8σ',
+          currentStage === 'complete' ? 'Candidate event isolated' : 'Anomaly residual (Δ > 4.8σ)',
           bx + 4,
           by - 6
         );
 
         ctx.textAlign = 'right';
-        ctx.fillText('df/dt = -0.32 Hz/s', bx + bw - 4, by - 6);
+        ctx.fillText('Drift: -0.32 Hz/s', bx + bw - 4, by - 6);
 
         ctx.restore();
       }
 
       // 4. Outer Border
-      ctx.strokeStyle = '#172338';
+      ctx.strokeStyle = '#1C2630';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 5. Scientific Axis Labels
-      ctx.fillStyle = '#84929C';
-      ctx.font = '9px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#7F8B95';
+      ctx.font = '10px Inter, sans-serif';
 
       // Left Frequency Axis
       const f0 = observation.frequencyMHz;
       const halfBw = (observation.bandwidthMHz / 2).toFixed(2);
       ctx.textAlign = 'right';
       ctx.fillText(`+${halfBw} MHz`, paddingLeft - 6, paddingTop + 8);
-      ctx.fillText(`f₀ // ${f0.toFixed(2)}`, paddingLeft - 6, cy + 3);
+      ctx.fillText(`f₀: ${f0.toFixed(2)}`, paddingLeft - 6, cy + 3);
       ctx.fillText(`-${halfBw} MHz`, paddingLeft - 6, paddingTop + plotH - 2);
 
       // Bottom Time Axis
       ctx.textAlign = 'center';
       ctx.fillText('00:00', paddingLeft + 16, paddingTop + plotH + 16);
-      ctx.fillText('MIDPOINT', paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
+      ctx.fillText('Midpoint', paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
       ctx.fillText(observation.durationString, paddingLeft + plotW - 16, paddingTop + plotH + 16);
 
-      // Top Stage Header HUD
-      ctx.fillStyle = '#64748B';
+      // Top Stage Header
+      ctx.fillStyle = '#7F8B95';
       ctx.textAlign = 'left';
-      ctx.fillText(
-        `PROCESS PHASE: ${currentStage.toUpperCase()} // CADENCE: 1.00s // POL: DUAL CIRCULAR`,
-        paddingLeft,
-        paddingTop - 10
-      );
+      ctx.fillText(`Stage: ${currentStage}`, paddingLeft, paddingTop - 10);
 
       ctx.textAlign = 'right';
       ctx.fillText(
-        `APERTURE: ${observation.telescope.split(' ')[0]} // SAMPLES: ${observation.samplesCount.toLocaleString()}`,
+        `Samples: ${observation.samplesCount.toLocaleString()}`,
         paddingLeft + plotW,
         paddingTop - 10
       );
@@ -351,26 +347,21 @@ export function SignalAnalysisViewport({
   }, [observation]);
 
   return (
-    <div className="relative flex flex-col rounded-[2px] border border-slate-800/80 bg-[#05070A] overflow-hidden shadow-2xl">
+    <div className="relative flex flex-col rounded border border-[#1C2630] bg-[#06080B] overflow-hidden shadow-sm">
       {/* Viewport Top Bar */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 bg-[#0A0E13] px-3 py-1.5 font-mono text-[11px] text-[#84929C] select-none">
+      <div className="flex items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] px-3 py-2 text-xs select-none">
         <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-none bg-[#66E3FF] animate-pulse" />
-          <span className="font-bold text-[#EAF4F7] uppercase tracking-wider">
-            TRANSFORMATIONAL SIGNAL ANALYSIS CHAMBER
-          </span>
+          <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+          <span className="font-medium text-[#E6EDF2]">Signal analysis viewport</span>
         </div>
 
-        <div className="flex items-center gap-2 text-[10px]">
-          <span>TRANSFORMATION:</span>
-          <span className="text-cyan-300 font-semibold uppercase">
-            RAW → STFT → LATENT → ANOMALY
-          </span>
+        <div className="flex items-center gap-2 text-xs text-[#7F8B95]">
+          <span>Time–frequency representation</span>
         </div>
       </div>
 
       {/* Main Canvas Viewport */}
-      <div ref={containerRef} className="relative h-[280px] sm:h-[340px] w-full bg-[#03060C]">
+      <div ref={containerRef} className="relative h-[280px] sm:h-[340px] w-full bg-[#06080B]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>
     </div>

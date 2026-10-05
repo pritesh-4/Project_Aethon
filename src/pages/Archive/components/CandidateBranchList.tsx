@@ -13,21 +13,33 @@ export function CandidateBranchList({ observationId, candidates }: CandidateBran
 
   if (candidates.length === 0) {
     return (
-      <div className="rounded-[2px] border border-slate-800/80 bg-[#05070A] p-3 text-center text-xs font-mono text-slate-500">
-        NO CANDIDATE EVENTS EXTRACTED FOR THIS OBSERVATION RUN
+      <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-3 text-center text-xs font-mono text-slate-500">
+        No candidate events identified in this observation
       </div>
     );
   }
 
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'HIGH':
+        return 'High';
+      case 'MEDIUM':
+        return 'Medium';
+      case 'LOW':
+        return 'Low';
+      default:
+        return priority;
+    }
+  };
+
   return (
     <div className="font-mono text-xs select-none">
       {/* Root Node: Observation ID */}
-      <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-[#66E3FF]">
+      <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#5BD8F5]">
         <Crosshair className="h-3.5 w-3.5" />
         <span>{observationId}</span>
-        <span className="text-slate-600">//</span>
         <span className="text-[10px] text-slate-400 font-normal">
-          {candidates.length} {candidates.length === 1 ? 'CANDIDATE EVENT' : 'CANDIDATE EVENTS'}
+          ({candidates.length} {candidates.length === 1 ? 'candidate' : 'candidates'})
         </span>
       </div>
 
@@ -49,15 +61,15 @@ export function CandidateBranchList({ observationId, candidates }: CandidateBran
                   navigate(`/analysis/${cand.signalId}`);
                 }
               }}
-              className="group flex items-center justify-between rounded-[2px] px-2 py-1.5 hover:bg-[#10161D] border border-transparent hover:border-slate-800 cursor-pointer transition-colors"
+              className="group flex items-center justify-between rounded-[2px] px-2 py-1.5 hover:bg-[#10161D] border border-transparent hover:border-[#1C2630] cursor-pointer transition-colors"
             >
               {/* Left Branch + Candidate ID */}
               <div className="flex items-center gap-2">
                 <span className="text-slate-600 select-none">{branchChar}</span>
-                <span className="font-bold text-[#EAF4F7] group-hover:text-[#66E3FF] transition-colors">
+                <span className="font-semibold text-[#E6EDF2] group-hover:text-[#5BD8F5] transition-colors">
                   {cand.label}
                 </span>
-                <span className="text-slate-600 text-[10px]">//</span>
+                <span className="text-slate-700 text-[10px]">·</span>
                 <span className="text-[10px] text-slate-400">
                   {cand.frequencyMHz.toFixed(2)} MHz
                 </span>
@@ -70,18 +82,18 @@ export function CandidateBranchList({ observationId, candidates }: CandidateBran
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
-                    'px-1.5 py-0.2 rounded-[1px] text-[9px] font-mono border font-semibold tracking-wider uppercase',
+                    'px-1.5 py-0.2 rounded-[1px] text-[9px] font-mono border font-medium',
                     cand.priority === 'HIGH'
-                      ? 'border-[#FFB84D]/40 bg-[#FFB84D]/10 text-[#FFB84D]'
+                      ? 'border-[#E8AE50]/40 bg-[#E8AE50]/10 text-[#E8AE50]'
                       : cand.priority === 'MEDIUM'
                         ? 'border-cyan-800/40 bg-cyan-950/20 text-cyan-300'
-                        : 'border-slate-800 bg-slate-900/40 text-slate-400'
+                        : 'border-[#1C2630] bg-[#10161D] text-slate-400'
                   )}
                 >
-                  {cand.priority}
+                  {getPriorityLabel(cand.priority)}
                 </span>
 
-                <ExternalLink className="h-3 w-3 text-slate-600 group-hover:text-[#66E3FF] transition-colors" />
+                <ExternalLink className="h-3 w-3 text-slate-600 group-hover:text-[#5BD8F5] transition-colors" />
               </div>
             </div>
           );

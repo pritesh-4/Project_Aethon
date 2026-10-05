@@ -14,39 +14,37 @@ export function DiscoveryResults({
   onScrollToCandidates,
 }: DiscoveryResultsProps) {
   return (
-    <div className="rounded-[2px] border border-emerald-500/70 bg-gradient-to-r from-emerald-950/30 via-[#0A1624] to-[#0A0E13] p-4 font-mono shadow-[0_4px_24px_rgba(16,185,129,0.12)] select-none">
+    <div className="rounded border border-[#5BD8F5]/30 bg-[#0B0F14] p-4 select-none shadow-sm">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Left: Summary Metrics */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-              DISCOVERY COMPLETE
+            <CheckCircle2 className="h-4 w-4 text-[#5BD8F5]" />
+            <span className="text-xs font-semibold text-[#E6EDF2]">
+              Discovery complete: {summary.observationId}
             </span>
-            <span className="text-slate-600">//</span>
-            <span className="text-xs text-[#EAF4F7]">RECORD {summary.observationId}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-            <span className="text-slate-300">
-              <strong className="text-emerald-300 font-semibold">
+            <span className="text-[#7F8B95]">
+              <strong className="text-[#E6EDF2] font-semibold font-mono">
                 {summary.samplesAnalyzed.toLocaleString()}
               </strong>{' '}
-              <span className="text-[#84929C]">SIGNAL SAMPLES ANALYZED</span>
+              samples analyzed
             </span>
-            <span className="text-slate-700 hidden sm:inline">•</span>
-            <span className="text-slate-300">
-              <strong className="text-[#66E3FF] font-semibold">
+            <span className="text-[#7F8B95] hidden sm:inline">•</span>
+            <span className="text-[#7F8B95]">
+              <strong className="text-[#5BD8F5] font-semibold font-mono">
                 {summary.anomalousRegionsCount}
               </strong>{' '}
-              <span className="text-[#84929C]">ANOMALOUS REGIONS IDENTIFIED</span>
+              anomalous regions
             </span>
-            <span className="text-slate-700 hidden sm:inline">•</span>
-            <span className="text-slate-300">
-              <strong className="text-emerald-400 font-semibold">
+            <span className="text-[#7F8B95] hidden sm:inline">•</span>
+            <span className="text-[#7F8B95]">
+              <strong className="text-[#E8AE50] font-semibold font-mono">
                 {summary.highPriorityCandidatesCount}
               </strong>{' '}
-              <span className="text-[#84929C]">HIGH-PRIORITY CANDIDATES</span>
+              high-priority candidates
             </span>
           </div>
         </div>
@@ -59,11 +57,11 @@ export function DiscoveryResults({
             icon={<RotateCcw className="h-3.5 w-3.5" />}
             onClick={onReset}
           >
-            NEW DISCOVERY
+            New search
           </Button>
 
           <Button variant="primary" size="sm" withArrow onClick={onScrollToCandidates}>
-            VIEW CANDIDATES
+            View candidates
           </Button>
         </div>
       </div>

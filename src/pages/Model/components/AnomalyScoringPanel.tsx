@@ -6,28 +6,23 @@ export function AnomalyScoringPanel() {
   const activeIndex = Math.round(activeScore * segmentsCount);
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-5 font-mono select-none">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-3 mb-4 gap-2">
+    <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-5 font-mono select-none">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#1C2630] pb-3 mb-4 gap-2">
         <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-[#FFB84D]" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            ANOMALY INDEX & MANIFOLD DEVIATION METRIC
-          </h2>
+          <Zap className="h-4 w-4 text-[#E8AE50]" />
+          <h2 className="text-xs font-medium text-[#E6EDF2]">Anomaly index and deviation metric</h2>
         </div>
-        <span className="text-[10px] text-[#84929C] uppercase">
-          RECONSTRUCTION RESIDUAL CALCULATION
-        </span>
       </div>
 
-      {/* Main Score Visualizer (Section 7: Segmented/Linear Scale) */}
-      <div className="space-y-3 rounded-[2px] border border-slate-800 bg-[#05070A] p-4">
+      {/* Main Score Visualizer */}
+      <div className="space-y-3 rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4">
         <div className="flex items-baseline justify-between text-xs">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-            CONTINUOUS ANOMALY INDEX SPECTRUM
+          <span className="text-[10px] text-[#7F8B95] font-medium">
+            Continuous anomaly index spectrum
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-500 uppercase">MEASURED INDEX:</span>
-            <span className="text-xl font-bold font-mono text-[#FFB84D]">0.947</span>
+            <span className="text-[10px] text-[#7F8B95]">Measured index:</span>
+            <span className="text-xl font-medium font-mono text-[#E8AE50]">0.947</span>
           </div>
         </div>
 
@@ -36,14 +31,14 @@ export function AnomalyScoringPanel() {
           <div className="flex items-center gap-0.5">
             {Array.from({ length: segmentsCount }).map((_, i) => {
               const isActive = i < activeIndex;
-              let barColor = 'bg-slate-800/80';
+              let barColor = 'bg-[#1C2630]/60';
               if (isActive) {
                 if (i >= 22) {
-                  barColor = 'bg-[#FFB84D] shadow-[0_0_6px_rgba(255,184,77,0.6)]';
+                  barColor = 'bg-[#E8AE50]';
                 } else if (i >= 14) {
-                  barColor = 'bg-[#66E3FF] shadow-[0_0_4px_rgba(102,227,255,0.4)]';
+                  barColor = 'bg-[#5BD8F5]';
                 } else {
-                  barColor = 'bg-slate-500';
+                  barColor = 'bg-[#7F8B95]';
                 }
               }
 
@@ -53,19 +48,19 @@ export function AnomalyScoringPanel() {
             })}
           </div>
 
-          <div className="flex justify-between text-[9px] text-slate-500 font-mono pt-0.5">
-            <span>0.000 // NOMINAL BACKGROUND</span>
-            <span>0.500 // TRANSIENT THRESHOLD</span>
-            <span>1.000 // MAXIMUM DIVERGENCE</span>
+          <div className="flex justify-between text-[9px] text-[#7F8B95] font-mono pt-0.5">
+            <span>0.000 · Nominal baseline</span>
+            <span>0.500 · Anomaly threshold</span>
+            <span>1.000 · Maximum divergence</span>
           </div>
         </div>
 
         {/* Textual Scientific Explanation (Cautious phrasing) */}
-        <div className="rounded-[2px] border border-slate-800 bg-[#0A0E13] p-3 text-xs text-slate-300 font-sans leading-relaxed">
+        <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-3 text-xs text-[#7F8B95] font-sans leading-relaxed">
           <p>
             A higher anomaly index indicates stronger departure from the reference signal structure
             used by the discovery pipeline. It does{' '}
-            <strong className="text-slate-100 font-semibold">not</strong> assert an extraterrestrial
+            <strong className="text-[#E6EDF2] font-medium">not</strong> assert an extraterrestrial
             technosignature or confirm astrophysical discovery; rather, it flags signals exhibiting
             structural coherence coupled with severe geometric deviation from learned natural
             distributions.
@@ -73,53 +68,51 @@ export function AnomalyScoringPanel() {
         </div>
       </div>
 
-      {/* Section 16: Signal Manifold Geometry Representation */}
+      {/* Signal Manifold Geometry Representation */}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-        {/* Left: ASCII / Graphic Representation of Manifold vs Deviation */}
-        <div className="rounded-[2px] border border-slate-800 bg-[#05070A] p-4 flex flex-col justify-between">
-          <span className="text-[10px] text-[#84929C] uppercase font-bold tracking-wider mb-2 block">
-            MANIFOLD TOPOLOGY // REFERENCE VS OUTLIER
+        {/* Left: Graphic Representation of Manifold vs Deviation */}
+        <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4 flex flex-col justify-between">
+          <span className="text-[10px] text-[#7F8B95] font-medium mb-2 block">
+            Manifold topology
           </span>
 
-          <div className="rounded-[1px] border border-slate-800 bg-slate-950 p-4 font-mono text-[11px] leading-relaxed text-center">
-            <div className="text-cyan-400 font-semibold mb-1">[ LEARNED SIGNAL MANIFOLD ]</div>
-            <div className="text-slate-500">╭─────────────────────────╮</div>
-            <div className="text-slate-400">│ • • • • • • • • • • • • │</div>
-            <div className="text-slate-400">│ • • • • • • • • • • • • │</div>
-            <div className="text-slate-500">╰─────────────────────────╯</div>
-            <div className="text-slate-600 my-1">│ d_cosine = 0.918</div>
-            <div className="text-amber-400 font-bold">▼ [ × CANDIDATE AET-04721 ]</div>
+          <div className="rounded-[1px] border border-[#1C2630] bg-[#06080B] p-4 font-mono text-[11px] leading-relaxed text-center">
+            <div className="text-[#5BD8F5] font-medium mb-1">[ Learned signal distribution ]</div>
+            <div className="text-[#7F8B95]">╭─────────────────────────╮</div>
+            <div className="text-[#7F8B95]">│ • • • • • • • • • • • • │</div>
+            <div className="text-[#7F8B95]">│ • • • • • • • • • • • • │</div>
+            <div className="text-[#7F8B95]">╰─────────────────────────╯</div>
+            <div className="text-[#7F8B95] my-1">│ d_cosine = 0.918</div>
+            <div className="text-[#E8AE50] font-medium">▼ [ Candidate AET-04721 ]</div>
           </div>
 
-          <span className="text-[9px] text-slate-500 font-sans mt-2 block">
+          <span className="text-[9px] text-[#7F8B95] font-sans mt-2 block">
             Geometric distance from nearest manifold centroid defines the residual index.
           </span>
         </div>
 
         {/* Right: Anomaly Decomposition Parameters */}
-        <div className="rounded-[2px] border border-slate-800 bg-[#05070A] p-4 space-y-2.5">
-          <span className="text-[10px] text-[#84929C] uppercase font-bold tracking-wider block">
-            INDEX DECOMPOSITION PARAMETERS
+        <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4 space-y-2.5">
+          <span className="text-[10px] text-[#7F8B95] font-medium block">
+            Index decomposition parameters
           </span>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
-              <span className="text-slate-400 text-[11px]">Reconstruction Residual (L2)</span>
-              <span className="font-mono text-xs font-semibold text-[#66E3FF]">0.924</span>
+            <div className="flex items-center justify-between border-b border-[#1C2630] pb-1.5">
+              <span className="text-[#7F8B95] text-[11px]">Reconstruction residual (L2)</span>
+              <span className="font-mono text-xs font-medium text-[#5BD8F5]">0.924</span>
             </div>
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
-              <span className="text-slate-400 text-[11px]">Cosine Distance to Nearest Class</span>
-              <span className="font-mono text-xs font-semibold text-[#FFB84D]">0.918</span>
+            <div className="flex items-center justify-between border-b border-[#1C2630] pb-1.5">
+              <span className="text-[#7F8B95] text-[11px]">Cosine distance to nearest class</span>
+              <span className="font-mono text-xs font-medium text-[#E8AE50]">0.918</span>
             </div>
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
-              <span className="text-slate-400 text-[11px]">Local Outlier Factor (LOF)</span>
-              <span className="font-mono text-xs font-semibold text-slate-200">2.84×</span>
+            <div className="flex items-center justify-between border-b border-[#1C2630] pb-1.5">
+              <span className="text-[#7F8B95] text-[11px]">Local outlier factor (LOF)</span>
+              <span className="font-mono text-xs font-medium text-[#E6EDF2]">2.84×</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400 text-[11px]">Multi-Cadence Persistence</span>
-              <span className="font-mono text-xs font-semibold text-emerald-400">
-                87.3% (4/4 ON)
-              </span>
+              <span className="text-[#7F8B95] text-[11px]">Multi-cadence persistence</span>
+              <span className="font-mono text-xs font-medium text-[#5BD8F5]">87.3% (4/4 ON)</span>
             </div>
           </div>
         </div>

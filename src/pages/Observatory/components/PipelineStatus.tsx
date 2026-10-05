@@ -1,5 +1,5 @@
 import type { ObservationStatus, PipelineStageStatus } from '../types.ts';
-import { GitCommit, Layers } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 export interface PipelineStatusProps {
   status: ObservationStatus;
@@ -57,45 +57,45 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
     switch (stageStatus) {
       case 'COMPLETE':
         return (
-          <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold text-[10px]">
-            <span className="h-1.5 w-1.5 rounded-none bg-emerald-400" />
-            COMPLETE
+          <span className="inline-flex items-center gap-1.5 text-[#5BD8F5] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+            Complete
           </span>
         );
       case 'ACTIVE':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[#66E3FF] font-semibold text-[10px]">
-            <span className="h-1.5 w-1.5 rounded-none bg-[#66E3FF] animate-ping" />
-            ACTIVE
+          <span className="inline-flex items-center gap-1.5 text-[#5BD8F5] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+            Active
           </span>
         );
       case 'READY':
         return (
-          <span className="inline-flex items-center gap-1.5 text-slate-500 font-medium text-[10px]">
-            <span className="h-1.5 w-1.5 rounded-none border border-slate-600 bg-transparent" />
-            READY
+          <span className="inline-flex items-center gap-1.5 text-[#7F8B95] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full border border-[#7F8B95] bg-transparent" />
+            Ready
           </span>
         );
       case 'WARNING':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[#FFB84D] font-semibold text-[10px]">
-            <span className="h-1.5 w-1.5 rounded-none bg-[#FFB84D]" />
-            WARNING
+          <span className="inline-flex items-center gap-1.5 text-[#E8AE50] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#E8AE50]" />
+            Warning
           </span>
         );
       case 'ERROR':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[#FF5E5E] font-semibold text-[10px]">
-            <span className="h-1.5 w-1.5 rounded-none bg-[#FF5E5E]" />
-            ERROR
+          <span className="inline-flex items-center gap-1.5 text-[#D95C5C] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D95C5C]" />
+            Error
           </span>
         );
       case 'OFFLINE':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 text-slate-600 font-medium text-[10px]">
-            <span className="h-1.5 w-1.5 rounded-none bg-slate-700" />
-            OFFLINE
+          <span className="inline-flex items-center gap-1.5 text-[#7F8B95] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#1C2630]" />
+            Idle
           </span>
         );
     }
@@ -108,42 +108,39 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
   }[] = [
     {
       key: 'preprocessing',
-      title: 'PREPROCESSING',
+      title: 'Preprocessing',
       subtext: 'Polyphase filterbank channelization (4096 ch)',
     },
     {
       key: 'representation',
-      title: 'REPRESENTATION',
+      title: 'Representation',
       subtext: 'Spectrogram patch tokenization & embeddings',
     },
     {
       key: 'anomalySearch',
-      title: 'ANOMALY SEARCH',
+      title: 'Anomaly search',
       subtext: 'Variational latent reconstruction divergence',
     },
     {
       key: 'candidateRanking',
-      title: 'CANDIDATE RANKING',
+      title: 'Candidate ranking',
       subtext: 'Topocentric Doppler drift & RFI spatial rejection',
     },
   ];
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-4 font-mono select-none flex flex-col justify-between">
+    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none flex flex-col justify-between">
       <div>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+        <div className="flex items-center justify-between border-b border-[#1C2630] pb-2.5">
           <div className="flex items-center gap-2">
-            <Layers className="h-3.5 w-3.5 text-[#66E3FF]" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-              PROCESSING PIPELINE
-            </h3>
+            <Layers className="h-3.5 w-3.5 text-[#5BD8F5]" />
+            <h3 className="text-xs font-semibold text-[#E6EDF2]">Signal pipeline</h3>
           </div>
-          <span className="text-[10px] text-[#84929C] uppercase tracking-wider">PIPELINE V2.4</span>
         </div>
 
         {/* Pipeline Stage Items */}
-        <div className="mt-3 divide-y divide-slate-800/60">
+        <div className="mt-3 divide-y divide-[#1C2630]">
           {stageList.map((item, idx) => {
             const currentStageStatus = stages[item.key];
             const isActive = currentStageStatus === 'ACTIVE';
@@ -152,32 +149,21 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
               <div
                 key={item.key}
                 className={`py-2.5 transition-colors ${
-                  isActive ? 'bg-[#06b6d4]/5 px-2 -mx-2 rounded-[2px]' : ''
+                  isActive ? 'bg-[#5BD8F5]/5 px-2 -mx-2 rounded' : ''
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-slate-500 font-semibold">0{idx + 1}</span>
-                    <span className="text-xs font-semibold text-[#EAF4F7] tracking-wider uppercase">
-                      {item.title}
-                    </span>
+                    <span className="text-[10px] text-[#7F8B95] font-mono">0{idx + 1}</span>
+                    <span className="text-xs font-medium text-[#E6EDF2]">{item.title}</span>
                   </div>
                   <div>{renderBadge(currentStageStatus)}</div>
                 </div>
-                <div className="mt-1 text-[10px] text-[#84929C] pl-5">{item.subtext}</div>
+                <div className="mt-1 text-[11px] text-[#7F8B95] pl-5">{item.subtext}</div>
               </div>
             );
           })}
         </div>
-      </div>
-
-      {/* Pipeline Throughput Footer */}
-      <div className="mt-4 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-[#84929C]">
-        <div className="flex items-center gap-1.5">
-          <GitCommit className="h-3 w-3 text-emerald-400" />
-          <span>LATENCY: 14.8 ms</span>
-        </div>
-        <span>BUFFER: 100% HEALTH</span>
       </div>
     </div>
   );

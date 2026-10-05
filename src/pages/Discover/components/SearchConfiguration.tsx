@@ -25,23 +25,18 @@ export function SearchConfiguration({
   };
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-4 font-mono select-none">
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-3">
+    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none">
+      <div className="flex items-center justify-between border-b border-[#1C2630] pb-2 mb-3">
         <div className="flex items-center gap-2">
-          <Sliders className="h-3.5 w-3.5 text-[#66E3FF]" />
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            ANALYSIS CONFIGURATION
-          </h4>
+          <Sliders className="h-3.5 w-3.5 text-[#5BD8F5]" />
+          <h4 className="text-xs font-semibold text-[#E6EDF2]">Search configuration</h4>
         </div>
-        <span className="text-[10px] text-[#84929C] uppercase">RESTRAINED PARAMETERS</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Search Mode Selection */}
         <div className="space-y-2">
-          <span className="block text-[10px] uppercase tracking-wider text-[#84929C]">
-            SEARCH MODE
-          </span>
+          <span className="block text-xs font-medium text-[#7F8B95]">Search mode</span>
 
           <div className="grid grid-cols-2 gap-2">
             {/* Standard Mode */}
@@ -49,24 +44,24 @@ export function SearchConfiguration({
               type="button"
               disabled={disabled}
               onClick={() => handleModeChange('standard')}
-              className={`flex flex-col items-start p-2.5 rounded-[2px] border text-left transition-colors cursor-pointer ${
+              className={`flex flex-col items-start p-2.5 rounded border text-left transition-colors cursor-pointer ${
                 config.searchMode === 'standard'
-                  ? 'border-[#66E3FF] bg-[#06b6d4]/10 text-[#EAF4F7]'
-                  : 'border-slate-800 bg-[#05070A]/60 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                  ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#E6EDF2]'
+                  : 'border-[#1C2630] bg-[#06080B] text-[#7F8B95] hover:border-[#1C2630]/80 hover:text-[#E6EDF2]'
               }`}
             >
-              <div className="flex items-center gap-1.5 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 text-xs font-medium">
                 <span
                   className={`h-2 w-2 rounded-full border ${
                     config.searchMode === 'standard'
-                      ? 'border-[#66E3FF] bg-[#66E3FF]'
-                      : 'border-slate-600 bg-transparent'
+                      ? 'border-[#5BD8F5] bg-[#5BD8F5]'
+                      : 'border-[#7F8B95] bg-transparent'
                   }`}
                 />
-                <span>STANDARD DISCOVERY</span>
+                <span>Standard</span>
               </div>
-              <span className="mt-1 text-[10px] text-[#84929C] leading-normal font-sans">
-                Balanced candidate generation tuned for survey exploration.
+              <span className="mt-1 text-[11px] text-[#7F8B95] leading-normal">
+                Balanced candidate generation for routine survey exploration.
               </span>
             </button>
 
@@ -75,46 +70,46 @@ export function SearchConfiguration({
               type="button"
               disabled={disabled}
               onClick={() => handleModeChange('deep')}
-              className={`flex flex-col items-start p-2.5 rounded-[2px] border text-left transition-colors cursor-pointer ${
+              className={`flex flex-col items-start p-2.5 rounded border text-left transition-colors cursor-pointer ${
                 config.searchMode === 'deep'
-                  ? 'border-amber-500 bg-amber-950/20 text-[#EAF4F7]'
-                  : 'border-slate-800 bg-[#05070A]/60 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                  ? 'border-[#E8AE50] bg-[#E8AE50]/10 text-[#E6EDF2]'
+                  : 'border-[#1C2630] bg-[#06080B] text-[#7F8B95] hover:border-[#1C2630]/80 hover:text-[#E6EDF2]'
               }`}
             >
-              <div className="flex items-center gap-1.5 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 text-xs font-medium">
                 <span
                   className={`h-2 w-2 rounded-full border ${
                     config.searchMode === 'deep'
-                      ? 'border-amber-400 bg-amber-400'
-                      : 'border-slate-600 bg-transparent'
+                      ? 'border-[#E8AE50] bg-[#E8AE50]'
+                      : 'border-[#7F8B95] bg-transparent'
                   }`}
                 />
-                <span className={config.searchMode === 'deep' ? 'text-amber-300' : ''}>
-                  DEEP SEARCH
+                <span className={config.searchMode === 'deep' ? 'text-[#E8AE50]' : ''}>
+                  High sensitivity
                 </span>
               </div>
-              <span className="mt-1 text-[10px] text-[#84929C] leading-normal font-sans">
-                Higher sensitivity screening with broader anomaly envelope.
+              <span className="mt-1 text-[11px] text-[#7F8B95] leading-normal">
+                Broader screening envelope for faint and transient anomalies.
               </span>
             </button>
           </div>
         </div>
 
-        {/* Optional Scientific Filters */}
-        <div className="space-y-3">
-          <span className="block text-[10px] uppercase tracking-wider text-[#84929C]">
-            SCIENTIFIC SCREENING FILTERS
-          </span>
+        {/* Screening Filters */}
+        <div className="space-y-2">
+          <span className="block text-xs font-medium text-[#7F8B95]">Screening filters</span>
 
-          <div className="space-y-2.5 rounded-[2px] border border-slate-800 bg-[#05070A]/60 p-2.5 text-xs">
+          <div className="space-y-2.5 rounded border border-[#1C2630] bg-[#06080B] p-2.5 text-xs">
             {/* Minimum Persistence Slider */}
             <div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 flex items-center gap-1">
-                  <Zap className="h-3 w-3 text-cyan-400" />
-                  MINIMUM PERSISTENCE THRESHOLD:
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#7F8B95] flex items-center gap-1">
+                  <Zap className="h-3 w-3 text-[#5BD8F5]" />
+                  Minimum persistence threshold:
                 </span>
-                <span className="font-bold text-[#66E3FF]">{config.minPersistencePercent}%</span>
+                <span className="font-semibold text-[#5BD8F5] font-mono">
+                  {config.minPersistencePercent}%
+                </span>
               </div>
               <input
                 type="range"
@@ -124,36 +119,36 @@ export function SearchConfiguration({
                 value={config.minPersistencePercent}
                 onChange={(e) => handlePersistenceChange(Number(e.target.value))}
                 disabled={disabled}
-                className="w-full mt-1.5 accent-[#66E3FF] cursor-pointer"
+                className="w-full mt-1.5 accent-[#5BD8F5] cursor-pointer"
               />
-              <span className="block text-[9px] text-slate-500">
-                Reject transient signals present in fewer than 3 consecutive pointings
+              <span className="block text-[10px] text-[#7F8B95]">
+                Rejects transient features present in fewer than 3 consecutive pointings
               </span>
             </div>
 
             {/* Terrestrial RFI Filter Toggle */}
-            <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
-              <span className="text-slate-400 flex items-center gap-1 text-[11px]">
-                <Shield className="h-3 w-3 text-emerald-400" />
-                INTERFERENCE FILTER (RFI):
+            <div className="flex items-center justify-between pt-1 border-t border-[#1C2630]">
+              <span className="text-[#7F8B95] flex items-center gap-1 text-xs">
+                <Shield className="h-3 w-3 text-[#5BD8F5]" />
+                Interference rejection filter:
               </span>
 
               <button
                 type="button"
                 disabled={disabled}
                 onClick={handleToggleRfi}
-                className={`inline-flex items-center gap-1.5 rounded-[1px] border px-2 py-0.5 text-[10px] uppercase font-mono font-semibold transition-colors cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium transition-colors cursor-pointer ${
                   config.rfiFilterEnabled
-                    ? 'border-emerald-600 bg-emerald-950/40 text-emerald-300'
-                    : 'border-slate-700 bg-slate-900 text-slate-500'
+                    ? 'border-[#5BD8F5]/40 bg-[#5BD8F5]/10 text-[#5BD8F5]'
+                    : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95]'
                 }`}
               >
                 <span
-                  className={`h-1.5 w-1.5 rounded-none ${
-                    config.rfiFilterEnabled ? 'bg-emerald-400' : 'bg-slate-600'
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    config.rfiFilterEnabled ? 'bg-[#5BD8F5]' : 'bg-[#7F8B95]'
                   }`}
                 />
-                {config.rfiFilterEnabled ? 'ENABLED' : 'BYPASSED'}
+                {config.rfiFilterEnabled ? 'Enabled' : 'Off'}
               </button>
             </div>
           </div>

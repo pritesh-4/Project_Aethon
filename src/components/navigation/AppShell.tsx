@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sidebar } from './Sidebar.tsx';
 import { TopSystemBar } from './TopSystemBar.tsx';
 import { MobileNavigation } from './MobileNavigation.tsx';
-import { Activity, Database, Radio, ShieldCheck } from 'lucide-react';
 
 export interface AppShellProps {
   children: ReactNode;
@@ -16,7 +15,7 @@ export function AppShell({ children }: AppShellProps) {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-[#05070A] text-[#EAF4F7] flex flex-col font-sans selection:bg-[#66E3FF]/30 selection:text-[#66E3FF] overflow-x-hidden">
+    <div className="min-h-screen bg-[#06080B] text-[#E6EDF2] flex flex-col font-sans selection:bg-[#5BD8F5]/20 selection:text-[#5BD8F5] overflow-x-hidden">
       {/* Mobile Drawer Navigation */}
       <MobileNavigation isOpen={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
 
@@ -29,20 +28,20 @@ export function AppShell({ children }: AppShellProps) {
         />
 
         {/* Right Application Viewport */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#05070A]">
+        <div className="flex-1 flex flex-col min-w-0 bg-[#06080B]">
           {/* Thin Instrumentation Top Bar */}
           <TopSystemBar onOpenMobileNav={() => setIsMobileNavOpen(true)} />
 
-          {/* Application Content with Precise Navigation Motion */}
-          <main className="flex-1 observatory-grid-bg relative p-4 sm:p-6 lg:p-8">
+          {/* Application Content */}
+          <main className="flex-1 relative p-4 sm:p-6 lg:p-8">
             <div className="mx-auto max-w-7xl">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={location.pathname}
-                  initial={{ opacity: 0, y: 6 }}
+                  initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
                 >
                   {children}
                 </motion.div>
@@ -50,36 +49,14 @@ export function AppShell({ children }: AppShellProps) {
             </div>
           </main>
 
-          {/* Scientific Telemetry Footer */}
-          <footer className="border-t border-slate-800/70 bg-[#0A0E13] py-2.5 px-4 font-mono text-[10px] text-[#84929C] select-none">
+          {/* Minimal Status Footer */}
+          <footer className="border-t border-[#172230] bg-[#0B0F14] py-2 px-4 text-xs text-[#7F8B95] select-none">
             <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-1.5 text-slate-300">
-                  <Activity className="h-3 w-3 text-[#66E3FF]" />
-                  <span>AETHON ENGINE // ACTIVE</span>
-                </span>
-                <span className="text-slate-800">/</span>
-                <span className="flex items-center gap-1 text-[#84929C]">
-                  <Database className="h-3 w-3 text-emerald-400" />
-                  <span>BUFFER: 100% NOMINAL</span>
-                </span>
-                <span className="text-slate-800 hidden md:inline">/</span>
-                <span className="hidden md:flex items-center gap-1 text-[#84929C]">
-                  <Radio className="h-3 w-3 text-[#66E3FF]" />
-                  <span>1420.4057 MHz [H I]</span>
-                </span>
-                <span className="text-slate-800 hidden lg:inline">/</span>
-                <span className="hidden lg:flex items-center gap-1 text-[#84929C]">
-                  <ShieldCheck className="h-3 w-3 text-slate-500" />
-                  <span>RFI FILTER: 99.98%</span>
-                </span>
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+                <span className="font-sans text-xs text-[#7F8B95]">AETHON Discovery Platform</span>
               </div>
-
-              <div className="text-[10px] text-[#84929C] flex items-center gap-2">
-                <span>ASTRONOMICAL DISCOVERY FRAMEWORK</span>
-                <span className="text-slate-800">•</span>
-                <span className="text-[#66E3FF]">AET-01</span>
-              </div>
+              <div className="text-xs text-[#7F8B95] font-mono">1420.4 MHz (H I)</div>
             </div>
           </footer>
         </div>

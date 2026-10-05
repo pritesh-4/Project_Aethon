@@ -10,15 +10,14 @@ export function TechnicalDetails() {
   };
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-5 font-mono select-none">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-3 mb-4 gap-2">
+    <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-5 font-mono select-none">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#1C2630] pb-3 mb-4 gap-2">
         <div className="flex items-center gap-2">
-          <FileCode2 className="h-4 w-4 text-[#66E3FF]" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            TECHNICAL SPECIFICATIONS & MATHEMATICAL FORMULATIONS
+          <FileCode2 className="h-4 w-4 text-[#5BD8F5]" />
+          <h2 className="text-xs font-medium text-[#E6EDF2]">
+            Technical specifications and formulations
           </h2>
         </div>
-        <span className="text-[10px] text-[#84929C] uppercase">COLLAPSIBLE RESEARCH APPENDIX</span>
       </div>
 
       <div className="space-y-3">
@@ -29,66 +28,62 @@ export function TechnicalDetails() {
             <div
               key={sec.id}
               className={`rounded-[2px] border transition-colors ${
-                isOpen ? 'border-[#66E3FF]/60 bg-[#05070A]' : 'border-slate-800 bg-[#05070A]/50'
+                isOpen ? 'border-[#5BD8F5]/60 bg-[#06080B]' : 'border-[#1C2630] bg-[#06080B]/50'
               }`}
             >
               {/* Accordion Trigger */}
               <button
                 type="button"
                 onClick={() => toggleSection(sec.id)}
-                className="w-full p-3.5 flex items-center justify-between text-left cursor-pointer hover:bg-slate-900/40 transition-colors"
+                className="w-full p-3.5 flex items-center justify-between text-left cursor-pointer hover:bg-[#10161D]/40 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Terminal className={`h-4 w-4 ${isOpen ? 'text-[#66E3FF]' : 'text-slate-500'}`} />
+                  <Terminal className={`h-4 w-4 ${isOpen ? 'text-[#5BD8F5]' : 'text-[#7F8B95]'}`} />
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#EAF4F7] uppercase tracking-wider">
-                        {sec.title}
-                      </span>
-                      <span className="rounded-[1px] border border-slate-700 bg-slate-900 px-1.5 py-0.2 text-[9px] font-mono text-slate-400">
+                      <span className="text-xs font-medium text-[#E6EDF2]">{sec.title}</span>
+                      <span className="rounded-[1px] border border-[#1C2630] bg-[#10161D] px-1.5 py-0.2 text-[9px] font-mono text-[#7F8B95]">
                         {sec.tag}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 font-sans mt-0.5">{sec.summary}</p>
+                    <p className="text-[11px] text-[#7F8B95] font-sans mt-0.5">{sec.summary}</p>
                   </div>
                 </div>
 
-                <div className="text-slate-500 pl-2">
+                <div className="text-[#7F8B95] pl-2">
                   {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </div>
               </button>
 
               {/* Accordion Body */}
               {isOpen && (
-                <div className="border-t border-slate-800/80 p-4 space-y-3 text-xs">
+                <div className="border-t border-[#1C2630] p-4 space-y-3 text-xs">
                   {/* Formal Mathematical Definition */}
                   <div className="space-y-1">
-                    <span className="text-[9px] text-[#84929C] uppercase font-bold tracking-wider">
-                      FORMAL DEFINITION
+                    <span className="text-[9px] text-[#7F8B95] font-medium block">
+                      Formal definition
                     </span>
-                    <p className="text-slate-300 font-mono text-[11px] bg-slate-950 p-2.5 rounded-[1px] border border-slate-800/80 leading-relaxed overflow-x-auto">
+                    <p className="text-[#E6EDF2] font-mono text-[11px] bg-[#06080B] p-2.5 rounded-[1px] border border-[#1C2630] leading-relaxed overflow-x-auto">
                       {sec.formalDefinition}
                     </p>
                   </div>
 
                   {/* Parameter Telemetry Table */}
                   <div className="space-y-1">
-                    <span className="text-[9px] text-[#84929C] uppercase font-bold tracking-wider">
-                      OPERATIONAL PARAMETERS
+                    <span className="text-[9px] text-[#7F8B95] font-medium block">
+                      Operational parameters
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {sec.parameters.map((p) => (
                         <div
                           key={p.name}
-                          className="rounded-[2px] border border-slate-800 bg-[#0A0E13] p-2.5 space-y-1"
+                          className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-2.5 space-y-1"
                         >
-                          <span className="text-[9px] text-slate-400 uppercase block font-semibold">
-                            {p.name}
-                          </span>
-                          <span className="text-[11px] text-[#66E3FF] font-mono font-bold block">
+                          <span className="text-[9px] text-[#7F8B95] block">{p.name}</span>
+                          <span className="text-[11px] text-[#5BD8F5] font-mono font-medium block">
                             {p.spec}
                           </span>
-                          <p className="text-[10px] text-slate-400 font-sans leading-tight">
+                          <p className="text-[10px] text-[#7F8B95] font-sans leading-tight">
                             {p.description}
                           </p>
                         </div>

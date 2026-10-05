@@ -104,7 +104,7 @@ export function LearnedSignalSpace() {
       baseX: 0.68,
       baseY: 0.62,
       category: 'CANDIDATE',
-      label: 'CANDIDATE // AET-04721 (Proxima Centauri)',
+      label: 'Candidate: AET-04721 (Simulated observation)',
       anomalyScore: 0.947,
       id: 'AET-04721',
     });
@@ -116,7 +116,7 @@ export function LearnedSignalSpace() {
       baseX: 0.54,
       baseY: 0.48,
       category: 'CANDIDATE',
-      label: 'CANDIDATE // AET-04738 (Harmonic Sideband)',
+      label: 'Candidate: AET-04738 (Simulated observation)',
       anomalyScore: 0.821,
       id: 'AET-04738',
     });
@@ -351,51 +351,48 @@ export function LearnedSignalSpace() {
   };
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-5 font-mono select-none">
+    <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-5 font-mono select-none">
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-3 mb-4 gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#1C2630] pb-3 mb-4 gap-2">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#66E3FF]" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            LEARNED SIGNAL SPACE & MANIFOLD DEVIATION
-          </h2>
+          <Sparkles className="h-4 w-4 text-[#5BD8F5]" />
+          <h2 className="text-xs font-medium text-[#E6EDF2]">Learned signal space</h2>
         </div>
 
         {/* Filter Switcher */}
         <div className="flex items-center gap-1.5 text-[10px]">
-          <span className="text-[#84929C] uppercase mr-1">VIEWPORT:</span>
           {(['ALL', 'KNOWN', 'ANOMALOUS'] as const).map((mode) => (
             <button
               key={mode}
               type="button"
               onClick={() => setActiveFilter(mode)}
-              className={`rounded-[1px] border px-2 py-0.5 uppercase tracking-wider transition-colors cursor-pointer ${
+              className={`rounded-[1px] border px-2 py-0.5 transition-colors cursor-pointer ${
                 activeFilter === mode
-                  ? 'border-[#66E3FF] bg-[#06b6d4]/20 text-[#66E3FF] font-bold'
-                  : 'border-slate-800 bg-[#05070A] text-slate-400 hover:text-slate-200'
+                  ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5] font-medium'
+                  : 'border-[#1C2630] bg-[#06080B] text-[#7F8B95] hover:text-[#E6EDF2]'
               }`}
             >
-              {mode}
+              {mode === 'ALL' ? 'All' : mode === 'KNOWN' ? 'Known' : 'Anomalous'}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Mandatory Scientific Labeling Banner */}
-      <div className="mb-3 flex items-center justify-between rounded-[2px] border border-cyan-900/60 bg-cyan-950/20 px-3 py-1.5 text-[10px] text-cyan-300">
-        <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
-          <Info className="h-3.5 w-3.5 shrink-0" />
-          <span>CONCEPTUAL REPRESENTATION SPACE (DEMONSTRATION PROJECTION)</span>
+      {/* Demonstration Labeling Banner */}
+      <div className="mb-3 flex items-center justify-between rounded-[2px] border border-[#1C2630] bg-[#06080B] px-3 py-1.5 text-[10px] text-[#7F8B95]">
+        <div className="flex items-center gap-1.5 font-medium">
+          <Info className="h-3.5 w-3.5 shrink-0 text-[#5BD8F5]" />
+          <span>Representation space projection (Demonstration data)</span>
         </div>
-        <span className="text-[9px] text-slate-400 font-normal hidden sm:inline">
-          LATENT DIMENSION // 512-D PROJECTION TO 2-D VIA T-SNE
+        <span className="text-[9px] text-[#7F8B95] hidden sm:inline">
+          512-D latent space projected to 2D
         </span>
       </div>
 
       {/* Interactive Canvas Container */}
       <div
         ref={containerRef}
-        className="relative w-full rounded-[2px] border border-slate-800 bg-[#05070A] overflow-hidden"
+        className="relative w-full rounded-[2px] border border-[#1C2630] bg-[#06080B] overflow-hidden"
       >
         <canvas
           ref={canvasRef}
@@ -405,46 +402,46 @@ export function LearnedSignalSpace() {
         />
 
         {/* Legend Overlay */}
-        <div className="absolute bottom-3 left-3 rounded-[2px] border border-slate-800/80 bg-[#05070A]/90 p-2.5 backdrop-blur-sm text-[10px] space-y-1.5">
-          <span className="block text-[9px] text-[#84929C] uppercase font-bold tracking-wider border-b border-slate-800 pb-1">
-            MANIFOLD GEOMETRY
+        <div className="absolute bottom-3 left-3 rounded-[2px] border border-[#1C2630] bg-[#0B0F14]/90 p-2.5 backdrop-blur-sm text-[10px] space-y-1.5">
+          <span className="block text-[9px] text-[#7F8B95] font-medium border-b border-[#1C2630] pb-1">
+            Signal space geometry
           </span>
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-cyan-400/70" />
-            <span className="text-slate-300">Thermal Noise Baseline</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+            <span className="text-[#7F8B95]">Thermal noise baseline</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-blue-500/80" />
-            <span className="text-slate-300">Natural Pulsar Harmonics</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+            <span className="text-[#7F8B95]">Known pulsar harmonics</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-amber-400/80" />
-            <span className="text-slate-300">Terrestrial / Satellite RFI</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]" />
+            <span className="text-[#7F8B95]">Terrestrial / satellite interference</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[#FFB84D] font-bold text-xs">×</span>
-            <span className="text-[#FFB84D] font-bold">Prioritized Candidate (Isolated)</span>
+            <span className="text-[#E8AE50] font-bold text-xs">×</span>
+            <span className="text-[#E8AE50] font-medium">Prioritized candidate (Isolated)</span>
           </div>
         </div>
 
         {/* Hover Inspector Tooltip */}
         {hoveredPoint && (
           <div
-            className="pointer-events-none absolute z-20 rounded-[2px] border border-[#66E3FF] bg-[#05070A]/95 p-2.5 shadow-xl text-xs font-mono"
+            className="pointer-events-none absolute z-20 rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-2.5 shadow-xl text-xs font-mono"
             style={{
               left: `${hoveredPoint.x > 320 ? hoveredPoint.x - 220 : hoveredPoint.x + 14}px`,
               top: `${Math.max(hoveredPoint.y - 60, 10)}px`,
             }}
           >
-            <div className="text-[10px] text-[#66E3FF] font-bold uppercase tracking-wider border-b border-slate-800 pb-1 mb-1">
+            <div className="text-[10px] text-[#5BD8F5] font-medium border-b border-[#1C2630] pb-1 mb-1">
               {hoveredPoint.id}
             </div>
-            <div className="text-[11px] text-[#EAF4F7] font-semibold">{hoveredPoint.label}</div>
-            <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400 gap-4">
-              <span>ANOMALY INDEX:</span>
+            <div className="text-[11px] text-[#E6EDF2] font-medium">{hoveredPoint.label}</div>
+            <div className="mt-1 flex items-center justify-between text-[10px] text-[#7F8B95] gap-4">
+              <span>Anomaly index:</span>
               <span
-                className={`font-bold ${
-                  hoveredPoint.anomalyScore > 0.7 ? 'text-[#FFB84D]' : 'text-slate-300'
+                className={`font-medium ${
+                  hoveredPoint.anomalyScore > 0.7 ? 'text-[#E8AE50]' : 'text-[#E6EDF2]'
                 }`}
               >
                 {hoveredPoint.anomalyScore.toFixed(3)}
@@ -455,13 +452,11 @@ export function LearnedSignalSpace() {
       </div>
 
       {/* Explanatory Caption */}
-      <p className="mt-3 text-[11px] text-slate-400 font-sans leading-relaxed border-t border-slate-800/60 pt-3">
-        The dense clusters represent radio observations sharing coherent, learned representation
-        properties across the antenna cadence. Candidate{' '}
-        <span className="font-mono text-[#FFB84D] font-bold">AET-04721</span> appears distinctly
-        isolated in representation space because its persistent monochromatic structure deviates
-        substantially from both the Gaussian background noise manifold and configured terrestrial
-        RFI centroids.
+      <p className="mt-3 text-[11px] text-[#7F8B95] font-sans leading-relaxed border-t border-[#1C2630] pt-3">
+        Dense clusters represent radio observations sharing coherent representation properties.
+        Candidate <span className="font-mono text-[#E8AE50] font-medium">AET-04721</span> is
+        isolated in representation space because its persistent structure deviates from both
+        Gaussian background noise and known interference centroids.
       </p>
     </div>
   );

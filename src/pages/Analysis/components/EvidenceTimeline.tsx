@@ -16,24 +16,22 @@ export function EvidenceTimeline({ record }: EvidenceTimelineProps) {
   const durationString = `00:${durationMins.toString().padStart(2, '0')}:${durationSecs.toString().padStart(2, '0')}`;
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-4 font-mono select-none">
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-4">
+    <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-4 font-mono select-none">
+      <div className="flex items-center justify-between border-b border-[#1C2630] pb-2 mb-4">
         <div className="flex items-center gap-1.5">
-          <Clock className="h-3.5 w-3.5 text-[#66E3FF]" />
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            TEMPORAL EVIDENCE TIMELINE
-          </h4>
+          <Clock className="h-3.5 w-3.5 text-[#5BD8F5]" />
+          <h4 className="text-xs font-medium text-[#E6EDF2]">Timeline evidence</h4>
         </div>
-        <span className="text-[10px] text-[#84929C] uppercase">DURATION // {durationString}</span>
+        <span className="text-[10px] text-[#7F8B95]">Duration: {durationString}</span>
       </div>
 
       {/* Horizontal Axis Track */}
       <div className="relative pt-6 pb-2 px-4">
         {/* Timeline Bar Line */}
-        <div className="h-0.5 w-full bg-slate-800 relative">
+        <div className="h-0.5 w-full bg-[#1C2630] relative">
           {/* Anomalous Window Highlight along track */}
           <div
-            className="absolute top-0 h-full bg-[#FFB84D] shadow-[0_0_8px_rgba(255,184,77,0.6)]"
+            className="absolute top-0 h-full bg-[#E8AE50]"
             style={{
               left: `${(record.anomalyStartSec / totalDurationSec) * 100}%`,
               width: `${((record.anomalyEndSec - record.anomalyStartSec) / totalDurationSec) * 100}%`,
@@ -61,14 +59,14 @@ export function EvidenceTimeline({ record }: EvidenceTimelineProps) {
             >
               {/* Event Marker Node */}
               <div
-                className={`h-3.5 w-3.5 rounded-none border transition-all ${
+                className={`h-3 w-3 rounded-full border transition-all ${
                   isSelected
                     ? isAnomaly
-                      ? 'border-[#FFB84D] bg-[#FFB84D] shadow-[0_0_8px_rgba(255,184,77,0.8)]'
-                      : 'border-[#66E3FF] bg-[#66E3FF] shadow-[0_0_8px_rgba(102,227,255,0.6)]'
+                      ? 'border-[#E8AE50] bg-[#E8AE50]'
+                      : 'border-[#5BD8F5] bg-[#5BD8F5]'
                     : isAnomaly
-                      ? 'border-[#FFB84D] bg-amber-950/80 hover:bg-[#FFB84D]'
-                      : 'border-slate-700 bg-slate-900 hover:border-slate-500'
+                      ? 'border-[#E8AE50] bg-amber-950/80 hover:bg-[#E8AE50]'
+                      : 'border-[#1C2630] bg-[#10161D] hover:border-[#7F8B95]'
                 }`}
               />
 
@@ -76,8 +74,8 @@ export function EvidenceTimeline({ record }: EvidenceTimelineProps) {
               <span
                 className={`mt-2 text-[9px] font-mono transition-colors ${
                   isSelected
-                    ? 'text-[#EAF4F7] font-bold'
-                    : 'text-slate-500 group-hover:text-slate-300'
+                    ? 'text-[#E6EDF2] font-medium'
+                    : 'text-[#7F8B95] group-hover:text-[#E6EDF2]'
                 }`}
               >
                 {timeStr}
@@ -89,19 +87,17 @@ export function EvidenceTimeline({ record }: EvidenceTimelineProps) {
 
       {/* Selected Event Diagnostic Detail Callout */}
       {selectedEventIdx !== null && (
-        <div className="mt-6 rounded-[2px] border border-cyan-800/60 bg-[#05070A] p-3 text-xs">
+        <div className="mt-6 rounded-[2px] border border-[#1C2630] bg-[#06080B] p-3 text-xs">
           <div className="flex items-center justify-between text-[10px]">
             <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-none bg-[#66E3FF]" />
-              <span className="font-bold text-[#EAF4F7] tracking-wider uppercase">
-                {events[selectedEventIdx].label}
-              </span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+              <span className="font-medium text-[#E6EDF2]">{events[selectedEventIdx].label}</span>
             </div>
-            <span className="text-[#66E3FF] font-mono">
-              POWER: {events[selectedEventIdx].intensityDbm.toFixed(1)} dBm
+            <span className="text-[#5BD8F5] font-mono">
+              Power: {events[selectedEventIdx].intensityDbm.toFixed(1)} dBm
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-slate-300 font-sans">
+          <p className="mt-1 text-[11px] text-[#7F8B95] font-sans">
             {events[selectedEventIdx].description}
           </p>
         </div>

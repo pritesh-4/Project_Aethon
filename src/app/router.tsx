@@ -16,10 +16,10 @@ function LazyRoute({ children }: { children: ReactNode }) {
   return (
     <Suspense
       fallback={
-        <div className="flex h-[40vh] w-full items-center justify-center font-mono text-xs text-slate-500 select-none">
+        <div className="flex h-[40vh] w-full items-center justify-center font-sans text-xs text-[#7F8B95] select-none">
           <div className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-none bg-cyan-400 animate-pulse" />
-            <span className="tracking-wider uppercase">SYNCHRONIZING SUBSYSTEM...</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+            <span>Loading...</span>
           </div>
         </div>
       }

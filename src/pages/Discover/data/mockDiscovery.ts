@@ -7,13 +7,13 @@ import type {
 export const REFERENCE_OBSERVATIONS: DiscoveryObservationMeta[] = [
   {
     id: 'AET-04721',
-    name: 'Proxima Centauri L-Band Observation Run',
+    name: 'Proxima Centauri L-Band (Simulated observation)',
     format: 'CSV',
     samplesCount: 148320,
     durationString: '00:04:32',
     bandwidthMHz: 12.5,
     frequencyMHz: 1420.37,
-    telescope: 'Green Bank Telescope (100m Aperture)',
+    telescope: 'Synthetic Single Dish (Simulated observation)',
     fileSizeBytes: 4746240,
     coordinates: {
       ra: '14h 29m 42.95s',
@@ -22,13 +22,13 @@ export const REFERENCE_OBSERVATIONS: DiscoveryObservationMeta[] = [
   },
   {
     id: 'AET-08192',
-    name: 'Barnard Star Hydroxyl Spectral Survey',
+    name: 'Barnard Star Survey (Simulated observation)',
     format: 'JSON',
     samplesCount: 92160,
     durationString: '00:03:45',
     bandwidthMHz: 8.0,
     frequencyMHz: 1665.4,
-    telescope: 'MeerKAT Radio Array (64-Dish Beamformed)',
+    telescope: 'Synthetic Antenna Array (Simulated observation)',
     fileSizeBytes: 2949120,
     coordinates: {
       ra: '17h 57m 48.50s',
@@ -37,13 +37,13 @@ export const REFERENCE_OBSERVATIONS: DiscoveryObservationMeta[] = [
   },
   {
     id: 'AET-03910',
-    name: 'Kepler-452 Deep Space Exoplanet Baseline',
+    name: 'Kepler Field Baseline (Simulated observation)',
     format: 'CSV',
     samplesCount: 204800,
     durationString: '00:05:20',
     bandwidthMHz: 16.0,
     frequencyMHz: 1420.21,
-    telescope: 'Parkes Radio Telescope (Murriyang)',
+    telescope: 'Synthetic Baseline Receiver (Simulated observation)',
     fileSizeBytes: 6553600,
     coordinates: {
       ra: '19h 44m 00.89s',
@@ -56,7 +56,7 @@ export const MOCK_DISCOVERY_CANDIDATES: DiscoveredCandidate[] = [
   {
     rank: 1,
     id: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1420.4057,
     bandwidthKHz: 3.8,
     snrDb: 18.7,
@@ -75,7 +75,7 @@ export const MOCK_DISCOVERY_CANDIDATES: DiscoveredCandidate[] = [
   {
     rank: 2,
     id: 'AET-04738',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1420.4482,
     bandwidthKHz: 4.2,
     snrDb: 15.4,
@@ -94,7 +94,7 @@ export const MOCK_DISCOVERY_CANDIDATES: DiscoveredCandidate[] = [
   {
     rank: 3,
     id: 'AET-04752',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1420.291,
     bandwidthKHz: 6.5,
     snrDb: 12.1,
@@ -113,7 +113,7 @@ export const MOCK_DISCOVERY_CANDIDATES: DiscoveredCandidate[] = [
   {
     rank: 4,
     id: 'AET-04789',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1420.5124,
     bandwidthKHz: 8.0,
     snrDb: 10.8,
@@ -132,7 +132,7 @@ export const MOCK_DISCOVERY_CANDIDATES: DiscoveredCandidate[] = [
   {
     rank: 5,
     id: 'AET-04802',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1420.105,
     bandwidthKHz: 45.0,
     snrDb: 8.2,

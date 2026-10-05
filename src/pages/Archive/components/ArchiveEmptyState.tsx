@@ -8,23 +8,21 @@ export interface ArchiveEmptyStateProps {
 
 export function ArchiveEmptyState({ searchQuery, onClearFilters }: ArchiveEmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-10 text-center font-mono select-none my-6">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[2px] border border-slate-800 bg-[#05070A] text-slate-500">
+    <div className="flex flex-col items-center justify-center rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-10 text-center font-mono select-none my-6">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[2px] border border-[#1C2630] bg-[#06080B] text-slate-500">
         <SearchX className="h-6 w-6 text-slate-400" />
       </div>
 
       {searchQuery ? (
         <div className="space-y-3 max-w-md">
-          <div className="text-xs uppercase tracking-widest text-[#66E3FF]">
-            QUERY // {searchQuery}
+          <div className="text-xs text-[#5BD8F5]">Search query: {searchQuery}</div>
+          <div className="text-sm font-semibold tracking-wider text-[#E6EDF2]">
+            No matching observations
           </div>
-          <div className="text-sm font-bold tracking-wider text-[#EAF4F7]">
-            0 MATCHING OBSERVATIONS
-          </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed uppercase">
-            NO OBSERVATIONS MATCH THE CURRENT QUERY.
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            No observations match the search parameters.
             <br />
-            ADJUST THE SEARCH PARAMETERS OR CLEAR THE ACTIVE FILTERS.
+            Adjust search terms or clear filters to view archived observations.
           </p>
           <div className="pt-2">
             <Button
@@ -33,17 +31,17 @@ export function ArchiveEmptyState({ searchQuery, onClearFilters }: ArchiveEmptyS
               onClick={onClearFilters}
               icon={<RotateCcw className="h-3 w-3" />}
             >
-              CLEAR SEARCH
+              Clear search
             </Button>
           </div>
         </div>
       ) : (
         <div className="space-y-3 max-w-md">
-          <div className="text-sm font-bold tracking-wider text-[#EAF4F7]">
-            NO OBSERVATIONS MATCH THE CURRENT FILTER CRITERIA
+          <div className="text-sm font-semibold tracking-wider text-[#E6EDF2]">
+            No observations match the selected filters
           </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed uppercase">
-            ADJUST THE ACTIVE STATUS, DATE, OR PRIORITY FILTERS TO DISPLAY REGISTRY SPECIMENS.
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Adjust status, date, or priority filters to view observation records.
           </p>
           <div className="pt-2">
             <Button
@@ -52,7 +50,7 @@ export function ArchiveEmptyState({ searchQuery, onClearFilters }: ArchiveEmptyS
               onClick={onClearFilters}
               icon={<RotateCcw className="h-3 w-3" />}
             >
-              RESET ALL FILTERS
+              Reset filters
             </Button>
           </div>
         </div>

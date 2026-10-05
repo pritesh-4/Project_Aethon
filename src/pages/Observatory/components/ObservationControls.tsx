@@ -25,39 +25,31 @@ export function ObservationControls({
   const hasResult = status === 'ANOMALY_DETECTED' || status === 'CANDIDATE_READY';
 
   return (
-    <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-3 font-mono text-xs select-none">
+    <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 rounded border border-[#1C2630] bg-[#0B0F14] p-3 text-xs select-none">
       {/* Observation Metadata Readouts */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 border-b md:border-b-0 md:border-r border-slate-800/80 pb-3 md:pb-0 md:pr-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 border-b md:border-b-0 md:border-r border-[#1C2630] pb-3 md:pb-0 md:pr-6">
         <div>
-          <span className="block text-[10px] text-[#84929C] uppercase tracking-wider">
-            OBSERVATION
-          </span>
-          <span className="text-xs font-semibold text-[#EAF4F7] tracking-wider">
-            {observation.id}
-          </span>
+          <span className="block text-[11px] text-[#7F8B95]">Observation</span>
+          <span className="text-xs font-medium text-[#E6EDF2] font-mono">{observation.id}</span>
         </div>
 
         <div>
-          <span className="block text-[10px] text-[#84929C] uppercase tracking-wider">
-            FREQUENCY
-          </span>
-          <span className="text-xs font-semibold text-[#66E3FF] tracking-wider">
+          <span className="block text-[11px] text-[#7F8B95]">Center frequency</span>
+          <span className="text-xs font-medium text-[#5BD8F5] font-mono">
             {observation.frequencyMHz.toFixed(2)} MHz
           </span>
         </div>
 
         <div>
-          <span className="block text-[10px] text-[#84929C] uppercase tracking-wider">WINDOW</span>
-          <span className="text-xs font-semibold text-[#EAF4F7] tracking-wider">
+          <span className="block text-[11px] text-[#7F8B95]">Duration</span>
+          <span className="text-xs font-medium text-[#E6EDF2] font-mono">
             {observation.windowDuration}
           </span>
         </div>
 
         <div>
-          <span className="block text-[10px] text-[#84929C] uppercase tracking-wider">
-            BANDWIDTH
-          </span>
-          <span className="text-xs font-semibold text-[#EAF4F7] tracking-wider">
+          <span className="block text-[11px] text-[#7F8B95]">Bandwidth</span>
+          <span className="text-xs font-medium text-[#E6EDF2] font-mono">
             {observation.bandwidthMHz.toFixed(1)} MHz
           </span>
         </div>
@@ -71,22 +63,22 @@ export function ObservationControls({
           icon={<FolderOpen className="h-3.5 w-3.5" />}
           onClick={onLoadObservation}
           disabled={isAnalyzing}
-          title="Reload observation buffer"
+          title="Reload observation"
         >
-          LOAD OBSERVATION
+          Load observation
         </Button>
 
         <Button
           variant="primary"
           size="sm"
-          icon={<Sparkles className="h-3.5 w-3.5 text-[#66E3FF]" />}
+          icon={<Sparkles className="h-3.5 w-3.5 text-[#5BD8F5]" />}
           onClick={onStartAnalysis}
           state={isAnalyzing ? 'loading' : 'idle'}
-          loadingText="ANALYZING..."
+          loadingText="Analyzing..."
           disabled={isAnalyzing}
-          title="Initiate ML anomaly detection pipeline"
+          title="Initiate anomaly detection pipeline"
         >
-          {hasResult ? 'RE-ANALYZE' : 'ANALYZE'}
+          {hasResult ? 'Re-analyze' : 'Analyze'}
         </Button>
 
         <Button
@@ -97,7 +89,7 @@ export function ObservationControls({
           disabled={status === 'IDLE'}
           title={isPaused ? 'Resume observation playback' : 'Pause observation playback'}
         >
-          {isPaused ? 'RESUME' : 'PAUSE'}
+          {isPaused ? 'Resume' : 'Pause'}
         </Button>
 
         <Button
@@ -108,7 +100,7 @@ export function ObservationControls({
           disabled={status === 'IDLE' && !isPaused}
           title="Reset to initial state"
         >
-          RESET
+          Reset
         </Button>
       </div>
     </div>

@@ -6,70 +6,50 @@ export interface ArchiveHeaderProps {
 
 export function ArchiveHeader({ stats }: ArchiveHeaderProps) {
   return (
-    <div className="border-b border-slate-800/80 bg-[#0A0E13] px-4 py-4 sm:px-6 select-none font-mono">
+    <div className="border-b border-[#1C2630] bg-[#0B0F14] px-4 py-4 sm:px-6 select-none font-mono">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        {/* Title & Subtitle */}
+        {/* Title */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-none bg-[#66E3FF] shadow-[0_0_8px_rgba(102,227,255,0.6)]" />
-            <h1 className="text-sm sm:text-base font-bold tracking-[0.25em] text-[#EAF4F7] uppercase font-mono">
-              OBSERVATION ARCHIVE
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+            <h1 className="text-sm sm:text-base font-medium text-[#E6EDF2] font-mono">
+              Observation archive
             </h1>
           </div>
-          <p className="text-[10px] tracking-[0.2em] text-[#84929C] uppercase font-mono">
-            ASTRONOMICAL DATA REGISTRY
-          </p>
         </div>
 
-        {/* Center / Stat Readouts */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 sm:flex sm:items-center sm:gap-6 text-[11px] text-[#84929C]">
+        {/* Stat Readouts */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 sm:flex sm:items-center sm:gap-6 text-[11px] text-[#7F8B95]">
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-500 uppercase text-[10px] tracking-wider">
-              TOTAL OBSERVATIONS
-            </span>
-            <span className="text-slate-600">//</span>
-            <span className="font-semibold text-[#EAF4F7] tabular-nums">
+            <span className="text-[10px]">Total observations:</span>
+            <span className="font-medium text-[#E6EDF2] tabular-nums">
               {stats.totalObservations}
             </span>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-500 uppercase text-[10px] tracking-wider">ANALYZED</span>
-            <span className="text-slate-600">//</span>
-            <span className="font-semibold text-[#EAF4F7] tabular-nums">{stats.analyzed}</span>
+            <span className="text-[10px]">Analyzed:</span>
+            <span className="font-medium text-[#E6EDF2] tabular-nums">{stats.analyzed}</span>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-500 uppercase text-[10px] tracking-wider">
-              CANDIDATE EVENTS
-            </span>
-            <span className="text-slate-600">//</span>
-            <span className="font-semibold text-[#66E3FF] tabular-nums">
-              {stats.candidateEvents}
-            </span>
+            <span className="text-[10px]">Candidate events:</span>
+            <span className="font-medium text-[#5BD8F5] tabular-nums">{stats.candidateEvents}</span>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-500 uppercase text-[10px] tracking-wider">
-              FLAGGED FOR REVIEW
-            </span>
-            <span className="text-slate-600">//</span>
-            <span className="font-semibold text-[#FFB84D] tabular-nums">
+            <span className="text-[10px]">Flagged for review:</span>
+            <span className="font-medium text-[#E8AE50] tabular-nums">
               {stats.flaggedForReview}
             </span>
           </div>
         </div>
 
-        {/* Right side: ARCHIVE STATUS */}
-        <div className="flex items-center justify-end sm:justify-start lg:justify-end border-t border-slate-900 pt-2 lg:border-t-0 lg:pt-0">
-          <div className="flex flex-col items-end text-right font-mono">
-            <span className="text-[9px] tracking-[0.2em] text-slate-500 uppercase">
-              ARCHIVE STATUS
-            </span>
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-none bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-              <span>SYNCHRONIZED</span>
-            </div>
+        {/* Right side: Demonstration Archive Notice */}
+        <div className="flex items-center justify-end sm:justify-start lg:justify-end border-t border-[#1C2630] pt-2 lg:border-t-0 lg:pt-0">
+          <div className="flex items-center gap-1.5 text-[11px] text-[#7F8B95]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+            <span>Demonstration archive</span>
           </div>
         </div>
       </div>

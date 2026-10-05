@@ -320,11 +320,11 @@ export function SignalViewport({
         ctx.shadowBlur = 0;
 
         // Scan progress label
-        ctx.fillStyle = '#66E3FF';
-        ctx.font = '9px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#5BD8F5';
+        ctx.font = '10px Inter, sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText(
-          `STFT PIPELINE SCAN // ${Math.floor(current.scanProgress * 100)}%`,
+          `Analyzing: ${Math.floor(current.scanProgress * 100)}%`,
           scanX - 8,
           paddingTop + 14
         );
@@ -343,12 +343,12 @@ export function SignalViewport({
 
         ctx.save();
         // Subtle tinted region
-        ctx.fillStyle = 'rgba(6, 182, 212, 0.07)';
+        ctx.fillStyle = 'rgba(91, 216, 245, 0.08)';
         ctx.fillRect(ax, ay, aw, ah);
 
         // Precision corner brackets (not heavy border)
-        const cornerSize = 10;
-        ctx.strokeStyle = current.status === 'CANDIDATE_READY' ? '#10B981' : '#66E3FF';
+        const cornerSize = 8;
+        ctx.strokeStyle = '#5BD8F5';
         ctx.lineWidth = 1.2;
 
         // Top-left
@@ -379,15 +379,15 @@ export function SignalViewport({
         ctx.lineTo(ax + aw, ay + ah - cornerSize);
         ctx.stroke();
 
-        // Micro telemetry label
-        ctx.font = '9px "JetBrains Mono", monospace';
-        ctx.fillStyle = current.status === 'CANDIDATE_READY' ? '#10B981' : '#66E3FF';
+        // Micro label
+        ctx.font = '10px Inter, sans-serif';
+        ctx.fillStyle = '#5BD8F5';
         ctx.textAlign = 'left';
-        ctx.fillText('ANOMALY REGION [Δf = 3.8 Hz]', ax + 4, ay - 6);
+        ctx.fillText('Candidate region (Δf = 3.8 Hz)', ax + 4, ay - 6);
 
         ctx.textAlign = 'right';
         ctx.fillText(
-          `df/dt = ${current.observation.driftRateHzPerSec.toFixed(2)} Hz/s`,
+          `Drift: ${current.observation.driftRateHzPerSec.toFixed(2)} Hz/s`,
           ax + aw - 4,
           ay - 6
         );
@@ -493,21 +493,17 @@ export function SignalViewport({
       ctx.restore();
 
       // Top Header Overlays inside Canvas
-      ctx.fillStyle = '#64748B';
-      ctx.font = '8px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#7F8B95';
+      ctx.font = '9px "JetBrains Mono", monospace';
       ctx.textAlign = 'left';
       ctx.fillText(
-        `BANDWIDTH: ${current.observation.bandwidthMHz.toFixed(1)} MHz // RESOLUTION: 3.8 Hz/CH // POL: DUAL CIRCULAR`,
+        `Bandwidth: ${current.observation.bandwidthMHz.toFixed(1)} MHz`,
         paddingLeft,
         paddingTop - 10
       );
 
       ctx.textAlign = 'right';
-      ctx.fillText(
-        `ZOOM: ${current.zoomLevel}X // FRAME: BARYCENTRIC // SAMPLES: 2.4M`,
-        paddingLeft + plotW,
-        paddingTop - 10
-      );
+      ctx.fillText(`Zoom: ${current.zoomLevel}x`, paddingLeft + plotW, paddingTop - 10);
 
       animId = requestAnimationFrame(render);
     };
@@ -579,94 +575,89 @@ export function SignalViewport({
   };
 
   return (
-    <div className="relative flex flex-col rounded-[2px] border border-slate-800/80 bg-[#05070A] overflow-hidden shadow-2xl">
+    <div className="relative flex flex-col rounded border border-[#1C2630] bg-[#06080B] overflow-hidden shadow-sm">
       {/* Top Instrumentation Tool Strip */}
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-800/80 bg-[#0A0E13] px-3 py-1.5 font-mono text-[11px] text-[#84929C] select-none">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[#EAF4F7]">
-            <span className="h-1.5 w-1.5 rounded-none bg-[#66E3FF]" />
-            PRIMARY SPECTROGRAM VIEWPORT
+      <div className="flex flex-wrap items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] px-3 py-2 text-xs select-none">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 font-medium text-[#E6EDF2]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+            Spectrogram viewport
           </span>
-          <span className="text-slate-700 hidden sm:inline">|</span>
-          <span className="text-slate-400 hidden sm:inline">
-            APERTURE:{' '}
-            <strong className="font-normal text-slate-200">
-              {observation.telescope.split(' ')[0]}
-            </strong>
-          </span>
+          <span className="text-[#7F8B95] hidden sm:inline">•</span>
+          <span className="text-[11px] text-[#7F8B95] hidden sm:inline">Simulated observation</span>
         </div>
 
         {/* Viewport Control Toggles */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {/* Audio Synthesizer Toggle */}
           <button
             type="button"
             onClick={toggleAudio}
-            title={isAudioActive ? 'Mute Sonification' : 'Enable Audio Carrier Stream'}
-            className={`inline-flex items-center gap-1 rounded-[2px] border px-2 py-0.5 text-[10px] uppercase font-mono tracking-wider transition-colors ${
+            title={isAudioActive ? 'Mute audio' : 'Enable audio carrier'}
+            className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs transition-colors ${
               isAudioActive
-                ? 'border-[#66E3FF] bg-[#66E3FF]/15 text-[#66E3FF] shadow-[0_0_8px_rgba(102,227,255,0.2)]'
-                : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
+                ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5]'
+                : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2]'
             }`}
           >
             {isAudioActive ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
-            <span className="hidden sm:inline">AUDIO</span>
+            <span className="hidden sm:inline">Audio</span>
           </button>
 
           {/* Grid Toggle */}
           <button
             type="button"
             onClick={() => setShowGrid(!showGrid)}
-            title="Toggle Reticle Grid"
-            className={`inline-flex items-center gap-1 rounded-[2px] border px-2 py-0.5 text-[10px] uppercase font-mono tracking-wider transition-colors ${
+            title="Toggle grid"
+            className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs transition-colors ${
               showGrid
-                ? 'border-slate-700 bg-slate-800/80 text-cyan-300'
-                : 'border-slate-800 bg-slate-900/60 text-slate-500'
+                ? 'border-[#5BD8F5]/40 bg-[#5BD8F5]/10 text-[#5BD8F5]'
+                : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95]'
             }`}
           >
             <Grid className="h-3 w-3" />
-            <span className="hidden md:inline">GRID</span>
+            <span className="hidden md:inline">Grid</span>
           </button>
 
           {/* Noise Floor Toggle */}
           <button
             type="button"
             onClick={() => setShowNoise(!showNoise)}
-            title="Toggle Noise Baseline"
-            className={`inline-flex items-center gap-1 rounded-[2px] border px-2 py-0.5 text-[10px] uppercase font-mono tracking-wider transition-colors ${
+            title="Toggle noise floor"
+            className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs transition-colors ${
               showNoise
-                ? 'border-slate-700 bg-slate-800/80 text-cyan-300'
-                : 'border-slate-800 bg-slate-900/60 text-slate-500'
+                ? 'border-[#5BD8F5]/40 bg-[#5BD8F5]/10 text-[#5BD8F5]'
+                : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95]'
             }`}
           >
             <Eye className="h-3 w-3" />
-            <span className="hidden md:inline">NOISE</span>
+            <span className="hidden md:inline">Noise</span>
           </button>
 
           {/* Anomaly Overlay Toggle */}
           <button
             type="button"
             onClick={() => setShowAnomalyOverlay(!showAnomalyOverlay)}
-            title="Toggle Anomaly Boundary"
-            className={`inline-flex items-center gap-1 rounded-[2px] border px-2 py-0.5 text-[10px] uppercase font-mono tracking-wider transition-colors ${
+            title="Toggle anomaly overlay"
+            className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs transition-colors ${
               showAnomalyOverlay
-                ? 'border-cyan-800 bg-cyan-950/50 text-[#66E3FF]'
-                : 'border-slate-800 bg-slate-900/60 text-slate-500'
+                ? 'border-[#5BD8F5] bg-[#5BD8F5]/15 text-[#5BD8F5]'
+                : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95]'
             }`}
           >
             <Sparkles className="h-3 w-3" />
-            <span className="hidden md:inline">ANOMALY</span>
+            <span className="hidden md:inline">Candidate</span>
           </button>
 
           {/* Zoom Toggle */}
           <button
             type="button"
             onClick={() => setZoomLevel(zoomLevel === 1 ? 2 : 1)}
-            title="Toggle 2X Zoom on Anomaly"
-            className={`inline-flex items-center gap-1 rounded-[2px] border px-2 py-0.5 text-[10px] uppercase font-mono tracking-wider transition-colors ${
+            title="Toggle 2x zoom"
+            className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs transition-colors ${
               zoomLevel === 2
-                ? 'border-amber-600 bg-amber-950/50 text-amber-300'
-                : 'border-slate-800 bg-slate-900/60 text-slate-400'
+                ? 'border-[#E8AE50] bg-[#E8AE50]/15 text-[#E8AE50]'
+                : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95]'
             }`}
           >
             {zoomLevel === 2 ? (
@@ -674,7 +665,7 @@ export function SignalViewport({
             ) : (
               <Maximize2 className="h-3 w-3" />
             )}
-            <span>{zoomLevel}X</span>
+            <span>{zoomLevel}x</span>
           </button>
         </div>
       </div>
@@ -682,7 +673,7 @@ export function SignalViewport({
       {/* Primary Interactive Canvas Container */}
       <div
         ref={containerRef}
-        className="relative h-[340px] sm:h-[400px] w-full bg-[#03060C] cursor-crosshair"
+        className="relative h-[340px] sm:h-[400px] w-full bg-[#06080B] cursor-crosshair"
       >
         <canvas
           ref={canvasRef}
@@ -694,35 +685,30 @@ export function SignalViewport({
         {/* Hover Crosshair Telemetry Tooltip */}
         {hoverCoord && (
           <div
-            className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-12 rounded-[2px] border border-[#66E3FF]/60 bg-[#0A0E13]/95 px-2.5 py-1 font-mono text-[10px] text-[#EAF4F7] shadow-xl backdrop-blur-md"
+            className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-12 rounded border border-[#1C2630] bg-[#10161D] px-2.5 py-1 font-mono text-[10px] text-[#E6EDF2] shadow-lg"
             style={{ left: hoverCoord.x, top: hoverCoord.y }}
           >
             <div className="flex items-center gap-2">
-              <span className="text-[#66E3FF] font-semibold">
-                {hoverCoord.freqMHz.toFixed(4)} MHz
-              </span>
-              <span className="text-slate-600">•</span>
-              <span className="text-slate-300">T+{hoverCoord.timeSec.toFixed(1)}s</span>
-              <span className="text-slate-600">•</span>
-              <span className="text-emerald-400">{hoverCoord.powerDbm.toFixed(1)} dBm</span>
+              <span className="text-[#5BD8F5]">{hoverCoord.freqMHz.toFixed(4)} MHz</span>
+              <span className="text-[#7F8B95]">•</span>
+              <span className="text-[#E6EDF2]">T+{hoverCoord.timeSec.toFixed(1)}s</span>
+              <span className="text-[#7F8B95]">•</span>
+              <span className="text-[#7F8B95]">{hoverCoord.powerDbm.toFixed(1)} dBm</span>
             </div>
           </div>
         )}
 
         {/* Loading Overlay */}
         {status === 'LOADING' && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#05070A]/85 backdrop-blur-[2px]">
-            <div className="flex flex-col items-center gap-2 font-mono">
-              <div className="flex items-center gap-2 text-cyan-300 text-xs">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#06080B]/85 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 text-[#5BD8F5] text-xs">
                 <span className="inline-block animate-spin">◌</span>
-                <span className="tracking-wider uppercase">BUFFERING I/Q SPECTRAL SAMPLES...</span>
+                <span>Loading observation samples...</span>
               </div>
-              <div className="h-1 w-48 overflow-hidden rounded-none bg-slate-900 border border-slate-800">
-                <div className="h-full w-full bg-[#66E3FF] animate-pulse" />
+              <div className="h-1 w-48 overflow-hidden rounded-full bg-[#10161D] border border-[#1C2630]">
+                <div className="h-full w-full bg-[#5BD8F5] animate-pulse" />
               </div>
-              <span className="text-[10px] text-slate-500 uppercase">
-                2,400,000 COMPLEX SAMPLES LOADED
-              </span>
             </div>
           </div>
         )}

@@ -6,8 +6,6 @@ import type { CandidateSignalData, CandidateFilterState } from './types.ts';
 import { CANDIDATE_OBSERVATION_SUMMARY, MOCK_CANDIDATE_SIGNALS } from './data/mockCandidates.ts';
 
 import { CandidateHeader } from './components/CandidateHeader.tsx';
-import { CandidateSummary } from './components/CandidateSummary.tsx';
-import { CandidateToolbar } from './components/CandidateToolbar.tsx';
 import { CandidateTable } from './components/CandidateTable.tsx';
 import { CandidateDrawer } from './components/CandidateDrawer.tsx';
 
@@ -81,25 +79,19 @@ export default function CandidatesPage() {
 
   return (
     <PageTransition className="space-y-4">
-      {/* 1. Page Header */}
+      {/* 1. Unified Page Header with Search, Filter & Triage Counts */}
       <CandidateHeader
         observationId={CANDIDATE_OBSERVATION_SUMMARY.observationId}
+        targetName={CANDIDATE_OBSERVATION_SUMMARY.targetName}
         totalIdentified={CANDIDATE_OBSERVATION_SUMMARY.anomalousRegionsCount}
         highPriorityCount={CANDIDATE_OBSERVATION_SUMMARY.highPriorityCount}
-      />
-
-      {/* 2. Observation Summary Strip */}
-      <CandidateSummary summary={CANDIDATE_OBSERVATION_SUMMARY} />
-
-      {/* 3. Search & Filters Toolbar */}
-      <CandidateToolbar
         filters={filters}
         onFilterChange={setFilters}
         totalCount={MOCK_CANDIDATE_SIGNALS.length}
         filteredCount={filteredCandidates.length}
       />
 
-      {/* 4. Two-Pane Layout: Candidate Table on Left, Detail Drawer on Right */}
+      {/* 2. Primary Triage Layout: Candidate Table on Left, Detail Drawer on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Left: Candidate Records Table */}
         <div

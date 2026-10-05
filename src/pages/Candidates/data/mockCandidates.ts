@@ -2,7 +2,7 @@ import type { CandidateSignalData, CandidateObservationSummary } from '../types.
 
 export const CANDIDATE_OBSERVATION_SUMMARY: CandidateObservationSummary = {
   observationId: 'AET-04721',
-  targetName: 'Proxima Centauri (α Cen C)',
+  targetName: 'Simulated target: Proxima field',
   samplesCount: 148320,
   anomalousRegionsCount: 17,
   highPriorityCount: 4,
@@ -11,14 +11,14 @@ export const CANDIDATE_OBSERVATION_SUMMARY: CandidateObservationSummary = {
   durationString: '00:04:32',
   centerFrequencyMHz: 1420.37,
   bandwidthMHz: 12.5,
-  telescope: 'Green Bank Telescope (100m Aperture)',
+  telescope: 'Synthetic Antenna Array (Simulated observation)',
 };
 
 export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04721',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1420.37,
     bandwidthKHz: 3.8,
     durationSeconds: 18.4,
@@ -56,7 +56,7 @@ export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04738',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1418.92,
     bandwidthKHz: 4.2,
     durationSeconds: 14.1,
@@ -94,7 +94,7 @@ export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04744',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1421.05,
     bandwidthKHz: 5.1,
     durationSeconds: 22.0,
@@ -132,7 +132,7 @@ export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04749',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1419.64,
     bandwidthKHz: 6.8,
     durationSeconds: 12.6,
@@ -169,7 +169,7 @@ export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04752',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1423.14,
     bandwidthKHz: 7.4,
     durationSeconds: 9.8,
@@ -207,7 +207,7 @@ export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04760',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1416.8,
     bandwidthKHz: 8.5,
     durationSeconds: 11.2,
@@ -244,7 +244,7 @@ export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04768',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1424.5,
     bandwidthKHz: 12.0,
     durationSeconds: 8.5,
@@ -281,7 +281,7 @@ export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04775',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1417.2,
     bandwidthKHz: 9.6,
     durationSeconds: 7.2,
@@ -318,7 +318,7 @@ export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04789',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1417.55,
     bandwidthKHz: 28.0,
     durationSeconds: 15.0,
@@ -356,7 +356,7 @@ export const MOCK_CANDIDATE_SIGNALS: CandidateSignalData[] = [
   {
     id: 'AET-04802',
     observationId: 'AET-04721',
-    targetName: 'Proxima Centauri (α Cen C)',
+    targetName: 'Simulated target: Proxima field',
     frequencyMHz: 1420.1,
     bandwidthKHz: 45.0,
     durationSeconds: 24.5,

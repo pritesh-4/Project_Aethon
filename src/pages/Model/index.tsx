@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PageTransition } from '@/components/ui/motion.tsx';
+import { Layers, Network, ShieldCheck, Binary } from 'lucide-react';
 import type { ModelStageId } from './types.ts';
 
 import { ModelHeader } from './components/ModelHeader.tsx';
@@ -15,70 +16,89 @@ import { EvaluationPanel } from './components/EvaluationPanel.tsx';
 import { TechnicalDetails } from './components/TechnicalDetails.tsx';
 import { ModelCta } from './components/ModelCta.tsx';
 
+type ModelViewTab = 'architecture' | 'manifold' | 'screening' | 'technical';
+
 export default function ModelPage() {
+  const [activeTab, setActiveTab] = useState<ModelViewTab>('architecture');
   const [activeStageId, setActiveStageId] = useState<ModelStageId>('observation');
+
+  const tabs: { id: ModelViewTab; label: string; icon: typeof Layers }[] = [
+    { id: 'architecture', label: 'Architecture & pipeline', icon: Layers },
+    { id: 'manifold', label: 'Representation space', icon: Network },
+    { id: 'screening', label: 'Interference screening', icon: ShieldCheck },
+    { id: 'technical', label: 'Technical specifications', icon: Binary },
+  ];
 
   return (
     <PageTransition className="space-y-6 max-w-7xl mx-auto pb-10">
-      {/* 2 & 3. PAGE HEADER & HERO PHILOSOPHY STATEMENTS */}
+      {/* 1. Header */}
       <section aria-label="Model Intelligence Header">
         <ModelHeader />
       </section>
 
-      {/* 4 & 5. PRIMARY LIVE COMPUTATIONAL ARCHITECTURE TOPOLOGY */}
-      <section aria-label="Interactive Computational Architecture">
-        <ArchitectureMap
-          activeStageId={activeStageId}
-          onSelectStage={(id) => setActiveStageId(id)}
-        />
+      {/* 2. Model View Tabs */}
+      <section aria-label="Model Exploration Views" className="space-y-6">
+        <div className="flex items-center gap-2 border-b border-[#1C2630] pb-2 font-sans text-xs">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] font-medium transition-colors cursor-pointer ${
+                  isActive
+                    ? 'bg-[#10161D] text-[#5BD8F5] border border-[#1C2630]'
+                    : 'text-[#7F8B95] hover:text-[#E6EDF2] border border-transparent'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab 1: Architecture & Pipeline */}
+        {activeTab === 'architecture' && (
+          <div className="space-y-6">
+            <ArchitectureMap
+              activeStageId={activeStageId}
+              onSelectStage={(id) => setActiveStageId(id)}
+            />
+            <ModelFlowVisualizer />
+            <ModelStrategyComparison />
+          </div>
+        )}
+
+        {/* Tab 2: Representation Space */}
+        {activeTab === 'manifold' && (
+          <div className="space-y-6">
+            <LearnedSignalSpace />
+            <AnomalyScoringPanel />
+          </div>
+        )}
+
+        {/* Tab 3: Interference Screening */}
+        {activeTab === 'screening' && (
+          <div className="space-y-6">
+            <FalsePositivePanel />
+            <HumanInTheLoopFlow />
+          </div>
+        )}
+
+        {/* Tab 4: Technical Specifications */}
+        {activeTab === 'technical' && (
+          <div className="space-y-6">
+            <TechnicalDetails />
+            <AlgorithmArchitecture />
+            <EvaluationPanel />
+          </div>
+        )}
       </section>
 
-      {/* 6. LEARNED SIGNAL SPACE & MANIFOLD DEVIATION */}
-      <section aria-label="Conceptual Learned Signal Space">
-        <LearnedSignalSpace />
-      </section>
-
-      {/* 10. STEP-BY-STEP DATA TRANSFORMATION FLOW */}
-      <section aria-label="Signal Transformation Flow">
-        <ModelFlowVisualizer />
-      </section>
-
-      {/* 8 & 11. MODEL STRATEGY: SUPERVISED VS OPEN-WORLD DISCOVERY */}
-      <section aria-label="Model Strategy Comparison">
-        <ModelStrategyComparison />
-      </section>
-
-      {/* 7 & 16. ANOMALY SCORING SPECTRUM & SIGNAL MANIFOLD GEOMETRY */}
-      <section aria-label="Anomaly Index and Manifold Geometry">
-        <AnomalyScoringPanel />
-      </section>
-
-      {/* 12. THE FALSE POSITIVE PROBLEM */}
-      <section aria-label="False Positive Taxonomy and Mitigation">
-        <FalsePositivePanel />
-      </section>
-
-      {/* 13. HUMAN-IN-THE-LOOP DISCOVERY GATEWAY */}
-      <section aria-label="Human-In-The-Loop Flow">
-        <HumanInTheLoopFlow />
-      </section>
-
-      {/* 9. ALGORITHM ARCHITECTURE: PRODUCTION VS RESEARCH EXTENSIONS */}
-      <section aria-label="Algorithm Architecture Breakdown">
-        <AlgorithmArchitecture />
-      </section>
-
-      {/* 14, 15, 17. EVALUATION METHODOLOGY & PIPELINE TELEMETRY */}
-      <section aria-label="Evaluation Methodology and Pipeline Telemetry">
-        <EvaluationPanel />
-      </section>
-
-      {/* 18. COLLAPSIBLE TECHNICAL SPECIFICATIONS & EQUATIONS */}
-      <section aria-label="Technical Details and Formulations">
-        <TechnicalDetails />
-      </section>
-
-      {/* 28. FINAL CANDIDATE PHILOSOPHY CALL TO ACTION */}
+      {/* 3. Closing Philosophy Statement */}
       <section aria-label="Explore Discovery Call to Action">
         <ModelCta />
       </section>

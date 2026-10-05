@@ -30,37 +30,39 @@ export function SidebarItem({
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          'group relative flex items-center transition-colors duration-200 select-none font-mono outline-none',
-          'focus-visible:ring-1 focus-visible:ring-[#66E3FF] focus-visible:ring-offset-1 focus-visible:ring-offset-[#05070A]',
+          'group relative flex items-center transition-colors duration-150 select-none font-sans outline-none',
+          'focus-visible:ring-1 focus-visible:ring-[#5BD8F5] focus-visible:ring-offset-1 focus-visible:ring-offset-[#06080B]',
           isCollapsed
-            ? 'h-10 w-10 mx-auto justify-center rounded-[2px]'
-            : 'h-9 w-full px-3 gap-2.5 rounded-[2px] text-xs',
+            ? 'h-9 w-9 mx-auto justify-center rounded-[4px]'
+            : 'h-9 w-full px-2.5 gap-2.5 rounded-[4px] text-xs',
           isActive
-            ? 'bg-[#10161D] text-[#EAF4F7] font-semibold'
-            : 'text-[#84929C] hover:text-[#EAF4F7] hover:bg-[#10161D]/50'
+            ? 'bg-[#10161D] text-[#E6EDF2] font-medium'
+            : 'text-[#7F8B95] hover:text-[#E6EDF2] hover:bg-[#10161D]/60'
         )
       }
     >
       {({ isActive }) => (
         <>
-          {/* Active Left Indicator Bar (Live System Channel) */}
+          {/* Active Left Indicator Bar */}
           {isActive && (
             <motion.span
               layoutId="activeNavIndicator"
               className={cn(
-                'absolute bg-[#66E3FF] shadow-[0_0_8px_rgba(102,227,255,0.7)]',
-                isCollapsed ? 'left-0 top-1.5 bottom-1.5 w-[2px]' : 'left-0 top-1 bottom-1 w-[2px]'
+                'absolute bg-[#5BD8F5]',
+                isCollapsed
+                  ? 'left-0 top-1.5 bottom-1.5 w-[2px]'
+                  : 'left-0 top-1.5 bottom-1.5 w-[2px]'
               )}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
             />
           )}
 
-          {/* Icon with 1-2px subtle shift on hover */}
-          <span className="relative shrink-0 transition-transform duration-200 group-hover:translate-x-[2px]">
+          {/* Icon */}
+          <span className="relative shrink-0">
             <Icon
               className={cn(
-                'h-4 w-4 transition-colors duration-200',
-                isActive ? 'text-[#66E3FF]' : 'text-[#84929C] group-hover:text-[#EAF4F7]'
+                'h-4 w-4 transition-colors duration-150',
+                isActive ? 'text-[#5BD8F5]' : 'text-[#7F8B95] group-hover:text-[#E6EDF2]'
               )}
             />
           </span>
@@ -72,18 +74,18 @@ export function SidebarItem({
                 {index && (
                   <span
                     className={cn(
-                      'text-[10px] tracking-wider transition-colors',
-                      isActive ? 'text-[#66E3FF]' : 'text-slate-600 group-hover:text-slate-400'
+                      'text-[10px] font-mono transition-colors',
+                      isActive ? 'text-[#5BD8F5]' : 'text-[#7F8B95]/60 group-hover:text-[#7F8B95]'
                     )}
                   >
                     {index}
                   </span>
                 )}
-                <span className="truncate tracking-wider text-[11px] uppercase">{label}</span>
+                <span className="truncate text-xs tracking-normal">{label}</span>
               </div>
 
               {badge && (
-                <span className="ml-2 shrink-0 rounded-[1px] border border-slate-800 bg-[#0A0E13] px-1 py-0.2 text-[9px] font-mono text-[#84929C] group-hover:text-[#EAF4F7] transition-colors">
+                <span className="ml-2 shrink-0 rounded-[3px] border border-[#172230] bg-[#10161D] px-1.5 py-0.2 text-[10px] font-mono text-[#7F8B95] group-hover:text-[#E6EDF2] transition-colors">
                   {badge}
                 </span>
               )}

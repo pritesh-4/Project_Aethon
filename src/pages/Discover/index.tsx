@@ -38,6 +38,7 @@ export default function DiscoverPage() {
     minPersistencePercent: 75,
     rfiFilterEnabled: true,
   });
+  const [showConfig, setShowConfig] = useState(false);
 
   const [stageProgress, setStageProgress] = useState({
     preprocessing: 0,
@@ -75,9 +76,7 @@ export default function DiscoverPage() {
       ranking: 0,
     });
     setVisibleCandidateCount(0);
-    toast.success(`Observation record ${obs.id} loaded into discovery bay`, {
-      description: `${obs.samplesCount.toLocaleString()} complex samples ready for PFB transform.`,
-    });
+    toast.success(`Observation ${obs.id} loaded`);
   };
 
   // Handle Remove Observation
@@ -102,9 +101,7 @@ export default function DiscoverPage() {
     setOverallProgress(0);
     setVisibleCandidateCount(0);
 
-    toast.info(`Initiating Autonomous Signal Discovery [${observation.id}]`, {
-      description: 'Deploying Polyphase Filterbank and Latent Feature Extraction...',
-    });
+    toast.info(`Starting discovery for ${observation.id}`);
 
     const pipelineSequence = [
       { stage: 'preprocessing' as const, key: 'preprocessing' as const, duration: 1000 },
@@ -121,8 +118,8 @@ export default function DiscoverPage() {
         setStage('complete');
         setOverallProgress(100);
         setVisibleCandidateCount(MOCK_DISCOVERY_CANDIDATES.length);
-        toast.success('Autonomous Signal Search Procedure Complete', {
-          description: `Identified 17 anomalous regions; isolated 4 high-priority candidate signals.`,
+        toast.success('Discovery complete', {
+          description: 'Identified 4 candidate events.',
         });
         return;
       }
@@ -179,7 +176,7 @@ export default function DiscoverPage() {
     });
     setOverallProgress(0);
     setVisibleCandidateCount(0);
-    toast('Discovery workspace reset');
+    toast('Discovery reset');
   };
 
   const isAnalyzing =
@@ -223,13 +220,30 @@ export default function DiscoverPage() {
         )}
       </AnimatePresence>
 
-      {/* 3. Analysis Configuration (Visible when observation loaded and not running) */}
+      {/* 3. Analysis Configuration (Progressive Disclosure) */}
       {!isAnalyzing && stage !== 'complete' && observation && (
-        <SearchConfiguration
-          config={searchConfig}
-          onChange={setSearchConfig}
-          disabled={isAnalyzing}
-        />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs text-[#7F8B95] px-1">
+            <button
+              type="button"
+              onClick={() => setShowConfig(!showConfig)}
+              className="flex items-center gap-1.5 hover:text-[#5BD8F5] transition-colors cursor-pointer"
+            >
+              <span>
+                {showConfig
+                  ? '▾ Hide search parameters'
+                  : '▸ Configure search parameters (Standard mode, 75% persistence)'}
+              </span>
+            </button>
+          </div>
+          {showConfig && (
+            <SearchConfiguration
+              config={searchConfig}
+              onChange={setSearchConfig}
+              disabled={isAnalyzing}
+            />
+          )}
+        </div>
       )}
 
       {/* 4. Live Analysis Section: Signal Viewport + Pipeline Progress */}

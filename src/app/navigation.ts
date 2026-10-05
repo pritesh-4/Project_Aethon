@@ -20,28 +20,28 @@ export interface NavItem {
 }
 
 export const PRIMARY_NAV: NavItem[] = [
-  { id: 'observatory', index: '01', label: 'OBSERVATORY', path: '/observatory', icon: Radar },
+  { id: 'observatory', index: '01', label: 'Observatory', path: '/observatory', icon: Radar },
   {
     id: 'discovery',
     index: '02',
-    label: 'DISCOVERY',
+    label: 'Discovery',
     path: '/discover',
     icon: ScanSearch,
     badge: '4',
   },
-  { id: 'candidates', index: '03', label: 'CANDIDATES', path: '/candidates', icon: Crosshair },
+  { id: 'candidates', index: '03', label: 'Candidates', path: '/candidates', icon: Crosshair },
   {
     id: 'analysis',
     index: '04',
-    label: 'ANALYSIS',
+    label: 'Analysis',
     path: '/analysis/AET-04721',
     icon: Activity,
   },
-  { id: 'model', index: '05', label: 'MODEL', path: '/model', icon: BrainCircuit },
+  { id: 'model', index: '05', label: 'Model', path: '/model', icon: BrainCircuit },
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
-  { id: 'archive', label: 'ARCHIVE', path: '/archive', icon: Database },
-  { id: 'about', label: 'ABOUT', path: '/about', icon: Info },
-  { id: 'mission', label: 'MISSION NARRATIVE', path: '/', icon: Disc },
+  { id: 'archive', label: 'Archive', path: '/archive', icon: Database },
+  { id: 'about', label: 'About', path: '/about', icon: Info },
+  { id: 'mission', label: 'Overview', path: '/', icon: Disc },
 ];

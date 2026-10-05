@@ -16,48 +16,43 @@ export function DiscoveryPipeline({ stageProgress }: DiscoveryPipelineProps) {
   const stages = [
     {
       key: 'preprocessing',
-      title: 'PREPROCESSING',
+      title: 'Preprocessing',
       subtitle: 'Polyphase filterbank channelization (4096 ch)',
       progress: stageProgress.preprocessing,
     },
     {
       key: 'transform',
-      title: 'TIME–FREQUENCY TRANSFORM',
+      title: 'Time–frequency transform',
       subtitle: 'Complex STFT high-cadence matrix generation',
       progress: stageProgress.transform,
     },
     {
       key: 'representing',
-      title: 'REPRESENTATION LEARNING',
+      title: 'Representation learning',
       subtitle: 'Patch tokenization & latent transformer embeddings',
       progress: stageProgress.representing,
     },
     {
       key: 'searching',
-      title: 'ANOMALY SEARCH',
+      title: 'Anomaly search',
       subtitle: 'Variational latent reconstruction residual (Δ > 4.8σ)',
       progress: stageProgress.searching,
     },
     {
       key: 'ranking',
-      title: 'CANDIDATE RANKING',
+      title: 'Candidate ranking',
       subtitle: 'Topocentric Doppler drift & multi-beam spatial filter',
       progress: stageProgress.ranking,
     },
   ];
 
   return (
-    <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-4 font-mono select-none">
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5 mb-3">
+    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none">
+      <div className="flex items-center justify-between border-b border-[#1C2630] pb-2.5 mb-3">
         <div className="flex items-center gap-2">
-          <Cpu className="h-3.5 w-3.5 text-[#66E3FF]" />
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#EAF4F7]">
-            AETHON DISCOVERY ENGINE PIPELINE
-          </h4>
+          <Cpu className="h-3.5 w-3.5 text-[#5BD8F5]" />
+          <h4 className="text-xs font-semibold text-[#E6EDF2]">Discovery pipeline</h4>
         </div>
-        <span className="text-[10px] text-cyan-400 uppercase tracking-wider font-semibold">
-          ACTIVE INFERENCE
-        </span>
       </div>
 
       <div className="space-y-3.5">
@@ -69,48 +64,44 @@ export function DiscoveryPipeline({ stageProgress }: DiscoveryPipelineProps) {
             <div key={st.key} className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-500 font-semibold">0{idx + 1}</span>
+                  <span className="text-[10px] text-[#7F8B95] font-mono">0{idx + 1}</span>
                   <span
-                    className={`font-semibold tracking-wider uppercase ${
-                      isComplete ? 'text-[#EAF4F7]' : isActive ? 'text-[#66E3FF]' : 'text-slate-500'
+                    className={`font-medium ${
+                      isComplete ? 'text-[#E6EDF2]' : isActive ? 'text-[#5BD8F5]' : 'text-[#7F8B95]'
                     }`}
                   >
                     {st.title}
                   </span>
                 </div>
 
-                <div className="text-[10px] font-mono">
+                <div className="text-[11px] font-mono">
                   {isComplete ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                    <span className="inline-flex items-center gap-1 text-[#5BD8F5] font-medium">
                       <CheckCircle2 className="h-3 w-3" />
-                      COMPLETE
+                      Complete
                     </span>
                   ) : isActive ? (
-                    <span className="text-[#66E3FF] font-semibold">{Math.floor(st.progress)}%</span>
+                    <span className="text-[#5BD8F5] font-medium">{Math.floor(st.progress)}%</span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-slate-600">
+                    <span className="inline-flex items-center gap-1 text-[#7F8B95]">
                       <Clock className="h-3 w-3" />
-                      WAITING
+                      Pending
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Progress Bar with Precision Segments */}
-              <div className="h-1.5 w-full overflow-hidden rounded-none bg-slate-900 border border-slate-800/80">
+              {/* Progress Bar */}
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#10161D] border border-[#1C2630]">
                 <div
                   className={`h-full transition-all duration-150 ${
-                    isComplete
-                      ? 'bg-emerald-500'
-                      : isActive
-                        ? 'bg-[#66E3FF] shadow-[0_0_8px_rgba(102,227,255,0.6)]'
-                        : 'bg-transparent'
+                    isComplete ? 'bg-[#5BD8F5]' : isActive ? 'bg-[#5BD8F5]' : 'bg-transparent'
                   }`}
                   style={{ width: `${Math.min(100, Math.max(0, st.progress))}%` }}
                 />
               </div>
 
-              <div className="text-[9px] text-[#84929C] pl-5">{st.subtitle}</div>
+              <div className="text-[11px] text-[#7F8B95] pl-5">{st.subtitle}</div>
             </div>
           );
         })}

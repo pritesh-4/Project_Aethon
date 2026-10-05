@@ -1,6 +1,6 @@
 import type { ObservationStatus } from '../types.ts';
-import { StatusIndicator } from '@/components/ui/StatusIndicator.tsx';
-import { Activity, Cpu } from 'lucide-react';
+import { Button } from '@/components/ui/Button.tsx';
+import { Sparkles, Play, Pause, RotateCcw } from 'lucide-react';
 
 export interface ObservatoryHeaderProps {
   observationId: string;
@@ -9,6 +9,10 @@ export interface ObservatoryHeaderProps {
   telescope: string;
   observationList: { id: string; name: string }[];
   onSelectObservation: (id: string) => void;
+  isPaused: boolean;
+  onStartAnalysis: () => void;
+  onTogglePause: () => void;
+  onReset: () => void;
 }
 
 export function ObservatoryHeader({
@@ -18,117 +22,129 @@ export function ObservatoryHeader({
   telescope,
   observationList,
   onSelectObservation,
+  isPaused,
+  onStartAnalysis,
+  onTogglePause,
+  onReset,
 }: ObservatoryHeaderProps) {
+  const isAnalyzing = status === 'ANALYZING' || status === 'LOADING';
+  const hasResult = status === 'ANOMALY_DETECTED' || status === 'CANDIDATE_READY';
+
   const getStatusColor = (s: ObservationStatus) => {
     switch (s) {
       case 'IDLE':
-        return 'text-[#84929C] border-slate-700 bg-slate-900/40';
+        return 'text-[#7F8B95] border-[#1C2630] bg-[#10161D]';
       case 'LOADING':
-        return 'text-[#66E3FF] border-[#66E3FF]/40 bg-[#06b6d4]/10';
       case 'ANALYZING':
-        return 'text-[#66E3FF] border-[#66E3FF]/70 bg-[#06b6d4]/15 animate-pulse';
-      case 'ANOMALY_DETECTED':
-        return 'text-[#FFB84D] border-[#FFB84D]/70 bg-amber-950/30';
       case 'CANDIDATE_READY':
-        return 'text-emerald-400 border-emerald-500/70 bg-emerald-950/30';
+        return 'text-[#5BD8F5] border-[#5BD8F5]/30 bg-[#0E1A22]';
+      case 'ANOMALY_DETECTED':
+        return 'text-[#E8AE50] border-[#E8AE50]/40 bg-[#1C160E]';
     }
   };
 
   const getStatusLabel = (s: ObservationStatus) => {
     switch (s) {
       case 'IDLE':
-        return 'STANDBY';
+        return 'Standby';
       case 'LOADING':
-        return 'BUFFERING';
+        return 'Buffering';
       case 'ANALYZING':
-        return 'PROCESSING';
+        return 'Analyzing';
       case 'ANOMALY_DETECTED':
-        return 'ANOMALY DETECTED';
+        return 'Anomaly detected';
       case 'CANDIDATE_READY':
-        return 'CANDIDATE READY';
+        return 'Candidate ready';
     }
   };
 
   return (
-    <header className="border-b border-slate-800/80 bg-[#080D1A]/60 px-4 py-2.5 backdrop-blur-sm">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        {/* Left: Compact Scientific Title & Active Observation Metadata */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-xs">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-bold tracking-widest text-[#EAF4F7] uppercase font-sans">
-                OBSERVATORY
-              </span>
-              <span className="text-slate-600">//</span>
-              <span className="text-[11px] text-[#84929C] tracking-wider uppercase">
-                DEEP-SKY SIGNAL ANALYSIS
-              </span>
-            </div>
-          </div>
+    <header className="border-b border-[#1C2630] bg-[#0B0F14] px-4 py-3 select-none">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Left: Title, Observation Switcher & Status */}
+        <div className="flex flex-wrap items-center gap-3 text-xs font-sans">
+          <span className="text-sm font-semibold tracking-wide text-[#E6EDF2]">Observatory</span>
 
-          <div className="hidden sm:block h-3.5 w-px bg-slate-800" />
+          <span className="text-[#1C2630] hidden sm:inline">|</span>
 
-          {/* Observation Switcher / Identifier */}
+          {/* Observation Switcher */}
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-[#84929C] uppercase">OBSERVATION //</span>
-            <div className="relative">
-              <select
-                aria-label="Select Observation Record"
-                value={observationId}
-                onChange={(e) => onSelectObservation(e.target.value)}
-                className="h-6 rounded-[2px] border border-slate-700/80 bg-[#0A0E13] px-2 text-[11px] font-mono text-[#66E3FF] focus:border-[#66E3FF] focus:outline-none transition-colors cursor-pointer"
-              >
-                {observationList.map((obs) => (
-                  <option key={obs.id} value={obs.id}>
-                    {obs.id} — {obs.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <span className="text-xs text-[#7F8B95]">Observation:</span>
+            <select
+              aria-label="Select Observation Record"
+              value={observationId}
+              onChange={(e) => onSelectObservation(e.target.value)}
+              disabled={isAnalyzing}
+              className="h-7 rounded-[4px] border border-[#1C2630] bg-[#10161D] px-2 text-xs font-mono text-[#5BD8F5] focus:border-[#5BD8F5] focus:outline-none transition-colors cursor-pointer"
+            >
+              {observationList.map((obs) => (
+                <option key={obs.id} value={obs.id}>
+                  {obs.id} — {obs.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <div className="hidden md:block h-3.5 w-px bg-slate-800" />
-
-          {/* Target & Aperture Breadcrumb */}
-          <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-[#84929C]">
-            <span className="text-slate-400 font-medium">{targetName}</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-slate-500 text-[10px] truncate max-w-[200px]">{telescope}</span>
-          </div>
-
-          <div className="hidden sm:block h-3.5 w-px bg-slate-800" />
+          <span className="text-[#1C2630] hidden sm:inline">|</span>
 
           {/* Status Badge */}
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-[#84929C] uppercase">STATUS //</span>
             <span
-              className={`rounded-[2px] border px-1.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase ${getStatusColor(
+              className={`rounded-[4px] border px-2 py-0.5 text-xs font-medium ${getStatusColor(
                 status
               )}`}
             >
               {getStatusLabel(status)}
             </span>
           </div>
+
+          {/* Target & Telescope Breadcrumb */}
+          <span className="text-xs text-[#7F8B95] hidden lg:inline">
+            {targetName} · {telescope}
+          </span>
         </div>
 
-        {/* Right: Thin Subsystem Health Indicators */}
-        <div className="flex items-center gap-4 font-mono text-[11px] text-[#84929C] self-end lg:self-center">
-          <div className="flex items-center gap-1.5">
-            <Activity className="h-3 w-3 text-[#66E3FF]" />
-            <span className="text-slate-400">SIGNAL ENGINE</span>
-            <StatusIndicator status="online" label="ONLINE" pulse={false} className="text-[10px]" />
-          </div>
+        {/* Right: Primary Action & Playback Controls */}
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          {/* Reset button (visible when not idle) */}
+          {status !== 'IDLE' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<RotateCcw className="h-3.5 w-3.5" />}
+              onClick={onReset}
+              disabled={isAnalyzing}
+              title="Reset observation"
+            >
+              Reset
+            </Button>
+          )}
 
-          <div className="h-3.5 w-px bg-slate-800" />
+          {/* Pause / Resume button */}
+          {status !== 'IDLE' && (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+              onClick={onTogglePause}
+              title={isPaused ? 'Resume observation playback' : 'Pause observation playback'}
+            >
+              {isPaused ? 'Resume' : 'Pause'}
+            </Button>
+          )}
 
-          <div className="flex items-center gap-1.5">
-            <Cpu className="h-3 w-3 text-emerald-400" />
-            <span className="text-slate-400">INFERENCE ENGINE</span>
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase text-emerald-400 tracking-wider">
-              <span className="h-1.5 w-1.5 rounded-none bg-emerald-400" />
-              READY
-            </span>
-          </div>
+          {/* PRIMARY ACTION */}
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            onClick={onStartAnalysis}
+            state={isAnalyzing ? 'loading' : 'idle'}
+            loadingText="Analyzing..."
+            disabled={isAnalyzing}
+          >
+            {hasResult ? 'Re-analyze' : 'Analyze observation'}
+          </Button>
         </div>
       </div>
     </header>

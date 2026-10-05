@@ -17,53 +17,54 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
       animate={{ width: isCollapsed ? 64 : 240 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        'hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r border-slate-800/80 bg-[#0A0E13] select-none font-mono z-30',
+        'hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r border-[#172230] bg-[#0B0F14] select-none font-sans z-30',
         className
       )}
     >
       {/* 1. Header: AETHON Wordmark & System Status */}
-      <div className="h-28 border-b border-slate-800/70 p-4 flex flex-col justify-between overflow-hidden">
+      <div className="h-24 border-b border-[#172230] px-4 py-3 flex flex-col justify-between overflow-hidden">
         {!isCollapsed ? (
           <div>
             <div className="flex items-center justify-between">
-              <h1 className="text-base font-bold tracking-[0.25em] text-[#EAF4F7] uppercase font-mono">
-                AETHON
-              </h1>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#5BD8F5]" />
+                <h1 className="text-sm font-semibold tracking-wider text-[#E6EDF2] font-sans">
+                  AETHON
+                </h1>
+              </div>
               <button
                 type="button"
                 onClick={onToggleCollapse}
                 title="Collapse sidebar"
-                className="h-5 w-5 flex items-center justify-center rounded-[2px] border border-slate-800 bg-[#05070A] text-[#84929C] hover:text-[#EAF4F7] hover:border-slate-700 transition-colors cursor-pointer"
+                className="h-6 w-6 flex items-center justify-center rounded-[4px] border border-[#172230] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2] hover:border-[#243345] transition-colors cursor-pointer"
               >
-                <ChevronLeft className="h-3 w-3" />
+                <ChevronLeft className="h-3.5 w-3.5" />
               </button>
             </div>
-            <p className="text-[9px] tracking-[0.2em] text-[#84929C] uppercase font-mono mt-0.5 leading-tight">
-              ASTRONOMICAL
-              <br />
-              DISCOVERY SYSTEM
+            <p className="text-[11px] text-[#7F8B95] font-sans mt-1">
+              Astronomical Signal Discovery
             </p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <span className="text-sm font-bold tracking-widest text-[#66E3FF] font-mono">A</span>
+            <span className="text-sm font-semibold text-[#5BD8F5] font-sans">A</span>
             <button
               type="button"
               onClick={onToggleCollapse}
               title="Expand sidebar"
-              className="h-5 w-5 flex items-center justify-center rounded-[2px] border border-slate-800 bg-[#05070A] text-[#84929C] hover:text-[#EAF4F7] hover:border-slate-700 transition-colors cursor-pointer"
+              className="h-6 w-6 flex items-center justify-center rounded-[4px] border border-[#172230] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2] hover:border-[#243345] transition-colors cursor-pointer"
             >
-              <ChevronRight className="h-3 w-3" />
+              <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
 
         {/* System Status Readout */}
         {!isCollapsed ? (
-          <SystemStatus status="online" label="ONLINE" showCategory={true} />
+          <SystemStatus status="online" label="Online" showCategory={false} />
         ) : (
           <div className="flex justify-center" title="System Status: Online">
-            <span className="h-1.5 w-1.5 rounded-none bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]" />
           </div>
         )}
       </div>
@@ -73,9 +74,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
         {/* Primary Navigation */}
         <div className="space-y-1">
           {!isCollapsed && (
-            <div className="px-3 pb-1 text-[9px] font-semibold tracking-[0.2em] text-slate-600 uppercase">
-              OPERATIONAL
-            </div>
+            <div className="px-3 pb-1 text-[11px] font-medium text-[#7F8B95]">Operational</div>
           )}
           {PRIMARY_NAV.map((item) => (
             <SidebarItem
@@ -92,14 +91,12 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
         </div>
 
         {/* Divider */}
-        <div className="border-t border-slate-800/60 my-2" />
+        <div className="border-t border-[#172230] my-2" />
 
         {/* Secondary Navigation */}
         <div className="space-y-1">
           {!isCollapsed && (
-            <div className="px-3 pb-1 text-[9px] font-semibold tracking-[0.2em] text-slate-600 uppercase">
-              SYSTEM & ARCHIVE
-            </div>
+            <div className="px-3 pb-1 text-[11px] font-medium text-[#7F8B95]">System & Archive</div>
           )}
           {SECONDARY_NAV.map((item) => (
             <SidebarItem
@@ -114,35 +111,16 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
         </div>
       </div>
 
-      {/* 3. Footer: Astronomical Software Telemetry Status */}
-      <div className="border-t border-slate-800/70 p-4 bg-[#05070A] text-[#84929C] text-[10px] font-mono leading-relaxed">
+      {/* 3. Footer: Version & Clean Status */}
+      <div className="border-t border-[#172230] p-3 bg-[#0B0F14] text-[#7F8B95] text-[11px] font-sans leading-relaxed">
         {!isCollapsed ? (
-          <div className="space-y-2">
-            <div>
-              <span className="block text-[9px] text-slate-500 uppercase tracking-widest">
-                AETHON ENGINE
-              </span>
-              <span className="text-[#EAF4F7] font-semibold text-[10px] tracking-wider">
-                ONLINE
-              </span>
-            </div>
-
-            <div>
-              <span className="block text-[9px] text-slate-500 uppercase tracking-widest">
-                MODEL
-              </span>
-              <span className="text-[#66E3FF] font-semibold text-[10px] tracking-wider">READY</span>
-            </div>
-
-            <div className="pt-2 border-t border-slate-900 flex items-center justify-between text-[9px] text-slate-600">
-              <span>v0.1.0</span>
-              <span>REST: 1420 MHz</span>
-            </div>
+          <div className="flex items-center justify-between">
+            <span>Aethon Core</span>
+            <span className="font-mono text-[10px] text-[#7F8B95]">v0.1.0</span>
           </div>
         ) : (
           <div className="text-center">
-            <span className="text-[8px] text-slate-600 block">v0.1</span>
-            <span className="h-1 w-1 rounded-none bg-emerald-400 inline-block mt-1" />
+            <span className="font-mono text-[9px] text-[#7F8B95]">v0.1</span>
           </div>
         )}
       </div>

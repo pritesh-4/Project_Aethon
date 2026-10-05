@@ -3,9 +3,9 @@ import type { ObservationData } from '../types.ts';
 export const MOCK_OBSERVATIONS: ObservationData[] = [
   {
     id: 'AET-04721',
-    name: 'Proxima Centauri Spectral Run 47',
-    targetName: 'Proxima Centauri (α Cen C)',
-    telescope: 'Green Bank Telescope (100m Aperture)',
+    name: 'Target Field Alpha (Simulated observation)',
+    targetName: 'Target Field Alpha',
+    telescope: 'Synthetic Antenna Array (Simulated)',
     frequencyMHz: 1420.37,
     bandwidthMHz: 12.5,
     windowDuration: '00:04:32',
@@ -30,7 +30,7 @@ export const MOCK_OBSERVATIONS: ObservationData[] = [
         freqOffsetKHz: -42.5,
         bandwidthKHz: 3.8,
       },
-      classificationLabel: 'NARROWBAND COHERENT CARRIER (UNCLASSIFIED)',
+      classificationLabel: 'Narrowband coherent carrier (unclassified)',
     },
     priority: 'HIGH',
     telemetryNotes:
@@ -38,9 +38,9 @@ export const MOCK_OBSERVATIONS: ObservationData[] = [
   },
   {
     id: 'AET-08192',
-    name: 'Barnard Star Hydroxyl Survey 12',
-    targetName: 'Barnard’s Star (GJ 699)',
-    telescope: 'MeerKAT Radio Array (64-Dish Beamformed)',
+    name: 'Target Field Beta (Simulated observation)',
+    targetName: 'Target Field Beta',
+    telescope: 'Synthetic Array Feed (Simulated)',
     frequencyMHz: 1665.4,
     bandwidthMHz: 8.0,
     windowDuration: '00:03:45',
@@ -65,7 +65,7 @@ export const MOCK_OBSERVATIONS: ObservationData[] = [
         freqOffsetKHz: 18.2,
         bandwidthKHz: 5.2,
       },
-      classificationLabel: 'POTENTIALLY INTERESTING PERIODIC EMISSION',
+      classificationLabel: 'Periodic emission candidate',
     },
     priority: 'HIGH',
     telemetryNotes:
@@ -73,9 +73,9 @@ export const MOCK_OBSERVATIONS: ObservationData[] = [
   },
   {
     id: 'AET-02319',
-    name: 'Deep Sky RFI Verification Run',
-    targetName: 'HD 106906 System',
-    telescope: 'Parkes Radio Telescope (Murriyang)',
+    name: 'Target Field Gamma (Simulated observation)',
+    targetName: 'Target Field Gamma',
+    telescope: 'Synthetic Single Dish (Simulated)',
     frequencyMHz: 2380.0,
     bandwidthMHz: 16.0,
     windowDuration: '00:05:10',
@@ -100,10 +100,10 @@ export const MOCK_OBSERVATIONS: ObservationData[] = [
         freqOffsetKHz: 0.0,
         bandwidthKHz: 240.0,
       },
-      classificationLabel: 'TERRESTRIAL SATELLITE UPLINK (RFI CONFIRMED)',
+      classificationLabel: 'Terrestrial satellite uplink (RFI)',
     },
     priority: 'LOW',
     telemetryNotes:
-      'Zero Doppler drift observed across barycentric frame. High correlation with Starlink Ku/S transponder harmonic.',
+      'Zero Doppler drift observed across barycentric frame. High correlation with satellite transponder harmonic.',
   },
 ];

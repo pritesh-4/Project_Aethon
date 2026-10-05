@@ -6,7 +6,6 @@ import type { ArchivedObservation, ArchiveFilterState } from './types.ts';
 import { MOCK_ARCHIVED_OBSERVATIONS, ARCHIVE_SUMMARY_STATS } from './data/mockArchive.ts';
 
 import { ArchiveHeader } from './components/ArchiveHeader.tsx';
-import { ArchiveSummary } from './components/ArchiveSummary.tsx';
 import { ArchiveToolbar } from './components/ArchiveToolbar.tsx';
 import { ArchiveTimeline } from './components/ArchiveTimeline.tsx';
 import { ObservationDrawer } from './components/ObservationDrawer.tsx';
@@ -206,14 +205,11 @@ export default function ArchivePage() {
 
   return (
     <PageTransition>
-      <div className="min-h-[calc(100vh-2.5rem)] bg-[#05070A] text-[#EAF4F7] flex flex-col font-mono selection:bg-[#66E3FF]/30 selection:text-[#66E3FF]">
+      <div className="min-h-[calc(100vh-2.5rem)] bg-[#06080B] text-[#E6EDF2] flex flex-col font-mono selection:bg-[#5BD8F5]/30 selection:text-[#5BD8F5]">
         {/* 1. Header */}
         <ArchiveHeader stats={ARCHIVE_SUMMARY_STATS} />
 
-        {/* 2. Summary Strip */}
-        <ArchiveSummary stats={ARCHIVE_SUMMARY_STATS} />
-
-        {/* 3. Toolbar (Search, Filter, Sort) */}
+        {/* 2. Toolbar (Search, Filter, Sort) */}
         <ArchiveToolbar
           filters={filters}
           onFilterChange={setFilters}
@@ -228,7 +224,7 @@ export default function ArchivePage() {
           <main
             tabIndex={0}
             aria-label="Chronological Observation Records List"
-            className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 outline-none focus:ring-1 focus:ring-cyan-500/20"
+            className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 outline-none"
           >
             {filteredObservations.length > 0 ? (
               <ArchiveTimeline
@@ -271,7 +267,7 @@ export default function ArchivePage() {
           {isMobileDrawerOpen && selectedObservation && (
             <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
               <div
-                className="w-full h-[85vh] bg-[#0A0E13] rounded-t-lg border-t border-slate-700 shadow-2xl flex flex-col overflow-hidden"
+                className="w-full h-[85vh] bg-[#0B0F14] rounded-t-lg border-t border-[#1C2630] shadow-2xl flex flex-col overflow-hidden"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Observation Detail Sheet"

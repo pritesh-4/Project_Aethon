@@ -1,14 +1,5 @@
 import { Link } from 'react-router';
-import {
-  Activity,
-  Radio,
-  Cpu,
-  Compass,
-  ArrowRight,
-  ShieldCheck,
-  Database,
-  Zap,
-} from 'lucide-react';
+import { Activity, Radio, Cpu, Compass, ArrowRight } from 'lucide-react';
 
 interface NarrativeSection6Props {
   progress: number; // 0.90 to 1.00
@@ -23,36 +14,25 @@ export function NarrativeSection6({ progress }: NarrativeSection6Props) {
       style={{ opacity: sectionAlpha }}
     >
       {/* Top Header */}
-      <div className="flex items-center justify-between pt-10 sm:pt-14 px-2 sm:px-8 font-mono select-none">
+      <div className="flex items-center justify-between pt-10 sm:pt-14 px-2 sm:px-8 font-sans select-none">
         <div>
-          <span className="text-[10px] tracking-[0.25em] text-cyan-400 uppercase font-semibold">
-            SECTION 06 // ENTER THE OBSERVATORY
-          </span>
-          <p className="text-[9px] text-slate-400 mt-0.5">
-            RESEARCH INTERFACE READY // WORKSTATION UNLOCKED
-          </p>
+          <span className="text-xs text-[#5BD8F5] font-medium">Observatory</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="text-[10px] font-mono text-cyan-300 font-semibold tracking-wider">
-            ALL SYSTEMS NOMINAL
-          </span>
+          <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+          <span className="text-xs text-[#E6EDF2] font-medium">Workspaces ready</span>
         </div>
       </div>
 
       {/* Main Gateway Hub */}
       <div className="relative w-full max-w-5xl mx-auto px-4 my-auto">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded border border-cyan-800/60 bg-cyan-950/40 text-[10px] font-mono tracking-widest text-cyan-400 mb-3">
-            <Activity className="h-3 w-3" />
-            OBSERVATORY CORE OPERATIONAL
-          </div>
-          <h2 className="text-3xl sm:text-5xl font-light tracking-tight text-slate-100 font-sans">
-            ENTER THE RESEARCH WORKSTATION
+          <h2 className="text-3xl sm:text-5xl font-normal tracking-tight text-[#E6EDF2] font-sans">
+            Research Workstations
           </h2>
-          <p className="mt-2 text-xs sm:text-sm text-slate-400 font-mono tracking-wider">
-            SELECT A SYSTEM CONSOLE TO INITIATE SCIENTIFIC INVESTIGATION
+          <p className="mt-2 text-sm text-[#7F8B95] font-sans">
+            Select a workspace to inspect signals, review candidates, or examine model architecture.
           </p>
         </div>
 
@@ -61,27 +41,26 @@ export function NarrativeSection6({ progress }: NarrativeSection6Props) {
           {/* Card 1: Live Observatory Console */}
           <Link
             to="/observatory"
-            className="group rounded-lg border border-cyan-500/40 bg-slate-950/80 p-5 backdrop-blur-md transition-all hover:border-cyan-400 hover:bg-slate-900/90 hover:shadow-[0_0_20px_rgba(6,182,212,0.18)] flex flex-col justify-between"
+            className="group rounded-[4px] border border-[#172230] bg-[#0B0F14] p-5 transition-all hover:border-[#5BD8F5]/60 hover:bg-[#10161D] flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between text-cyan-400 mb-3">
-                <div className="p-2 rounded border border-cyan-900/60 bg-cyan-950/50">
-                  <Activity className="h-5 w-5" />
+              <div className="flex items-center justify-between text-[#5BD8F5] mb-3">
+                <div className="p-2 rounded-[4px] border border-[#172230] bg-[#10161D]">
+                  <Activity className="h-4 w-4" />
                 </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/80">
-                  LIVE STREAM
+                <span className="text-[11px] font-sans px-2 py-0.5 rounded-[4px] bg-[#10161D] text-[#5BD8F5] border border-[#172230]">
+                  Live Stream
                 </span>
               </div>
-              <h3 className="text-base font-semibold text-slate-100 font-sans group-hover:text-cyan-300 transition-colors">
+              <h3 className="text-sm font-semibold text-[#E6EDF2] font-sans group-hover:text-[#5BD8F5] transition-colors">
                 Observatory Console
               </h3>
-              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
-                Stream live FFT spectrograms from the Green Bank 100m Dish at 1420.405 MHz with
-                Doppler drift tracking.
+              <p className="mt-2 text-xs text-[#7F8B95] leading-relaxed font-sans">
+                Stream simulated spectral data with Doppler drift tracking and real-time STFT.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-900 flex items-center justify-between font-mono text-xs text-cyan-400">
-              <span>Launch Feed</span>
+            <div className="mt-4 pt-3 border-t border-[#172230] flex items-center justify-between text-xs text-[#5BD8F5] font-medium">
+              <span>Launch console</span>
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </div>
           </Link>
@@ -89,116 +68,92 @@ export function NarrativeSection6({ progress }: NarrativeSection6Props) {
           {/* Card 2: Discovery Catalog */}
           <Link
             to="/discover"
-            className="group rounded-lg border border-slate-800/80 bg-slate-950/80 p-5 backdrop-blur-md transition-all hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-lg flex flex-col justify-between"
+            className="group rounded-[4px] border border-[#172230] bg-[#0B0F14] p-5 transition-all hover:border-[#5BD8F5]/60 hover:bg-[#10161D] flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between text-cyan-400 mb-3">
-                <div className="p-2 rounded border border-cyan-900/60 bg-cyan-950/50">
-                  <Radio className="h-5 w-5" />
+              <div className="flex items-center justify-between text-[#5BD8F5] mb-3">
+                <div className="p-2 rounded-[4px] border border-[#172230] bg-[#10161D]">
+                  <Radio className="h-4 w-4" />
                 </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/80">
-                  4 FLAGGED
+                <span className="text-[11px] font-sans px-2 py-0.5 rounded-[4px] bg-[#10161D] text-[#7F8B95] border border-[#172230]">
+                  Search
                 </span>
               </div>
-              <h3 className="text-base font-semibold text-slate-100 font-sans group-hover:text-cyan-300 transition-colors">
-                Candidate Catalog
+              <h3 className="text-sm font-semibold text-[#E6EDF2] font-sans group-hover:text-[#5BD8F5] transition-colors">
+                Signal Discovery
               </h3>
-              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
-                Inspect isolated candidates, SNR metrics, constellation coordinates, and
-                verification logs.
+              <p className="mt-2 text-xs text-[#7F8B95] leading-relaxed font-sans">
+                Ingest observations and screen against learned distributions for persistent
+                anomalies.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-900 flex items-center justify-between font-mono text-xs text-slate-300 group-hover:text-cyan-300">
-              <span>Inspect Signals</span>
+            <div className="mt-4 pt-3 border-t border-[#172230] flex items-center justify-between text-xs text-[#7F8B95] group-hover:text-[#5BD8F5] font-medium">
+              <span>Run search</span>
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </div>
           </Link>
 
-          {/* Card 3: Deep-Space Neural Model */}
+          {/* Card 3: Neural Model */}
           <Link
             to="/model"
-            className="group rounded-lg border border-slate-800/80 bg-slate-950/80 p-5 backdrop-blur-md transition-all hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-lg flex flex-col justify-between"
+            className="group rounded-[4px] border border-[#172230] bg-[#0B0F14] p-5 transition-all hover:border-[#5BD8F5]/60 hover:bg-[#10161D] flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between text-cyan-400 mb-3">
-                <div className="p-2 rounded border border-cyan-900/60 bg-cyan-950/50">
-                  <Cpu className="h-5 w-5" />
+              <div className="flex items-center justify-between text-[#5BD8F5] mb-3">
+                <div className="p-2 rounded-[4px] border border-[#172230] bg-[#10161D]">
+                  <Cpu className="h-4 w-4" />
                 </div>
-                <span className="text-[10px] font-mono text-slate-400">AethonNet-v2.4</span>
+                <span className="text-[11px] font-sans text-[#7F8B95]">Architecture</span>
               </div>
-              <h3 className="text-base font-semibold text-slate-100 font-sans group-hover:text-cyan-300 transition-colors">
-                Neural Architecture
+              <h3 className="text-sm font-semibold text-[#E6EDF2] font-sans group-hover:text-[#5BD8F5] transition-colors">
+                Model Architecture
               </h3>
-              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
-                Examine multi-head attention layers, latent representation manifolds, and RFI
-                rejection loss functions.
+              <p className="mt-2 text-xs text-[#7F8B95] leading-relaxed font-sans">
+                Examine representations, latent spaces, and anomaly rejection criteria.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-900 flex items-center justify-between font-mono text-xs text-slate-300 group-hover:text-cyan-300">
-              <span>Architecture</span>
+            <div className="mt-4 pt-3 border-t border-[#172230] flex items-center justify-between text-xs text-[#7F8B95] group-hover:text-[#5BD8F5] font-medium">
+              <span>View model</span>
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </div>
           </Link>
 
           {/* Card 4: Detailed Signal Dossier */}
           <Link
-            to="/analysis/SIG-2026-089A"
-            className="group rounded-lg border border-slate-800/80 bg-slate-950/80 p-5 backdrop-blur-md transition-all hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-lg flex flex-col justify-between"
+            to="/candidates"
+            className="group rounded-[4px] border border-[#172230] bg-[#0B0F14] p-5 transition-all hover:border-[#5BD8F5]/60 hover:bg-[#10161D] flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between text-cyan-400 mb-3">
-                <div className="p-2 rounded border border-cyan-900/60 bg-cyan-950/50">
-                  <Compass className="h-5 w-5" />
+              <div className="flex items-center justify-between text-[#5BD8F5] mb-3">
+                <div className="p-2 rounded-[4px] border border-[#172230] bg-[#10161D]">
+                  <Compass className="h-4 w-4" />
                 </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/80">
-                  SIG-089A
+                <span className="text-[11px] font-sans px-2 py-0.5 rounded-[4px] bg-[#1C160E] text-[#E8AE50] border border-[#E8AE50]/30">
+                  Review
                 </span>
               </div>
-              <h3 className="text-base font-semibold text-slate-100 font-sans group-hover:text-cyan-300 transition-colors">
-                Signal Dossier
+              <h3 className="text-sm font-semibold text-[#E6EDF2] font-sans group-hover:text-[#5BD8F5] transition-colors">
+                Candidate Triage
               </h3>
-              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
-                Direct scientific deep-dive into the Proxima Centauri candidate signal, barycentric
-                curves, and telemetry.
+              <p className="mt-2 text-xs text-[#7F8B95] leading-relaxed font-sans">
+                Prioritize candidate events and perform forensic evaluation of candidate signals.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-900 flex items-center justify-between font-mono text-xs text-slate-300 group-hover:text-cyan-300">
-              <span>Open Dossier</span>
+            <div className="mt-4 pt-3 border-t border-[#172230] flex items-center justify-between text-xs text-[#7F8B95] group-hover:text-[#5BD8F5] font-medium">
+              <span>Review candidates</span>
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </div>
           </Link>
         </div>
-
-        {/* Live Array Telemetry Status Strip */}
-        <div className="mt-6 rounded-lg border border-slate-800/80 bg-slate-950/60 p-4 font-mono text-xs text-slate-400 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-slate-300">
-            <Zap className="h-3.5 w-3.5 text-cyan-400" />
-            <span>
-              ARRAY INFERENCE CLUSTER: <span className="text-emerald-400">14.2 ms LATENCY</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Database className="h-3.5 w-3.5 text-slate-500" />
-            <span>
-              SPECTRAL BUFFER: <span className="text-slate-200">100% HEALTH</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-3.5 w-3.5 text-slate-500" />
-            <span>
-              RFI PURGE EFFICIENCY: <span className="text-cyan-400">99.98%</span>
-            </span>
-          </div>
-        </div>
       </div>
 
-      {/* Bottom Telemetry Status Bar */}
-      <div className="flex items-center justify-between font-mono text-[10px] text-slate-400 pb-10 sm:pb-14 px-2 sm:px-8 select-none">
+      {/* Bottom Status Bar */}
+      <div className="flex items-center justify-between font-sans text-xs text-[#7F8B95] pb-10 sm:pb-14 px-2 sm:px-8 select-none">
         <div>
-          <span>AETHON ASTRONOMICAL SYSTEM // VERSION 1.0</span>
+          <span>Aethon Discovery System • Demonstration Prototype</span>
         </div>
         <div className="hidden sm:block">
-          <span>GREEN BANK • MEERKAT • PARKES RADIO OBSERVATORIES</span>
+          <span>Synthetic radio observation data</span>
         </div>
       </div>
     </div>

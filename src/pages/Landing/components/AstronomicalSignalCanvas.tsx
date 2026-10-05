@@ -163,13 +163,12 @@ export function AstronomicalSignalCanvas({ progress }: AstronomicalSignalCanvasP
         c.globalAlpha = fade * 0.7;
         c.textAlign = 'left';
         c.fillText('+150 Hz [1420.40585 MHz]', 24, cy - 124);
-        c.fillText('f₀ // 1420.40570 MHz', 24, cy - 6);
+        c.fillText('f₀ (1420.40570 MHz)', 24, cy - 6);
         c.fillText('-150 Hz [1420.40555 MHz]', 24, cy + 124);
 
-        // Right side observatory telemetry indicator
+        // Right side indicator
         c.textAlign = 'right';
-        c.fillText('CADENCE // 1.00s', w - 24, cy - 124);
-        c.fillText('POL // DUAL CIRCULAR', w - 24, cy + 124);
+        c.fillText('Simulated observation', w - 24, cy - 124);
       }
 
       c.restore();
@@ -222,7 +221,7 @@ export function AstronomicalSignalCanvas({ progress }: AstronomicalSignalCanvasP
         c.fillStyle = 'rgba(148, 163, 184, 0.7)';
         c.font = '9px "JetBrains Mono", monospace';
         c.textAlign = 'center';
-        c.fillText('SIG // UNRESOLVED', reticleX, reticleY - 20);
+        c.fillText('Unresolved candidate', reticleX, reticleY - 20);
       }
 
       c.restore();
@@ -250,7 +249,7 @@ export function AstronomicalSignalCanvas({ progress }: AstronomicalSignalCanvasP
           amp: 22,
           freq: 0.04,
           speed: 8,
-          label: 'RFI // L-BAND RADAR (TERRESTRIAL)',
+          label: 'Terrestrial radar interference',
           type: 'rfi',
         },
         {
@@ -258,16 +257,16 @@ export function AstronomicalSignalCanvas({ progress }: AstronomicalSignalCanvasP
           amp: 14,
           freq: 0.08,
           speed: -12,
-          label: 'LEO SATELLITE CHIRP (STARLINK)',
+          label: 'Satellite downlink chirp',
           type: 'leo',
         },
-        { yOff: -30, amp: 8, freq: 0.02, speed: 3, label: 'IONOSPHERIC REFLECTION', type: 'iono' },
+        { yOff: -30, amp: 8, freq: 0.02, speed: 3, label: 'Ionospheric reflection', type: 'iono' },
         {
           yOff: 40,
           amp: 18,
           freq: 0.05,
           speed: 7,
-          label: 'TERRESTRIAL 50Hz HARMONIC',
+          label: 'Power grid harmonic',
           type: 'hum',
         },
         {
@@ -275,10 +274,10 @@ export function AstronomicalSignalCanvas({ progress }: AstronomicalSignalCanvasP
           amp: 26,
           freq: 0.03,
           speed: -5,
-          label: 'DEEP SPACE THERMAL (JOHNSON-NYQUIST)',
+          label: 'Thermal baseline noise',
           type: 'thermal',
         },
-        { yOff: 125, amp: 10, freq: 0.12, speed: 15, label: 'FM SIDEBAND SPILLOVER', type: 'fm' },
+        { yOff: 125, amp: 10, freq: 0.12, speed: 15, label: 'Broadcast spillover', type: 'fm' },
       ];
 
       traces.forEach((tr) => {
@@ -650,10 +649,10 @@ export function AstronomicalSignalCanvas({ progress }: AstronomicalSignalCanvasP
       c.fillStyle = 'rgba(241, 245, 249, 0.9)';
       c.font = '10px "JetBrains Mono", monospace';
       c.textAlign = 'center';
-      c.fillText('TARGET // PROXIMA CENTAURI [ALPHA CEN C]', cx, cy - 70);
+      c.fillText('Candidate event AET-04721 (Simulated observation)', cx, cy - 70);
 
-      c.fillStyle = 'rgba(56, 189, 248, 0.95)';
-      c.fillText('SIG-2026-089A // DRIFT -0.32 Hz/s // TOPOCENTRIC CONFIRMED', cx, cy + 80);
+      c.fillStyle = 'rgba(91, 216, 245, 0.95)';
+      c.fillText('Drift: -0.32 Hz/s · Sidelobe check: Clear', cx, cy + 80);
 
       c.restore();
     }
@@ -709,21 +708,13 @@ export function AstronomicalSignalCanvas({ progress }: AstronomicalSignalCanvasP
       c.stroke();
 
       // Monitor header bar
-      c.fillStyle = 'rgba(6, 182, 212, 0.9)';
+      c.fillStyle = 'rgba(91, 216, 245, 0.9)';
       c.font = '9px "JetBrains Mono", monospace';
       c.textAlign = 'left';
-      c.fillText(
-        'LIVE CHANNEL STREAM // GBT-100M APERTURE // FREQ 1420.4057 MHz',
-        left + 12,
-        currY - monitorH * 0.5 - 8
-      );
+      c.fillText('Synthetic stream (Simulated observation)', left + 12, currY - monitorH * 0.5 - 8);
 
       c.textAlign = 'right';
-      c.fillText(
-        'REALTIME BUFFER: NOMINAL [14.2ms]',
-        left + currW - 12,
-        currY - monitorH * 0.5 - 8
-      );
+      c.fillText('Stream status: Active', left + currW - 12, currY - monitorH * 0.5 - 8);
 
       c.restore();
     }

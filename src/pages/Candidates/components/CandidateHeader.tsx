@@ -1,67 +1,113 @@
-import { Crosshair } from 'lucide-react';
-import { StatusIndicator } from '@/components/ui/StatusIndicator.tsx';
+import type { CandidateFilterState } from '../types.ts';
+import { Search, Filter, ArrowUpDown } from 'lucide-react';
 
 export interface CandidateHeaderProps {
   observationId: string;
+  targetName: string;
   totalIdentified: number;
   highPriorityCount: number;
+  filters: CandidateFilterState;
+  onFilterChange: (newFilters: CandidateFilterState) => void;
+  totalCount: number;
+  filteredCount: number;
 }
 
 export function CandidateHeader({
   observationId,
+  targetName,
   totalIdentified,
   highPriorityCount,
+  filters,
+  onFilterChange,
+  totalCount,
+  filteredCount,
 }: CandidateHeaderProps) {
   return (
-    <header className="border-b border-slate-800/80 bg-[#080D1A]/60 px-4 py-2.5 backdrop-blur-sm select-none">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Left: Scientific Header Title and Subsystem Meta */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-xs">
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-bold tracking-widest text-[#EAF4F7] uppercase font-sans">
-              CANDIDATE EVENTS
+    <header className="border-b border-[#1C2630] bg-[#0B0F14] px-4 py-3 select-none font-sans">
+      <div className="flex flex-col gap-3">
+        {/* Top Line: Title & Observation Context */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2.5 text-xs">
+            <h1 className="text-sm font-semibold text-[#E6EDF2]">Candidate triage</h1>
+            <span className="text-[#1C2630] hidden sm:inline">|</span>
+            <span className="text-[#7F8B95]">
+              Observation <span className="text-[#5BD8F5] font-mono">{observationId}</span>
             </span>
-            <span className="text-slate-600">//</span>
-            <span className="text-[11px] text-[#84929C] tracking-wider uppercase">
-              ANOMALOUS SIGNAL TRIAGE
+            <span className="text-[#1C2630] hidden sm:inline">|</span>
+            <span className="text-[#7F8B95] truncate max-w-[200px]">{targetName}</span>
+            <span className="text-[#1C2630] hidden sm:inline">|</span>
+            <span className="text-xs text-[#7F8B95]">{totalIdentified} events</span>
+            <span className="rounded border border-[#E8AE50]/40 bg-[#E8AE50]/10 px-2 py-0.5 text-xs font-medium text-[#E8AE50]">
+              {highPriorityCount} high priority
             </span>
           </div>
 
-          <div className="hidden sm:block h-3.5 w-px bg-slate-800" />
-
-          <div className="flex items-center gap-1.5 text-[11px] text-[#84929C]">
-            <span className="text-slate-500 uppercase">OBSERVATION //</span>
-            <span className="text-[#66E3FF] font-semibold">{observationId}</span>
-          </div>
-
-          <div className="hidden md:block h-3.5 w-px bg-slate-800" />
-
-          <div className="flex items-center gap-1.5 text-[11px] text-[#84929C]">
-            <span className="text-slate-500 uppercase">EVENTS IDENTIFIED //</span>
-            <span className="text-[#EAF4F7] font-semibold">{totalIdentified}</span>
-          </div>
-
-          <div className="hidden lg:block h-3.5 w-px bg-slate-800" />
-
-          <div className="flex items-center gap-1.5 text-[11px]">
-            <span className="text-slate-500 uppercase">HIGH PRIORITY //</span>
-            <span className="rounded-[1px] border border-amber-500/60 bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-bold text-[#FFB84D] uppercase tracking-wider">
-              {highPriorityCount}
-            </span>
+          <div className="text-xs text-[#7F8B95]">
+            Showing <strong className="text-[#E6EDF2] font-semibold">{filteredCount}</strong> of{' '}
+            {totalCount}
           </div>
         </div>
 
-        {/* Right: Engine Status Indicator */}
-        <div className="flex items-center gap-3 font-mono text-[11px] self-end sm:self-center">
-          <div className="flex items-center gap-1.5">
-            <Crosshair className="h-3.5 w-3.5 text-[#66E3FF]" />
-            <span className="text-slate-400 text-[10px] uppercase">DISCOVERY ENGINE</span>
-            <StatusIndicator
-              status="nominal"
-              label="COMPLETE"
-              pulse={false}
-              className="text-[10px]"
+        {/* Bottom Line: Search & Filters Toolbar */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 border-t border-[#1C2630]/60">
+          {/* Search Input */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-500" />
+            <input
+              type="text"
+              value={filters.searchQuery}
+              onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
+              placeholder="Search candidate ID, frequency, classification..."
+              className="h-8 w-full rounded-[4px] border border-[#1C2630] bg-[#06080B] pl-8 pr-3 text-xs text-[#E6EDF2] placeholder-[#7F8B95] focus:border-[#5BD8F5] focus:outline-none transition-colors font-mono"
             />
+          </div>
+
+          {/* Filter & Sort Controls */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Priority Filter */}
+            <div className="flex items-center gap-1.5 text-xs text-[#7F8B95]">
+              <Filter className="h-3.5 w-3.5 text-slate-500" />
+              <span>Priority:</span>
+              <select
+                value={filters.priorityFilter}
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    priorityFilter: e.target.value as CandidateFilterState['priorityFilter'],
+                  })
+                }
+                aria-label="Filter by priority"
+                className="h-7 rounded-[4px] border border-[#1C2630] bg-[#10161D] px-2 text-xs text-[#E6EDF2] focus:border-[#5BD8F5] focus:outline-none transition-colors cursor-pointer"
+              >
+                <option value="ALL">All priorities</option>
+                <option value="HIGH">High priority</option>
+                <option value="MEDIUM">Medium priority</option>
+                <option value="LOW">Low priority</option>
+              </select>
+            </div>
+
+            {/* Sort By */}
+            <div className="flex items-center gap-1.5 text-xs text-[#7F8B95]">
+              <ArrowUpDown className="h-3.5 w-3.5 text-slate-500" />
+              <span>Sort:</span>
+              <select
+                value={filters.sortBy}
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    sortBy: e.target.value as CandidateFilterState['sortBy'],
+                  })
+                }
+                aria-label="Sort candidates"
+                className="h-7 rounded-[4px] border border-[#1C2630] bg-[#10161D] px-2 text-xs font-mono text-[#5BD8F5] focus:border-[#5BD8F5] focus:outline-none transition-colors cursor-pointer"
+              >
+                <option value="priority">Investigation priority</option>
+                <option value="anomalyIndex">Anomaly index</option>
+                <option value="persistence">Persistence</option>
+                <option value="snr">Peak SNR</option>
+                <option value="frequency">Frequency</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>

@@ -12,23 +12,23 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
     switch (priority) {
       case 'HIGH':
         return (
-          <span className="inline-flex items-center gap-1 rounded-[1px] border border-amber-500/70 bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-bold text-[#FFB84D] uppercase tracking-wider">
-            <span className="h-1.5 w-1.5 rounded-none bg-[#FFB84D]" />
-            HIGH
+          <span className="inline-flex items-center gap-1 rounded border border-[#E8AE50]/40 bg-[#E8AE50]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#E8AE50]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#E8AE50]" />
+            High
           </span>
         );
       case 'MEDIUM':
         return (
-          <span className="inline-flex items-center gap-1 rounded-[1px] border border-cyan-800/80 bg-cyan-950/50 px-1.5 py-0.2 text-[10px] font-semibold text-[#66E3FF] uppercase tracking-wider">
-            <span className="h-1.5 w-1.5 rounded-none bg-[#66E3FF]" />
-            MEDIUM
+          <span className="inline-flex items-center gap-1 rounded border border-[#7F8B95]/40 bg-[#7F8B95]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#7F8B95]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]" />
+            Medium
           </span>
         );
       case 'LOW':
         return (
-          <span className="inline-flex items-center gap-1 rounded-[1px] border border-slate-800 bg-slate-900/60 px-1.5 py-0.2 text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            <span className="h-1.5 w-1.5 rounded-none bg-slate-500" />
-            LOW
+          <span className="inline-flex items-center gap-1 rounded border border-[#1C2630] bg-[#10161D] px-1.5 py-0.5 text-[10px] font-medium text-[#7F8B95]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]" />
+            Low
           </span>
         );
     }
@@ -37,20 +37,14 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
   const getStatusBadge = (status: CandidateSignalData['status']) => {
     switch (status) {
       case 'INVESTIGATING':
-        return (
-          <span className="text-[10px] text-cyan-400 uppercase font-semibold">INVESTIGATING</span>
-        );
+        return <span className="text-[11px] text-[#5BD8F5] font-medium">Investigating</span>;
       case 'FLAGGED_RFI':
-        return (
-          <span className="text-[10px] text-slate-500 uppercase font-semibold">RFI FLAGGED</span>
-        );
+        return <span className="text-[11px] text-[#7F8B95] font-medium">Flagged RFI</span>;
       case 'CONFIRMED':
-        return (
-          <span className="text-[10px] text-emerald-400 uppercase font-semibold">CONFIRMED</span>
-        );
+        return <span className="text-[11px] text-[#5BD8F5] font-medium">Confirmed</span>;
       case 'REVIEW':
       default:
-        return <span className="text-[10px] text-slate-400 uppercase">REVIEW</span>;
+        return <span className="text-[11px] text-[#7F8B95]">Review</span>;
     }
   };
 
@@ -67,10 +61,8 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
       tabIndex={0}
       onClick={() => onSelect(candidate)}
       onKeyDown={handleKeyDown}
-      className={`group relative transition-all duration-150 cursor-pointer select-none font-mono text-xs outline-none ${
-        isSelected
-          ? 'bg-[#10192A] text-[#EAF4F7] shadow-inner'
-          : 'hover:bg-[#0E1521] text-slate-300'
+      className={`group relative transition-all duration-150 cursor-pointer select-none text-xs outline-none ${
+        isSelected ? 'bg-[#5BD8F5]/10 text-[#E6EDF2]' : 'hover:bg-[#10161D] text-[#7F8B95]'
       }`}
     >
       {/* Active Selection Indicator Bar */}
@@ -79,9 +71,9 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
           className={`h-full w-1 transition-all ${
             isSelected
               ? candidate.priority === 'HIGH'
-                ? 'bg-[#FFB84D]'
-                : 'bg-[#66E3FF]'
-              : 'group-hover:bg-slate-700 bg-transparent'
+                ? 'bg-[#E8AE50]'
+                : 'bg-[#5BD8F5]'
+              : 'group-hover:bg-[#1C2630] bg-transparent'
           }`}
         />
       </td>
@@ -92,8 +84,8 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
       {/* Candidate Identifier */}
       <td className="py-2.5 px-3 whitespace-nowrap">
         <span
-          className={`font-bold tracking-wider transition-colors ${
-            isSelected ? 'text-[#66E3FF]' : 'text-[#EAF4F7] group-hover:text-[#66E3FF]'
+          className={`font-semibold font-mono transition-colors ${
+            isSelected ? 'text-[#5BD8F5]' : 'text-[#E6EDF2] group-hover:text-[#5BD8F5]'
           }`}
         >
           {candidate.id}
@@ -101,29 +93,29 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
       </td>
 
       {/* Anomaly Index */}
-      <td className="py-2.5 px-3 text-right font-bold whitespace-nowrap text-[#66E3FF]">
+      <td className="py-2.5 px-3 text-right font-semibold font-mono whitespace-nowrap text-[#5BD8F5]">
         {candidate.anomalyIndex.toFixed(3)}
       </td>
 
       {/* Persistence */}
-      <td className="py-2.5 px-3 text-right whitespace-nowrap text-emerald-400">
+      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap text-[#E6EDF2]">
         {(candidate.persistence * 100).toFixed(1)}%
       </td>
 
       {/* Known Pattern Similarity */}
-      <td className="py-2.5 px-3 text-right whitespace-nowrap text-slate-400">
+      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap text-[#7F8B95]">
         {(candidate.knownPatternSimilarity * 100).toFixed(1)}%
       </td>
 
       {/* RFI Risk */}
-      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap">
         <span
           className={
             candidate.interferenceProbability < 0.1
-              ? 'text-emerald-400'
+              ? 'text-[#5BD8F5]'
               : candidate.interferenceProbability < 0.25
-                ? 'text-slate-400'
-                : 'text-amber-400'
+                ? 'text-[#7F8B95]'
+                : 'text-[#E8AE50]'
           }
         >
           {(candidate.interferenceProbability * 100).toFixed(1)}%
@@ -131,7 +123,7 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
       </td>
 
       {/* Frequency */}
-      <td className="py-2.5 px-3 text-right whitespace-nowrap text-slate-300">
+      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap text-[#E6EDF2]">
         {candidate.frequencyMHz.toFixed(2)} MHz
       </td>
 
@@ -141,12 +133,12 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
       </td>
 
       {/* Arrow Indicator */}
-      <td className="py-2.5 px-3 text-right whitespace-nowrap text-slate-500">
+      <td className="py-2.5 px-3 text-right whitespace-nowrap text-[#7F8B95]">
         <ArrowRight
           className={`h-3.5 w-3.5 transition-transform duration-200 ${
             isSelected
-              ? 'text-[#66E3FF] translate-x-1'
-              : 'group-hover:text-slate-300 group-hover:translate-x-0.5'
+              ? 'text-[#5BD8F5] translate-x-1'
+              : 'group-hover:text-[#E6EDF2] group-hover:translate-x-0.5'
           }`}
         />
       </td>
