@@ -19,21 +19,26 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id: string) {
-          if (id.includes('node_modules')) {
+          const normalized = id.replace(/\\/g, '/');
+          if (normalized.includes('/node_modules/')) {
             if (
-              id.includes('/react/') ||
-              id.includes('/react-dom/') ||
-              id.includes('/react-router/')
+              normalized.includes('/react/') ||
+              normalized.includes('/react-dom/') ||
+              normalized.includes('/react-router/')
             ) {
               return 'vendor-react';
             }
-            if (id.includes('recharts') || id.includes('d3-') || id.includes('victory-vendor')) {
+            if (
+              normalized.includes('/recharts/') ||
+              normalized.includes('/d3-') ||
+              normalized.includes('/victory-vendor/')
+            ) {
               return 'vendor-charts';
             }
-            if (id.includes('motion')) {
+            if (normalized.includes('/motion/')) {
               return 'vendor-motion';
             }
-            if (id.includes('lucide-react')) {
+            if (normalized.includes('/lucide-react/')) {
               return 'vendor-icons';
             }
           }

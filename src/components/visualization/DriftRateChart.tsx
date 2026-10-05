@@ -23,11 +23,11 @@ interface DriftRateChartProps {
 const DEFAULT_DRIFT: DriftDataPoint[] = Array.from({ length: 20 }, (_, i) => {
   const time = i * 15; // 15s intervals
   const driftRate = -0.32; // -0.32 Hz/s
-  const drift = driftRate * time + (Math.random() - 0.5) * 0.4;
+  const drift = driftRate * time + Math.sin(i * 4.31) * 0.2;
   return {
     timeOffsetSec: time,
     frequencyOffsetHz: Number(drift.toFixed(2)),
-    snr: Number((18.5 + (Math.random() - 0.5) * 1.8).toFixed(1)),
+    snr: Number((18.5 + Math.sin(i * 2.7) * 0.9).toFixed(1)),
   };
 });
 

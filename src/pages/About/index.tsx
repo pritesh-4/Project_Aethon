@@ -83,7 +83,7 @@ export default function AboutPage() {
 
         {/* Sidebar Specifications */}
         <div className="space-y-6">
-          <div className="rounded-xl border border-slate-800/80 bg-slate-950/80 p-6 space-y-4">
+          <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-6 space-y-4">
             <h3 className="text-base font-bold font-sans text-slate-100 flex items-center gap-2">
               <Terminal className="h-4 w-4 text-cyan-400" />
               Observatory Stack
@@ -121,7 +121,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-800/80 bg-slate-950/80 p-6 space-y-3 font-mono text-xs">
+          <div className="rounded-[2px] border border-slate-800/80 bg-[#0A0E13] p-6 space-y-3 font-mono text-xs">
             <div className="flex items-center gap-2 text-cyan-400">
               <Award className="h-4 w-4" />
               <span className="font-bold uppercase tracking-wider">Scientific Alignment</span>

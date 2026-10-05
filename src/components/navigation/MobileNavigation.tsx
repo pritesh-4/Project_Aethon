@@ -1,18 +1,9 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  Radar,
-  ScanSearch,
-  Crosshair,
-  Activity,
-  BrainCircuit,
-  Database,
-  Info,
-  X,
-  Disc,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { SidebarItem } from './SidebarItem.tsx';
 import { SystemStatus } from './SystemStatus.tsx';
+import { PRIMARY_NAV, SECONDARY_NAV } from '@/app/navigation.ts';
 
 export interface MobileNavigationProps {
   isOpen: boolean;
@@ -31,33 +22,6 @@ export function MobileNavigation({ isOpen, onClose }: MobileNavigationProps) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
-
-  const primaryNav = [
-    { id: 'observatory', index: '01', label: 'OBSERVATORY', path: '/observatory', icon: Radar },
-    {
-      id: 'discovery',
-      index: '02',
-      label: 'DISCOVERY',
-      path: '/discover',
-      icon: ScanSearch,
-      badge: '4',
-    },
-    { id: 'candidates', index: '03', label: 'CANDIDATES', path: '/candidates', icon: Crosshair },
-    {
-      id: 'analysis',
-      index: '04',
-      label: 'ANALYSIS',
-      path: '/analysis/SIG-2026-089A',
-      icon: Activity,
-    },
-    { id: 'model', index: '05', label: 'MODEL', path: '/model', icon: BrainCircuit },
-  ];
-
-  const secondaryNav = [
-    { id: 'archive', label: 'ARCHIVE', path: '/archive', icon: Database },
-    { id: 'about', label: 'ABOUT', path: '/about', icon: Info },
-    { id: 'mission', label: 'MISSION NARRATIVE', path: '/', icon: Disc },
-  ];
 
   return (
     <AnimatePresence>
@@ -117,7 +81,7 @@ export function MobileNavigation({ isOpen, onClose }: MobileNavigationProps) {
                 <span className="px-2 text-[9px] font-semibold tracking-widest text-slate-500 uppercase block pb-1">
                   OPERATIONAL SUBSYSTEMS
                 </span>
-                {primaryNav.map((item) => (
+                {PRIMARY_NAV.map((item) => (
                   <SidebarItem
                     key={item.id}
                     id={item.id}
@@ -137,7 +101,7 @@ export function MobileNavigation({ isOpen, onClose }: MobileNavigationProps) {
                 <span className="px-2 text-[9px] font-semibold tracking-widest text-slate-500 uppercase block pb-1">
                   ARCHIVE & SYSTEM
                 </span>
-                {secondaryNav.map((item) => (
+                {SECONDARY_NAV.map((item) => (
                   <SidebarItem
                     key={item.id}
                     id={item.id}

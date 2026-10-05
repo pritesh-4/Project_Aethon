@@ -77,8 +77,17 @@ export function CandidateRankingTable({
               return (
                 <tr
                   key={cand.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
                   onClick={() => onSelectCandidate(cand)}
-                  className={`transition-colors cursor-pointer ${
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectCandidate(cand);
+                    }
+                  }}
+                  className={`transition-colors cursor-pointer focus:outline-none focus:bg-[#06b6d4]/15 ${
                     isSelected
                       ? 'bg-[#06b6d4]/10 text-[#EAF4F7]'
                       : 'hover:bg-[#10161D]/60 text-slate-300'

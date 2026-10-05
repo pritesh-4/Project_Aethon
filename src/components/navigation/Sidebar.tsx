@@ -1,19 +1,9 @@
 import { motion } from 'motion/react';
-import {
-  Radar,
-  ScanSearch,
-  Crosshair,
-  Activity,
-  BrainCircuit,
-  Database,
-  Info,
-  ChevronLeft,
-  ChevronRight,
-  Disc,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SidebarItem } from './SidebarItem.tsx';
 import { SystemStatus } from './SystemStatus.tsx';
 import { cn } from '@/lib/utils.ts';
+import { PRIMARY_NAV, SECONDARY_NAV } from '@/app/navigation.ts';
 
 export interface SidebarProps {
   isCollapsed: boolean;
@@ -22,33 +12,6 @@ export interface SidebarProps {
 }
 
 export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarProps) {
-  const primaryNav = [
-    { id: 'observatory', index: '01', label: 'OBSERVATORY', path: '/observatory', icon: Radar },
-    {
-      id: 'discovery',
-      index: '02',
-      label: 'DISCOVERY',
-      path: '/discover',
-      icon: ScanSearch,
-      badge: '4',
-    },
-    { id: 'candidates', index: '03', label: 'CANDIDATES', path: '/candidates', icon: Crosshair },
-    {
-      id: 'analysis',
-      index: '04',
-      label: 'ANALYSIS',
-      path: '/analysis/SIG-2026-089A',
-      icon: Activity,
-    },
-    { id: 'model', index: '05', label: 'MODEL', path: '/model', icon: BrainCircuit },
-  ];
-
-  const secondaryNav = [
-    { id: 'archive', label: 'ARCHIVE', path: '/archive', icon: Database },
-    { id: 'about', label: 'ABOUT', path: '/about', icon: Info },
-    { id: 'mission', label: 'MISSION NARRATIVE', path: '/', icon: Disc },
-  ];
-
   return (
     <motion.aside
       animate={{ width: isCollapsed ? 64 : 240 }}
@@ -114,7 +77,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
               OPERATIONAL
             </div>
           )}
-          {primaryNav.map((item) => (
+          {PRIMARY_NAV.map((item) => (
             <SidebarItem
               key={item.id}
               id={item.id}
@@ -138,7 +101,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
               SYSTEM & ARCHIVE
             </div>
           )}
-          {secondaryNav.map((item) => (
+          {SECONDARY_NAV.map((item) => (
             <SidebarItem
               key={item.id}
               id={item.id}

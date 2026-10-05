@@ -310,17 +310,18 @@ export function SignalAnalysisViewport({
       ctx.font = '9px "JetBrains Mono", monospace';
 
       // Left Frequency Axis
-      const f0 = 1420.37;
+      const f0 = observation.frequencyMHz;
+      const halfBw = (observation.bandwidthMHz / 2).toFixed(2);
       ctx.textAlign = 'right';
-      ctx.fillText('+6.25 MHz', paddingLeft - 6, paddingTop + 8);
+      ctx.fillText(`+${halfBw} MHz`, paddingLeft - 6, paddingTop + 8);
       ctx.fillText(`f₀ // ${f0.toFixed(2)}`, paddingLeft - 6, cy + 3);
-      ctx.fillText('-6.25 MHz', paddingLeft - 6, paddingTop + plotH - 2);
+      ctx.fillText(`-${halfBw} MHz`, paddingLeft - 6, paddingTop + plotH - 2);
 
       // Bottom Time Axis
       ctx.textAlign = 'center';
       ctx.fillText('00:00', paddingLeft + 16, paddingTop + plotH + 16);
-      ctx.fillText('02:16', paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
-      ctx.fillText('04:32', paddingLeft + plotW - 16, paddingTop + plotH + 16);
+      ctx.fillText('MIDPOINT', paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
+      ctx.fillText(observation.durationString, paddingLeft + plotW - 16, paddingTop + plotH + 16);
 
       // Top Stage Header HUD
       ctx.fillStyle = '#64748B';

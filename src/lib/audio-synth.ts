@@ -97,6 +97,13 @@ class ObservatoryAudioEngine {
     this.carrierOsc.frequency.setTargetAtTime(newFreq, this.ctx.currentTime, 0.1);
   }
 
+  public mute() {
+    if (this.isRunning && this.masterGain && this.ctx) {
+      this.isRunning = false;
+      this.masterGain.gain.setTargetAtTime(0.0, this.ctx.currentTime, 0.05);
+    }
+  }
+
   public getStatus(): boolean {
     return this.isRunning;
   }

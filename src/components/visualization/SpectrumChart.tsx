@@ -25,10 +25,10 @@ const DEFAULT_SPECTRUM: SpectrumDataPoint[] = Array.from({ length: 60 }, (_, i) 
   // Add Gaussian peak near 1420.405 MHz (HI line)
   const distFromPeak = Math.abs(freq - 1420.405);
   const peak = Math.exp(-Math.pow(distFromPeak / 0.04, 2)) * 18.5;
-  const noise = (Math.random() - 0.5) * 1.5 - 85;
+  const pseudoNoise = Math.sin(i * 12.9898) * 0.75 - 85;
   return {
     frequencyMHz: Number(freq.toFixed(4)),
-    amplitudeDb: Number((noise + peak).toFixed(2)),
+    amplitudeDb: Number((pseudoNoise + peak).toFixed(2)),
   };
 });
 

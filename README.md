@@ -330,31 +330,36 @@ Aethon/
 │   │
 │   ├── components/
 │   │   ├── ui/                 # Reusable scientific UI primitives
-│   │   │   ├── Badge.tsx       # Telemetry status badges (cyan, emerald, rose)
+│   │   │   ├── Badge.tsx       # Telemetry status badges (cyan, emerald, amber, rose)
 │   │   │   ├── Button.tsx      # Aerospace control buttons
-│   │   │   ├── StatMetric.tsx  # Telemetry metric cards
 │   │   │   └── motion.tsx      # Motion/react transitions & pulse indicators
 │   │   ├── layout/
 │   │   │   ├── AppLayout.tsx   # Observatory application shell & telemetry footer
 │   │   │   └── PageHeader.tsx  # Consistent instrumentation headers
 │   │   ├── navigation/
-│   │   │   └── Navbar.tsx      # Live UTC clock, GBT array status, navigation
+│   │   │   ├── Sidebar.tsx     # Collapsible telemetry navigation rail
+│   │   │   ├── TopSystemBar.tsx# Live UTC clock, antenna status & receiver health
+│   │   │   ├── MobileNavigation.tsx # Fullscreen modal drawer for tablet/mobile
+│   │   │   ├── SidebarItem.tsx # Accessible navigation button with telemetry badges
+│   │   │   └── SystemStatus.tsx# Subsystem operational indicator
 │   │   └── visualization/
 │   │       ├── SpectrumChart.tsx # FFT power distribution (Recharts)
 │   │       └── DriftRateChart.tsx# Doppler drift cadence tracker (Recharts)
 │   │
-│   ├── features/
-│   │   └── signals/
-│   │       ├── SignalCard.tsx  # Candidate signal card component
-│   │       └── sample-data.ts  # Rigorous candidate signal mock datasets
+│   ├── app/
+│   │   ├── navigation.ts       # Centralized primary & secondary navigation definitions
+│   │   └── router.tsx          # Client route definitions & lazy-loaded suspense boundaries
 │   │
 │   ├── pages/
 │   │   ├── Landing/            # Mission overview & live preview
 │   │   ├── Observatory/        # Main telemetry console & controls
 │   │   ├── Discover/           # Signal dropzone & candidate filter pipeline
-│   │   ├── Analysis/           # Signal dossier & celestial coordinates
-│   │   ├── Model/              # ML transformer architecture & benchmarks
-│   │   └── About/              # Astrophysical concepts & mission background
+│   │   ├── Candidates/         # Dedicated candidate registry & ranking matrix
+│   │   ├── Archive/            # Persistent observational registry & temporal history
+│   │   ├── Analysis/           # Signal dossier, multi-resolution FFT & timeline
+│   │   ├── Model/              # ML transformer architecture & manifold deviation
+│   │   ├── About/              # Astrophysical concepts & mission background
+│   │   └── NotFound/           # Off-target 404 coordinates recovery interface
 │   │
 │   ├── lib/
 │   │   ├── api.ts              # Centralized Axios client & telemetry interceptors

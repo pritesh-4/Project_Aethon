@@ -24,17 +24,31 @@ export default function ObservatoryPage() {
     MOCK_OBSERVATIONS.find((o) => o.id === selectedObsId) || MOCK_OBSERVATIONS[0];
 
   const scanTimerRef = useRef<number | null>(null);
+  const timeoutsRef = useRef<number[]>([]);
+
+  const safeTimeout = useCallback((cb: () => void, ms: number) => {
+    const id = window.setTimeout(cb, ms);
+    timeoutsRef.current.push(id);
+    return id;
+  }, []);
+
+  const clearAllTimeouts = useCallback(() => {
+    timeoutsRef.current.forEach((id) => clearTimeout(id));
+    timeoutsRef.current = [];
+  }, []);
 
   // Clean up any running timers on unmount
   useEffect(() => {
     return () => {
       if (scanTimerRef.current) cancelAnimationFrame(scanTimerRef.current);
+      clearAllTimeouts();
     };
-  }, []);
+  }, [clearAllTimeouts]);
 
   // Handle Observation selection
   const handleSelectObservation = (id: string) => {
     if (scanTimerRef.current) cancelAnimationFrame(scanTimerRef.current);
+    clearAllTimeouts();
     setSelectedObsId(id);
     setStatus('IDLE');
     setScanProgress(0);
@@ -49,13 +63,14 @@ export default function ObservatoryPage() {
     if (status === 'ANALYZING' || status === 'LOADING') return;
 
     if (scanTimerRef.current) cancelAnimationFrame(scanTimerRef.current);
+    clearAllTimeouts();
 
     // Step 1: LOADING (buffer ingestion)
     setStatus('LOADING');
     setIsPaused(false);
     setScanProgress(0);
 
-    setTimeout(() => {
+    safeTimeout(() => {
       // Step 2: ANALYZING (scanning sweep across spectrogram)
       setStatus('ANALYZING');
       const startTime = performance.now();
@@ -76,7 +91,7 @@ export default function ObservatoryPage() {
           });
 
           // Step 4: CANDIDATE READY (after brief verification delay)
-          setTimeout(() => {
+          safeTimeout(() => {
             setStatus('CANDIDATE_READY');
           }, 800);
         }
@@ -84,14 +99,15 @@ export default function ObservatoryPage() {
 
       scanTimerRef.current = requestAnimationFrame(animateScan);
     }, 600);
-  }, [status, currentObservation]);
+  }, [status, currentObservation, clearAllTimeouts, safeTimeout]);
 
   // Handle Load Observation action
   const handleLoadObservation = () => {
     if (scanTimerRef.current) cancelAnimationFrame(scanTimerRef.current);
+    clearAllTimeouts();
     setStatus('LOADING');
     setScanProgress(0);
-    setTimeout(() => {
+    safeTimeout(() => {
       setStatus('IDLE');
       toast.success(`Observation ${currentObservation.id} buffer reloaded`, {
         description: `${currentObservation.windowDuration} elapsed integration ready for analysis.`,
@@ -108,6 +124,7 @@ export default function ObservatoryPage() {
   // Handle Reset to IDLE
   const handleReset = () => {
     if (scanTimerRef.current) cancelAnimationFrame(scanTimerRef.current);
+    clearAllTimeouts();
     setStatus('IDLE');
     setScanProgress(0);
     setIsPaused(false);

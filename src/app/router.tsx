@@ -7,8 +7,10 @@ const ObservatoryPage = lazy(() => import('@/pages/Observatory/index.tsx'));
 const DiscoverPage = lazy(() => import('@/pages/Discover/index.tsx'));
 const CandidatesPage = lazy(() => import('@/pages/Candidates/index.tsx'));
 const AnalysisPage = lazy(() => import('@/pages/Analysis/index.tsx'));
+const ArchivePage = lazy(() => import('@/pages/Archive/index.tsx'));
 const ModelPage = lazy(() => import('@/pages/Model/index.tsx'));
 const AboutPage = lazy(() => import('@/pages/About/index.tsx'));
+const NotFoundPage = lazy(() => import('@/pages/NotFound/index.tsx'));
 
 function LazyRoute({ children }: { children: ReactNode }) {
   return (
@@ -68,7 +70,15 @@ const router = createBrowserRouter([
         path: 'archive',
         element: (
           <LazyRoute>
-            <DiscoverPage />
+            <ArchivePage />
+          </LazyRoute>
+        ),
+      },
+      {
+        path: 'analysis',
+        element: (
+          <LazyRoute>
+            <AnalysisPage />
           </LazyRoute>
         ),
       },
@@ -100,7 +110,7 @@ const router = createBrowserRouter([
         path: '*',
         element: (
           <LazyRoute>
-            <LandingPage />
+            <NotFoundPage />
           </LazyRoute>
         ),
       },
