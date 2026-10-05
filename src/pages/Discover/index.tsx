@@ -1,177 +1,286 @@
-import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { PageHeader } from '@/components/layout/PageHeader.tsx';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { PageTransition } from '@/components/ui/motion.tsx';
-import { Badge } from '@/components/ui/Badge.tsx';
-import { SegmentedControl } from '@/components/ui/SegmentedControl.tsx';
-import { SignalCard } from '@/features/signals/SignalCard.tsx';
-import { SAMPLE_CANDIDATES } from '@/features/signals/sample-data.ts';
-import { UploadCloud, Search, Filter, CheckCircle2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
-import type { CandidateSignal } from '@/types/index.ts';
+
+import type {
+  DiscoveryStage,
+  DiscoveryObservationMeta,
+  SearchConfig,
+  DiscoveredCandidate,
+} from './types.ts';
+import {
+  REFERENCE_OBSERVATIONS,
+  MOCK_DISCOVERY_CANDIDATES,
+  MOCK_DISCOVERY_RESULT,
+} from './data/mockDiscovery.ts';
+
+import { DiscoveryHeader } from './components/DiscoveryHeader.tsx';
+import { ObservationDropzone } from './components/ObservationDropzone.tsx';
+import { ObservationSummary } from './components/ObservationSummary.tsx';
+import { SearchConfiguration } from './components/SearchConfiguration.tsx';
+import { DiscoveryPipeline } from './components/DiscoveryPipeline.tsx';
+import { SignalAnalysisViewport } from './components/SignalAnalysisViewport.tsx';
+import { CandidateRankingTable } from './components/CandidateRankingTable.tsx';
+import { CandidatePreview } from './components/CandidatePreview.tsx';
+import { DiscoveryResults } from './components/DiscoveryResults.tsx';
 
 export default function DiscoverPage() {
-  const [candidates, setCandidates] = useState<CandidateSignal[]>(SAMPLE_CANDIDATES);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  // Primary State
+  const [stage, setStage] = useState<DiscoveryStage>('observation_loaded');
+  const [observation, setObservation] = useState<DiscoveryObservationMeta | null>(
+    REFERENCE_OBSERVATIONS[0]
+  );
+  const [searchConfig, setSearchConfig] = useState<SearchConfig>({
+    searchMode: 'standard',
+    freqRangeMinMHz: 1400,
+    freqRangeMaxMHz: 1450,
+    minPersistencePercent: 75,
+    rfiFilterEnabled: true,
+  });
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 0) return;
-    const file = acceptedFiles[0];
-    setUploadedFileName(file.name);
-    setIsProcessing(true);
+  const [stageProgress, setStageProgress] = useState({
+    preprocessing: 0,
+    transform: 0,
+    representing: 0,
+    searching: 0,
+    ranking: 0,
+  });
+  const [overallProgress, setOverallProgress] = useState(0);
+  const [visibleCandidateCount, setVisibleCandidateCount] = useState(0);
+  const [selectedCandidate, setSelectedCandidate] = useState<DiscoveredCandidate>(
+    MOCK_DISCOVERY_CANDIDATES[0]
+  );
 
-    toast.info(`Ingesting radio spectrogram: ${file.name}`, {
-      description: `Size: ${(file.size / 1024).toFixed(1)} KB. Commencing Polyphase Filterbank FFT...`,
-    });
+  const candidatesRef = useRef<HTMLDivElement | null>(null);
+  const animTimerRef = useRef<number | null>(null);
 
-    // Simulate AI model inference on the uploaded signal
-    setTimeout(() => {
-      setIsProcessing(false);
-      const newSignal: CandidateSignal = {
-        id: `SIG-2026-${Math.floor(100 + Math.random() * 900)}X`,
-        name: `Extracted Anomaly [${file.name.replace(/\.[^/.]+$/, '')}]`,
-        frequencyMHz: 1420.735,
-        bandwidthKHz: 3.8,
-        snrDb: 22.4,
-        driftRateHzPerSec: -0.28,
-        timestamp: new Date().toISOString(),
-        telescope: 'Local Ingest Buffer / GBT Archive',
-        status: 'candidate',
-        priorityRank: 'high',
-        anomalyScore: 0.912,
-        verificationStatus: 'flagged',
-        mlModelVersion: 'AethonNet-v2.4-Transformer',
-        coordinates: {
-          ra: '18h 12m 04.1s',
-          dec: '-14° 01′ 22.0″',
-          constellation: 'Serpens',
-        },
-      };
-
-      setCandidates((prev) => [newSignal, ...prev]);
-      toast.success('Signal Processed Successfully', {
-        description: `Isolated narrowband anomaly at ${newSignal.frequencyMHz} MHz (SNR: +${newSignal.snrDb} dB)`,
-      });
-    }, 1800);
+  // Clean up animation timers on unmount
+  useEffect(() => {
+    return () => {
+      if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
+    };
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    maxFiles: 1,
-    accept: {
-      'application/octet-stream': ['.fil', '.h5', '.fits', '.dat'],
-      'text/csv': ['.csv'],
-      'application/json': ['.json'],
-    },
-  });
+  // Handle Observation Loaded
+  const handleObservationLoaded = (obs: DiscoveryObservationMeta) => {
+    setObservation(obs);
+    setStage('observation_loaded');
+    setOverallProgress(0);
+    setStageProgress({
+      preprocessing: 0,
+      transform: 0,
+      representing: 0,
+      searching: 0,
+      ranking: 0,
+    });
+    setVisibleCandidateCount(0);
+    toast.success(`Observation record ${obs.id} loaded into discovery bay`, {
+      description: `${obs.samplesCount.toLocaleString()} complex samples ready for PFB transform.`,
+    });
+  };
 
-  const filteredCandidates = candidates.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.telescope.toLowerCase().includes(searchQuery.toLowerCase());
+  // Handle Remove Observation
+  const handleRemoveObservation = () => {
+    setObservation(null);
+    setStage('idle');
+    setOverallProgress(0);
+    setVisibleCandidateCount(0);
+  };
 
-    const matchesPriority = filterPriority === 'all' || item.priorityRank === filterPriority;
+  // Scroll to candidates section
+  const handleScrollToCandidates = () => {
+    candidatesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-    return matchesSearch && matchesPriority;
-  });
+  // Deterministic Discovery Execution Flow
+  const handleInitiateDiscovery = useCallback(() => {
+    if (!observation) return;
+    if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
+
+    setStage('preprocessing');
+    setOverallProgress(0);
+    setVisibleCandidateCount(0);
+
+    toast.info(`Initiating Autonomous Signal Discovery [${observation.id}]`, {
+      description: 'Deploying Polyphase Filterbank and Latent Feature Extraction...',
+    });
+
+    const pipelineSequence = [
+      { stage: 'preprocessing' as const, key: 'preprocessing' as const, duration: 1000 },
+      { stage: 'transform' as const, key: 'transform' as const, duration: 1200 },
+      { stage: 'representing' as const, key: 'representing' as const, duration: 1100 },
+      { stage: 'searching' as const, key: 'searching' as const, duration: 1300 },
+      { stage: 'ranking' as const, key: 'ranking' as const, duration: 1100 },
+    ];
+
+    let currentStepIdx = 0;
+
+    const runStep = () => {
+      if (currentStepIdx >= pipelineSequence.length) {
+        setStage('complete');
+        setOverallProgress(100);
+        setVisibleCandidateCount(MOCK_DISCOVERY_CANDIDATES.length);
+        toast.success('Autonomous Signal Search Procedure Complete', {
+          description: `Identified 17 anomalous regions; isolated 4 high-priority candidate signals.`,
+        });
+        return;
+      }
+
+      const step = pipelineSequence[currentStepIdx];
+      setStage(step.stage);
+      const stepStartTime = performance.now();
+
+      const animateStep = (now: number) => {
+        const elapsed = now - stepStartTime;
+        const progress = Math.min(100, (elapsed / step.duration) * 100);
+
+        setStageProgress((prev) => ({
+          ...prev,
+          [step.key]: progress,
+        }));
+
+        const totalCompleted = currentStepIdx * 20 + (progress / 100) * 20;
+        setOverallProgress(totalCompleted);
+
+        // Gradually reveal candidate events during ranking stage
+        if (step.stage === 'ranking') {
+          const count = Math.min(
+            MOCK_DISCOVERY_CANDIDATES.length,
+            Math.floor((progress / 100) * MOCK_DISCOVERY_CANDIDATES.length) + 1
+          );
+          setVisibleCandidateCount(count);
+        }
+
+        if (progress < 100) {
+          animTimerRef.current = requestAnimationFrame(animateStep);
+        } else {
+          currentStepIdx++;
+          runStep();
+        }
+      };
+
+      animTimerRef.current = requestAnimationFrame(animateStep);
+    };
+
+    runStep();
+  }, [observation]);
+
+  // Handle Reset to new discovery
+  const handleReset = () => {
+    if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
+    setStage(observation ? 'observation_loaded' : 'idle');
+    setStageProgress({
+      preprocessing: 0,
+      transform: 0,
+      representing: 0,
+      searching: 0,
+      ranking: 0,
+    });
+    setOverallProgress(0);
+    setVisibleCandidateCount(0);
+    toast('Discovery workspace reset');
+  };
+
+  const isAnalyzing =
+    stage === 'preprocessing' ||
+    stage === 'transform' ||
+    stage === 'representing' ||
+    stage === 'searching' ||
+    stage === 'ranking';
 
   return (
-    <PageTransition className="space-y-6">
-      <PageHeader
-        category="SIGNAL DISCOVERY PIPELINE"
-        title="Signal Discovery & Ingestion"
-        subtitle="Upload astronomical filterbank (FIL, HDF5, FITS) raw data or query candidate signals isolated across automated telescope surveys."
-        badge={<Badge variant="cyan">NEURAL FFT INFERENCE READY</Badge>}
-      />
+    <PageTransition className="space-y-4">
+      {/* 1. Header */}
+      <DiscoveryHeader stage={stage} />
 
-      {/* File Upload Zone */}
-      <div
-        {...getRootProps()}
-        className={`relative flex flex-col items-center justify-center rounded-[2px] border-2 border-dashed p-8 text-center transition-all cursor-pointer ${
-          isDragActive
-            ? 'border-cyan-400 bg-cyan-950/30'
-            : 'border-slate-800 bg-[#040814]/70 hover:border-slate-700 hover:bg-[#070d1e]/80'
-        }`}
-      >
-        <input {...getInputProps()} />
-
-        <div className="flex h-10 w-10 items-center justify-center rounded-[2px] border border-cyan-900/60 bg-cyan-950/40 text-cyan-400 mb-3 shadow-[0_0_12px_rgba(6,182,212,0.18)]">
-          <UploadCloud className="h-5 w-5" />
-        </div>
-
-        <h3 className="text-base font-semibold text-slate-100 font-sans">
-          {isDragActive
-            ? 'Release radio telemetry file for ingestion'
-            : 'Drop astronomical signal file here, or click to browse'}
-        </h3>
-
-        <p className="mt-1 text-xs text-slate-400 font-mono">
-          Supports SIGPROC Filterbank (.fil), HDF5 (.h5), FITS (.fits), and telemetry CSV dumps
-        </p>
-
-        {uploadedFileName && (
-          <div className="mt-3 flex items-center gap-2 rounded-[2px] bg-slate-900 px-3 py-1 font-mono text-xs text-cyan-300 border border-slate-700">
-            {isProcessing ? (
-              <span className="h-3 w-3 rounded-none border border-cyan-400 border-t-transparent animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-            )}
-            <span>{uploadedFileName}</span>
-            {isProcessing && <span className="text-slate-400">— Running AethonNet FFT...</span>}
-          </div>
+      {/* 2. Top Observation Bay: Dropzone vs. Loaded Observation Summary */}
+      <AnimatePresence mode="wait">
+        {!observation ? (
+          <motion.div
+            key="dropzone-view"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ObservationDropzone onObservationLoaded={handleObservationLoaded} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="summary-view"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ObservationSummary
+              observation={observation}
+              onRemove={handleRemoveObservation}
+              onInitiateDiscovery={handleInitiateDiscovery}
+            />
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
 
-      {/* Search and Filters Bar */}
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-3 rounded-[2px] border border-slate-800 bg-[#040814]/90 p-3 font-mono text-xs">
-        <div className="relative w-full lg:w-80">
-          <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-500" />
-          <input
-            type="text"
-            placeholder="Search signal ID, target, coordinates..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-8 rounded-[2px] border border-slate-700/80 bg-slate-950 pl-8 pr-3 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 tracking-wider"
+      {/* 3. Analysis Configuration (Visible when observation loaded and not running) */}
+      {!isAnalyzing && stage !== 'complete' && observation && (
+        <SearchConfiguration
+          config={searchConfig}
+          onChange={setSearchConfig}
+          disabled={isAnalyzing}
+        />
+      )}
+
+      {/* 4. Live Analysis Section: Signal Viewport + Pipeline Progress */}
+      {(isAnalyzing || stage === 'complete') && observation && (
+        <div className="space-y-4">
+          {/* Central Evolving Signal Viewport */}
+          <SignalAnalysisViewport
+            stage={stage}
+            observation={observation}
+            overallProgress={overallProgress}
           />
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
-          <span className="text-[11px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
-            <Filter className="h-3.5 w-3.5 text-cyan-500" />
-            FILTER:
-          </span>
-          <SegmentedControl
-            options={[
-              { value: 'all', label: 'ALL', badge: candidates.length },
-              { value: 'critical', label: 'CRITICAL' },
-              { value: 'high', label: 'HIGH' },
-              { value: 'medium', label: 'MEDIUM' },
-              { value: 'low', label: 'RFI' },
-            ]}
-            value={filterPriority}
-            onChange={(val) => setFilterPriority(val)}
-            size="sm"
-          />
+          {/* Dual Column: Pipeline Stages & Results */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-12">
+              <DiscoveryPipeline stage={stage} stageProgress={stageProgress} />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Candidates Display */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-          <span>Showing {filteredCandidates.length} candidate discoveries</span>
-          <span>Sorting: Highest Anomaly Score first</span>
-        </div>
+      {/* 5. Completion Result Banner */}
+      {stage === 'complete' && (
+        <DiscoveryResults
+          summary={MOCK_DISCOVERY_RESULT}
+          onReset={handleReset}
+          onScrollToCandidates={handleScrollToCandidates}
+        />
+      )}
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCandidates.map((candidate) => (
-            <SignalCard key={candidate.id} signal={candidate} />
-          ))}
+      {/* 6. Candidate Events Ranking & Preview Section */}
+      {(stage === 'ranking' || stage === 'complete') && visibleCandidateCount > 0 && (
+        <div ref={candidatesRef} className="space-y-4 pt-2">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Left: Ranking Table (8 cols) */}
+            <div className="lg:col-span-8">
+              <CandidateRankingTable
+                candidates={MOCK_DISCOVERY_CANDIDATES}
+                selectedCandidateId={selectedCandidate.id}
+                onSelectCandidate={setSelectedCandidate}
+                visibleCount={visibleCandidateCount}
+              />
+            </div>
+
+            {/* Right: Top Candidate Preview & Interpretability (4 cols) */}
+            <div className="lg:col-span-4">
+              <CandidatePreview candidate={selectedCandidate} />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </PageTransition>
   );
 }

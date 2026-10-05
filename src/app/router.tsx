@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout.tsx';
 const LandingPage = lazy(() => import('@/pages/Landing/index.tsx'));
 const ObservatoryPage = lazy(() => import('@/pages/Observatory/index.tsx'));
 const DiscoverPage = lazy(() => import('@/pages/Discover/index.tsx'));
+const CandidatesPage = lazy(() => import('@/pages/Candidates/index.tsx'));
 const AnalysisPage = lazy(() => import('@/pages/Analysis/index.tsx'));
 const ModelPage = lazy(() => import('@/pages/Model/index.tsx'));
 const AboutPage = lazy(() => import('@/pages/About/index.tsx'));
@@ -59,7 +60,7 @@ const router = createBrowserRouter([
         path: 'candidates',
         element: (
           <LazyRoute>
-            <DiscoverPage />
+            <CandidatesPage />
           </LazyRoute>
         ),
       },
