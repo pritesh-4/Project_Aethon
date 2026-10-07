@@ -4,21 +4,16 @@ import type { DiscoveryStage, DiscoveryObservationMeta } from '../types.ts';
 export interface SignalAnalysisViewportProps {
   stage: DiscoveryStage;
   observation: DiscoveryObservationMeta;
-  overallProgress: number; // 0 to 100
 }
 
-export function SignalAnalysisViewport({
-  stage,
-  observation,
-  overallProgress,
-}: SignalAnalysisViewportProps) {
+export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisViewportProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const stateRef = useRef({ stage, observation, overallProgress });
+  const stateRef = useRef({ stage, observation });
   useEffect(() => {
-    stateRef.current = { stage, observation, overallProgress };
-  }, [stage, observation, overallProgress]);
+    stateRef.current = { stage, observation };
+  }, [stage, observation]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -63,27 +58,27 @@ export function SignalAnalysisViewport({
 
     const render = (now: number) => {
       const t = (now - startTime) * 0.001;
-      const { stage: currentStage, overallProgress: prog } = stateRef.current;
+      const { stage: currentStage } = stateRef.current;
 
-      const paddingLeft = 52;
-      const paddingRight = 28;
-      const paddingTop = 26;
-      const paddingBottom = 34;
+      const paddingLeft = 48;
+      const paddingRight = 24;
+      const paddingTop = 20;
+      const paddingBottom = 28;
 
       const plotW = Math.max(10, width - paddingLeft - paddingRight);
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
       const cy = paddingTop + plotH * 0.5;
 
       // 1. Clear Background
-      ctx.fillStyle = '#03060C';
+      ctx.fillStyle = '#06080B';
       ctx.fillRect(0, 0, width, height);
 
       // Plot Area Fill
-      ctx.fillStyle = '#050913';
+      ctx.fillStyle = '#0B0F14';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 2. Reticle Grid
-      ctx.strokeStyle = 'rgba(23, 35, 56, 0.6)';
+      ctx.strokeStyle = 'rgba(23, 34, 48, 0.7)';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -95,8 +90,8 @@ export function SignalAnalysisViewport({
         ctx.stroke();
       }
 
-      for (let i = 0; i <= 5; i++) {
-        const x = paddingLeft + (plotW / 5) * i;
+      for (let i = 0; i <= 4; i++) {
+        const x = paddingLeft + (plotW / 4) * i;
         ctx.beginPath();
         ctx.moveTo(x, paddingTop);
         ctx.lineTo(x, paddingTop + plotH);
@@ -104,18 +99,17 @@ export function SignalAnalysisViewport({
       }
       ctx.setLineDash([]);
 
-      // 3. Evolving Single-Core Visualization based on Stage
-      const pNorm = Math.min(1, Math.max(0, prog / 100));
+      // 3. Stage Visual Progression
+      const isPrepare = currentStage === 'prepare' || currentStage === 'idle';
+      const isRepresent = currentStage === 'represent';
+      const isSearch = currentStage === 'search';
+      const isRankOrComplete = currentStage === 'rank' || currentStage === 'complete';
 
-      // STAGE A: RAW SIGNAL WAVEFORM (pNorm 0.0 to 0.25)
-      if (pNorm < 0.35 || currentStage === 'idle' || currentStage === 'observation_loaded') {
-        const waveAlpha = currentStage === 'preprocessing' ? 1 - (pNorm - 0.1) * 3 : 0.9;
+      // Waveform display during prepare
+      if (isPrepare) {
         ctx.save();
-        ctx.strokeStyle = '#38BDF8';
-        ctx.shadowColor = 'rgba(56, 189, 248, 0.4)';
-        ctx.shadowBlur = 8;
+        ctx.strokeStyle = '#5BD8F5';
         ctx.lineWidth = 1.3;
-        ctx.globalAlpha = Math.max(0.15, Math.min(1, waveAlpha));
 
         ctx.beginPath();
         for (let x = 0; x <= plotW; x += 2) {
@@ -123,9 +117,9 @@ export function SignalAnalysisViewport({
           const noise =
             Math.sin(x * 0.04 + t * 4) * 3 +
             Math.sin(x * 0.09 - t * 6) * 1.5 +
-            (Math.random() - 0.5) * 3;
-          const envelope = Math.exp(-Math.pow((nx - 0.52) * 4, 2));
-          const carrier = Math.sin(x * 0.08 - t * 8) * 22 * envelope;
+            (Math.random() - 0.5) * 2;
+          const envelope = Math.exp(-Math.pow((nx - 0.5) * 4, 2));
+          const carrier = Math.sin(x * 0.08 - t * 8) * 18 * envelope;
 
           const y = cy + noise + carrier;
           if (x === 0) ctx.moveTo(paddingLeft + x, y);
@@ -135,12 +129,9 @@ export function SignalAnalysisViewport({
         ctx.restore();
       }
 
-      // STAGE B: TIME-FREQUENCY SPECTROGRAM (emerges after pNorm > 0.15)
-      if (pNorm > 0.15) {
-        const specAlpha = Math.min(1, (pNorm - 0.15) * 3.5);
+      // Spectrogram display during represent, search, rank, complete
+      if (isRepresent || isSearch || isRankOrComplete) {
         ctx.save();
-        ctx.globalAlpha = specAlpha * 0.85;
-
         const cellW = plotW / cols;
         const cellH = plotH / rows;
 
@@ -148,16 +139,16 @@ export function SignalAnalysisViewport({
           const normFreq = 1 - r / rows;
           for (let c = 0; c < cols; c++) {
             const normTime = c / cols;
-            const baseNoise = noiseMatrix[r * cols + c] * 0.18;
+            const baseNoise = noiseMatrix[r * cols + c] * 0.16;
 
-            // Coherent Doppler carrier slope
+            // Carrier slope
             const carrierCenter = 0.54 + (normTime - 0.5) * -0.28;
             const dist = Math.abs(normFreq - carrierCenter);
 
             let intensity = baseNoise;
             if (dist < 0.045) {
               const strength = 1 - dist / 0.045;
-              intensity += strength * (0.65 + Math.sin(c * 0.3 - t * 5) * 0.15);
+              intensity += strength * (0.65 + Math.sin(c * 0.3 - t * 4) * 0.15);
             }
 
             if (intensity > 0.06) {
@@ -168,18 +159,18 @@ export function SignalAnalysisViewport({
 
               if (cl < 0.4) {
                 cr = Math.floor(10 * cl);
-                cg = Math.floor(50 * cl * 2);
-                cb = Math.floor(120 * cl * 2.5);
+                cg = Math.floor(40 * cl * 2);
+                cb = Math.floor(100 * cl * 2.5);
               } else if (cl < 0.8) {
                 const f = (cl - 0.4) / 0.4;
-                cr = Math.floor(14 + 40 * f);
-                cg = Math.floor(110 + 117 * f);
-                cb = Math.floor(170 + 85 * f);
+                cr = Math.floor(14 + 30 * f);
+                cg = Math.floor(90 + 100 * f);
+                cb = Math.floor(150 + 90 * f);
               } else {
                 const f = (cl - 0.8) / 0.2;
-                cr = Math.floor(102 + 153 * f);
-                cg = Math.floor(227 + 28 * f);
-                cb = 255;
+                cr = Math.floor(91 + 140 * f);
+                cg = Math.floor(216 + 25 * f);
+                cb = 245;
               }
 
               ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
@@ -195,58 +186,17 @@ export function SignalAnalysisViewport({
         ctx.restore();
       }
 
-      // STAGE C: REPRESENTATION LEARNING (Latent Token Nodes & Attention Connections)
-      if (pNorm > 0.45) {
-        const latentAlpha = Math.min(1, (pNorm - 0.45) * 3);
+      // Anomaly isolation bracket during search, rank, and complete
+      if (isSearch || isRankOrComplete) {
         ctx.save();
-        ctx.globalAlpha = latentAlpha;
-
-        const tokenCount = 10;
-        const coords: { x: number; y: number }[] = [];
-
-        for (let i = 0; i < tokenCount; i++) {
-          const normX = 0.2 + (i / (tokenCount - 1)) * 0.6;
-          const normY = 0.54 + (normX - 0.5) * -0.28;
-          const tx = paddingLeft + normX * plotW;
-          const ty = paddingTop + (1 - normY) * plotH + Math.sin(i * 1.2 + t * 3) * 4;
-          coords.push({ x: tx, y: ty });
-
-          // Token point
-          ctx.fillStyle = '#66E3FF';
-          ctx.shadowColor = '#66E3FF';
-          ctx.shadowBlur = 6;
-          ctx.beginPath();
-          ctx.arc(tx, ty, 3, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Draw sparse attention links between adjacent tokens
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < coords.length - 1; i++) {
-          ctx.beginPath();
-          ctx.moveTo(coords[i].x, coords[i].y);
-          ctx.lineTo(coords[i + 1].x, coords[i + 1].y);
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
-
-      // STAGE D: ANOMALY SEARCH & CANDIDATE ISOLATION
-      if (pNorm > 0.7 || currentStage === 'complete') {
-        const anomAlpha = Math.min(1, (pNorm - 0.7) * 3.5);
-        ctx.save();
-        ctx.globalAlpha = anomAlpha;
-
         const bx = paddingLeft + plotW * 0.42;
         const bw = plotW * 0.34;
         const by = paddingTop + plotH * 0.32;
         const bh = plotH * 0.34;
 
-        // Anomaly bounding brackets
-        ctx.strokeStyle = currentStage === 'complete' ? '#10B981' : '#66E3FF';
-        ctx.lineWidth = 1.3;
-        const cLen = 12;
+        ctx.strokeStyle = isRankOrComplete ? '#5BD8F5' : '#E8AE50';
+        ctx.lineWidth = 1.2;
+        const cLen = 10;
 
         // Top-left
         ctx.beginPath();
@@ -276,64 +226,47 @@ export function SignalAnalysisViewport({
         ctx.lineTo(bx + bw, by + bh - cLen);
         ctx.stroke();
 
-        // Doppler vector trajectory line
-        ctx.strokeStyle = currentStage === 'complete' ? '#10B981' : '#66E3FF';
-        ctx.lineWidth = 1.4;
+        // Drift line
         ctx.beginPath();
-        ctx.moveTo(bx + 10, by + 14);
-        ctx.lineTo(bx + bw - 10, by + bh - 14);
+        ctx.moveTo(bx + 8, by + 12);
+        ctx.lineTo(bx + bw - 8, by + bh - 12);
         ctx.stroke();
 
-        // Micro label
+        // Clean label
         ctx.font = '10px Inter, sans-serif';
-        ctx.fillStyle = '#5BD8F5';
+        ctx.fillStyle = isRankOrComplete ? '#5BD8F5' : '#E8AE50';
         ctx.textAlign = 'left';
         ctx.fillText(
-          currentStage === 'complete' ? 'Candidate event isolated' : 'Anomaly residual (Δ > 4.8σ)',
+          isRankOrComplete ? 'Candidate signal isolated' : 'Anomaly detected',
           bx + 4,
           by - 6
         );
 
-        ctx.textAlign = 'right';
-        ctx.fillText('Drift: -0.32 Hz/s', bx + bw - 4, by - 6);
-
         ctx.restore();
       }
 
-      // 4. Outer Border
+      // Outer Plot Border
       ctx.strokeStyle = '#1C2630';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
-      // 5. Scientific Axis Labels
+      // Clean Scientific Axes
       ctx.fillStyle = '#7F8B95';
       ctx.font = '10px Inter, sans-serif';
 
-      // Left Frequency Axis
+      // Frequency axis (Y)
       const f0 = observation.frequencyMHz;
-      const halfBw = (observation.bandwidthMHz / 2).toFixed(2);
+      const halfBw = (observation.bandwidthMHz / 2).toFixed(1);
       ctx.textAlign = 'right';
       ctx.fillText(`+${halfBw} MHz`, paddingLeft - 6, paddingTop + 8);
-      ctx.fillText(`f₀: ${f0.toFixed(2)}`, paddingLeft - 6, cy + 3);
+      ctx.fillText(`${f0.toFixed(2)} MHz`, paddingLeft - 6, cy + 3);
       ctx.fillText(`-${halfBw} MHz`, paddingLeft - 6, paddingTop + plotH - 2);
 
-      // Bottom Time Axis
+      // Time axis (X)
       ctx.textAlign = 'center';
       ctx.fillText('00:00', paddingLeft + 16, paddingTop + plotH + 16);
-      ctx.fillText('Midpoint', paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
+      ctx.fillText('Observation duration', paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
       ctx.fillText(observation.durationString, paddingLeft + plotW - 16, paddingTop + plotH + 16);
-
-      // Top Stage Header
-      ctx.fillStyle = '#7F8B95';
-      ctx.textAlign = 'left';
-      ctx.fillText(`Stage: ${currentStage}`, paddingLeft, paddingTop - 10);
-
-      ctx.textAlign = 'right';
-      ctx.fillText(
-        `Samples: ${observation.samplesCount.toLocaleString()}`,
-        paddingLeft + plotW,
-        paddingTop - 10
-      );
 
       animId = requestAnimationFrame(render);
     };
@@ -347,21 +280,13 @@ export function SignalAnalysisViewport({
   }, [observation]);
 
   return (
-    <div className="relative flex flex-col rounded border border-[#1C2630] bg-[#06080B] overflow-hidden shadow-sm">
-      {/* Viewport Top Bar */}
-      <div className="flex items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] px-3 py-2 text-xs select-none">
-        <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
-          <span className="font-medium text-[#E6EDF2]">Signal analysis viewport</span>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs text-[#7F8B95]">
-          <span>Time–frequency representation</span>
-        </div>
+    <div className="rounded border border-[#1C2630] bg-[#06080B] overflow-hidden select-none">
+      <div className="flex items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] px-3.5 py-2 text-xs">
+        <span className="font-medium text-[#E6EDF2]">Time–frequency spectrogram</span>
+        <span className="text-[11px] text-[#7F8B95] font-mono">{observation.name}</span>
       </div>
 
-      {/* Main Canvas Viewport */}
-      <div ref={containerRef} className="relative h-[280px] sm:h-[340px] w-full bg-[#06080B]">
+      <div ref={containerRef} className="relative h-[220px] sm:h-[260px] w-full bg-[#06080B]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>
     </div>

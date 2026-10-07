@@ -1,14 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { PageTransition } from '@/components/ui/motion.tsx';
-import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 
-import type {
-  DiscoveryStage,
-  DiscoveryObservationMeta,
-  SearchConfig,
-  DiscoveredCandidate,
-} from './types.ts';
+import type { DiscoveryStage, DiscoveryObservationMeta, SearchConfig } from './types.ts';
 import {
   REFERENCE_OBSERVATIONS,
   MOCK_DISCOVERY_CANDIDATES,
@@ -16,285 +10,198 @@ import {
 } from './data/mockDiscovery.ts';
 
 import { DiscoveryHeader } from './components/DiscoveryHeader.tsx';
-import { ObservationDropzone } from './components/ObservationDropzone.tsx';
-import { ObservationSummary } from './components/ObservationSummary.tsx';
-import { SearchConfiguration } from './components/SearchConfiguration.tsx';
+import { ObservationInput } from './components/ObservationInput.tsx';
+import { SearchSettings } from './components/SearchSettings.tsx';
 import { DiscoveryPipeline } from './components/DiscoveryPipeline.tsx';
 import { SignalAnalysisViewport } from './components/SignalAnalysisViewport.tsx';
-import { CandidateRankingTable } from './components/CandidateRankingTable.tsx';
-import { CandidatePreview } from './components/CandidatePreview.tsx';
 import { DiscoveryResults } from './components/DiscoveryResults.tsx';
+import { CandidateSummary } from './components/CandidateSummary.tsx';
+import { Button } from '@/components/ui/Button.tsx';
+import { ArrowRight, RotateCcw } from 'lucide-react';
 
 export default function DiscoverPage() {
   // Primary State
-  const [stage, setStage] = useState<DiscoveryStage>('observation_loaded');
-  const [observation, setObservation] = useState<DiscoveryObservationMeta | null>(
+  const [stage, setStage] = useState<DiscoveryStage>('idle');
+  const [observation, setObservation] = useState<DiscoveryObservationMeta>(
     REFERENCE_OBSERVATIONS[0]
   );
   const [searchConfig, setSearchConfig] = useState<SearchConfig>({
-    searchMode: 'standard',
-    freqRangeMinMHz: 1400,
-    freqRangeMaxMHz: 1450,
-    minPersistencePercent: 75,
-    rfiFilterEnabled: true,
+    sensitivity: 'standard',
+    rejectTerrestrialRfi: true,
   });
-  const [showConfig, setShowConfig] = useState(false);
-
-  const [stageProgress, setStageProgress] = useState({
-    preprocessing: 0,
-    transform: 0,
-    representing: 0,
-    searching: 0,
-    ranking: 0,
-  });
-  const [overallProgress, setOverallProgress] = useState(0);
-  const [visibleCandidateCount, setVisibleCandidateCount] = useState(0);
-  const [selectedCandidate, setSelectedCandidate] = useState<DiscoveredCandidate>(
-    MOCK_DISCOVERY_CANDIDATES[0]
-  );
 
   const candidatesRef = useRef<HTMLDivElement | null>(null);
   const animTimerRef = useRef<number | null>(null);
 
-  // Clean up animation timers on unmount
+  // Clean up animation timer on unmount
   useEffect(() => {
     return () => {
       if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
     };
   }, []);
 
-  // Handle Observation Loaded
-  const handleObservationLoaded = (obs: DiscoveryObservationMeta) => {
+  // Handle Observation Selection
+  const handleSelectObservation = (obs: DiscoveryObservationMeta) => {
     setObservation(obs);
-    setStage('observation_loaded');
-    setOverallProgress(0);
-    setStageProgress({
-      preprocessing: 0,
-      transform: 0,
-      representing: 0,
-      searching: 0,
-      ranking: 0,
-    });
-    setVisibleCandidateCount(0);
-    toast.success(`Observation ${obs.id} loaded`);
-  };
-
-  // Handle Remove Observation
-  const handleRemoveObservation = () => {
-    setObservation(null);
-    setStage('idle');
-    setOverallProgress(0);
-    setVisibleCandidateCount(0);
+    if (stage === 'complete') {
+      setStage('idle');
+    }
   };
 
   // Scroll to candidates section
-  const handleScrollToCandidates = () => {
+  const handleViewCandidates = () => {
     candidatesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Deterministic Discovery Execution Flow
+  // Deterministic 4-Stage Discovery Execution Flow
+  // PREPARE -> REPRESENT -> SEARCH -> RANK -> COMPLETE
   const handleInitiateDiscovery = useCallback(() => {
     if (!observation) return;
     if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
 
-    setStage('preprocessing');
-    setOverallProgress(0);
-    setVisibleCandidateCount(0);
+    setStage('prepare');
+    toast.info(`Initiating analysis for ${observation.id}`);
 
-    toast.info(`Starting discovery for ${observation.id}`);
+    const stages: DiscoveryStage[] = ['prepare', 'represent', 'search', 'rank'];
+    const stepDurations = [1200, 1300, 1400, 1200];
+    let currentIdx = 0;
 
-    const pipelineSequence = [
-      { stage: 'preprocessing' as const, key: 'preprocessing' as const, duration: 1000 },
-      { stage: 'transform' as const, key: 'transform' as const, duration: 1200 },
-      { stage: 'representing' as const, key: 'representing' as const, duration: 1100 },
-      { stage: 'searching' as const, key: 'searching' as const, duration: 1300 },
-      { stage: 'ranking' as const, key: 'ranking' as const, duration: 1100 },
-    ];
-
-    let currentStepIdx = 0;
-
-    const runStep = () => {
-      if (currentStepIdx >= pipelineSequence.length) {
+    const runNextStage = () => {
+      if (currentIdx >= stages.length) {
         setStage('complete');
-        setOverallProgress(100);
-        setVisibleCandidateCount(MOCK_DISCOVERY_CANDIDATES.length);
-        toast.success('Discovery complete', {
-          description: 'Identified 4 candidate events.',
+        toast.success('Observation analyzed', {
+          description: '4 candidate events identified.',
         });
         return;
       }
 
-      const step = pipelineSequence[currentStepIdx];
-      setStage(step.stage);
-      const stepStartTime = performance.now();
+      setStage(stages[currentIdx]);
+      const duration = stepDurations[currentIdx];
+      const start = performance.now();
 
-      const animateStep = (now: number) => {
-        const elapsed = now - stepStartTime;
-        const progress = Math.min(100, (elapsed / step.duration) * 100);
-
-        setStageProgress((prev) => ({
-          ...prev,
-          [step.key]: progress,
-        }));
-
-        const totalCompleted = currentStepIdx * 20 + (progress / 100) * 20;
-        setOverallProgress(totalCompleted);
-
-        // Gradually reveal candidate events during ranking stage
-        if (step.stage === 'ranking') {
-          const count = Math.min(
-            MOCK_DISCOVERY_CANDIDATES.length,
-            Math.floor((progress / 100) * MOCK_DISCOVERY_CANDIDATES.length) + 1
-          );
-          setVisibleCandidateCount(count);
-        }
-
-        if (progress < 100) {
-          animTimerRef.current = requestAnimationFrame(animateStep);
+      const waitStep = (now: number) => {
+        if (now - start >= duration) {
+          currentIdx++;
+          runNextStage();
         } else {
-          currentStepIdx++;
-          runStep();
+          animTimerRef.current = requestAnimationFrame(waitStep);
         }
       };
 
-      animTimerRef.current = requestAnimationFrame(animateStep);
+      animTimerRef.current = requestAnimationFrame(waitStep);
     };
 
-    runStep();
+    runNextStage();
   }, [observation]);
 
   // Handle Reset to new discovery
   const handleReset = () => {
     if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
-    setStage(observation ? 'observation_loaded' : 'idle');
-    setStageProgress({
-      preprocessing: 0,
-      transform: 0,
-      representing: 0,
-      searching: 0,
-      ranking: 0,
-    });
-    setOverallProgress(0);
-    setVisibleCandidateCount(0);
-    toast('Discovery reset');
+    setStage('idle');
   };
 
   const isAnalyzing =
-    stage === 'preprocessing' ||
-    stage === 'transform' ||
-    stage === 'representing' ||
-    stage === 'searching' ||
-    stage === 'ranking';
+    stage === 'prepare' || stage === 'represent' || stage === 'search' || stage === 'rank';
 
   return (
-    <PageTransition className="space-y-4">
-      {/* 1. Header */}
+    <PageTransition className="space-y-0">
+      {/* 1. Scientific Header */}
       <DiscoveryHeader stage={stage} />
 
-      {/* 2. Top Observation Bay: Dropzone vs. Loaded Observation Summary */}
-      <AnimatePresence mode="wait">
-        {!observation ? (
-          <motion.div
-            key="dropzone-view"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ObservationDropzone onObservationLoaded={handleObservationLoaded} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="summary-view"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ObservationSummary
-              observation={observation}
-              onRemove={handleRemoveObservation}
-              onInitiateDiscovery={handleInitiateDiscovery}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 3. Analysis Configuration (Progressive Disclosure) */}
-      {!isAnalyzing && stage !== 'complete' && observation && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-[#7F8B95] px-1">
-            <button
-              type="button"
-              onClick={() => setShowConfig(!showConfig)}
-              className="flex items-center gap-1.5 hover:text-[#5BD8F5] transition-colors cursor-pointer"
-            >
-              <span>
-                {showConfig
-                  ? '▾ Hide search parameters'
-                  : '▸ Configure search parameters (Standard mode, 75% persistence)'}
-              </span>
-            </button>
-          </div>
-          {showConfig && (
-            <SearchConfiguration
-              config={searchConfig}
-              onChange={setSearchConfig}
-              disabled={isAnalyzing}
-            />
-          )}
-        </div>
-      )}
-
-      {/* 4. Live Analysis Section: Signal Viewport + Pipeline Progress */}
-      {(isAnalyzing || stage === 'complete') && observation && (
-        <div className="space-y-4">
-          {/* Central Evolving Signal Viewport */}
-          <SignalAnalysisViewport
-            stage={stage}
-            observation={observation}
-            overallProgress={overallProgress}
-          />
-
-          {/* Dual Column: Pipeline Stages & Results */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-12">
-              <DiscoveryPipeline stage={stage} stageProgress={stageProgress} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 5. Completion Result Banner */}
-      {stage === 'complete' && (
-        <DiscoveryResults
-          summary={MOCK_DISCOVERY_RESULT}
-          onReset={handleReset}
-          onScrollToCandidates={handleScrollToCandidates}
+      {/* Main Scientific Procedure Container */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* ==================================================== */}
+        {/* STAGE 1: OBSERVATION INPUT & SEARCH SETTINGS */}
+        {/* ==================================================== */}
+        <ObservationInput
+          selectedObservation={observation}
+          onSelectObservation={handleSelectObservation}
+          disabled={isAnalyzing}
         />
-      )}
 
-      {/* 6. Candidate Events Ranking & Preview Section */}
-      {(stage === 'ranking' || stage === 'complete') && visibleCandidateCount > 0 && (
-        <div ref={candidatesRef} className="space-y-4 pt-2">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Left: Ranking Table (8 cols) */}
-            <div className="lg:col-span-8">
-              <CandidateRankingTable
-                candidates={MOCK_DISCOVERY_CANDIDATES}
-                selectedCandidateId={selectedCandidate.id}
-                onSelectCandidate={setSelectedCandidate}
-                visibleCount={visibleCandidateCount}
-              />
+        {/* ==================================================== */}
+        {/* STAGE 2: OPTIONAL SEARCH SETTINGS */}
+        {/* ==================================================== */}
+        {!isAnalyzing && stage !== 'complete' && (
+          <SearchSettings config={searchConfig} onChange={setSearchConfig} disabled={isAnalyzing} />
+        )}
+
+        {/* ==================================================== */}
+        {/* STAGE 3: INITIATE DISCOVERY (CLEAR PRIMARY ACTION) */}
+        {/* ==================================================== */}
+        {!isAnalyzing && stage !== 'complete' && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none">
+            <div className="space-y-0.5 text-center sm:text-left">
+              <span className="text-xs font-semibold text-[#E6EDF2]">
+                Ready to analyze observation {observation.id}
+              </span>
+              <p className="text-[11px] text-[#7F8B95]">
+                Executes the 4-stage candidate screening pipeline on the selected data stream.
+              </p>
             </div>
 
-            {/* Right: Top Candidate Preview & Interpretability (4 cols) */}
-            <div className="lg:col-span-4">
-              <CandidatePreview candidate={selectedCandidate} />
-            </div>
+            <Button
+              variant="primary"
+              size="lg"
+              icon={<ArrowRight className="h-4 w-4" />}
+              onClick={handleInitiateDiscovery}
+              className="w-full sm:w-auto text-xs font-semibold uppercase tracking-wider"
+            >
+              Initiate Discovery
+            </Button>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* ==================================================== */}
+        {/* STAGE 4: ANALYSIS PROGRESS (PREPARE, REPRESENT, SEARCH, RANK) */}
+        {/* ==================================================== */}
+        {(isAnalyzing || stage === 'complete') && (
+          <div className="space-y-4">
+            {/* 4-Stage Procedure Status */}
+            <DiscoveryPipeline stage={stage} />
+
+            {/* Time-Frequency Spectrogram Viewport */}
+            <SignalAnalysisViewport stage={stage} observation={observation} />
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* STAGE 5: RESULT BANNER (OBSERVATION ANALYZED) */}
+        {/* ==================================================== */}
+        {stage === 'complete' && (
+          <DiscoveryResults
+            summary={MOCK_DISCOVERY_RESULT}
+            onReset={handleReset}
+            onViewCandidates={handleViewCandidates}
+          />
+        )}
+
+        {/* ==================================================== */}
+        {/* STAGE 6: CANDIDATE SUMMARY */}
+        {/* ==================================================== */}
+        {stage === 'complete' && (
+          <div ref={candidatesRef} className="pt-2">
+            <CandidateSummary
+              candidates={MOCK_DISCOVERY_CANDIDATES.slice(0, 4)}
+              observationId={observation.id}
+            />
+          </div>
+        )}
+
+        {/* Reset / Configure button when analyzing */}
+        {isAnalyzing && (
+          <div className="flex justify-end pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<RotateCcw className="h-3 w-3" />}
+              onClick={handleReset}
+            >
+              Cancel procedure
+            </Button>
+          </div>
+        )}
+      </main>
     </PageTransition>
   );
 }

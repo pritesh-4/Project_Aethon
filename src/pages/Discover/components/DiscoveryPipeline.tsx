@@ -1,107 +1,106 @@
 import type { DiscoveryStage } from '../types.ts';
-import { Cpu, CheckCircle2, Clock } from 'lucide-react';
+import { Check, Loader2, Clock } from 'lucide-react';
 
 export interface DiscoveryPipelineProps {
   stage: DiscoveryStage;
-  stageProgress: {
-    preprocessing: number;
-    transform: number;
-    representing: number;
-    searching: number;
-    ranking: number;
-  };
 }
 
-export function DiscoveryPipeline({ stageProgress }: DiscoveryPipelineProps) {
-  const stages = [
+export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
+  const steps = [
     {
-      key: 'preprocessing',
-      title: 'Preprocessing',
-      subtitle: 'Polyphase filterbank channelization (4096 ch)',
-      progress: stageProgress.preprocessing,
+      id: 'prepare',
+      name: 'PREPARE',
+      desc: 'Channelization & baseline calibration',
     },
     {
-      key: 'transform',
-      title: 'Time–frequency transform',
-      subtitle: 'Complex STFT high-cadence matrix generation',
-      progress: stageProgress.transform,
+      id: 'represent',
+      name: 'REPRESENT',
+      desc: 'Time–frequency latent representation',
     },
     {
-      key: 'representing',
-      title: 'Representation learning',
-      subtitle: 'Patch tokenization & latent transformer embeddings',
-      progress: stageProgress.representing,
+      id: 'search',
+      name: 'SEARCH',
+      desc: 'Narrowband anomaly screening',
     },
     {
-      key: 'searching',
-      title: 'Anomaly search',
-      subtitle: 'Variational latent reconstruction residual (Δ > 4.8σ)',
-      progress: stageProgress.searching,
-    },
-    {
-      key: 'ranking',
-      title: 'Candidate ranking',
-      subtitle: 'Topocentric Doppler drift & multi-beam spatial filter',
-      progress: stageProgress.ranking,
+      id: 'rank',
+      name: 'RANK',
+      desc: 'Doppler drift & candidate classification',
     },
   ];
 
+  const getStepStatus = (stepId: string) => {
+    const stageOrder = ['prepare', 'represent', 'search', 'rank', 'complete'];
+    const currentIdx = stageOrder.indexOf(stage);
+    const stepIdx = stageOrder.indexOf(stepId);
+
+    if (currentIdx === -1) return 'pending';
+    if (stage === 'complete' || currentIdx > stepIdx) return 'complete';
+    if (currentIdx === stepIdx) return 'active';
+    return 'pending';
+  };
+
   return (
-    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none">
-      <div className="flex items-center justify-between border-b border-[#1C2630] pb-2.5 mb-3">
-        <div className="flex items-center gap-2">
-          <Cpu className="h-3.5 w-3.5 text-[#5BD8F5]" />
-          <h4 className="text-xs font-semibold text-[#E6EDF2]">Discovery pipeline</h4>
-        </div>
+    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none space-y-3">
+      <div className="flex items-center justify-between border-b border-[#1C2630] pb-2">
+        <span className="text-xs font-semibold text-[#E6EDF2]">Analysis procedure</span>
+        <span className="text-[11px] text-[#7F8B95]">
+          {stage === 'complete'
+            ? 'Procedure finished'
+            : stage === 'idle'
+              ? 'Ready to initiate'
+              : 'Autonomous execution in progress'}
+        </span>
       </div>
 
-      <div className="space-y-3.5">
-        {stages.map((st, idx) => {
-          const isComplete = st.progress >= 100;
-          const isActive = st.progress > 0 && st.progress < 100;
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+        {steps.map((step, idx) => {
+          const status = getStepStatus(step.id);
+          const isComplete = status === 'complete';
+          const isActive = status === 'active';
 
           return (
-            <div key={st.key} className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
+            <div
+              key={step.id}
+              className={`flex flex-col justify-between p-3 rounded border transition-colors ${
+                isActive
+                  ? 'border-[#5BD8F5] bg-[#5BD8F5]/10'
+                  : isComplete
+                    ? 'border-[#1C2630] bg-[#10161D]'
+                    : 'border-[#1C2630]/60 bg-[#06080B]/60'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between">
                   <span className="text-[10px] text-[#7F8B95] font-mono">0{idx + 1}</span>
-                  <span
-                    className={`font-medium ${
-                      isComplete ? 'text-[#E6EDF2]' : isActive ? 'text-[#5BD8F5]' : 'text-[#7F8B95]'
-                    }`}
-                  >
-                    {st.title}
-                  </span>
-                </div>
-
-                <div className="text-[11px] font-mono">
                   {isComplete ? (
-                    <span className="inline-flex items-center gap-1 text-[#5BD8F5] font-medium">
-                      <CheckCircle2 className="h-3 w-3" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#5BD8F5]">
+                      <Check className="h-3 w-3" />
                       Complete
                     </span>
                   ) : isActive ? (
-                    <span className="text-[#5BD8F5] font-medium">{Math.floor(st.progress)}%</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#5BD8F5]">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      In progress
+                    </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[#7F8B95]">
+                    <span className="inline-flex items-center gap-1 text-[11px] text-[#7F8B95]">
                       <Clock className="h-3 w-3" />
                       Pending
                     </span>
                   )}
                 </div>
-              </div>
 
-              {/* Progress Bar */}
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#10161D] border border-[#1C2630]">
                 <div
-                  className={`h-full transition-all duration-150 ${
-                    isComplete ? 'bg-[#5BD8F5]' : isActive ? 'bg-[#5BD8F5]' : 'bg-transparent'
+                  className={`mt-1.5 text-xs font-semibold tracking-wider ${
+                    isActive ? 'text-[#5BD8F5]' : isComplete ? 'text-[#E6EDF2]' : 'text-[#7F8B95]'
                   }`}
-                  style={{ width: `${Math.min(100, Math.max(0, st.progress))}%` }}
-                />
+                >
+                  {step.name}
+                </div>
               </div>
 
-              <div className="text-[11px] text-[#7F8B95] pl-5">{st.subtitle}</div>
+              <p className="mt-2 text-[11px] text-[#7F8B95] leading-normal">{step.desc}</p>
             </div>
           );
         })}

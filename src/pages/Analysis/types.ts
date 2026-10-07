@@ -1,5 +1,7 @@
 export type SignalViewMode = 'SPECTROGRAM' | 'WAVEFORM' | 'INTENSITY';
 
+export type AnalysisStageId = 'observation' | 'representation' | 'comparison' | 'anomaly';
+
 export type PipelineStageId =
   'observation' | 'preprocessing' | 'transform' | 'representation' | 'anomaly' | 'candidate_score';
 

@@ -1,14 +1,6 @@
-export type DiscoveryStage =
-  | 'idle'
-  | 'observation_loaded'
-  | 'preprocessing'
-  | 'transform'
-  | 'representing'
-  | 'searching'
-  | 'ranking'
-  | 'complete';
+export type DiscoveryStage = 'idle' | 'prepare' | 'represent' | 'search' | 'rank' | 'complete';
 
-export type SearchMode = 'standard' | 'deep';
+export type SearchSensitivity = 'standard' | 'high';
 
 export type CandidatePriority = 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -29,11 +21,8 @@ export interface DiscoveryObservationMeta {
 }
 
 export interface SearchConfig {
-  searchMode: SearchMode;
-  freqRangeMinMHz: number;
-  freqRangeMaxMHz: number;
-  minPersistencePercent: number;
-  rfiFilterEnabled: boolean;
+  sensitivity: SearchSensitivity;
+  rejectTerrestrialRfi: boolean;
 }
 
 export interface DiscoveredCandidate {

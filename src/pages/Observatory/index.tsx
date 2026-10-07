@@ -117,7 +117,7 @@ export default function ObservatoryPage() {
         observationId={currentObservation.id}
         status={status}
         targetName={currentObservation.targetName}
-        telescope={currentObservation.telescope}
+        frequencyMHz={currentObservation.frequencyMHz}
         observationList={MOCK_OBSERVATIONS.map((o) => ({ id: o.id, name: o.name }))}
         onSelectObservation={handleSelectObservation}
         isPaused={isPaused}

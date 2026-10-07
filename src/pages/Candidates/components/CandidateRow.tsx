@@ -1,5 +1,4 @@
 import type { CandidateSignalData, CandidatePriority } from '../types.ts';
-import { ArrowRight } from 'lucide-react';
 
 export interface CandidateRowProps {
   candidate: CandidateSignalData;
@@ -8,6 +7,8 @@ export interface CandidateRowProps {
 }
 
 export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowProps) {
+  const isHigh = candidate.priority === 'HIGH';
+
   const getPriorityBadge = (priority: CandidatePriority) => {
     switch (priority) {
       case 'HIGH':
@@ -19,7 +20,7 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
         );
       case 'MEDIUM':
         return (
-          <span className="inline-flex items-center gap-1 rounded border border-[#7F8B95]/40 bg-[#7F8B95]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#7F8B95]">
+          <span className="inline-flex items-center gap-1 rounded border border-[#7F8B95]/30 bg-[#7F8B95]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#7F8B95]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]" />
             Medium
           </span>
@@ -27,24 +28,10 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
       case 'LOW':
         return (
           <span className="inline-flex items-center gap-1 rounded border border-[#1C2630] bg-[#10161D] px-1.5 py-0.5 text-[10px] font-medium text-[#7F8B95]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]/60" />
             Low
           </span>
         );
-    }
-  };
-
-  const getStatusBadge = (status: CandidateSignalData['status']) => {
-    switch (status) {
-      case 'INVESTIGATING':
-        return <span className="text-[11px] text-[#5BD8F5] font-medium">Investigating</span>;
-      case 'FLAGGED_RFI':
-        return <span className="text-[11px] text-[#7F8B95] font-medium">Flagged RFI</span>;
-      case 'CONFIRMED':
-        return <span className="text-[11px] text-[#5BD8F5] font-medium">Confirmed</span>;
-      case 'REVIEW':
-      default:
-        return <span className="text-[11px] text-[#7F8B95]">Review</span>;
     }
   };
 
@@ -59,56 +46,60 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
     <tr
       role="button"
       tabIndex={0}
+      aria-pressed={isSelected}
       onClick={() => onSelect(candidate)}
       onKeyDown={handleKeyDown}
-      className={`group relative transition-all duration-150 cursor-pointer select-none text-xs outline-none ${
+      className={`group transition-colors cursor-pointer select-none text-xs outline-none ${
         isSelected ? 'bg-[#5BD8F5]/10 text-[#E6EDF2]' : 'hover:bg-[#10161D] text-[#7F8B95]'
       }`}
     >
-      {/* Active Selection Indicator Bar */}
-      <td className="w-1.5 p-0">
-        <div
-          className={`h-full w-1 transition-all ${
-            isSelected
-              ? candidate.priority === 'HIGH'
-                ? 'bg-[#E8AE50]'
-                : 'bg-[#5BD8F5]'
-              : 'group-hover:bg-[#1C2630] bg-transparent'
-          }`}
-        />
+      {/* 1. CANDIDATE */}
+      <td className="py-3 px-4">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <span
+              className={`font-semibold font-mono transition-colors ${
+                isSelected
+                  ? 'text-[#5BD8F5]'
+                  : isHigh
+                    ? 'text-[#E6EDF2] group-hover:text-[#5BD8F5]'
+                    : 'text-[#E6EDF2]'
+              }`}
+            >
+              {candidate.id}
+            </span>
+            {isHigh && (
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-[#E8AE50] shrink-0"
+                title="High priority candidate"
+              />
+            )}
+          </div>
+          <span className="text-[11px] text-[#7F8B95] font-mono">
+            {candidate.frequencyMHz.toFixed(2)} MHz
+          </span>
+        </div>
       </td>
 
-      {/* Priority */}
-      <td className="py-2.5 px-3 whitespace-nowrap">{getPriorityBadge(candidate.priority)}</td>
-
-      {/* Candidate Identifier */}
-      <td className="py-2.5 px-3 whitespace-nowrap">
-        <span
-          className={`font-semibold font-mono transition-colors ${
-            isSelected ? 'text-[#5BD8F5]' : 'text-[#E6EDF2] group-hover:text-[#5BD8F5]'
-          }`}
-        >
-          {candidate.id}
-        </span>
+      {/* 2. ANOMALY */}
+      <td className="py-3 px-3 text-right">
+        <div className="flex flex-col items-end">
+          <span className="font-semibold font-mono text-[#5BD8F5]">
+            {candidate.anomalyIndex.toFixed(3)}
+          </span>
+          <span className="text-[10px] text-[#7F8B95] font-mono">
+            +{candidate.evidenceFactors?.anomalousStructure?.sigma.toFixed(1) || '4.0'}σ
+          </span>
+        </div>
       </td>
 
-      {/* Anomaly Index */}
-      <td className="py-2.5 px-3 text-right font-semibold font-mono whitespace-nowrap text-[#5BD8F5]">
-        {candidate.anomalyIndex.toFixed(3)}
-      </td>
-
-      {/* Persistence */}
-      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap text-[#E6EDF2]">
+      {/* 3. PERSISTENCE */}
+      <td className="py-3 px-3 text-right font-mono text-[#E6EDF2]">
         {(candidate.persistence * 100).toFixed(1)}%
       </td>
 
-      {/* Known Pattern Similarity */}
-      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap text-[#7F8B95]">
-        {(candidate.knownPatternSimilarity * 100).toFixed(1)}%
-      </td>
-
-      {/* RFI Risk */}
-      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap">
+      {/* 4. RFI */}
+      <td className="py-3 px-3 text-right font-mono">
         <span
           className={
             candidate.interferenceProbability < 0.1
@@ -122,26 +113,8 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
         </span>
       </td>
 
-      {/* Frequency */}
-      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap text-[#E6EDF2]">
-        {candidate.frequencyMHz.toFixed(2)} MHz
-      </td>
-
-      {/* Status */}
-      <td className="py-2.5 px-3 text-center whitespace-nowrap">
-        {getStatusBadge(candidate.status)}
-      </td>
-
-      {/* Arrow Indicator */}
-      <td className="py-2.5 px-3 text-right whitespace-nowrap text-[#7F8B95]">
-        <ArrowRight
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${
-            isSelected
-              ? 'text-[#5BD8F5] translate-x-1'
-              : 'group-hover:text-[#E6EDF2] group-hover:translate-x-0.5'
-          }`}
-        />
-      </td>
+      {/* 5. PRIORITY */}
+      <td className="py-3 px-4 text-center">{getPriorityBadge(candidate.priority)}</td>
     </tr>
   );
 }
