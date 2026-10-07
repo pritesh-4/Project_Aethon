@@ -6,6 +6,7 @@ export interface TooltipProps {
   content: ReactNode;
   children: ReactNode;
   position?: 'right' | 'top' | 'bottom' | 'left';
+  side?: 'right' | 'top' | 'bottom' | 'left';
   disabled?: boolean;
   className?: string;
   delay?: number;
@@ -15,10 +16,12 @@ export function Tooltip({
   content,
   children,
   position = 'right',
+  side,
   disabled = false,
   className,
   delay = 120,
 }: TooltipProps) {
+  const activePosition = side || position;
   const [isVisible, setIsVisible] = useState(false);
   const [timeoutId, setTimeoutId] = useState<number | null>(null);
 
@@ -60,18 +63,18 @@ export function Tooltip({
       <AnimatePresence>
         {isVisible && !disabled && (
           <motion.div
-            initial={initialMotion[position]}
+            initial={initialMotion[activePosition]}
             animate={{
               opacity: 1,
               x: 0,
-              y: position === 'right' || position === 'left' ? '-50%' : 0,
+              y: activePosition === 'right' || activePosition === 'left' ? '-50%' : 0,
             }}
-            exit={initialMotion[position]}
+            exit={initialMotion[activePosition]}
             transition={{ duration: 0.15, ease: 'easeOut' }}
             role="tooltip"
             className={cn(
               'pointer-events-none absolute z-50 whitespace-nowrap rounded-[4px] border border-[#243345] bg-[#10161D] px-2.5 py-1 font-sans text-xs text-[#E6EDF2] tracking-normal select-none shadow-md',
-              positionStyles[position],
+              positionStyles[activePosition],
               className
             )}
           >

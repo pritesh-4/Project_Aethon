@@ -29,7 +29,7 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* Right Application Viewport */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#06080B]">
-          {/* Thin Instrumentation Top Bar */}
+          {/* Top Bar */}
           <TopSystemBar onOpenMobileNav={() => setIsMobileNavOpen(true)} />
 
           {/* Application Content */}
@@ -49,14 +49,16 @@ export function AppShell({ children }: AppShellProps) {
             </div>
           </main>
 
-          {/* Minimal Status Footer */}
+          {/* Quiet Footer */}
           <footer className="border-t border-[#172230] bg-[#0B0F14] py-2 px-4 text-xs text-[#7F8B95] select-none">
-            <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="mx-auto max-w-7xl flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
-                <span className="font-sans text-xs text-[#7F8B95]">AETHON Discovery Platform</span>
+                <span className="font-sans text-xs text-[#7F8B95]">AETHON</span>
               </div>
-              <div className="text-xs text-[#7F8B95] font-mono">1420.4 MHz (H I)</div>
+              <span className="text-[11px] text-[#7F8B95]/70 font-mono">
+                Astronomical Discovery
+              </span>
             </div>
           </footer>
         </div>
