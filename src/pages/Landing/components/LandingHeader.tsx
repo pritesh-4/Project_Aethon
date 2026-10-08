@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { Volume2, VolumeX, ArrowRight } from 'lucide-react';
-import { motion, type MotionValue } from 'motion/react';
+import { motion, useTransform, type MotionValue } from 'motion/react';
 import { observatoryAudio } from '@/lib/audio-synth.ts';
 
 interface LandingHeaderProps {
@@ -10,14 +10,26 @@ interface LandingHeaderProps {
 
 export function LandingHeader({ scrollYProgress }: LandingHeaderProps) {
   const [isAudioActive, setIsAudioActive] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleToggleAudio = () => {
     const active = observatoryAudio.toggle();
     setIsAudioActive(active);
   };
 
+  // During deep narrative (0.14 - 0.82), dim the header controls to keep attention locked on the signal
+  const narrativeControlsOpacity = useTransform(
+    scrollYProgress,
+    [0.0, 0.12, 0.2, 0.78, 0.85],
+    [1, 1, 0.35, 0.35, 1]
+  );
+
   return (
-    <header className="relative w-full z-30 select-none font-sans">
+    <header
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="relative w-full z-30 select-none font-sans"
+    >
       <div className="flex items-center justify-between px-6 py-4">
         {/* Understated wordmark */}
         <Link
@@ -27,8 +39,11 @@ export function LandingHeader({ scrollYProgress }: LandingHeaderProps) {
           AETHON
         </Link>
 
-        {/* Quiet controls */}
-        <div className="flex items-center gap-4 text-xs font-mono">
+        {/* Quiet controls with narrative-aware dimming */}
+        <motion.div
+          style={{ opacity: isHovered ? 1 : narrativeControlsOpacity }}
+          className="flex items-center gap-4 text-xs font-mono transition-opacity duration-300"
+        >
           <button
             type="button"
             onClick={handleToggleAudio}
@@ -55,7 +70,7 @@ export function LandingHeader({ scrollYProgress }: LandingHeaderProps) {
             <span>Observatory</span>
             <ArrowRight className="h-3 w-3" />
           </Link>
-        </div>
+        </motion.div>
       </div>
 
       {/* Whisper-quiet 1px scroll progress line */}

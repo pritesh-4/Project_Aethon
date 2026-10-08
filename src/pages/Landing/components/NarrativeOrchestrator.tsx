@@ -2,6 +2,206 @@ import { Link } from 'react-router';
 import { motion, useTransform, useReducedMotion, type MotionValue } from 'motion/react';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 
+interface NarrativeScene {
+  id: string;
+  start: number;
+  peakStart: number;
+  peakEnd: number;
+  end: number;
+  tag?: string;
+  title: string;
+  subtitle?: string;
+  telemetryTag?: string;
+  isTerminal?: boolean;
+}
+
+const NARRATIVE_SCENES: NarrativeScene[] = [
+  {
+    id: 'silence',
+    start: 0.0,
+    peakStart: 0.04,
+    peakEnd: 0.11,
+    end: 0.15,
+    tag: 'SIMULATED OBSERVATION',
+    title: 'The sky is full of signals.',
+    subtitle: 'Cosmic background noise and ambient radio frequency emission.',
+  },
+  {
+    id: 'known',
+    start: 0.15,
+    peakStart: 0.18,
+    peakEnd: 0.26,
+    end: 0.3,
+    tag: 'SPECTRAL SURVEY',
+    title: 'Most are already known.',
+    subtitle: 'Transmitters, satellites, and predictable orbital harmonics.',
+  },
+  {
+    id: 'overwhelm',
+    start: 0.3,
+    peakStart: 0.33,
+    peakEnd: 0.41,
+    end: 0.45,
+    tag: 'SPECTRAL CONGESTION',
+    title: 'Among the signals,',
+    subtitle: 'some patterns remain unexplained.',
+  },
+  {
+    id: 'deviation',
+    start: 0.45,
+    peakStart: 0.5,
+    peakEnd: 0.58,
+    end: 0.63,
+    tag: 'ANOMALOUS COHERENCE',
+    title: "Something doesn't fit.",
+    subtitle: 'A single trace breaks orbital symmetry. AETHON looks closer.',
+  },
+  {
+    id: 'investigation',
+    start: 0.63,
+    peakStart: 0.66,
+    peakEnd: 0.76,
+    end: 0.81,
+    tag: 'SPECTROTEMPORAL ISOLATION',
+    title: 'Anomaly is not an answer.',
+    subtitle: 'It is a reason to look closer.',
+    telemetryTag: 'CH-1420.405 MHz · DRIFT: -0.32 Hz/s · ISOLATION: 99.4%',
+  },
+  {
+    id: 'candidate',
+    start: 0.81,
+    peakStart: 0.85,
+    peakEnd: 1.0,
+    end: 1.0,
+    tag: 'CANDIDATE EVENT // UNVERIFIED DRIFT',
+    title: 'AETHON',
+    subtitle: 'Intelligence for the unclassified sky.',
+    isTerminal: true,
+  },
+];
+
+interface SceneItemProps {
+  scene: NarrativeScene;
+  progress: MotionValue<number>;
+  shouldReduceMotion: boolean;
+}
+
+function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemProps) {
+  const isTerminal = scene.isTerminal ?? false;
+
+  // Dimensional interpolation: smooth entry, breathing room, clean exit
+  const opacity = useTransform(
+    progress,
+    isTerminal
+      ? [scene.start, scene.peakStart, 1.0]
+      : [scene.start, scene.peakStart, scene.peakEnd, scene.end],
+    isTerminal ? [0, 1, 1] : [0, 1, 1, 0]
+  );
+
+  const y = useTransform(
+    progress,
+    isTerminal
+      ? [scene.start, scene.peakStart, 1.0]
+      : [scene.start, scene.peakStart, scene.peakEnd, scene.end],
+    shouldReduceMotion
+      ? isTerminal
+        ? [0, 0, 0]
+        : [0, 0, 0, 0]
+      : isTerminal
+        ? [18, 0, 0]
+        : [18, 0, 0, -12]
+  );
+
+  const blurVal = useTransform(
+    progress,
+    isTerminal
+      ? [scene.start, scene.peakStart, 1.0]
+      : [scene.start, scene.peakStart, scene.peakEnd, scene.end],
+    shouldReduceMotion
+      ? isTerminal
+        ? [0, 0, 0]
+        : [0, 0, 0, 0]
+      : isTerminal
+        ? [6, 0, 0]
+        : [6, 0, 0, 4]
+  );
+
+  const filter = useTransform(blurVal, (b) => (b <= 0.1 ? 'none' : `blur(${b.toFixed(1)}px)`));
+
+  // Pointer interaction active only for final terminal CTA scene
+  const pointerEvents = useTransform(progress, (v) => (isTerminal && v >= 0.84 ? 'auto' : 'none'));
+
+  // Eliminate GPU compositor overhead when scene is fully hidden
+  const visibility = useTransform(opacity, (o) => (o > 0.005 ? 'visible' : 'hidden'));
+
+  return (
+    <motion.div
+      style={{
+        opacity,
+        y,
+        filter,
+        pointerEvents,
+        visibility,
+      }}
+      className="absolute inset-x-0 mx-auto px-4 max-w-2xl text-center flex flex-col items-center justify-center select-none"
+    >
+      {/* Restrained tag */}
+      {scene.tag && (
+        <p className="text-[11px] sm:text-xs font-mono tracking-widest text-[#7F8B95] uppercase mb-3">
+          {scene.tag}
+        </p>
+      )}
+
+      {/* Primary Narrative Statement */}
+      <h2
+        className={`tracking-tight text-[#E6EDF2] leading-tight font-light ${
+          isTerminal
+            ? 'text-3xl sm:text-5xl md:text-6xl font-normal'
+            : 'text-2xl sm:text-4xl md:text-5xl'
+        }`}
+      >
+        {scene.title}
+      </h2>
+
+      {/* Subtitle / Context phrase */}
+      {scene.subtitle && (
+        <p className="mt-3 text-sm sm:text-base font-light text-[#7F8B95] max-w-lg leading-relaxed">
+          {scene.subtitle}
+        </p>
+      )}
+
+      {/* Technical Telemetry Tag (Scene 5) */}
+      {scene.telemetryTag && (
+        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded bg-[#10161D]/80 border border-[#172230] text-[11px] font-mono text-[#E8AE50]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#E8AE50] animate-pulse" />
+          <span>{scene.telemetryTag}</span>
+        </div>
+      )}
+
+      {/* Terminal Action Beats (Scene 6) */}
+      {isTerminal && (
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            to="/observatory"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-[4px] bg-[#10161D] text-[#5BD8F5] border border-[#5BD8F5]/70 hover:bg-[#15202B] hover:border-[#5BD8F5] hover:shadow-[0_0_24px_rgba(91,216,245,0.25)] transition-all text-xs font-mono font-medium cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
+          >
+            <span>Enter the observatory</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+
+          <Link
+            to="/candidates"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono text-[#7F8B95] hover:text-[#E6EDF2] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] rounded hover:bg-[#10161D]/60"
+          >
+            <span>Review candidate events</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 interface NarrativeOrchestratorProps {
   scrollYProgress: MotionValue<number>;
 }
@@ -9,153 +209,29 @@ interface NarrativeOrchestratorProps {
 export function NarrativeOrchestrator({ scrollYProgress }: NarrativeOrchestratorProps) {
   const shouldReduceMotion = useReducedMotion();
 
-  // BEAT 1: 0.00 - 0.16 (THE SKY IS FULL OF SIGNALS.)
-  const opacity1 = useTransform(scrollYProgress, [0.0, 0.02, 0.12, 0.16], [1, 1, 1, 0]);
-  const y1 = useTransform(
-    scrollYProgress,
-    [0.0, 0.02, 0.12, 0.16],
-    shouldReduceMotion ? [0, 0, 0, 0] : [0, 0, 0, -8]
-  );
-
-  // BEAT 2: 0.16 - 0.33 (MOST ARE KNOWN.)
-  const opacity2 = useTransform(scrollYProgress, [0.16, 0.2, 0.29, 0.33], [0, 1, 1, 0]);
-  const y2 = useTransform(
-    scrollYProgress,
-    [0.16, 0.2, 0.29, 0.33],
-    shouldReduceMotion ? [0, 0, 0, 0] : [8, 0, 0, -8]
-  );
-
-  // BEAT 3: 0.33 - 0.50 (SOME ARE NOT.)
-  const opacity3 = useTransform(scrollYProgress, [0.33, 0.37, 0.46, 0.5], [0, 1, 1, 0]);
-  const y3 = useTransform(
-    scrollYProgress,
-    [0.33, 0.37, 0.46, 0.5],
-    shouldReduceMotion ? [0, 0, 0, 0] : [8, 0, 0, -8]
-  );
-
-  // BEAT 4: 0.50 - 0.67 (AETHON SEARCHES THE DIFFERENCE.)
-  const opacity4 = useTransform(scrollYProgress, [0.5, 0.54, 0.63, 0.67], [0, 1, 1, 0]);
-  const y4 = useTransform(
-    scrollYProgress,
-    [0.5, 0.54, 0.63, 0.67],
-    shouldReduceMotion ? [0, 0, 0, 0] : [8, 0, 0, -8]
-  );
-
-  // BEAT 5: 0.67 - 0.83 (ANOMALY IS NOT AN ANSWER. IT IS A REASON TO LOOK CLOSER.)
-  const opacity5 = useTransform(scrollYProgress, [0.67, 0.71, 0.79, 0.83], [0, 1, 1, 0]);
-  const y5 = useTransform(
-    scrollYProgress,
-    [0.67, 0.71, 0.79, 0.83],
-    shouldReduceMotion ? [0, 0, 0, 0] : [8, 0, 0, -8]
-  );
-
-  // BEAT 6: 0.83 - 1.00 (ENTER THE OBSERVATORY →)
-  const opacity6 = useTransform(scrollYProgress, [0.83, 0.88, 1.0], [0, 1, 1]);
-  const y6 = useTransform(
-    scrollYProgress,
-    [0.83, 0.88, 1.0],
-    shouldReduceMotion ? [0, 0, 0] : [8, 0, 0]
-  );
-
-  // Pointer events enabled only for the final interactive action beat
-  const pointerEvents6 = useTransform(scrollYProgress, (v) => (v >= 0.85 ? 'auto' : 'none'));
-
-  // Gentle initial scroll indicator
-  const scrollHintOpacity = useTransform(scrollYProgress, [0.0, 0.04], [0.6, 0]);
+  // Gentle initial scroll cue fading out upon first touch (0.00 -> 0.03)
+  const scrollHintOpacity = useTransform(scrollYProgress, [0.0, 0.03], [0.65, 0]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center p-6 select-none pointer-events-none z-20 font-sans">
-      <div className="relative w-full max-w-2xl text-center flex items-center justify-center min-h-[260px]">
-        {/* BEAT 1: AETHON / The sky is full of signals. */}
-        <motion.div
-          style={{ opacity: opacity1, y: y1 }}
-          className="absolute inset-x-0 mx-auto px-4 pointer-events-none"
-        >
-          <p className="text-xs tracking-widest text-[#7F8B95] uppercase font-mono mb-4">AETHON</p>
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#E6EDF2] leading-tight">
-            The sky is full of signals.
-          </h1>
-        </motion.div>
-
-        {/* BEAT 2: Most are known. */}
-        <motion.div
-          style={{ opacity: opacity2, y: y2 }}
-          className="absolute inset-x-0 mx-auto px-4 pointer-events-none"
-        >
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#E6EDF2] leading-tight">
-            Most are known.
-          </h2>
-        </motion.div>
-
-        {/* BEAT 3: Some are not. */}
-        <motion.div
-          style={{ opacity: opacity3, y: y3 }}
-          className="absolute inset-x-0 mx-auto px-4 pointer-events-none"
-        >
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#5BD8F5] leading-tight">
-            Some are not.
-          </h2>
-        </motion.div>
-
-        {/* BEAT 4: AETHON searches the difference. */}
-        <motion.div
-          style={{ opacity: opacity4, y: y4 }}
-          className="absolute inset-x-0 mx-auto px-4 pointer-events-none"
-        >
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#E6EDF2] leading-tight">
-            AETHON searches the difference.
-          </h2>
-        </motion.div>
-
-        {/* BEAT 5: Anomaly is not an answer. It is a reason to look closer. */}
-        <motion.div
-          style={{ opacity: opacity5, y: y5 }}
-          className="absolute inset-x-0 mx-auto px-4 pointer-events-none"
-        >
-          <h2 className="text-2xl sm:text-4xl font-light tracking-tight text-[#E6EDF2] leading-tight">
-            Anomaly is not an answer.
-          </h2>
-          <p className="mt-3 text-sm sm:text-base font-light text-[#7F8B95]">
-            It is a reason to look closer.
-          </p>
-        </motion.div>
-
-        {/* BEAT 6: Enter the observatory → */}
-        <motion.div
-          style={{ opacity: opacity6, y: y6, pointerEvents: pointerEvents6 }}
-          className="absolute inset-x-0 mx-auto px-4"
-        >
-          <h2 className="text-2xl sm:text-4xl font-light tracking-tight text-[#E6EDF2] leading-tight mb-8">
-            Enter the observatory.
-          </h2>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/observatory"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[4px] bg-[#10161D] text-[#5BD8F5] border border-[#5BD8F5]/60 hover:bg-[#15202B] hover:border-[#5BD8F5] transition-all text-xs font-medium cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
-            >
-              <span>Launch console</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-
-            <Link
-              to="/candidates"
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs text-[#7F8B95] hover:text-[#E6EDF2] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] rounded"
-            >
-              <span>Review candidate events</span>
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-        </motion.div>
+      <div className="relative w-full max-w-2xl text-center flex items-center justify-center min-h-[300px]">
+        {NARRATIVE_SCENES.map((scene) => (
+          <NarrativeSceneItem
+            key={scene.id}
+            scene={scene}
+            progress={scrollYProgress}
+            shouldReduceMotion={shouldReduceMotion ?? false}
+          />
+        ))}
       </div>
 
       {/* Gentle Initial Scroll Indicator */}
       <motion.div
         style={{ opacity: scrollHintOpacity }}
-        className="absolute bottom-10 inset-x-0 mx-auto flex flex-col items-center gap-1 text-[11px] text-[#7F8B95] font-mono pointer-events-none"
+        className="absolute bottom-10 inset-x-0 mx-auto flex flex-col items-center gap-1.5 text-[11px] text-[#7F8B95] font-mono pointer-events-none"
       >
-        <span>Scroll to continue</span>
-        <ChevronDown className="h-3.5 w-3.5 text-[#5BD8F5]/70" />
+        <span>Scroll to explore</span>
+        <ChevronDown className="h-3.5 w-3.5 text-[#5BD8F5]/80 animate-bounce" />
       </motion.div>
     </div>
   );

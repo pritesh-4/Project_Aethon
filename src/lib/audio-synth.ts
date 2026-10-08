@@ -85,6 +85,50 @@ class ObservatoryAudioEngine {
     return this.isRunning;
   }
 
+  public updateNarrativeProgress(p: number) {
+    if (!this.carrierGain || !this.noiseGain || !this.carrierOsc || !this.ctx || !this.isRunning)
+      return;
+    const now = this.ctx.currentTime;
+    const clampedP = Math.max(0, Math.min(1, p));
+
+    if (clampedP < 0.12) {
+      // Scene 1: Silence / Emergence - very quiet cosmic noise, subtle carrier emergence
+      const emergence = Math.max(0, (clampedP - 0.04) / 0.08);
+      this.noiseGain.gain.setTargetAtTime(0.015, now, 0.1);
+      this.carrierGain.gain.setTargetAtTime(emergence * 0.012, now, 0.1);
+      this.carrierOsc.frequency.setTargetAtTime(880, now, 0.1);
+    } else if (clampedP < 0.28) {
+      // Scene 2: Known - established harmonic tone alongside ambient background
+      this.noiseGain.gain.setTargetAtTime(0.02, now, 0.1);
+      this.carrierGain.gain.setTargetAtTime(0.024, now, 0.1);
+      this.carrierOsc.frequency.setTargetAtTime(880, now, 0.1);
+    } else if (clampedP < 0.45) {
+      // Scene 3: Overwhelm - spectral congestion with elevated noise floor
+      const overwhelmProg = (clampedP - 0.28) / 0.17;
+      this.noiseGain.gain.setTargetAtTime(0.02 + overwhelmProg * 0.025, now, 0.1);
+      this.carrierGain.gain.setTargetAtTime(0.02, now, 0.1);
+      this.carrierOsc.frequency.setTargetAtTime(880, now, 0.1);
+    } else if (clampedP < 0.63) {
+      // Scene 4: The Deviation - noise falls away, carrier Doppler frequency shifts downward
+      const devProg = (clampedP - 0.45) / 0.18;
+      const noiseLevel = 0.045 * (1 - devProg) + 0.008 * devProg;
+      this.noiseGain.gain.setTargetAtTime(noiseLevel, now, 0.1);
+      this.carrierGain.gain.setTargetAtTime(0.032, now, 0.1);
+      const targetFreq = 880 - devProg * 44;
+      this.carrierOsc.frequency.setTargetAtTime(targetFreq, now, 0.1);
+    } else if (clampedP < 0.81) {
+      // Scene 5: Investigation - clean isolation, noise near zero, pure carrier tone
+      this.noiseGain.gain.setTargetAtTime(0.005, now, 0.1);
+      this.carrierGain.gain.setTargetAtTime(0.035, now, 0.1);
+      this.carrierOsc.frequency.setTargetAtTime(836, now, 0.1);
+    } else {
+      // Scene 6: Candidate - serene resolution
+      this.noiseGain.gain.setTargetAtTime(0.004, now, 0.1);
+      this.carrierGain.gain.setTargetAtTime(0.03, now, 0.1);
+      this.carrierOsc.frequency.setTargetAtTime(836, now, 0.1);
+    }
+  }
+
   public updateCarrierPresence(intensity: number, driftFactor: number = 0) {
     if (!this.carrierGain || !this.carrierOsc || !this.ctx || !this.isRunning) return;
     const clampedIntensity = Math.max(0, Math.min(1, intensity));

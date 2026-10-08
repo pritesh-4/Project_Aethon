@@ -6,12 +6,19 @@ interface AstronomicalSignalCanvasProps {
   scrollYProgress: MotionValue<number>;
 }
 
+// Hermite smoothstep interpolation for seamless C1 continuity between visual states
+function smoothstep(min: number, max: number, value: number): number {
+  if (min === max) return value >= min ? 1 : 0;
+  const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  return x * x * (3 - 2 * x);
+}
+
 export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignalCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const progressRef = useRef(scrollYProgress.get());
   const shouldReduceMotion = useReducedMotion();
 
-  // Subscribe to MotionValue changes without triggering any React re-renders
+  // Listen to MotionValue changes without triggering React re-renders
   useEffect(() => {
     const unsubscribe = scrollYProgress.on('change', (latest) => {
       progressRef.current = Math.max(0, Math.min(1, latest));
@@ -33,8 +40,8 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
 
     const handleResize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = canvas.parentElement?.clientWidth || window.innerWidth;
-      height = canvas.parentElement?.clientHeight || window.innerHeight;
+      width = Math.max(1, canvas.parentElement?.clientWidth || window.innerWidth);
+      height = Math.max(1, canvas.parentElement?.clientHeight || window.innerHeight);
 
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
@@ -48,286 +55,356 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Semantic color palette
+    // Color definitions
     const COLOR_BG = '#06080B';
-    const COLOR_GRID = 'rgba(23, 34, 48, 0.4)';
-    const COLOR_TICK = 'rgba(127, 139, 149, 0.25)';
+    const COLOR_GRID = 'rgba(23, 34, 48, 0.45)';
+    const COLOR_TICK = 'rgba(127, 139, 149, 0.22)';
     const COLOR_SIGNAL = '#5BD8F5';
-    const COLOR_NOISE = 'rgba(127, 139, 149, 0.2)';
-    const COLOR_ANOMALY = '#E8AE50';
+    const COLOR_NOISE = 'rgba(127, 139, 149, 0.28)';
+    const COLOR_AMBER = '#E8AE50';
 
     const render = (now: number) => {
       const t = shouldReduceMotion ? 0 : (now - startTime) * 0.001;
       const p = Math.max(0, Math.min(1, progressRef.current));
 
-      // Audio coupling - gentle carrier presence in middle stages
-      if (p > 0.3 && p < 0.85) {
-        observatoryAudio.updateCarrierPresence(Math.min(1, (p - 0.3) * 3), p > 0.45 ? -0.32 : 0);
-      } else {
-        observatoryAudio.updateCarrierPresence(0);
-      }
+      // Sonification tracking
+      observatoryAudio.updateNarrativeProgress(p);
 
-      // 1. Clear background
+      const centerX = width * 0.5;
+      const centerY = height * 0.5;
+      const isMobile = width < 640;
+
+      // 1. Atmospheric Deep Void Background with subtle cosmic radial gradient
       ctx.fillStyle = COLOR_BG;
       ctx.fillRect(0, 0, width, height);
 
-      const centerY = height * 0.5;
-      const centerX = width * 0.5;
+      const radGrad = ctx.createRadialGradient(
+        centerX,
+        centerY,
+        0,
+        centerX,
+        centerY,
+        Math.max(width, height) * 0.65
+      );
+      radGrad.addColorStop(0, 'rgba(12, 22, 34, 0.35)');
+      radGrad.addColorStop(1, '#06080B');
+      ctx.fillStyle = radGrad;
+      ctx.fillRect(0, 0, width, height);
 
-      // 2. Ultra-subtle calibration baseline
-      drawBaselineGrid(ctx, width, centerY);
+      // 2. Continuous Baseline Datum & Calibration Axis
+      drawBaseline(ctx, width, height, centerX, centerY, p, isMobile);
 
-      // 3. Evolving primary signal
-      // Evolution: signal -> structure -> noise/complexity -> anomaly -> candidate
-      if (p < 0.16) {
-        // Stage 1: pure signal
-        drawStageSignal(ctx, width, centerY, p / 0.16, t);
-      } else if (p < 0.33) {
-        // Stage 2: structure (harmonics & periodicity)
-        drawStageStructure(ctx, width, centerY, (p - 0.16) / 0.17, t);
-      } else if (p < 0.5) {
-        // Stage 3: noise / complexity (overlapping fields)
-        drawStageComplexity(ctx, width, centerY, (p - 0.33) / 0.17, t);
-      } else if (p < 0.67) {
-        // Stage 4: anomaly (Doppler drift coherence emerging)
-        drawStageAnomaly(ctx, width, centerY, (p - 0.5) / 0.17, t);
-      } else if (p < 0.83) {
-        // Stage 5: looking closer (anomaly inspection & framing)
-        drawStageLookingCloser(ctx, width, centerX, centerY, (p - 0.67) / 0.16, t);
-      } else {
-        // Stage 6: candidate (resolved, verified event)
-        drawStageCandidate(ctx, width, centerX, centerY, (p - 0.83) / 0.17, t);
+      // 3. Ambient Signal Field (Secondary known carriers + crowding clutter)
+      drawSignalField(ctx, width, centerX, centerY, p, t, isMobile);
+
+      // 4. The Protagonist Signal (Hero Carrier that separates, drifts, and becomes candidate)
+      drawProtagonistCarrier(ctx, width, centerX, centerY, p, t);
+
+      // 5. Analytical Investigation Reticle & Guides (Scene 5: 0.63 - 0.81)
+      if (p > 0.61 && p < 0.84) {
+        drawInvestigationFrame(ctx, width, centerX, centerY, p, isMobile);
+      }
+
+      // 6. Candidate Lock Reticle & Resolved Target (Scene 6: 0.81 - 1.00)
+      if (p > 0.8) {
+        drawCandidateLock(ctx, centerX, centerY, p, t, isMobile);
       }
 
       animationFrameId = requestAnimationFrame(render);
     };
 
-    function drawBaselineGrid(c: CanvasRenderingContext2D, w: number, cy: number) {
+    // Baseline Datum and Reference Axis
+    function drawBaseline(
+      c: CanvasRenderingContext2D,
+      w: number,
+      h: number,
+      cx: number,
+      cy: number,
+      prog: number,
+      mobile: boolean
+    ) {
       c.save();
+      // Baseline visibility emerges from faint silence (0.15) to structured (0.4)
+      const baseAlpha = 0.15 + smoothstep(0.02, 0.15, prog) * 0.25;
       c.strokeStyle = COLOR_GRID;
       c.lineWidth = 1;
+      c.globalAlpha = baseAlpha;
 
-      // Fine datum center line
+      // Primary horizontal frequency channel datum
       c.beginPath();
       c.moveTo(0, cy);
       c.lineTo(w, cy);
       c.stroke();
 
-      // Small tick marks
+      // Calibration ticks along the baseline
       c.strokeStyle = COLOR_TICK;
-      for (let x = 60; x < w; x += 120) {
+      const tickStep = mobile ? 60 : 90;
+      for (let x = cx % tickStep; x < w; x += tickStep) {
         c.beginPath();
         c.moveTo(x, cy - 3);
         c.lineTo(x, cy + 3);
         c.stroke();
       }
-      c.restore();
-    }
 
-    // STAGE 1: SIGNAL (Pure, delicate carrier trace)
-    function drawStageSignal(
-      c: CanvasRenderingContext2D,
-      w: number,
-      cy: number,
-      subProg: number,
-      t: number
-    ) {
-      c.save();
-      const alpha = 0.3 + subProg * 0.45;
-      const amp = 6 + subProg * 8;
-
-      c.strokeStyle = COLOR_SIGNAL;
-      c.lineWidth = 1.2;
-      c.globalAlpha = alpha;
-
-      c.beginPath();
-      for (let x = 0; x <= w; x += 3) {
-        const nx = x / w;
-        const envelope = Math.exp(-Math.pow((nx - 0.5) * 3.5, 2));
-        const noise = Math.sin(x * 0.02 + t * 2) * 1.2 + Math.cos(x * 0.06 - t * 3) * 0.8;
-        const carrier = Math.sin(x * 0.045 - t * 5) * amp * envelope;
-
-        const y = cy + noise + carrier;
-        if (x === 0) c.moveTo(x, y);
-        else c.lineTo(x, y);
-      }
-      c.stroke();
-      c.restore();
-    }
-
-    // STAGE 2: STRUCTURE (Harmonics, periodic regularity)
-    function drawStageStructure(
-      c: CanvasRenderingContext2D,
-      w: number,
-      cy: number,
-      subProg: number,
-      t: number
-    ) {
-      c.save();
-
-      // Periodic harmonic sidebands
-      const harmonics = [-40, 40];
-      harmonics.forEach((offset) => {
-        c.strokeStyle = COLOR_NOISE;
-        c.lineWidth = 1;
-        c.globalAlpha = 0.25;
+      // Subtle channel guide rails during investigation/candidate (prog > 0.62)
+      if (prog > 0.62) {
+        const railAlpha = smoothstep(0.62, 0.72, prog) * 0.18;
+        c.strokeStyle = COLOR_GRID;
+        c.setLineDash([4, 6]);
+        c.globalAlpha = railAlpha;
 
         c.beginPath();
-        for (let x = 0; x <= w; x += 4) {
-          const y = cy + offset + Math.sin(x * 0.035 + t * 4) * 6;
-          if (x === 0) c.moveTo(x, y);
-          else c.lineTo(x, y);
-        }
+        c.moveTo(0, cy - 42);
+        c.lineTo(w, cy - 42);
+        c.moveTo(0, cy + 42);
+        c.lineTo(w, cy + 42);
         c.stroke();
-      });
-
-      // Primary structured waveform
-      c.strokeStyle = COLOR_SIGNAL;
-      c.lineWidth = 1.3;
-      c.globalAlpha = 0.75 + subProg * 0.2;
-
-      c.beginPath();
-      for (let x = 0; x <= w; x += 3) {
-        const nx = x / w;
-        const pulse = Math.sin(nx * 12 - t * 3) * 4;
-        const carrier = Math.sin(x * 0.05 - t * 6) * 14;
-        const y = cy + carrier + pulse;
-        if (x === 0) c.moveTo(x, y);
-        else c.lineTo(x, y);
+        c.setLineDash([]);
       }
-      c.stroke();
+
+      // Quiet technical telemetry label at bottom corner
+      if (prog > 0.05) {
+        c.font = '10px "JetBrains Mono", monospace';
+        c.fillStyle = 'rgba(127, 139, 149, 0.35)';
+        c.textAlign = 'left';
+        c.fillText('FREQ: 1420.405 MHz // RECEIVER CHANNEL 01', 24, h - 24);
+      }
+
       c.restore();
     }
 
-    // STAGE 3: NOISE / COMPLEXITY (Multi-transmitter interference)
-    function drawStageComplexity(
-      c: CanvasRenderingContext2D,
-      w: number,
-      cy: number,
-      subProg: number,
-      t: number
-    ) {
-      c.save();
-
-      // Ambient clutter traces
-      const clutter = [
-        { yOff: -70, amp: 14, freq: 0.03, speed: 5 },
-        { yOff: -30, amp: 8, freq: 0.06, speed: -7 },
-        { yOff: 30, amp: 12, freq: 0.04, speed: 4 },
-        { yOff: 65, amp: 16, freq: 0.025, speed: -3 },
-      ];
-
-      clutter.forEach((cl) => {
-        c.strokeStyle = COLOR_NOISE;
-        c.lineWidth = 1;
-        c.globalAlpha = 0.35 * (1 - subProg * 0.3);
-
-        c.beginPath();
-        for (let x = 0; x <= w; x += 3) {
-          const y = cy + cl.yOff + Math.sin(x * cl.freq + t * cl.speed) * cl.amp;
-          if (x === 0) c.moveTo(x, y);
-          else c.lineTo(x, y);
-        }
-        c.stroke();
-      });
-
-      // Embedded carrier under complexity
-      c.strokeStyle = COLOR_SIGNAL;
-      c.lineWidth = 1.3;
-      c.globalAlpha = 0.7;
-
-      c.beginPath();
-      for (let x = 0; x <= w; x += 3) {
-        const y = cy + Math.sin(x * 0.045 - t * 6) * 16;
-        if (x === 0) c.moveTo(x, y);
-        else c.lineTo(x, y);
-      }
-      c.stroke();
-      c.restore();
-    }
-
-    // STAGE 4: ANOMALY (Narrowband coherence, linear Doppler drift)
-    function drawStageAnomaly(
-      c: CanvasRenderingContext2D,
-      w: number,
-      cy: number,
-      subProg: number,
-      t: number
-    ) {
-      c.save();
-
-      // Attenuated background noise
-      c.strokeStyle = COLOR_NOISE;
-      c.lineWidth = 1;
-      c.globalAlpha = 0.15;
-      c.beginPath();
-      for (let x = 0; x <= w; x += 4) {
-        const y = cy + Math.sin(x * 0.02 + t * 2) * 8;
-        if (x === 0) c.moveTo(x, y);
-        else c.lineTo(x, y);
-      }
-      c.stroke();
-
-      // The anomalous drifting signal
-      const driftSlope = -0.055;
-      const amp = 16 + subProg * 6;
-
-      c.strokeStyle = COLOR_SIGNAL;
-      c.lineWidth = 1.5;
-      c.globalAlpha = 0.95;
-
-      c.beginPath();
-      for (let x = 0; x <= w; x += 2) {
-        const nx = x / w;
-        const driftY = (x - w * 0.5) * driftSlope;
-        const envelope = 0.8 + 0.2 * Math.sin(nx * Math.PI);
-        const y = cy + driftY + Math.sin(x * 0.05 - t * 7) * amp * envelope;
-
-        if (x === 0) c.moveTo(x, y);
-        else c.lineTo(x, y);
-      }
-      c.stroke();
-      c.restore();
-    }
-
-    // STAGE 5: LOOKING CLOSER (High-resolution focus & amber bracket)
-    function drawStageLookingCloser(
+    // Secondary known signals and multi-channel crowding field
+    function drawSignalField(
       c: CanvasRenderingContext2D,
       w: number,
       cx: number,
       cy: number,
-      subProg: number,
+      prog: number,
+      t: number,
+      mobile: boolean
+    ) {
+      // Emergence: fades in starting at prog 0.12
+      const fieldIn = smoothstep(0.12, 0.2, prog);
+      // Dissolution: ALL ambient clutter smoothly fades away during the deviation (0.45 - 0.60)
+      const fieldOut = 1 - smoothstep(0.44, 0.58, prog);
+      const fieldAlpha = fieldIn * fieldOut;
+
+      if (fieldAlpha <= 0.005) return;
+
+      c.save();
+
+      // Known carriers configuration
+      const knownCarriers = [
+        { yOffset: -38, amp: 8, freq: 0.032, speed: 3.5, alpha: 0.32 },
+        { yOffset: 42, amp: 10, freq: 0.026, speed: -3.0, alpha: 0.3 },
+        { yOffset: -76, amp: 6, freq: 0.048, speed: 4.2, alpha: 0.22 },
+        { yOffset: 80, amp: 9, freq: 0.022, speed: -2.5, alpha: 0.25 },
+      ];
+
+      // Crowding clutter configurations (only visible in Scene 3: prog 0.28 - 0.46)
+      const crowdingFactor = smoothstep(0.28, 0.36, prog);
+      const clutterCarriers = mobile
+        ? []
+        : [
+            { yOffset: -115, amp: 7, freq: 0.04, speed: -5.0, alpha: 0.2 },
+            { yOffset: 120, amp: 11, freq: 0.018, speed: 4.0, alpha: 0.22 },
+            { yOffset: -20, amp: 5, freq: 0.07, speed: 6.0, alpha: 0.18 },
+            { yOffset: 24, amp: 7, freq: 0.055, speed: -4.5, alpha: 0.2 },
+          ];
+
+      const allSecondary =
+        crowdingFactor > 0.1 ? [...knownCarriers, ...clutterCarriers] : knownCarriers;
+
+      // Draw secondary traces
+      allSecondary.forEach((carrier) => {
+        const traceAlpha =
+          carrier.alpha *
+          fieldAlpha *
+          (carrier.yOffset < -50 || carrier.yOffset > 50 ? crowdingFactor : 1);
+        if (traceAlpha <= 0.01) return;
+
+        c.strokeStyle = COLOR_NOISE;
+        c.lineWidth = 1;
+        c.globalAlpha = traceAlpha;
+
+        c.beginPath();
+        const step = mobile ? 4 : 3;
+        for (let x = 0; x <= w; x += step) {
+          const nx = (x - cx) / (w * 0.5);
+          const env = Math.exp(-Math.pow(nx, 4) * 2.5);
+          const y =
+            cy +
+            carrier.yOffset +
+            Math.sin(x * carrier.freq + t * carrier.speed) * carrier.amp * env;
+          if (x === 0) c.moveTo(x, y);
+          else c.lineTo(x, y);
+        }
+        c.stroke();
+      });
+
+      // Congested spectral FFT bin tick streaks during peak overwhelm (Scene 3)
+      if (crowdingFactor > 0.2 && !mobile) {
+        c.strokeStyle = 'rgba(91, 216, 245, 0.15)';
+        c.globalAlpha = crowdingFactor * fieldAlpha * 0.4;
+        c.lineWidth = 1;
+
+        // Faint horizontal energy packets
+        const streakOffsets = [-58, -14, 56, 96];
+        streakOffsets.forEach((off, idx) => {
+          const seed = idx * 137.5;
+          const streakX = (cx + Math.sin(seed + t * 0.8) * (w * 0.35) + w) % w;
+          const streakLen = 40 + Math.sin(seed * 2 + t) * 20;
+
+          c.beginPath();
+          c.moveTo(streakX - streakLen * 0.5, cy + off);
+          c.lineTo(streakX + streakLen * 0.5, cy + off);
+          c.stroke();
+        });
+      }
+
+      c.restore();
+    }
+
+    // The Protagonist Carrier (Hero Signal)
+    function drawProtagonistCarrier(
+      c: CanvasRenderingContext2D,
+      w: number,
+      cx: number,
+      cy: number,
+      prog: number,
       t: number
     ) {
       c.save();
 
-      // Clean, sharp drifting carrier
-      const driftSlope = -0.055;
+      // 1. Dynamic Carrier Parameters driven by continuous progress
+      // Emergence alpha: 0.03 at silence, climbs to 0.85 in known, 1.0 when isolated
+      const emergence = smoothstep(0.01, 0.08, prog);
+      const isolationBoost = smoothstep(0.46, 0.6, prog);
+      const carrierAlpha = Math.max(0.04, emergence * (0.8 + isolationBoost * 0.2));
+
+      // Amplitude progression: 2px (faint baseline ripple) -> 14px -> 18px -> 24px (investigation zoom) -> 20px (lock)
+      let targetAmp: number;
+      if (prog < 0.12) {
+        targetAmp = 2 + smoothstep(0.02, 0.12, prog) * 12;
+      } else if (prog < 0.3) {
+        targetAmp = 14;
+      } else if (prog < 0.45) {
+        targetAmp = 15;
+      } else if (prog < 0.63) {
+        targetAmp = 15 + smoothstep(0.45, 0.63, prog) * 4;
+      } else if (prog < 0.81) {
+        targetAmp = 19 + smoothstep(0.63, 0.72, prog) * 5; // Visual zoom in investigation
+      } else {
+        targetAmp = 22 - smoothstep(0.81, 0.9, prog) * 2; // Resonant settle in candidate
+      }
+
+      // Modulation interference during overwhelm (Scene 3: 0.30 - 0.45)
+      const overwhelmFactor = smoothstep(0.28, 0.38, prog) * (1 - smoothstep(0.44, 0.52, prog));
+
+      // Doppler frequency drift slope (Scene 4 Deviation: starts at 0.45, ramps to -0.055)
+      const driftProgress = smoothstep(0.45, 0.62, prog);
+      const driftSlope = -0.052 * driftProgress;
+
+      // Spatial aperture width (visual narrowing / focus in investigation: Scene 5)
+      const zoomFactor = smoothstep(0.63, 0.78, prog);
+      const aperturePower = 2.2 + zoomFactor * 1.5;
+
+      // Carrier frequency and phase
+      const baseFreq = 0.042;
+      const phaseSpeed = 5.5;
+
+      // 2. Draw Subtle Ambient Echo / Coherence Shadow when drifting (Anomaly highlight)
+      if (isolationBoost > 0.1) {
+        c.strokeStyle = COLOR_AMBER;
+        c.lineWidth = 1;
+        c.globalAlpha = isolationBoost * 0.35;
+
+        c.beginPath();
+        for (let x = 0; x <= w; x += 3) {
+          const nx = (x - cx) / (w * 0.5);
+          const env = Math.exp(-Math.pow(nx, aperturePower) * 2.2);
+          const driftY = (x - cx) * driftSlope;
+          const y =
+            cy + driftY + 2 + Math.sin(x * baseFreq - t * phaseSpeed) * (targetAmp * 0.9) * env;
+          if (x === 0) c.moveTo(x, y);
+          else c.lineTo(x, y);
+        }
+        c.stroke();
+      }
+
+      // 3. Draw Soft Outer Cyan Glow
       c.strokeStyle = COLOR_SIGNAL;
-      c.lineWidth = 1.6;
-      c.globalAlpha = 1;
+      c.lineWidth = 2.2;
+      c.globalAlpha = carrierAlpha * 0.45;
 
       c.beginPath();
-      for (let x = 0; x <= w; x += 2) {
+      for (let x = 0; x <= w; x += 3) {
+        const nx = (x - cx) / (w * 0.5);
+        const env = Math.exp(-Math.pow(nx, aperturePower) * 2.2);
         const driftY = (x - cx) * driftSlope;
-        const y = cy + driftY + Math.sin(x * 0.05 - t * 7) * 20;
+        const noiseRipple =
+          overwhelmFactor * (Math.sin(x * 0.12 + t * 8) * 3 + Math.cos(x * 0.05 - t * 4) * 2);
+        const y =
+          cy + driftY + (Math.sin(x * baseFreq - t * phaseSpeed) * targetAmp + noiseRipple) * env;
+
         if (x === 0) c.moveTo(x, y);
         else c.lineTo(x, y);
       }
       c.stroke();
 
-      // Understated focus bracket in amber
-      const boxW = Math.min(220, w * 0.35);
-      const boxH = 64;
+      // 4. Draw Crisp Core Carrier
+      c.strokeStyle = isolationBoost > 0.5 ? '#E6EDF2' : COLOR_SIGNAL;
+      c.lineWidth = 1.3;
+      c.globalAlpha = carrierAlpha;
+
+      c.beginPath();
+      for (let x = 0; x <= w; x += 2) {
+        const nx = (x - cx) / (w * 0.5);
+        const env = Math.exp(-Math.pow(nx, aperturePower) * 2.2);
+        const driftY = (x - cx) * driftSlope;
+        const noiseRipple =
+          overwhelmFactor * (Math.sin(x * 0.12 + t * 8) * 3 + Math.cos(x * 0.05 - t * 4) * 2);
+        const y =
+          cy + driftY + (Math.sin(x * baseFreq - t * phaseSpeed) * targetAmp + noiseRipple) * env;
+
+        if (x === 0) c.moveTo(x, y);
+        else c.lineTo(x, y);
+      }
+      c.stroke();
+
+      c.restore();
+    }
+
+    // Analytical Investigation Frame (Scene 5: 0.63 - 0.81)
+    function drawInvestigationFrame(
+      c: CanvasRenderingContext2D,
+      w: number,
+      cx: number,
+      cy: number,
+      prog: number,
+      mobile: boolean
+    ) {
+      c.save();
+      const enterAlpha = smoothstep(0.63, 0.68, prog);
+      const exitAlpha = 1 - smoothstep(0.79, 0.83, prog);
+      const frameAlpha = enterAlpha * exitAlpha;
+
+      if (frameAlpha <= 0.01) {
+        c.restore();
+        return;
+      }
+
+      const boxW = Math.min(mobile ? 220 : 340, w * 0.6);
+      const boxH = mobile ? 64 : 84;
       const boxX = cx - boxW * 0.5;
       const boxY = cy - boxH * 0.5;
-      const bLen = 10;
+      const bLen = 12;
 
-      c.strokeStyle = COLOR_ANOMALY;
+      c.strokeStyle = COLOR_AMBER;
       c.lineWidth = 1;
-      c.globalAlpha = 0.6 + subProg * 0.3;
+      c.globalAlpha = frameAlpha * 0.75;
 
-      // 4 minimal corner brackets
+      // 4 Precision corner brackets
       // Top-left
       c.beginPath();
       c.moveTo(boxX, boxY + bLen);
@@ -356,62 +433,107 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
       c.lineTo(boxX + boxW, boxY + boxH - bLen);
       c.stroke();
 
+      // Center fiducial indicator
+      c.strokeStyle = COLOR_SIGNAL;
+      c.globalAlpha = frameAlpha * 0.5;
+      c.beginPath();
+      c.moveTo(cx, boxY - 4);
+      c.lineTo(cx, boxY + 4);
+      c.moveTo(cx, boxY + boxH - 4);
+      c.lineTo(cx, boxY + boxH + 4);
+      c.stroke();
+
+      // Subtle Telemetry readout
+      c.font = '9px "JetBrains Mono", monospace';
+      c.fillStyle = COLOR_AMBER;
+      c.globalAlpha = frameAlpha * 0.85;
+      c.textAlign = 'left';
+      c.fillText('NARROWBAND COHERENCE LOCK', boxX, boxY - 8);
+
+      c.textAlign = 'right';
+      c.fillText('Δf/Δt: -0.32 Hz/s', boxX + boxW, boxY - 8);
+
       c.restore();
     }
 
-    // STAGE 6: CANDIDATE (Resolved, stable event)
-    function drawStageCandidate(
+    // Candidate Lock Reticle (Scene 6: 0.81 - 1.00)
+    function drawCandidateLock(
       c: CanvasRenderingContext2D,
-      w: number,
       cx: number,
       cy: number,
-      subProg: number,
-      t: number
+      prog: number,
+      t: number,
+      mobile: boolean
     ) {
       c.save();
-
-      // Stable, resolved sinusoidal carrier
-      c.strokeStyle = COLOR_SIGNAL;
-      c.lineWidth = 1.6;
-      c.globalAlpha = 1;
-
-      c.beginPath();
-      for (let x = 0; x <= w; x += 2) {
-        const nx = x / w;
-        const envelope = 0.85 + 0.15 * Math.sin(nx * Math.PI);
-        const y = cy + Math.sin(x * 0.04 - t * 7) * 22 * envelope;
-        if (x === 0) c.moveTo(x, y);
-        else c.lineTo(x, y);
+      const lockAlpha = smoothstep(0.81, 0.87, prog);
+      if (lockAlpha <= 0.01) {
+        c.restore();
+        return;
       }
-      c.stroke();
 
-      // Fine reticle lock at center
-      const r = 32 + subProg * 4;
-      c.strokeStyle = 'rgba(91, 216, 245, 0.4)';
+      const r1 = mobile ? 26 : 34;
+      const r2 = r1 + (mobile ? 8 : 10);
+
+      // Inner target circle in luminous cyan
+      c.strokeStyle = COLOR_SIGNAL;
       c.lineWidth = 1;
+      c.globalAlpha = lockAlpha * 0.7;
 
       c.beginPath();
-      c.arc(cx, cy, r, 0, Math.PI * 2);
+      c.arc(cx, cy, r1, 0, Math.PI * 2);
       c.stroke();
 
-      // Center crosshair
+      // Center crosshair ticks
       c.beginPath();
-      c.moveTo(cx - 8, cy);
-      c.lineTo(cx + 8, cy);
-      c.moveTo(cx, cy - 8);
-      c.lineTo(cx, cy + 8);
+      c.moveTo(cx - 7, cy);
+      c.lineTo(cx + 7, cy);
+      c.moveTo(cx, cy - 7);
+      c.lineTo(cx, cy + 7);
       c.stroke();
+
+      // Rotating / breathing outer calibration ring with notched perimeter
+      const rotAngle = shouldReduceMotion ? 0 : t * 0.35;
+      c.strokeStyle = 'rgba(91, 216, 245, 0.3)';
+      c.setLineDash([3, 5]);
+
+      c.beginPath();
+      c.arc(cx, cy, r2, 0, Math.PI * 2);
+      c.stroke();
+      c.setLineDash([]);
+
+      // 4 Cardinal tick marks extending outward
+      c.strokeStyle = COLOR_AMBER;
+      c.globalAlpha = lockAlpha * 0.65;
+      for (let i = 0; i < 4; i++) {
+        const ang = rotAngle + (i * Math.PI) / 2;
+        const xStart = cx + Math.cos(ang) * (r2 + 2);
+        const yStart = cy + Math.sin(ang) * (r2 + 2);
+        const xEnd = cx + Math.cos(ang) * (r2 + 7);
+        const yEnd = cy + Math.sin(ang) * (r2 + 7);
+
+        c.beginPath();
+        c.moveTo(xStart, yStart);
+        c.lineTo(xEnd, yEnd);
+        c.stroke();
+      }
+
+      // Subdued Candidate Tag below reticle
+      c.font = '10px "JetBrains Mono", monospace';
+      c.fillStyle = COLOR_SIGNAL;
+      c.globalAlpha = lockAlpha * 0.8;
+      c.textAlign = 'center';
+      c.fillText('CANDIDATE EVENT // RESOLVED', cx, cy + r2 + 22);
 
       c.restore();
     }
 
-    // Start animation loop
     animationFrameId = requestAnimationFrame(render);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
-      observatoryAudio.updateCarrierPresence(0);
+      observatoryAudio.updateNarrativeProgress(0);
     };
   }, [shouldReduceMotion]);
 
