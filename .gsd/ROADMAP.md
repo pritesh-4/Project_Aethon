@@ -1,7 +1,7 @@
 # ROADMAP.md — Project Roadmap: AETHON
 
 > **Current Milestone:** v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine  
-> **Goal:** Ingest real Breakthrough Listen observations, perform interactive Doppler drift & de-Doppler correction, mitigate RFI via explainable cadence logic, score candidates with layered models, and export research-grade scientific PDF dossiers for a flawless 3-minute hackathon demo.  
+> **Goal:** Ingest real Breakthrough Listen observations, perform interactive Doppler drift & de-Doppler correction, mitigate RFI via explainable cadence logic, score candidates with layered models, and export research-grade scientific PDF dossiers for a flawless 3-minute technical demonstration.  
 > **Status:** Active · Ready for Phase 5 Planning
 
 ---
@@ -16,7 +16,7 @@
 - [ ] Controlled `setigen` synthetic signal injection & parameter recovery benchmark mode
 - [ ] Layered candidate scoring (Physics metrics + Isolation Forest + lightweight CNN)
 - [ ] Publication-grade scientific PDF dossier export with embedded spectral snapshots and metadata
-- [ ] Deterministic, offline-reliable 3-minute hackathon judge walkthrough
+- [ ] Deterministic, offline-reliable 3-minute technical walkthrough
 
 ---
 
@@ -148,7 +148,7 @@
   - BLC1 case study reproducible deterministically from UI without network access.
   - Final disposition correctly resolves to `TERRESTRIAL_INTERFERENCE` with traceable scientific evidence.
 - **Verification Method:** UI walkthrough verification and automated case study assertion test.
-- **Demo Value:** The primary narrative centerpiece for the hackathon presentation.
+- **Demo Value:** The primary narrative centerpiece for the research presentation.
 
 ---
 
@@ -169,14 +169,14 @@
   - Spectrograms embedded at $\ge 300\text{ DPI}$ without compression artifacts.
   - Preserves exact FITS/filterbank header parameters and SHA-256 slice hash.
 - **Verification Method:** Automated PDF structure validation and visual inspection.
-- **Demo Value:** Tangible, impressive takeaway that judges can see and inspect during or after the pitch.
+- **Demo Value:** Tangible, impressive takeaway that evaluators can see and inspect during or after technical review.
 
 ---
 
 ### Phase 12: Performance Profiling, Offline Demo Cache & Rehearsed Flow
 
 - **Status:** ⬜ Not Started
-- **Objective:** Profile end-to-end execution, eliminate processing bottlenecks, pre-cache demo data, and rehearse the exact 3-minute hackathon judge flow for zero-latency, 100% offline execution.
+- **Objective:** Profile end-to-end execution, eliminate processing bottlenecks, pre-cache demo data, and rehearse the exact 3-minute technical walkthrough flow for zero-latency, 100% offline execution.
 - **Dependencies:** All previous phases.
 - **Implementation Scope:**
   - Profile CPU and memory consumption across ingestion, FFT, and de-Doppler routines; apply vectorization / caching where required.
@@ -184,13 +184,13 @@
   - Add an automated Demo Mode toggle that seeds the application with the exact rehearsable 3-minute presentation state.
   - Comprehensive Playwright E2E test executing the 3-minute demo script and verifying all metrics, charts, and transitions.
 - **Non-Goals:** Over-engineering premature GPU pipelines; adding unnecessary cloud dependencies.
-- **Expected Artifacts:** `tests/e2e/hackathon_demo.spec.ts`, `backend/cache/demo_precomputed.json`, performance benchmark logs.
+- **Expected Artifacts:** `tests/e2e/technical_demo.spec.ts`, `backend/cache/demo_precomputed.json`, performance benchmark logs.
 - **Measurable Acceptance Criteria:**
   - 100% offline operation verified with WiFi disconnected.
   - Page transitions across all 9 routes complete in $<1.0\text{ s}$.
   - Zero console errors or uncaught exceptions during complete 3-minute scripted demo.
 - **Verification Method:** E2E headless test run with mock network disabled.
-- **Demo Value:** Guarantees zero demo failures or awkward loading spinners on stage in front of judges.
+- **Demo Value:** Guarantees zero demo failures or awkward loading spinners during live technical presentation.
 
 ---
 

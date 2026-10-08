@@ -47,6 +47,6 @@
 ## ADR-005: Offline-Reliable Demo Packaging
 
 - **Date:** 2026-10-09
-- **Context:** Live hackathon evaluations cannot tolerate external API timeouts or slow multi-gigabyte downloads.
+- **Context:** Live technical evaluations and peer demonstrations cannot tolerate external API timeouts or slow multi-gigabyte downloads.
 - **Decision:** Bundle and cache sample GBT/Parkes filterbank slices and precomputed results locally, enabling 100% offline execution of the 3-minute rehearsed presentation.
 - **Consequences:** Guaranteed sub-second responsiveness and zero presentation failure risk.

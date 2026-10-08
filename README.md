@@ -11,7 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg?style=flat-square)](LICENSE)
 [![Status: Research Prototype](https://img.shields.io/badge/Status-Research_Prototype-f59e0b?style=flat-square)](#)
 
-> **AETHON** is an AI-driven scientific framework designed for automated detection and characterization of uncatalogued radio-frequency anomalies in high-cadence astronomical telemetry. Developed for the **AstroNITR World Space Week 2026 — Rocket Revolution** AI/ML challenge, the system addresses open-ended discovery where observational targets lack prior labeled training examples.
+> **AETHON** is an independent research prototype exploring how machine learning can surface unusual radio-signal behaviour in astronomical observations and prioritize observations for human investigation. Through spectrotemporal analysis, unsupervised anomaly detection, and human-guided candidate investigation, the system addresses open-ended discovery where observational targets lack prior labeled training examples.
 
 ---
 
@@ -37,7 +37,7 @@ AETHON operates not as a static catalog classifier, but as an **automated discov
 
 ## 2. The Problem Statement
 
-**Challenge Context:** AstroNITR World Space Week 2026 — _Rocket Revolution: Discovering Unknown Radio Signals_
+**Research Context:** Independent research prototype exploring automated discovery of unknown radio signals in high-cadence astronomical telemetry.
 
 In observational radio astronomy, discovery pipelines face three fundamental hurdles:
 
@@ -449,7 +449,7 @@ npm run check           # Run complete multi-step quality gate locally
 
 ## 15. Acknowledgments & Scientific Attribution
 
-Project AETHON was developed for the **AstroNITR World Space Week 2026 — Rocket Revolution** AI/ML Hackathon challenge (_"Discovering Unknown Radio Signals"_).
+Project AETHON is an independent research prototype for astronomical signal discovery.
 
 Scientific inspiration and methodology acknowledge open-source research and data formats pioneered by:
 

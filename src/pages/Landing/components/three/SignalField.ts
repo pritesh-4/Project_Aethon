@@ -38,6 +38,11 @@ export class SignalField {
   private heroMaterial: THREE.LineBasicMaterial;
   private heroGlowMaterial: THREE.LineBasicMaterial;
 
+  // Connective Precursor Signal Points (Gentle transition into observation data)
+  private precursorPoints: THREE.Points;
+  private precursorMaterial: THREE.PointsMaterial;
+  private numPrecursors = 84;
+
   constructor() {
     this.group = new THREE.Group();
     this.group.name = 'SignalField';
@@ -239,6 +244,34 @@ export class SignalField {
     this.heroGlowLine = new THREE.Line(heroGeo, this.heroGlowMaterial);
     this.heroGlowLine.scale.set(1.02, 1.02, 1.0);
     this.group.add(this.heroGlowLine);
+
+    // 5. Connective Precursor Signal Trace Points
+    // Flanking the observation corridor, leaving the central text area (|x| < 6.8) clear
+    const precursorRng = new SeededRandom(1420701);
+    const precursorGeo = new THREE.BufferGeometry();
+    const precursorPos = new Float32Array(this.numPrecursors * 3);
+    for (let i = 0; i < this.numPrecursors; i++) {
+      const side = precursorRng.next() > 0.5 ? 1 : -1;
+      const px = side * precursorRng.range(7.2, 30.0);
+      const py = precursorRng.range(8.0, 26.0);
+      const pz = precursorRng.range(-35.0, -115.0);
+
+      precursorPos[i * 3 + 0] = px;
+      precursorPos[i * 3 + 1] = py;
+      precursorPos[i * 3 + 2] = pz;
+    }
+    precursorGeo.setAttribute('position', new THREE.BufferAttribute(precursorPos, 3));
+
+    this.precursorMaterial = new THREE.PointsMaterial({
+      color: 0x7da4cc,
+      size: 1.4,
+      transparent: true,
+      opacity: 0.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    this.precursorPoints = new THREE.Points(precursorGeo, this.precursorMaterial);
+    this.group.add(this.precursorPoints);
   }
 
   /**
@@ -307,5 +340,12 @@ export class SignalField {
     // Subtle breathing drift on the hero signal
     this.heroSignalLine.position.y = Math.sin(time * 0.8) * 0.15;
     this.heroGlowLine.position.y = this.heroSignalLine.position.y;
+
+    // 5. Connective Precursor Signal Trace Emergence (0.13 -> 0.26)
+    // Subtly emerges as the planet leaves and first narrative statement is absorbed,
+    // providing the subconscious feeling of observation data beginning to form.
+    const precursorIn = THREE.MathUtils.smoothstep(progress, 0.13, 0.18);
+    const precursorOut = 1 - THREE.MathUtils.smoothstep(progress, 0.22, 0.28);
+    this.precursorMaterial.opacity = precursorIn * precursorOut * 0.55;
   }
 }

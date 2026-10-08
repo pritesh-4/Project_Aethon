@@ -16,7 +16,7 @@ updated: 2026-10-09T00:18:00+05:30
 
 ## Active Goal
 
-Ingest real Breakthrough Listen observations, perform interactive Doppler drift & de-Doppler correction, mitigate RFI via explainable cadence logic, score candidates with layered models, and export research-grade scientific PDF dossiers for a flawless 3-minute hackathon demo.
+Ingest real Breakthrough Listen observations, perform interactive Doppler drift & de-Doppler correction, mitigate RFI via explainable cadence logic, score candidates with layered models, and export research-grade scientific PDF dossiers for a seamless interactive research demonstration.
 
 ## Active Phases
 

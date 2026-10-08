@@ -20,8 +20,8 @@ export class RadioBeam {
     this.group = new THREE.Group();
     this.group.name = 'RadioBeam';
 
-    // Positioned aligned with dish feed pointing trajectory
-    this.group.position.set(0, 2, 0);
+    // Positioned aligned with celestial star center
+    this.group.position.set(0, 3.2, 0);
 
     // 1. Concentric Electromagnetic Wavefront Rings
     const numRings = 16;

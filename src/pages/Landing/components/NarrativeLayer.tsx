@@ -23,10 +23,10 @@ interface NarrativeScene {
 const SCENES: NarrativeScene[] = [
   {
     id: 'observatory',
-    start: 0.02,
-    peakStart: 0.05,
-    peakEnd: 0.12,
-    end: 0.15,
+    start: 0.08,
+    peakStart: 0.12,
+    peakEnd: 0.15,
+    end: 0.18,
     kicker: 'L-BAND SPECTRAL OBSERVATORY',
     headline: 'The sky is full of signals.',
     body: 'Cosmic background radiation, orbital emissions, and ambient frequency fields.',

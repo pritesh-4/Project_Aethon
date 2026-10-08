@@ -45,9 +45,9 @@
    - Elevate detections into structured scientific case files (Identity, Physical Properties, Observational Context, Multi-Factor Intelligence, Spectrogram Evidence, and Disposition).
    - Generate exportable, high-fidelity PDF scientific research dossiers containing raw provenance, calibration metadata, and high-resolution spectral plots.
 
-8. **Deterministic, Offline-Reliable Hackathon Demo:**
+8. **Deterministic, Offline-Reliable Technical Demo:**
    - Package a curated offline demo bundle containing real GBT/BLC1 slices and controlled synthetic benchmarks.
-   - Ensure the entire 3-minute judge narrative is deterministic, fast (<1s load times), and immune to network outages.
+   - Ensure the entire 3-minute technical narrative is deterministic, fast (<1s load times), and immune to network outages.
 
 ---
 
@@ -65,8 +65,8 @@
 
 ## 4. Target Users & Evaluation Context
 
-1. **Hackathon Judges & Technical Evaluators:**
-   - Needs: Rapid comprehension of the scientific problem, unmistakable evidence that algorithms operate on real radio astronomy data, clear visual proof of Doppler de-dispersion, and an engaging 3-minute rehearsable story.
+1. **Technical Evaluators & Peer Reviewers:**
+   - Needs: Rapid comprehension of the scientific problem, unmistakable evidence that algorithms operate on real radio astronomy data, clear visual proof of Doppler de-dispersion, and an engaging 3-minute rehearsable walkthrough.
 2. **Astrophysicists & Signal Processing Researchers:**
    - Needs: Methodological credibility, preservation of FITS/filterbank headers, scientifically meaningful physical units ($MHz$, $Hz/s$, $Jy$, $dB$), explainable RFI rejection logic, and reproducible data provenance.
 
@@ -93,7 +93,7 @@
 
 ---
 
-## 6. Three-Minute Hackathon Demonstration Script
+## 6. Three-Minute Technical Demonstration Script
 
 ```
 0:00–0:20  [The Problem]

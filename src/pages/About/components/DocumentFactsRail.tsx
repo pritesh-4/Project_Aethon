@@ -6,13 +6,13 @@ export function DocumentFactsRail() {
 
   const bibtex = `@misc{aethon2026,
   title={AETHON: AI-Assisted Discovery of Anomalous Astronomical Radio Signatures},
-  author={Project AETHON Consortium},
+  author={Project AETHON},
   year={2026},
   howpublished={\\url{https://github.com/pritesh-4/Project_Aethon}},
   note={Research Prototype Dossier ATR-2026-W01}
 }`;
 
-  const apa = `Project AETHON Consortium. (2026). AETHON: AI-Assisted Discovery of Anomalous Astronomical Radio Signatures (Research Dossier ATR-2026-W01). Retrieved from https://github.com/pritesh-4/Project_Aethon`;
+  const apa = `Project AETHON. (2026). AETHON: AI-Assisted Discovery of Anomalous Astronomical Radio Signatures (Research Dossier ATR-2026-W01). Retrieved from https://github.com/pritesh-4/Project_Aethon`;
 
   const handleCopy = (text: string, format: string) => {
     navigator.clipboard.writeText(text);

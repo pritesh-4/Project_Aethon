@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { ObservatoryTelescope } from './three/ObservatoryTelescope.ts';
+import { CelestialStar } from './three/CelestialStar.ts';
 import { RadioBeam } from './three/RadioBeam.ts';
 import { SignalField } from './three/SignalField.ts';
 import { SpectrogramPlane } from './three/SpectrogramPlane.ts';
@@ -87,8 +87,8 @@ export function SceneCanvas({ progress, velocity, reducedMotion, onWebGLError }:
     scene.add(anomalyLight);
 
     // 5. Construct Scene Subsystems
-    const telescope = new ObservatoryTelescope();
-    scene.add(telescope.group);
+    const celestialStar = new CelestialStar();
+    scene.add(celestialStar.group);
 
     const radioBeam = new RadioBeam();
     scene.add(radioBeam.group);
@@ -137,8 +137,8 @@ export function SceneCanvas({ progress, velocity, reducedMotion, onWebGLError }:
       // Update Camera along the continuous narrative path
       cameraController.update(p, mouseRef.current.x, mouseRef.current.y, vel, isReduced);
 
-      // Update Observatory Telescope dish orientation
-      telescope.update(p, totalTime);
+      // Update Celestial Star rotation, limb emission, and lifecycle
+      celestialStar.update(p, totalTime, isReduced);
 
       // Update Radio Beam wavefronts and volumetric particles
       radioBeam.update(p, totalTime, delta);
@@ -168,6 +168,7 @@ export function SceneCanvas({ progress, velocity, reducedMotion, onWebGLError }:
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+      celestialStar.dispose();
       renderer.dispose();
     };
   }, [onWebGLError]);

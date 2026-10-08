@@ -47,14 +47,12 @@ export function DossierHeader({ searchQuery, onSearchChange }: DossierHeaderProp
       {/* Document Facts / Metadata Badges */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs font-mono text-[#56616A] border-t border-[#E4E1D9] pt-4">
         <div>
-          <span className="text-[#7E8B96]">Challenge: </span>
-          <span className="text-[#17202A] font-medium">AstroNITR World Space Week 2026</span>
+          <span className="text-[#7E8B96]">Context: </span>
+          <span className="text-[#17202A] font-medium">Independent Research Prototype</span>
         </div>
         <div>
-          <span className="text-[#7E8B96]">Track: </span>
-          <span className="text-[#17202A] font-medium">
-            Rocket Revolution — Unknown Radio Signals
-          </span>
+          <span className="text-[#7E8B96]">Domain: </span>
+          <span className="text-[#17202A] font-medium">Radio Astronomy · Machine Learning</span>
         </div>
         <div>
           <span className="text-[#7E8B96]">Repository: </span>

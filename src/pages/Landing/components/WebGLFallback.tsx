@@ -38,6 +38,13 @@ export function WebGLFallback({ progress }: WebGLFallbackProps) {
     handleResize();
     window.addEventListener('resize', handleResize);
 
+    const fallbackImg = new Image();
+    fallbackImg.src = '/textures/planet_fallback.jpg';
+    let imgLoaded = false;
+    fallbackImg.onload = () => {
+      imgLoaded = true;
+    };
+
     const render = () => {
       ctx.fillStyle = '#070b10';
       ctx.fillRect(0, 0, width, height);
@@ -55,24 +62,98 @@ export function WebGLFallback({ progress }: WebGLFallbackProps) {
         ctx.fillRect(sx, sy, 1.2, 1.2);
       }
 
-      // 2. Telescope Dish Silhouette (0.00 - 0.25)
-      if (p < 0.3) {
-        const telAlpha = Math.max(0, 1 - (p - 0.1) * 5);
+      // 2. Distant Rocky Celestial Body (0.00 - 0.155)
+      if (p < 0.155) {
+        const descentProg = p <= 0.038 ? 0 : Math.min(1, Math.max(0, (p - 0.038) / (0.14 - 0.038)));
+        const smoothDescent = descentProg * descentProg * (3 - 2 * descentProg);
+        const planetAlpha = p <= 0.08 ? 1 : Math.max(0, 1 - (p - 0.08) / (0.152 - 0.08));
+
         ctx.save();
-        ctx.globalAlpha = telAlpha;
-        ctx.fillStyle = '#141f28';
-        ctx.strokeStyle = '#223242';
+        ctx.globalAlpha = planetAlpha;
 
-        // Base
-        ctx.fillRect(cx - 30, height - 120, 60, 120);
+        const planetRadius = Math.min(width, height) * 0.14;
+        const planetY = height * 0.44 + smoothDescent * height * 0.48;
 
-        // Parabolic dish arc
+        // Base planetary sphere clip
         ctx.beginPath();
-        ctx.ellipse(cx, height - 160, 140, 70, 0, 0, Math.PI);
-        ctx.fill();
-        ctx.stroke();
+        ctx.arc(cx, planetY, planetRadius, 0, Math.PI * 2);
+        ctx.clip();
+
+        if (imgLoaded) {
+          ctx.drawImage(
+            fallbackImg,
+            cx - planetRadius,
+            planetY - planetRadius,
+            planetRadius * 2,
+            planetRadius * 2
+          );
+        } else {
+          // Deep shadow base (night side)
+          ctx.fillStyle = '#0a0d11';
+          ctx.fillRect(
+            cx - planetRadius,
+            planetY - planetRadius,
+            planetRadius * 2,
+            planetRadius * 2
+          );
+
+          // Directional stellar sunlight (illuminated day side with mineral regolith tones)
+          const lightX = cx - planetRadius * 0.45;
+          const lightY = planetY - planetRadius * 0.45;
+          const sunGrad = ctx.createRadialGradient(
+            lightX,
+            lightY,
+            planetRadius * 0.1,
+            lightX,
+            lightY,
+            planetRadius * 1.55
+          );
+          sunGrad.addColorStop(0, '#b8a692'); // Sunlit mineral bedrock
+          sunGrad.addColorStop(0.35, '#786858'); // Weathered sandstone plains
+          sunGrad.addColorStop(0.65, '#423830'); // Basaltic terrain
+          sunGrad.addColorStop(0.85, '#1e1a18'); // Terminator edge
+          sunGrad.addColorStop(1.0, '#0a0d11'); // Deep shadow
+
+          ctx.fillStyle = sunGrad;
+          ctx.beginPath();
+          ctx.arc(cx, planetY, planetRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Subtle daylight atmospheric limb haze (lit crescent only)
+          const atmoGrad = ctx.createRadialGradient(
+            lightX,
+            lightY,
+            planetRadius * 0.85,
+            lightX,
+            lightY,
+            planetRadius * 1.15
+          );
+          atmoGrad.addColorStop(0, 'rgba(140, 170, 205, 0)');
+          atmoGrad.addColorStop(0.8, 'rgba(140, 170, 205, 0.28)');
+          atmoGrad.addColorStop(1, 'rgba(140, 170, 205, 0)');
+          ctx.fillStyle = atmoGrad;
+          ctx.beginPath();
+          ctx.arc(cx, planetY, planetRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
         ctx.restore();
+      }
+
+      // Connective Precursor Signal Dots (0.13 - 0.26)
+      if (p >= 0.13 && p <= 0.26) {
+        const precIn = Math.min(1, Math.max(0, (p - 0.13) / 0.05));
+        const precOut = Math.max(0, 1 - (p - 0.22) / 0.05);
+        const precAlpha = precIn * precOut * 0.6;
+        ctx.fillStyle = '#7da4cc';
+        ctx.globalAlpha = precAlpha;
+        for (let i = 0; i < 40; i++) {
+          const side = i % 2 === 0 ? 1 : -1;
+          const px = cx + side * (width * 0.18 + ((i * 19.3) % (width * 0.28)));
+          const py = height * 0.22 + ((i * 37.1) % (height * 0.55));
+          ctx.fillRect(px, py, 1.6, 1.6);
+        }
+        ctx.globalAlpha = 1.0;
       }
 
       // 3. Signal Population Field (0.25 - 0.65)
