@@ -9,69 +9,91 @@ export interface AnalysisHeaderProps {
 }
 
 export function AnalysisHeader({ record, prevCandidateId, nextCandidateId }: AnalysisHeaderProps) {
-  const priorityColor = record.priority === 'HIGH' ? 'text-[#D4864A]' : 'text-[#9A9C96]';
-
   return (
-    <header className="border-b border-[#242825] bg-[#0F1110] px-4 sm:px-6 py-2 select-none">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Left: Breadcrumb + Candidate Identity */}
-        <div className="flex items-center gap-3 min-w-0">
-          <Link
-            to="/candidates"
-            className="flex items-center gap-1 text-[#666963] hover:text-[#E6E4DD] transition-colors shrink-0"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-          </Link>
+    <header className="border-b border-[#242825] bg-[#0E100F] px-4 sm:px-6 py-6 sm:py-8 select-none font-sans">
+      <div className="max-w-7xl mx-auto space-y-3">
+        {/* Breadcrumb Navigation Strip */}
+        <div className="flex items-center justify-between text-xs font-mono">
+          <div className="flex items-center gap-2 text-[#767973]">
+            <Link
+              to="/candidates"
+              className="inline-flex items-center gap-1.5 hover:text-[#E6E4DD] transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>CANDIDATES QUEUE</span>
+            </Link>
+            <span className="text-[#363C38]">/</span>
+            <span className="text-[#A0A29C]">SIGNAL INVESTIGATION</span>
+          </div>
 
-          <span className="text-[#242825] shrink-0">/</span>
+          {/* Adjacent Candidate Switcher */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-[#666963] uppercase hidden sm:inline">SPECIMEN:</span>
+            {prevCandidateId ? (
+              <Link
+                to={`/analysis/${prevCandidateId}`}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] border border-[#242825] bg-[#141715] text-[#848780] hover:text-[#E6E4DD] hover:border-[#383E3A] transition-colors text-[11px]"
+                aria-label="Previous candidate"
+              >
+                <ChevronLeft className="h-3 w-3" />
+                <span>PREV</span>
+              </Link>
+            ) : (
+              <span className="px-2 py-0.5 rounded-[2px] border border-[#1C1F1D] bg-[#0C0E0D] text-[#444741] text-[11px] cursor-not-allowed">
+                PREV
+              </span>
+            )}
 
-          <div className="flex items-center gap-2.5 min-w-0">
-            <h1 className="text-sm font-medium text-[#E6E4DD] font-mono shrink-0">
-              {record.candidateId}
-            </h1>
-            <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColor}`}>
-              {record.priority}
-            </span>
-            <span className="text-[#242825] hidden sm:inline">·</span>
-            <span className="text-xs text-[#9A9C96] truncate hidden sm:inline">
-              {record.targetName}
-            </span>
-            <span className="text-[#242825] hidden sm:inline">·</span>
-            <span className="text-xs text-[#E6E4DD] font-mono hidden sm:inline">
-              {record.frequencyMHz.toFixed(3)} MHz
-            </span>
-            <span className="text-[#242825] hidden lg:inline">·</span>
-            <span className="text-xs text-[#666963] font-mono hidden lg:inline">
-              {record.telescope}
-            </span>
+            {nextCandidateId ? (
+              <Link
+                to={`/analysis/${nextCandidateId}`}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] border border-[#242825] bg-[#141715] text-[#848780] hover:text-[#E6E4DD] hover:border-[#383E3A] transition-colors text-[11px]"
+                aria-label="Next candidate"
+              >
+                <span>NEXT</span>
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            ) : (
+              <span className="px-2 py-0.5 rounded-[2px] border border-[#1C1F1D] bg-[#0C0E0D] text-[#444741] text-[11px] cursor-not-allowed">
+                NEXT
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Right: Candidate Switcher */}
-        <div className="flex items-center gap-1 shrink-0">
-          {prevCandidateId ? (
-            <Link
-              to={`/analysis/${prevCandidateId}`}
-              className="inline-flex items-center justify-center w-7 h-7 rounded-sm text-[#666963] hover:text-[#E6E4DD] hover:bg-[#141715] transition-colors"
-              aria-label="Previous candidate"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </Link>
-          ) : (
-            <span className="w-7 h-7" />
-          )}
+        {/* Role 1: Authoritative Candidate Identity (32-40px) */}
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
+          <div className="flex flex-wrap items-baseline gap-3">
+            <h1 className="text-3xl sm:text-4xl font-normal tracking-tight text-[#E6E4DD] font-mono">
+              {record.candidateId}
+            </h1>
 
-          {nextCandidateId ? (
-            <Link
-              to={`/analysis/${nextCandidateId}`}
-              className="inline-flex items-center justify-center w-7 h-7 rounded-sm text-[#666963] hover:text-[#E6E4DD] hover:bg-[#141715] transition-colors"
-              aria-label="Next candidate"
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Link>
-          ) : (
-            <span className="w-7 h-7" />
-          )}
+            {record.priority === 'HIGH' && (
+              <span className="font-mono text-xs uppercase tracking-wider text-[#D4864A] bg-[#221B16] px-2 py-0.5 rounded-[2px] border border-[#D4864A]/30 font-semibold">
+                HIGH PRIORITY CANDIDATE
+              </span>
+            )}
+            {record.priority === 'MEDIUM' && (
+              <span className="font-mono text-xs uppercase tracking-wider text-[#9A9C96] bg-[#181B19] px-2 py-0.5 rounded-[2px] border border-[#242825]">
+                MEDIUM PRIORITY
+              </span>
+            )}
+            {record.priority === 'LOW' && (
+              <span className="font-mono text-xs uppercase tracking-wider text-[#666963] bg-[#121413] px-2 py-0.5 rounded-[2px] border border-[#242825]">
+                LOW PRIORITY
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-[#848780]">
+            <span className="text-[#E6E4DD] font-medium font-sans text-sm">
+              {record.targetName}
+            </span>
+            <span className="text-[#363C38]">·</span>
+            <span>{record.frequencyMHz.toFixed(3)} MHz</span>
+            <span className="text-[#363C38]">·</span>
+            <span>{record.telescope}</span>
+          </div>
         </div>
       </div>
     </header>

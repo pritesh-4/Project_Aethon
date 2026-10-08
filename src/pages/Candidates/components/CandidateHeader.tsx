@@ -21,58 +21,80 @@ export function CandidateHeader({
   totalCount,
 }: CandidateHeaderProps) {
   return (
-    <header className="border-b border-[#242825] bg-[#0F1110] px-4 sm:px-6 py-2.5 select-none">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 max-w-7xl mx-auto">
-        {/* Left: Title + Context inline */}
-        <div className="flex flex-wrap items-center gap-2 text-xs min-w-0">
-          <h1 className="text-sm font-medium tracking-tight text-[#E6E4DD] shrink-0">
-            Candidate review
-          </h1>
-          <span className="text-[#242825] hidden sm:inline">·</span>
-          <span className="text-[#9A9C96] font-mono hidden sm:inline">{observationId}</span>
-          <span className="text-[#242825] hidden sm:inline">·</span>
-          <span className="text-[#9A9C96] hidden sm:inline">{totalIdentified} isolated</span>
-          <span className="text-[#242825] hidden sm:inline">·</span>
-          <span className="text-[#D4864A] hidden sm:inline">{highPriorityCount} prioritized</span>
+    <header className="border-b border-[#242825] bg-[#0E100F] px-4 sm:px-6 py-6 sm:py-8 select-none font-sans">
+      <div className="max-w-7xl mx-auto space-y-4">
+        {/* Role 1: Page Identity + Role 4: Supporting Orientation */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#767973] uppercase tracking-wider">
+              <span>AETHON WORKSPACE</span>
+              <span>/</span>
+              <span>TRIAGE QUEUE</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-normal tracking-tight text-[#E6E4DD]">
+              Candidates
+            </h1>
+            <p className="text-sm text-[#9A9C96] leading-relaxed max-w-xl">
+              Prioritized candidate events surfaced from observation{' '}
+              <span className="font-mono text-[#D4864A] font-semibold">{observationId}</span> for
+              researcher review and multi-telescope replication.
+            </p>
+          </div>
+
+          {/* Quick Metrics */}
+          <div className="flex items-center gap-3 self-start sm:self-end pb-1 font-mono text-xs text-[#848780]">
+            <div>
+              <span className="text-[#666963] uppercase">TOTAL:</span>{' '}
+              <span className="text-[#E6E4DD] font-semibold">{totalIdentified}</span>
+            </div>
+            <span>·</span>
+            <div>
+              <span className="text-[#666963] uppercase">HIGH PRIORITY:</span>{' '}
+              <span className="text-[#D4864A] font-semibold">{highPriorityCount}</span>
+            </div>
+          </div>
         </div>
 
-        {/* Right: Search & Filter */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Quick Search */}
-          <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-[#666963]" />
-            <input
-              type="text"
-              value={filters.searchQuery}
-              onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
-              placeholder="Search ID..."
-              className="h-7 w-full sm:w-44 rounded-sm border border-[#242825] bg-[#141715] pl-8 pr-2.5 text-xs text-[#E6E4DD] placeholder-[#666963] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors font-mono"
-            />
+        {/* Toolbar: Search & Priority Filter Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#1F2321]">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Quick Search */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#666963]" />
+              <input
+                type="text"
+                value={filters.searchQuery}
+                onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
+                placeholder="Search candidate ID..."
+                className="h-8 w-48 sm:w-56 rounded-[2px] border border-[#242825] bg-[#141715] pl-8 pr-2.5 text-xs text-[#E6E4DD] placeholder-[#666963] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors font-mono"
+              />
+            </div>
+
+            {/* Priority Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-3.5 w-3.5 text-[#666963]" />
+              <select
+                value={filters.priorityFilter}
+                onChange={(e) =>
+                  onFilterChange({
+                    ...filters,
+                    priorityFilter: e.target.value as CandidateFilterState['priorityFilter'],
+                  })
+                }
+                aria-label="Filter candidates by priority"
+                className="h-8 rounded-[2px] border border-[#242825] bg-[#141715] px-2.5 text-xs text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors cursor-pointer"
+              >
+                <option value="ALL">All priorities ({totalCount})</option>
+                <option value="HIGH">High priority ({highPriorityCount})</option>
+                <option value="MEDIUM">Medium priority</option>
+                <option value="LOW">Low priority</option>
+              </select>
+            </div>
           </div>
 
-          {/* Priority Filter */}
-          <div className="flex items-center gap-1.5">
-            <Filter className="h-3.5 w-3.5 text-[#666963]" />
-            <select
-              value={filters.priorityFilter}
-              onChange={(e) =>
-                onFilterChange({
-                  ...filters,
-                  priorityFilter: e.target.value as CandidateFilterState['priorityFilter'],
-                })
-              }
-              aria-label="Filter candidates by priority"
-              className="h-7 rounded-sm border border-[#242825] bg-[#141715] px-2 text-xs text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors cursor-pointer"
-            >
-              <option value="ALL">All ({totalCount})</option>
-              <option value="HIGH">High ({highPriorityCount})</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-            </select>
-          </div>
-
-          <span className="text-[11px] text-[#666963] hidden sm:inline">
-            <strong className="text-[#E6E4DD] font-mono font-normal">{filteredCount}</strong> shown
+          <span className="text-xs font-mono text-[#767973]">
+            Showing <strong className="text-[#E6E4DD] font-semibold">{filteredCount}</strong> of{' '}
+            {totalCount} records
           </span>
         </div>
       </div>

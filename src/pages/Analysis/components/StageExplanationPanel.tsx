@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import type { SignalAnalysisRecord, AnalysisStageId } from '../types.ts';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 export interface StageExplanationPanelProps {
   record: SignalAnalysisRecord;
@@ -147,49 +149,62 @@ function buildContent(record: SignalAnalysisRecord): Record<AnalysisStageId, Sta
 }
 
 export function StageExplanationPanel({ record, activeStage }: StageExplanationPanelProps) {
+  const [showMeasurements, setShowMeasurements] = useState(false);
   const current = buildContent(record)[activeStage];
 
   return (
-    <div className="select-none space-y-0">
-      {/* Guiding question as editorial heading */}
-      <div className="space-y-2 pb-4">
-        <h2 className="text-sm font-medium tracking-tight text-[#E6E4DD]">{current.question}</h2>
-        <p className="text-xs text-[#9A9C96] leading-relaxed max-w-2xl">{current.summary}</p>
+    <div className="select-none font-sans space-y-4">
+      {/* Guiding Question & Summary */}
+      <div className="space-y-1.5 pb-2">
+        <h2 className="text-base font-medium tracking-tight text-[#E6E4DD]">{current.question}</h2>
+        <p className="text-xs text-[#9A9C96] leading-relaxed">{current.summary}</p>
       </div>
 
-      {/* Measurement values — horizontal rule-separated list, not cards */}
-      <div className="border-t border-[#242825] pt-4 pb-4">
-        <span className="block text-[10px] uppercase tracking-widest text-[#666963] mb-3 font-medium">
-          Measurements
+      {/* Role 2: Explanatory Evidence First (Per Rule 24) */}
+      <div className="border-t border-[#242825] pt-3 space-y-2.5">
+        <span className="block text-[10px] font-mono uppercase tracking-wider text-[#767973] font-semibold">
+          Why AETHON Flagged This
         </span>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-          {current.metrics.map((m) => (
-            <div key={m.label} className="flex items-baseline justify-between gap-2 min-w-0">
-              <span className="text-[11px] text-[#9A9C96] truncate shrink-0">{m.label}</span>
-              <span className="text-xs font-mono text-[#E6E4DD] text-right whitespace-nowrap">
-                {m.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Evidence as editorial bullet points, not bordered cards */}
-      <div className="border-t border-[#242825] pt-4">
-        <span className="block text-[10px] uppercase tracking-widest text-[#666963] mb-3 font-medium">
-          Evidence
-        </span>
-        <div className="space-y-3">
+        <div className="space-y-2.5 text-xs">
           {current.evidence.map((ev) => (
-            <div key={ev.title} className="flex gap-2.5">
-              <span className="w-1 h-1 rounded-full bg-[#D4864A] mt-1.5 shrink-0" />
+            <div key={ev.title} className="flex items-start gap-2.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D4864A] mt-1.5 shrink-0" />
               <div className="min-w-0">
-                <span className="text-xs font-medium text-[#E6E4DD] block">{ev.title}</span>
+                <span className="font-medium text-[#E6E4DD] block">{ev.title}</span>
                 <p className="text-[11px] text-[#9A9C96] leading-relaxed mt-0.5">{ev.text}</p>
               </div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Role 3: Level 3 Progressive Disclosure — [ Inspect measurements ] */}
+      <div className="border-t border-[#242825] pt-2">
+        <button
+          type="button"
+          aria-expanded={showMeasurements}
+          onClick={() => setShowMeasurements(!showMeasurements)}
+          className="flex items-center justify-between w-full text-xs font-mono text-[#848780] hover:text-[#E6E4DD] py-1.5 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+        >
+          <span>{showMeasurements ? 'HIDE MEASUREMENTS' : 'INSPECT MEASUREMENTS'}</span>
+          {showMeasurements ? (
+            <ChevronDown className="h-3.5 w-3.5 text-[#D4864A]" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-[#767973]" />
+          )}
+        </button>
+
+        {showMeasurements && (
+          <div className="mt-2 divide-y divide-[#1D211F] border border-[#242825] bg-[#0E100F] rounded-[2px] p-3 text-xs font-mono space-y-1 animate-in fade-in duration-150">
+            {current.metrics.map((m) => (
+              <div key={m.label} className="flex items-baseline justify-between py-1.5 gap-2">
+                <span className="text-[#767973] text-[11px]">{m.label}</span>
+                <span className="text-[#E6E4DD] text-right font-medium">{m.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

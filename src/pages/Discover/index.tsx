@@ -124,34 +124,42 @@ export default function DiscoverPage() {
         {/* STAGE 3: INITIATE DISCOVERY (CLEAR PRIMARY ACTION / IDLE STATE) */}
         {/* ==================================================== */}
         {!isAnalyzing && stage !== 'complete' && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-b border-[#242825] py-3.5 select-none">
+          <div className="pt-2 pb-6 border-t border-[#242825] select-none">
             {observation ? (
-              <>
-                <div className="space-y-0.5 text-center sm:text-left">
-                  <span className="text-xs font-medium text-[#E6E4DD]">
-                    Target Data Stream: {observation.id}
-                  </span>
-                  <p className="text-[11px] text-[#848780]">
-                    Executes the 4-stage candidate screening pipeline on the selected data stream.
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-[3px] bg-[#141210] border border-[#D4864A]/40">
+                <div className="space-y-1 text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-[#529E72] animate-pulse" />
+                    <span className="text-sm font-medium text-[#E6E4DD]">
+                      Everything is ready to begin screening
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#9A9C96]">
+                    Observation{' '}
+                    <span className="font-mono text-[#D4864A] font-semibold">{observation.id}</span>{' '}
+                    will be processed through baseline calibration, latent manifold mapping, and
+                    Doppler classification.
                   </p>
                 </div>
 
                 <Button
                   variant="primary"
-                  size="md"
+                  size="lg"
                   icon={<ArrowRight className="h-4 w-4" />}
                   onClick={handleInitiateDiscovery}
-                  className="w-full sm:w-auto text-xs font-medium"
+                  className="w-full sm:w-auto text-sm font-medium shadow-md shrink-0 py-3 px-6"
                 >
-                  Initiate discovery
+                  Begin discovery
                 </Button>
-              </>
+              </div>
             ) : (
-              <>
-                <div className="space-y-0.5 text-center sm:text-left">
-                  <span className="text-xs font-medium text-[#767973]">No observation loaded</span>
-                  <p className="text-[11px] text-[#666963]">
-                    Select a reference observation or mount a data stream above to begin screening.
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-[3px] border border-[#242825] bg-[#101211] opacity-60">
+                <div className="space-y-0.5 text-left">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#767973]">
+                    Step 3 · Pipeline Trigger
+                  </span>
+                  <p className="text-xs text-[#848780]">
+                    Select a target observation above to enable screening execution.
                   </p>
                 </div>
 
@@ -160,11 +168,11 @@ export default function DiscoverPage() {
                   size="md"
                   disabled
                   icon={<ArrowRight className="h-4 w-4" />}
-                  className="w-full sm:w-auto text-xs font-medium opacity-40 cursor-not-allowed"
+                  className="w-full sm:w-auto text-xs font-medium cursor-not-allowed opacity-40"
                 >
-                  Initiate discovery
+                  Begin discovery
                 </Button>
-              </>
+              </div>
             )}
           </div>
         )}

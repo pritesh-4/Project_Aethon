@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { SearchConfig, SearchSensitivity } from '../types.ts';
-import { ChevronDown, ChevronRight, Sliders, ShieldCheck } from 'lucide-react';
+import { ChevronDown, ChevronUp, Sliders, ShieldCheck } from 'lucide-react';
 
 export interface SearchSettingsProps {
   config: SearchConfig;
@@ -20,111 +20,132 @@ export function SearchSettings({ config, onChange, disabled = false }: SearchSet
   };
 
   return (
-    <div className="border border-[#242825] bg-[#0F1110] select-none rounded-[2px] font-sans">
-      {/* Header / Accordion Toggle */}
-      <button
-        type="button"
-        disabled={disabled}
-        aria-expanded={isOpen}
-        aria-controls="search-settings-panel"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between px-3.5 py-2.5 text-left transition-colors hover:bg-[#141715] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
-      >
-        <div className="flex items-center gap-2.5">
-          <Sliders className="h-3.5 w-3.5 text-[#D4864A]" />
-          <span className="text-xs font-medium text-[#E6E4DD]">Search Parameters</span>
-          <span className="text-[#363C38]">•</span>
-          <span className="text-[11px] font-mono text-[#848780]">
-            {config.sensitivity === 'standard' ? 'Standard sensitivity' : 'High sensitivity'} /{' '}
-            {config.rejectTerrestrialRfi ? 'RFI rejection active' : 'RFI rejection bypass'}
-          </span>
+    <section className="border border-[#242825] bg-[#0E100F] rounded-[3px] select-none font-sans overflow-hidden">
+      {/* Collapsed Bar: Information Separated from Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:px-4">
+        {/* Information Group */}
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <Sliders className="h-3.5 w-3.5 text-[#D4864A]" />
+            <span className="text-[11px] font-mono uppercase tracking-wider text-[#767973] font-semibold">
+              Screening Parameters
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-[#E6E4DD]">
+            <span>
+              {config.sensitivity === 'standard' ? 'Standard sensitivity' : 'High sensitivity'}
+            </span>
+            <span className="text-[#363C38]">·</span>
+            <span className="text-[#9A9C96]">
+              {config.rejectTerrestrialRfi ? 'RFI rejection enabled' : 'RFI rejection bypassed'}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1 text-[11px] font-mono text-[#767973]">
-          <span>{isOpen ? 'COLLAPSE' : 'CONFIGURE'}</span>
-          {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-        </div>
-      </button>
+        {/* Clear Action Affordance (Role 3: Action Control) */}
+        <button
+          type="button"
+          disabled={disabled}
+          aria-expanded={isOpen}
+          aria-controls="screening-settings-panel"
+          onClick={() => setIsOpen(!isOpen)}
+          className="inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1.5 rounded-[2px] border border-[#242825] bg-[#141715] hover:border-[#D4864A]/60 hover:bg-[#1A1D1B] text-xs font-medium text-[#C9C8C0] hover:text-[#E6E4DD] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+        >
+          <span>{isOpen ? 'Close settings' : 'Adjust screening'}</span>
+          {isOpen ? (
+            <ChevronUp className="h-3 w-3 text-[#D4864A]" />
+          ) : (
+            <ChevronDown className="h-3 w-3 text-[#848780]" />
+          )}
+        </button>
+      </div>
 
-      {/* Expanded Settings */}
+      {/* Expanded Controls Panel */}
       {isOpen && (
         <div
-          id="search-settings-panel"
-          className="border-t border-[#242825] px-4 py-3 bg-[#0B0D0C]"
+          id="screening-settings-panel"
+          className="border-t border-[#242825] p-4 bg-[#0A0C0B] space-y-4 animate-in fade-in duration-150"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Search Sensitivity */}
+            {/* Control 1: Sensitivity */}
             <div className="space-y-2">
               <span className="block text-[11px] font-mono uppercase tracking-wider text-[#767973]">
-                Detection Sensitivity
+                Detection Threshold
               </span>
-              <div className="flex items-center rounded-[2px] border border-[#242825] bg-[#121513] p-0.5">
+
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   aria-pressed={config.sensitivity === 'standard'}
                   disabled={disabled}
                   onClick={() => handleSensitivityChange('standard')}
-                  className={`flex-1 py-1.5 px-3 text-xs font-mono transition-colors text-center cursor-pointer outline-none ${
+                  className={`p-3 text-left rounded-[2px] border transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
                     config.sensitivity === 'standard'
-                      ? 'bg-[#221B16] text-[#D4864A] font-semibold'
-                      : 'text-[#848780] hover:text-[#C9C8C0]'
+                      ? 'border-[#D4864A] bg-[#221B16] text-[#E6E4DD]'
+                      : 'border-[#242825] bg-[#101211] text-[#848780] hover:border-[#333834]'
                   }`}
                 >
-                  STANDARD
+                  <span className="text-xs font-semibold block">Standard</span>
+                  <span className="text-[11px] text-[#767973] block mt-0.5 leading-snug">
+                    Target persistent coherent carriers.
+                  </span>
                 </button>
+
                 <button
                   type="button"
                   aria-pressed={config.sensitivity === 'high'}
                   disabled={disabled}
                   onClick={() => handleSensitivityChange('high')}
-                  className={`flex-1 py-1.5 px-3 text-xs font-mono transition-colors text-center cursor-pointer outline-none ${
+                  className={`p-3 text-left rounded-[2px] border transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
                     config.sensitivity === 'high'
-                      ? 'bg-[#221B16] text-[#D4864A] font-semibold'
-                      : 'text-[#848780] hover:text-[#C9C8C0]'
+                      ? 'border-[#D4864A] bg-[#221B16] text-[#E6E4DD]'
+                      : 'border-[#242825] bg-[#101211] text-[#848780] hover:border-[#333834]'
                   }`}
                 >
-                  HIGH SENSITIVITY
+                  <span className="text-xs font-semibold block">High sensitivity</span>
+                  <span className="text-[11px] text-[#767973] block mt-0.5 leading-snug">
+                    Detect faint transient anomalies.
+                  </span>
                 </button>
               </div>
-              <p className="text-[11px] text-[#767973] leading-snug">
-                {config.sensitivity === 'standard'
-                  ? 'Baseline threshold targeting persistent, high-SNR coherent anomalies.'
-                  : 'Screens for faint, transient, or drift-accelerating signals with relaxed threshold.'}
-              </p>
             </div>
 
-            {/* Interference Rejection */}
+            {/* Control 2: RFI Filter */}
             <div className="space-y-2">
               <span className="block text-[11px] font-mono uppercase tracking-wider text-[#767973]">
                 Interference Filtering
               </span>
-              <div className="flex items-center justify-between border border-[#242825] bg-[#121513] px-3 py-2 rounded-[2px]">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-3.5 w-3.5 text-[#529E72]" />
-                  <span className="text-xs text-[#E6E4DD]">Terrestrial RFI rejection</span>
+
+              <div className="flex items-center justify-between p-3 rounded-[2px] border border-[#242825] bg-[#101211]">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-[#E6E4DD]">
+                    <ShieldCheck className="h-3.5 w-3.5 text-[#529E72]" />
+                    <span>Terrestrial RFI rejection</span>
+                  </div>
+                  <span className="text-[11px] text-[#767973] block">
+                    Filters known satellite beacons and ground stations.
+                  </span>
                 </div>
+
                 <button
                   type="button"
                   aria-pressed={config.rejectTerrestrialRfi}
                   disabled={disabled}
                   onClick={handleToggleRfi}
-                  className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-[2px] transition-colors cursor-pointer ${
+                  className={`px-3 py-1 text-xs font-mono rounded-[2px] transition-colors cursor-pointer ${
                     config.rejectTerrestrialRfi
-                      ? 'border border-[#529E72]/40 bg-[#141F18] text-[#529E72]'
-                      : 'border border-[#242825] bg-[#171917] text-[#767973]'
+                      ? 'bg-[#142318] text-[#529E72] border border-[#529E72]/40 font-semibold'
+                      : 'bg-[#171917] text-[#767973] border border-[#242825]'
                   }`}
                 >
                   {config.rejectTerrestrialRfi ? 'FILTER ON' : 'BYPASS'}
                 </button>
               </div>
-              <p className="text-[11px] text-[#767973] leading-snug">
-                Rejects orbital satellite transponders and persistent terrestrial transmitter
-                channels.
-              </p>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

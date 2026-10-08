@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'motion/react';
 import type { DiscoveryObservationMeta } from '../types.ts';
 import { REFERENCE_OBSERVATIONS } from '../data/mockDiscovery.ts';
-import { Upload, Check, AlertCircle, Radio } from 'lucide-react';
+import { Upload, Check, AlertCircle, Radio, Sparkles } from 'lucide-react';
 
 export interface ObservationInputProps {
   selectedObservation: DiscoveryObservationMeta | null;
@@ -22,7 +22,7 @@ export function ObservationInput({
     (acceptedFiles: File[], fileRejections: unknown[]) => {
       setErrorMsg(null);
       if (fileRejections && (fileRejections as unknown[]).length > 0) {
-        setErrorMsg('Unsupported format — please select a CSV, JSON, or FITS observation file.');
+        setErrorMsg('Unsupported format — please select a FITS, HDF5, CSV, or JSON file.');
         return;
       }
 
@@ -67,161 +67,234 @@ export function ObservationInput({
   });
 
   return (
-    <section className="space-y-4 font-sans select-none">
-      {/* Primary Section Header */}
-      <div className="border-b border-[#242825] pb-2.5">
-        <h2 className="text-sm font-medium tracking-tight text-[#E6E4DD]">Input Data Stream</h2>
-        <p className="mt-0.5 text-xs text-[#9A9C96]">
-          Select a catalogued survey observation or mount a local radio telescope dataset.
+    <section className="space-y-6 font-sans select-none">
+      {/* Role 2: Primary Section Heading (24-28px) */}
+      <div className="space-y-1">
+        <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-[#E6E4DD]">
+          Choose what AETHON should examine
+        </h2>
+        <p className="text-sm text-[#9A9C96] leading-relaxed">
+          Select a catalogued survey observation from the repository, or upload a raw radio
+          frequency stream.
         </p>
       </div>
 
-      {/* Reference Observations Segmented Selector */}
-      <div className="space-y-1.5">
-        <span className="block text-[11px] font-mono uppercase tracking-wider text-[#767973]">
-          Catalogued Observations
-        </span>
-        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#242825] border border-[#242825] bg-[#101211] rounded-[2px] overflow-hidden">
-          {REFERENCE_OBSERVATIONS.map((obs) => {
-            const isSelected = selectedObservation?.id === obs.id;
-
-            return (
-              <button
-                key={obs.id}
-                type="button"
-                aria-pressed={isSelected}
-                disabled={disabled}
-                onClick={() => onSelectObservation(obs)}
-                className={`relative flex flex-col items-start p-3.5 text-left transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
-                  isSelected
-                    ? 'bg-[#1D1815] text-[#E6E4DD]'
-                    : 'text-[#9A9C96] hover:bg-[#151816] hover:text-[#E6E4DD]'
-                } ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
-              >
-                <div className="flex w-full items-center justify-between gap-2">
-                  <span
-                    className={`text-xs font-semibold font-mono ${isSelected ? 'text-[#D4864A]' : 'text-[#A0A29C]'}`}
-                  >
-                    {obs.id}
-                  </span>
-                  {isSelected && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#D4864A]">
-                      <Check className="h-2.5 w-2.5" />
-                      ACTIVE
-                    </span>
-                  )}
-                </div>
-
-                <span className="mt-1 text-xs font-medium text-[#E6E4DD] line-clamp-1">
-                  {obs.name}
-                </span>
-
-                <div className="mt-2 flex items-center gap-2.5 text-[11px] text-[#767973] font-mono">
-                  <span>{obs.frequencyMHz.toFixed(2)} MHz</span>
-                  <span>•</span>
-                  <span>{obs.durationString}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Upload Bay */}
-      <div className="space-y-1.5">
-        <span className="block text-[11px] font-mono uppercase tracking-wider text-[#767973]">
-          Or Ingest Local File
-        </span>
-
-        <div
-          {...getRootProps()}
-          className={`relative flex min-h-[90px] flex-col items-center justify-center rounded-[2px] border border-dashed transition-all duration-150 cursor-pointer p-4 text-center outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
-            disabled ? 'opacity-50 cursor-not-allowed' : ''
-          } ${
-            isDragActive
-              ? 'border-[#D4864A] bg-[#D4864A]/10'
-              : errorMsg
-                ? 'border-[#C84A4A]/60 bg-[#C84A4A]/10'
-                : 'border-[#242825] bg-[#0E100F] hover:border-[#383E3A]'
-          }`}
-        >
-          <input {...getInputProps()} aria-label="Upload observation file" />
-
-          <AnimatePresence mode="wait">
-            {isDragActive ? (
-              <motion.div
-                key="drag-active"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex items-center gap-2 text-xs text-[#D4864A]"
-              >
-                <Upload className="h-4 w-4 animate-bounce" />
-                <span>Drop observation payload to ingest</span>
-              </motion.div>
-            ) : errorMsg ? (
-              <motion.div
-                key="error-state"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex items-center gap-2 text-xs text-[#E56B6F]"
-              >
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{errorMsg}</span>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="idle-state"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex items-center gap-3 text-center sm:text-left"
-              >
-                <div className="flex h-7 w-7 items-center justify-center rounded-[2px] border border-[#242825] bg-[#141715] text-[#D4864A] shrink-0">
-                  <Upload className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <span className="text-xs text-[#C9C8C0]">
-                    Drop FITS, HDF5, CSV, or JSON observation file, or click to browse
-                  </span>
-                  <span className="block text-[11px] text-[#666963] font-mono mt-0.5">
-                    Maximum single stream buffer: 250 MB
-                  </span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Selected Observation Summary Strip */}
-      {selectedObservation && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-b border-[#242825] bg-[#101211] px-3.5 py-2.5 text-xs">
-          <div className="flex items-center gap-2">
-            <Radio className="h-3.5 w-3.5 text-[#D4864A] shrink-0" />
-            <div className="flex flex-wrap items-center gap-x-2.5 text-xs">
-              <span className="font-semibold text-[#D4864A] font-mono">
-                {selectedObservation.id}
-              </span>
-              <span className="text-[#363C38]">•</span>
-              <span className="font-medium text-[#E6E4DD]">{selectedObservation.name}</span>
-              <span className="text-[#363C38]">•</span>
-              <span className="text-[#848780] font-mono text-[11px]">
-                {selectedObservation.frequencyMHz.toFixed(2)} MHz (BW:{' '}
-                {selectedObservation.bandwidthMHz.toFixed(1)} MHz)
-              </span>
-              <span className="text-[#363C38]">•</span>
-              <span className="text-[#848780] font-mono text-[11px]">
-                {selectedObservation.telescope}
-              </span>
-            </div>
+      {/* Two Visibly Separate Acquisition Modes */}
+      <div className="space-y-5">
+        {/* ==================================================== */}
+        {/* PATH A: EXISTING CATALOGUED OBSERVATIONS */}
+        {/* ==================================================== */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-[#848780] uppercase tracking-wider font-semibold">
+              PATH A · Existing Observations
+            </span>
+            <span className="text-[#666963]">3 calibrated sky targets</span>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[#529E72] bg-[#141F18] px-1.5 py-0.5 rounded-[2px] border border-[#529E72]/30">
-              BUFFER READY
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {REFERENCE_OBSERVATIONS.map((obs) => {
+              const isSelected = selectedObservation?.id === obs.id;
+
+              return (
+                <button
+                  key={obs.id}
+                  type="button"
+                  aria-pressed={isSelected}
+                  disabled={disabled}
+                  onClick={() => onSelectObservation(obs)}
+                  className={`relative flex flex-col items-start p-4 rounded-[3px] border text-left transition-all duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#D4864A] ${
+                    isSelected
+                      ? 'border-[#D4864A] bg-[#221B16] text-[#E6E4DD] shadow-sm'
+                      : 'border-[#242825] bg-[#101211] text-[#9A9C96] hover:border-[#383E3A] hover:bg-[#141715] hover:text-[#E6E4DD]'
+                  } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {/* Active selection bar indicator */}
+                  {isSelected && (
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#D4864A]" />
+                  )}
+
+                  {/* Header: Large ID + Selection State */}
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <span
+                      className={`text-sm font-semibold font-mono tracking-tight ${
+                        isSelected ? 'text-[#D4864A]' : 'text-[#E6E4DD]'
+                      }`}
+                    >
+                      {obs.id}
+                    </span>
+
+                    {isSelected ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-[#D4864A] bg-[#332219] px-1.5 py-0.5 rounded-[2px] border border-[#D4864A]/30">
+                        <Check className="h-3 w-3" />
+                        Selected
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-mono text-[#555852] uppercase">
+                        Available
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Target Name (Role 4: Prominent) */}
+                  <span className="mt-2 text-sm font-medium text-[#E6E4DD] line-clamp-1">
+                    {obs.name}
+                  </span>
+
+                  {/* Machine Data (Role 5: Monospace) */}
+                  <div className="mt-3 pt-2.5 border-t border-[#242825] w-full flex items-center justify-between text-xs text-[#848780] font-mono">
+                    <span>{obs.frequencyMHz.toFixed(2)} MHz</span>
+                    <span className="text-[#444741]">·</span>
+                    <span>{obs.durationString}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Explicit Path Separator */}
+        <div className="relative flex items-center justify-center my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-[#242825]" />
+          </div>
+          <div className="relative px-3 bg-[#0F1110] text-[11px] font-mono uppercase tracking-widest text-[#666963]">
+            OR
+          </div>
+        </div>
+
+        {/* ==================================================== */}
+        {/* PATH B: UPLOAD RAW OBSERVATION */}
+        {/* ==================================================== */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-[#848780] uppercase tracking-wider font-semibold">
+              PATH B · Local Data Ingestion
             </span>
+            <span className="text-[#666963]">Direct file mount</span>
+          </div>
+
+          <div
+            {...getRootProps()}
+            className={`relative flex min-h-[110px] flex-col items-center justify-center rounded-[3px] border border-dashed transition-all duration-150 cursor-pointer p-5 text-center outline-none focus-visible:ring-2 focus-visible:ring-[#D4864A] ${
+              disabled ? 'opacity-50 cursor-not-allowed' : ''
+            } ${
+              isDragActive
+                ? 'border-[#D4864A] bg-[#D4864A]/10'
+                : errorMsg
+                  ? 'border-[#C84A4A] bg-[#C84A4A]/10'
+                  : 'border-[#242825] bg-[#101211] hover:border-[#3E4540] hover:bg-[#131614]'
+            }`}
+          >
+            <input {...getInputProps()} aria-label="Upload observation file" />
+
+            <AnimatePresence mode="wait">
+              {isDragActive ? (
+                <motion.div
+                  key="drag-active"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center gap-1.5 text-xs text-[#D4864A]"
+                >
+                  <Upload className="h-5 w-5 animate-bounce" />
+                  <span className="font-medium">Drop observation file to ingest immediately</span>
+                </motion.div>
+              ) : errorMsg ? (
+                <motion.div
+                  key="error-state"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-2 text-xs text-[#E56B6F]"
+                >
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{errorMsg}</span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="idle-state"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  {/* 1. Action First */}
+                  <div className="flex items-center gap-2 text-sm font-medium text-[#E6E4DD]">
+                    <Upload className="h-4 w-4 text-[#D4864A]" />
+                    <span>Upload observation</span>
+                  </div>
+
+                  {/* 2. Supported Formats */}
+                  <div className="font-mono text-xs text-[#848780]">FITS · HDF5 · CSV · JSON</div>
+
+                  {/* 3. Technical Limitation */}
+                  <div className="text-[11px] text-[#666963]">250 MB maximum stream size</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* ==================================================== */}
+      {/* VISUALLY DOMINANT SELECTED OBSERVATION SUMMARY */}
+      {/* ==================================================== */}
+      {selectedObservation && (
+        <div className="mt-6 p-4 sm:p-5 rounded-[3px] border border-[#D4864A]/40 bg-[#1A1613] space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#D4864A]/20 pb-3">
+            <div className="flex items-center gap-2">
+              <Radio className="h-4 w-4 text-[#D4864A]" />
+              <span className="text-[11px] font-mono uppercase tracking-wider text-[#D4864A] font-semibold">
+                Active Target For Screening
+              </span>
+            </div>
+
+            <span className="inline-flex items-center gap-1.5 text-xs font-mono text-[#529E72] bg-[#142318] px-2 py-0.5 rounded-[2px] border border-[#529E72]/40 self-start sm:self-auto">
+              <Sparkles className="h-3 w-3" />
+              READY TO SCREEN
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+            <div>
+              <div className="text-xl sm:text-2xl font-mono font-bold text-[#E6E4DD]">
+                {selectedObservation.id}
+              </div>
+              <div className="text-sm font-medium text-[#C9C8C0] mt-0.5">
+                {selectedObservation.name}
+              </div>
+            </div>
+
+            <div className="text-xs text-[#848780] font-mono">{selectedObservation.telescope}</div>
+          </div>
+
+          {/* Machine Telemetry Row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#D4864A]/20 text-xs font-mono">
+            <div>
+              <span className="block text-[10px] text-[#848780] uppercase">Center Frequency</span>
+              <span className="text-[#E6E4DD] text-xs font-semibold">
+                {selectedObservation.frequencyMHz.toFixed(4)} MHz
+              </span>
+            </div>
+            <div>
+              <span className="block text-[10px] text-[#848780] uppercase">Bandwidth</span>
+              <span className="text-[#E6E4DD] text-xs font-semibold">
+                {selectedObservation.bandwidthMHz.toFixed(1)} MHz
+              </span>
+            </div>
+            <div>
+              <span className="block text-[10px] text-[#848780] uppercase">Duration</span>
+              <span className="text-[#E6E4DD] text-xs font-semibold">
+                {selectedObservation.durationString}
+              </span>
+            </div>
+            <div>
+              <span className="block text-[10px] text-[#848780] uppercase">Coordinates</span>
+              <span className="text-[#E6E4DD] text-xs font-semibold">
+                {selectedObservation.coordinates.ra} · {selectedObservation.coordinates.dec}
+              </span>
+            </div>
           </div>
         </div>
       )}
