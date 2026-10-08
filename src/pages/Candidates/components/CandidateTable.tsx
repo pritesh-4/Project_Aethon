@@ -15,12 +15,12 @@ export function CandidateTable({
 }: CandidateTableProps) {
   if (candidates.length === 0) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center rounded-[2px] border border-[#242825] bg-[#101211] p-8 text-center select-none">
-        <Layers className="h-6 w-6 text-[#666963] mb-2" />
-        <span className="text-xs font-medium text-[#E6E4DD]">
+      <div className="flex h-64 flex-col items-center justify-center rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] p-8 text-center select-none shadow-xs">
+        <Layers className="h-6 w-6 text-[#76828D] mb-2" />
+        <span className="text-xs font-semibold text-[#17202A]">
           No candidate signals match current filter
         </span>
-        <span className="mt-1 text-xs text-[#848780]">
+        <span className="mt-1 text-xs text-[#56616A]">
           Clear search or adjust priority filter to view other candidate entries.
         </span>
       </div>
@@ -28,19 +28,19 @@ export function CandidateTable({
   }
 
   return (
-    <div className="rounded-[2px] border border-[#242825] bg-[#101211] overflow-hidden select-none font-sans">
+    <div className="rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] overflow-hidden select-none font-sans shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead>
             {/* Scannable Queue Columns: Candidate, Anomaly Evidence, Priority, Review State */}
-            <tr className="border-b border-[#242825] bg-[#0A0C0B] text-[10px] font-mono uppercase tracking-wider text-[#767973]">
-              <th className="py-2.5 px-3 sm:px-4 font-normal">Candidate Signal</th>
-              <th className="py-2.5 px-3 font-normal">Anomaly Evidence</th>
-              <th className="py-2.5 px-3 font-normal text-center">Priority</th>
-              <th className="py-2.5 px-3 sm:px-4 font-normal text-right">Review State</th>
+            <tr className="border-b border-[#D6D2C9] bg-[#EAE7E0] text-[11px] font-mono uppercase tracking-wider text-[#56616A]">
+              <th className="py-2.5 px-3.5 sm:px-4 font-normal">Candidate Signal</th>
+              <th className="py-2.5 px-3.5 font-normal">Anomaly Evidence</th>
+              <th className="py-2.5 px-3.5 font-normal text-center">Priority</th>
+              <th className="py-2.5 px-3.5 sm:px-4 font-normal text-right">Review State</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1D211F]">
+          <tbody className="divide-y divide-[#D6D2C9]">
             {candidates.map((candidate) => (
               <CandidateRow
                 key={candidate.id}

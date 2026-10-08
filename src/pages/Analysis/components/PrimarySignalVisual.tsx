@@ -83,7 +83,7 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       const t = (now - startTime) * 0.001;
       const { record: rec, activeStage: stage } = stateRef.current;
 
-      const paddingLeft = 52;
+      const paddingLeft = 56;
       const paddingRight = 28;
       const paddingTop = 24;
       const paddingBottom = 38;
@@ -92,16 +92,16 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
       const cy = paddingTop + plotH * 0.5;
 
-      // 1. Clear Background (Deep graphite)
-      ctx.fillStyle = '#0F1110';
+      // 1. Instrument Background (#0D141A)
+      ctx.fillStyle = '#0D141A';
       ctx.fillRect(0, 0, width, height);
 
-      // Plot Area Fill
-      ctx.fillStyle = '#141715';
+      // Plot Area Fill (#111A22)
+      ctx.fillStyle = '#111A22';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 2. Reticle Grid
-      ctx.strokeStyle = 'rgba(154, 156, 150, 0.12)';
+      ctx.strokeStyle = '#1D2A37';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -152,22 +152,21 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
               let cg: number;
               let cb: number;
 
-              // Mineral & Copper colormap
               if (cl < 0.35) {
                 const factor = cl / 0.35;
-                cr = Math.floor(26 + 45 * factor);
-                cg = Math.floor(30 + 35 * factor);
-                cb = Math.floor(27 + 25 * factor);
+                cr = Math.floor(13 + 30 * factor);
+                cg = Math.floor(20 + 60 * factor);
+                cb = Math.floor(26 + 100 * factor);
               } else if (cl < 0.75) {
                 const factor = (cl - 0.35) / 0.4;
-                cr = Math.floor(71 + 141 * factor);
-                cg = Math.floor(65 + 69 * factor);
-                cb = Math.floor(52 + 22 * factor);
+                cr = Math.floor(25 + 60 * factor);
+                cg = Math.floor(44 + 90 * factor);
+                cb = Math.floor(66 + 115 * factor);
               } else {
                 const factor = (cl - 0.75) / 0.25;
-                cr = Math.floor(212 + 33 * factor);
-                cg = Math.floor(134 + 101 * factor);
-                cb = Math.floor(74 + 146 * factor);
+                cr = Math.floor(85 + 120 * factor);
+                cg = Math.floor(134 + 60 * factor);
+                cb = Math.floor(181 - 70 * factor);
               }
 
               ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
@@ -186,13 +185,12 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       // STAGE 2: REPRESENTATION (Latent Patch Tokens & Attention)
       // ========================================================
       if (stage === 'representation') {
-        // Base spectrogram faint background
         const cellW = plotW / cols;
         const cellH = plotH / rows;
         for (let r = 0; r < rows; r += 2) {
           for (let c = 0; c < cols; c += 2) {
             const n = noiseMatrix[r * cols + c] * 0.08;
-            ctx.fillStyle = `rgba(212, 134, 74, ${n * 0.6})`;
+            ctx.fillStyle = `rgba(55, 106, 155, ${n * 0.7})`;
             ctx.fillRect(paddingLeft + c * cellW, paddingTop + r * cellH, cellW * 2, cellH * 2);
           }
         }
@@ -209,18 +207,18 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
           tokenCoords.push({ x: tx, y: ty });
 
           // Patch bounding box
-          ctx.strokeStyle = 'rgba(154, 156, 150, 0.35)';
+          ctx.strokeStyle = 'rgba(92, 137, 183, 0.4)';
           ctx.strokeRect(tx - 12, ty - 12, 24, 24);
 
-          // Token centroid node
-          ctx.fillStyle = '#D4864A';
+          // Token centroid node (Solar Gold #C19348)
+          ctx.fillStyle = '#C19348';
           ctx.beginPath();
           ctx.arc(tx, ty, 3, 0, Math.PI * 2);
           ctx.fill();
         }
 
-        // Attention Links between tokens
-        ctx.strokeStyle = 'rgba(212, 134, 74, 0.35)';
+        // Attention Links between tokens (Observatory Blue #376A9B)
+        ctx.strokeStyle = 'rgba(92, 137, 183, 0.35)';
         ctx.lineWidth = 1;
         for (let i = 0; i < tokenCoords.length - 1; i++) {
           ctx.beginPath();
@@ -247,9 +245,9 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       // STAGE 3: PATTERN COMPARISON (Observed vs Nearest Known Catalog)
       // ========================================================
       if (stage === 'comparison') {
-        // Upper half: Observed Candidate Carrier (Copper)
+        // Upper: Observed Candidate Carrier (Sky Blue #5C89B7)
         ctx.save();
-        ctx.strokeStyle = '#D4864A';
+        ctx.strokeStyle = '#5C89B7';
         ctx.lineWidth = 2;
         ctx.beginPath();
 
@@ -264,16 +262,16 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
         ctx.stroke();
 
         // Label Candidate
-        ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillStyle = '#D4864A';
+        ctx.font = '500 12px "Source Sans 3", sans-serif';
+        ctx.fillStyle = '#E3EBF2';
         ctx.fillText(
           `Observed: ${rec.candidateId} (Continuous monochromatic carrier)`,
           paddingLeft + 12,
-          paddingTop + 20
+          paddingTop + 22
         );
 
-        // Lower: Nearest Known Catalog (Muted slate reference)
-        ctx.strokeStyle = '#9A9C96';
+        // Lower: Nearest Known Catalog (Muted slate reference #7C8E9E)
+        ctx.strokeStyle = '#7C8E9E';
         ctx.setLineDash([4, 4]);
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -289,7 +287,8 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
         ctx.setLineDash([]);
 
         // Label Nearest Known Pattern
-        ctx.fillStyle = '#9A9C96';
+        ctx.fillStyle = '#7C8E9E';
+        ctx.font = '11px "Source Sans 3", sans-serif';
         ctx.fillText(
           `Nearest catalog: ${rec.comparison.nearestKnownPattern} (Cosine distance: ${rec.comparison.cosineDistance.toFixed(3)})`,
           paddingLeft + 12,
@@ -323,7 +322,7 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
 
             if (intensity > 0.06) {
               const cl = Math.min(1, intensity);
-              ctx.fillStyle = `rgba(212, 134, 74, ${cl * 0.9})`;
+              ctx.fillStyle = `rgba(92, 137, 183, ${cl * 0.85})`;
               ctx.fillRect(
                 paddingLeft + c * cellW,
                 paddingTop + r * cellH,
@@ -334,13 +333,13 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
           }
         }
 
-        // Anomaly Bounding Bracket & Vector
+        // Anomaly Bounding Bracket & Vector (Solar Gold #C19348)
         const ax = paddingLeft + plotW * 0.35;
         const aw = plotW * 0.42;
         const ay = paddingTop + plotH * 0.28;
         const ah = plotH * 0.42;
 
-        ctx.strokeStyle = '#D4864A';
+        ctx.strokeStyle = '#C19348';
         ctx.lineWidth = 1.3;
         const cLen = 12;
 
@@ -379,23 +378,25 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
         ctx.stroke();
 
         // Anomaly callout text
-        ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillStyle = '#E6E4DD';
+        ctx.font = '500 12px "Source Sans 3", sans-serif';
+        ctx.fillStyle = '#E3EBF2';
         ctx.textAlign = 'left';
         ctx.fillText(`Anomaly residual: +4.8σ divergence from baseline`, ax + 4, ay - 8);
 
         ctx.textAlign = 'right';
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#C19348';
         ctx.fillText(`Drift: ${rec.driftRateHzPerSec.toFixed(2)} Hz/s`, ax + aw - 4, ay - 8);
       }
 
       // 4. Outer Border
-      ctx.strokeStyle = '#242825';
+      ctx.strokeStyle = '#213240';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 5. Scientific Axis Labels
-      ctx.fillStyle = '#9A9C96';
-      ctx.font = '10px ui-monospace, SFMono-Regular, monospace';
+      ctx.fillStyle = '#7C8E9E';
+      ctx.font = '10px "IBM Plex Mono", monospace';
 
       // Left Frequency Axis
       const f0 = rec.frequencyMHz;
@@ -433,25 +434,29 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
   };
 
   return (
-    <div className="rounded-[2px] border border-[#242825] bg-[#0F1110] overflow-hidden select-none shadow-sm">
+    <div className="rounded-[3px] border border-[#213240] bg-[#0D141A] overflow-hidden select-none shadow-md">
       {/* Viewport Top Bar */}
-      <div className="flex items-center justify-between border-b border-[#242825] bg-[#141715] px-4 py-2 text-xs">
+      <div className="flex items-center justify-between border-b border-[#213240] bg-[#111A22] px-4 py-2.5 text-xs">
         <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
-          <span className="font-medium text-[#E6E4DD]">{stageTitles[activeStage]}</span>
+          <span className="h-2 w-2 rounded-full bg-[#376A9B]" />
+          <span className="font-semibold text-[#E3EBF2]">{stageTitles[activeStage]}</span>
         </div>
 
         <button
           type="button"
           aria-pressed={isAudioActive}
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
+          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] ${
             isAudioActive
-              ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
-              : 'border-[#242825] bg-[#1A1E1B] text-[#9A9C96] hover:text-[#E6E4DD]'
+              ? 'border-[#376A9B] bg-[#376A9B]/20 text-[#5C89B7]'
+              : 'border-[#213240] bg-[#1D2A37] text-[#7C8E9E] hover:text-[#E3EBF2]'
           }`}
         >
-          {isAudioActive ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
+          {isAudioActive ? (
+            <Volume2 className="h-3.5 w-3.5" />
+          ) : (
+            <VolumeX className="h-3.5 w-3.5" />
+          )}
           <span>{isAudioActive ? 'Monitoring' : 'Audio feed'}</span>
         </button>
       </div>
@@ -459,7 +464,7 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       {/* Large Dominant Viewport Canvas */}
       <div
         ref={containerRef}
-        className="relative h-[380px] sm:h-[460px] lg:h-[500px] w-full bg-[#0F1110]"
+        className="relative h-[380px] sm:h-[460px] lg:h-[500px] w-full bg-[#0D141A]"
       >
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>

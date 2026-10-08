@@ -24,37 +24,37 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
     switch (observation.status) {
       case 'review':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#D4864A] font-mono">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#9E6E20] font-mono font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#C19348]" />
             <span>REVIEW</span>
           </span>
         );
       case 'candidate':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#E6E4DD] font-mono">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#376A9B] font-mono font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#376A9B]" />
             <span>CANDIDATE</span>
           </span>
         );
       case 'error':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#C84A4A] font-mono">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#C84A4A]" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#B64B4B] font-mono font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#B64B4B]" />
             <span>FAIL</span>
           </span>
         );
       case 'archived':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#767973] font-mono">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#666963]" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#76828D] font-mono">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#76828D]" />
             <span>ARCHIVED</span>
           </span>
         );
       case 'analyzed':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#848780] font-mono">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#529E72]" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#3D7D54] font-mono font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#3D7D54]" />
             <span>ANALYZED</span>
           </span>
         );
@@ -69,33 +69,33 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
       aria-selected={isSelected}
       onClick={() => onSelect(observation)}
       className={cn(
-        'group relative w-full text-left transition-colors duration-150 cursor-pointer select-none px-3.5 py-2.5 outline-none font-sans',
-        'focus-visible:ring-1 focus-visible:ring-[#D4864A] focus-visible:ring-inset',
-        isSelected ? 'bg-[#181B19] text-[#E6E4DD]' : 'hover:bg-[#141615] text-[#9A9C96]'
+        'group relative w-full text-left transition-colors duration-150 cursor-pointer select-none px-3.5 py-3 outline-none font-sans',
+        'focus-visible:ring-1 focus-visible:ring-[#376A9B] focus-visible:ring-inset',
+        isSelected ? 'bg-[#EAE7E0] text-[#17202A]' : 'hover:bg-[#F4F1EA] text-[#56616A]'
       )}
     >
       {/* Active Left Indicator */}
-      {isSelected && <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#D4864A]" />}
+      {isSelected && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#376A9B]" />}
 
       {/* Desktop 5-Column Ledger Row */}
       <div className="hidden sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 text-xs">
         {/* 1. Date */}
-        <div className="col-span-3 text-[#767973] font-mono tabular-nums truncate">
+        <div className="col-span-3 text-[#56616A] font-mono tabular-nums truncate">
           {dateDisplay}
         </div>
 
         {/* 2. Observation ID */}
         <div
           className={cn(
-            'col-span-3 font-mono font-medium transition-colors truncate',
-            isSelected ? 'text-[#D4864A]' : 'text-[#E6E4DD] group-hover:text-[#D4864A]'
+            'col-span-3 font-mono font-semibold transition-colors truncate',
+            isSelected ? 'text-[#376A9B]' : 'text-[#17202A] group-hover:text-[#376A9B]'
           )}
         >
           {observation.id}
         </div>
 
         {/* 3. Candidate Count */}
-        <div className="col-span-2 text-[#848780] font-mono text-[11px]">
+        <div className="col-span-2 text-[#56616A] font-mono text-[11px]">
           {observation.candidates.length === 1
             ? '1 event'
             : `${observation.candidates.length} events`}
@@ -104,21 +104,21 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
         {/* 4. Highest Priority */}
         <div className="col-span-2">
           {highestPriority === 'HIGH' && (
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[#D4864A] bg-[#221B16] px-1.5 py-0.5 rounded-[2px] border border-[#D4864A]/30">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[#9E6E20] bg-[#FDF6E9] px-2 py-0.5 rounded-[2px] border border-[#E8CFA0] font-semibold">
               HIGH
             </span>
           )}
           {highestPriority === 'MEDIUM' && (
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[#9A9C96] bg-[#181B19] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[#56616A] bg-[#EAE7E0] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
               MED
             </span>
           )}
           {highestPriority === 'LOW' && (
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[#666963] bg-[#121413] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[#76828D] bg-[#F4F1EA] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
               LOW
             </span>
           )}
-          {!highestPriority && <span className="text-[#555852] text-xs font-mono">—</span>}
+          {!highestPriority && <span className="text-[#B8B3A8] text-xs font-mono">—</span>}
         </div>
 
         {/* 5. Status */}
@@ -130,8 +130,8 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
         <div className="flex items-center justify-between">
           <span
             className={cn(
-              'font-mono font-medium',
-              isSelected ? 'text-[#D4864A]' : 'text-[#E6E4DD]'
+              'font-mono font-semibold',
+              isSelected ? 'text-[#376A9B]' : 'text-[#17202A]'
             )}
           >
             {observation.id}
@@ -139,7 +139,7 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
           {renderStatus()}
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-[#848780]">
+        <div className="flex items-center justify-between text-[11px] text-[#56616A]">
           <span className="font-mono tabular-nums">{dateDisplay}</span>
           <div className="flex items-center gap-2">
             <span className="font-mono">
@@ -150,8 +150,8 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
             {highestPriority && (
               <span
                 className={cn(
-                  'text-[10px] font-mono',
-                  highestPriority === 'HIGH' ? 'text-[#D4864A]' : 'text-[#848780]'
+                  'text-[10px] font-mono font-semibold',
+                  highestPriority === 'HIGH' ? 'text-[#9E6E20]' : 'text-[#56616A]'
                 )}
               >
                 [{highestPriority}]

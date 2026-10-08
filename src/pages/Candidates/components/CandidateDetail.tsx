@@ -76,32 +76,32 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
   const evidenceClaims = getEvidenceClaims();
 
   return (
-    <div className="rounded-[3px] border border-[#242825] bg-[#101211] select-none flex flex-col overflow-hidden font-sans shadow-sm">
+    <div className="rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] select-none flex flex-col overflow-hidden font-sans shadow-xs">
       {/* 1. WHO IS THIS? */}
-      <div className="border-b border-[#242825] bg-[#0A0C0B] p-4 flex items-start justify-between gap-3">
+      <div className="border-b border-[#D6D2C9] bg-[#EAE7E0] p-4 flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2.5">
-            <h3 className="text-xl font-bold font-mono text-[#D4864A]">{candidate.id}</h3>
+            <h3 className="text-xl font-bold font-mono text-[#17202A]">{candidate.id}</h3>
             {candidate.priority === 'HIGH' && (
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[#D4864A] bg-[#221B16] px-1.5 py-0.5 rounded-[2px] border border-[#D4864A]/30 font-semibold">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#9E6E20] bg-[#FDF6E9] px-2 py-0.5 rounded-[2px] border border-[#E8CFA0] font-semibold">
                 HIGH PRIORITY
               </span>
             )}
             {candidate.priority === 'MEDIUM' && (
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[#9A9C96] bg-[#181B19] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#56616A] bg-[#EAE7E0] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
                 MEDIUM
               </span>
             )}
             {candidate.priority === 'LOW' && (
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[#666963] bg-[#121413] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#76828D] bg-[#F4F1EA] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
                 LOW
               </span>
             )}
           </div>
 
-          <div className="text-xs text-[#E6E4DD] font-medium mt-1">{candidate.targetName}</div>
+          <div className="text-xs text-[#17202A] font-medium mt-1">{candidate.targetName}</div>
 
-          <div className="text-[11px] font-mono text-[#767973] mt-0.5">
+          <div className="text-[11px] font-mono text-[#56616A] mt-0.5">
             Coordinates: {candidate.coordinates.ra} · {candidate.coordinates.dec}
           </div>
         </div>
@@ -110,48 +110,48 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
           type="button"
           onClick={onClose}
           aria-label="Close specimen inspector"
-          className="h-7 w-7 flex items-center justify-center rounded-[2px] text-[#767973] hover:text-[#E6E4DD] hover:bg-[#181B19] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+          className="h-7 w-7 flex items-center justify-center rounded-[2px] text-[#76828D] hover:text-[#17202A] hover:bg-[#D6D2C9]/60 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B]"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
       {/* 2. WHY SHOULD I CARE? */}
-      <div className="px-4 py-3 bg-[#131514] border-b border-[#1F2321] text-xs">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-[#767973] block mb-1">
+      <div className="px-4 py-3 bg-[#FAF8F5] border-b border-[#D6D2C9] text-xs">
+        <span className="text-[11px] font-mono uppercase tracking-wider text-[#76828D] block mb-1">
           Divergence Verdict
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold font-mono text-[#D4864A]">
+          <span className="text-sm font-semibold font-mono text-[#9E6E20]">
             {(candidate.anomalyIndex * 100).toFixed(1)}% anomaly score
           </span>
-          <span className="text-xs text-[#848780]">
-            · 4.8σ departure from learned astrophysical manifold
+          <span className="text-xs text-[#56616A]">
+            · 4.8σ departure from learned astrophysical baseline
           </span>
         </div>
       </div>
 
       {/* 3. WHAT DOES IT LOOK LIKE? (HERO SIGNAL VIEWPORT) */}
-      <div className="p-4 space-y-1.5">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-[#767973] block">
+      <div className="p-4 space-y-1.5 bg-[#FAF8F5]">
+        <span className="text-[11px] font-mono uppercase tracking-wider text-[#76828D] block">
           Spectrogram Slice
         </span>
         <CandidateSignalViewport candidate={candidate} />
       </div>
 
       {/* 4. WHAT EVIDENCE SUPPORTS IT? */}
-      <div className="px-4 py-3 border-t border-[#1F2321] space-y-2.5">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-[#767973] block">
+      <div className="px-4 py-3 border-t border-[#D6D2C9] space-y-2.5 bg-[#FAF8F5]">
+        <span className="text-[11px] font-mono uppercase tracking-wider text-[#76828D] block">
           Observational Evidence
         </span>
 
         <div className="space-y-2 text-xs">
           {evidenceClaims.map((claim) => (
             <div key={claim.label} className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4864A] shrink-0 mt-1.5" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#376A9B] shrink-0 mt-1.5" />
               <div className="leading-snug">
-                <span className="font-medium text-[#E6E4DD]">{claim.label}: </span>
-                <span className="text-[#9A9C96]">{claim.detail}</span>
+                <span className="font-semibold text-[#17202A]">{claim.label}: </span>
+                <span className="text-[#56616A]">{claim.detail}</span>
               </div>
             </div>
           ))}
@@ -159,12 +159,12 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
       </div>
 
       {/* 5. SHOW ME THE TECHNICAL DETAILS (PROGRESSIVELY DISCLOSED LEVEL 3) */}
-      <div className="px-4 py-2.5 border-t border-[#1F2321]">
+      <div className="px-4 py-2.5 border-t border-[#D6D2C9] bg-[#FAF8F5]">
         <button
           type="button"
           aria-expanded={showTechnicalDetails}
           onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-          className="flex items-center justify-between w-full text-xs font-mono text-[#848780] hover:text-[#E6E4DD] py-1 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+          className="flex items-center justify-between w-full text-xs font-mono text-[#56616A] hover:text-[#17202A] py-1 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B]"
         >
           <span>
             {showTechnicalDetails
@@ -172,49 +172,55 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
               : 'INSPECT TECHNICAL MEASUREMENTS'}
           </span>
           {showTechnicalDetails ? (
-            <ChevronDown className="h-3.5 w-3.5 text-[#D4864A]" />
+            <ChevronDown className="h-3.5 w-3.5 text-[#376A9B]" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-[#767973]" />
+            <ChevronRight className="h-3.5 w-3.5 text-[#76828D]" />
           )}
         </button>
 
         {showTechnicalDetails && (
-          <div className="mt-2.5 divide-y divide-[#1D211F] border border-[#242825] bg-[#0C0E0D] rounded-[2px] text-xs font-mono p-3 space-y-1.5 animate-in fade-in duration-150">
+          <div className="mt-2.5 divide-y divide-[#D6D2C9] border border-[#D6D2C9] bg-[#EAE7E0] rounded-[2px] text-xs font-mono p-3 space-y-1.5 animate-in fade-in duration-150">
             <div className="flex justify-between py-1">
-              <span className="text-[#767973]">Frequency</span>
-              <span className="text-[#E6E4DD]">{candidate.frequencyMHz.toFixed(4)} MHz</span>
+              <span className="text-[#56616A]">Frequency</span>
+              <span className="text-[#17202A] font-medium">
+                {candidate.frequencyMHz.toFixed(4)} MHz
+              </span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-[#767973]">Bandwidth</span>
-              <span className="text-[#E6E4DD]">{candidate.bandwidthKHz.toFixed(1)} kHz</span>
+              <span className="text-[#56616A]">Bandwidth</span>
+              <span className="text-[#17202A] font-medium">
+                {candidate.bandwidthKHz.toFixed(1)} kHz
+              </span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-[#767973]">Signal-to-Noise Ratio</span>
-              <span className="text-[#E6E4DD]">+{candidate.snrDb.toFixed(1)} dB</span>
+              <span className="text-[#56616A]">Signal-to-Noise Ratio</span>
+              <span className="text-[#17202A] font-medium">+{candidate.snrDb.toFixed(1)} dB</span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-[#767973]">Doppler Drift Rate</span>
-              <span className="text-[#D4864A]">
+              <span className="text-[#56616A]">Doppler Drift Rate</span>
+              <span className="text-[#376A9B] font-medium">
                 {candidate.driftRateHzPerSec > 0 ? '+' : ''}
                 {candidate.driftRateHzPerSec} Hz/s
               </span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-[#767973]">Peak Power</span>
-              <span className="text-[#E6E4DD]">{candidate.peakPowerDbm.toFixed(1)} dBm</span>
+              <span className="text-[#56616A]">Peak Power</span>
+              <span className="text-[#17202A] font-medium">
+                {candidate.peakPowerDbm.toFixed(1)} dBm
+              </span>
             </div>
           </div>
         )}
       </div>
 
       {/* 6. PRIMARY ACTION: EXAMINE IN ANALYSIS */}
-      <div className="border-t border-[#242825] p-4 bg-[#0A0C0B]">
+      <div className="border-t border-[#D6D2C9] p-4 bg-[#EAE7E0]">
         <Link to={`/analysis/${candidate.id}`} className="block w-full">
           <Button
             variant="primary"
             size="md"
             icon={<ArrowRight className="h-4 w-4" />}
-            className="w-full text-xs font-medium justify-center"
+            className="w-full text-xs font-semibold justify-center shadow-xs"
           >
             Examine candidate in analysis
           </Button>

@@ -34,7 +34,7 @@ export function LandingHeader({ scrollYProgress }: LandingHeaderProps) {
         {/* Understated wordmark */}
         <Link
           to="/"
-          className="text-xs font-mono tracking-widest text-[#9A9C96] hover:text-[#E6E4DD] transition-colors"
+          className="text-xs font-mono tracking-widest text-[#6A7E8F] hover:text-[#E3EBF2] transition-colors"
         >
           AETHON
         </Link>
@@ -48,16 +48,16 @@ export function LandingHeader({ scrollYProgress }: LandingHeaderProps) {
             type="button"
             onClick={handleToggleAudio}
             title={isAudioActive ? 'Mute Sonification' : 'Enable Sonification'}
-            className="flex items-center gap-1.5 text-[#9A9C96] hover:text-[#E6E4DD] transition-colors cursor-pointer py-1"
+            className="flex items-center gap-1.5 text-[#6A7E8F] hover:text-[#E3EBF2] transition-colors cursor-pointer py-1"
           >
             {isAudioActive ? (
               <>
-                <Volume2 className="h-3.5 w-3.5 text-[#D4864A]" />
-                <span className="text-[#D4864A] text-[11px]">Audio on</span>
+                <Volume2 className="h-3.5 w-3.5 text-[#5C89B7]" />
+                <span className="text-[#5C89B7] text-[11px]">Audio on</span>
               </>
             ) : (
               <>
-                <VolumeX className="h-3.5 w-3.5 text-[#666963]" />
+                <VolumeX className="h-3.5 w-3.5 text-[#475766]" />
                 <span className="text-[11px]">Audio off</span>
               </>
             )}
@@ -65,10 +65,10 @@ export function LandingHeader({ scrollYProgress }: LandingHeaderProps) {
 
           <Link
             to="/observatory"
-            className="flex items-center gap-1 text-[#9A9C96] hover:text-[#E6E4DD] transition-colors py-1 cursor-pointer"
+            className="flex items-center gap-1 text-[#6A7E8F] hover:text-[#E3EBF2] transition-colors py-1 cursor-pointer"
           >
             <span>Observatory</span>
-            <ArrowRight className="h-3 w-3 text-[#D4864A]" />
+            <ArrowRight className="h-3 w-3 text-[#5C89B7]" />
           </Link>
         </motion.div>
       </div>
@@ -76,7 +76,7 @@ export function LandingHeader({ scrollYProgress }: LandingHeaderProps) {
       {/* Whisper-quiet 1px scroll progress line */}
       <motion.div
         style={{ scaleX: scrollYProgress, transformOrigin: 'left' }}
-        className="h-[1px] w-full bg-[#D4864A]/40"
+        className="h-[1px] w-full bg-[#376A9B]/50"
       />
     </header>
   );

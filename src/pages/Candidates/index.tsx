@@ -86,8 +86,8 @@ export default function CandidatesPage() {
             }`}
           >
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-[#9A9C96] px-1 pb-1">
-                <span className="font-medium text-[#E6E4DD]">Candidate ledger</span>
+              <div className="flex items-center justify-between text-xs text-[#56616A] px-1 pb-1">
+                <span className="font-semibold text-[#17202A]">Candidate ledger</span>
                 <span>Select a row to inspect specimen</span>
               </div>
 

@@ -55,22 +55,22 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
   const getStatusIndicator = (stageStatus: PipelineStageStatus) => {
     switch (stageStatus) {
       case 'COMPLETE':
-        return { dot: 'bg-[#529E72]', label: 'Complete', labelColor: 'text-[#529E72]' };
+        return { dot: 'bg-[#3D7D54]', label: 'Complete', labelColor: 'text-[#3D7D54]' };
       case 'ACTIVE':
-        return { dot: 'bg-[#D4864A]', label: 'Active', labelColor: 'text-[#D4864A]' };
+        return { dot: 'bg-[#376A9B]', label: 'Active', labelColor: 'text-[#376A9B]' };
       case 'READY':
         return {
-          dot: 'border border-[#666963] bg-transparent',
+          dot: 'border border-[#BCB6A8] bg-transparent',
           label: 'Ready',
-          labelColor: 'text-[#9A9C96]',
+          labelColor: 'text-[#7E8B96]',
         };
       case 'WARNING':
-        return { dot: 'bg-[#D4864A]', label: 'Warning', labelColor: 'text-[#D4864A]' };
+        return { dot: 'bg-[#C19348]', label: 'Warning', labelColor: 'text-[#C19348]' };
       case 'ERROR':
-        return { dot: 'bg-[#C84A4A]', label: 'Error', labelColor: 'text-[#C84A4A]' };
+        return { dot: 'bg-[#B64B4B]', label: 'Error', labelColor: 'text-[#B64B4B]' };
       case 'OFFLINE':
       default:
-        return { dot: 'bg-[#242825]', label: 'Idle', labelColor: 'text-[#9A9C96]' };
+        return { dot: 'bg-[#D6D2C9]', label: 'Idle', labelColor: 'text-[#7E8B96]' };
     }
   };
 
@@ -102,8 +102,8 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
   ];
 
   return (
-    <div className="select-none">
-      <span className="text-[10px] uppercase tracking-widest text-[#666963] font-medium block mb-3">
+    <div className="select-none font-sans">
+      <span className="text-[11px] uppercase tracking-wider text-[#7E8B96] font-medium block mb-3">
         Signal pipeline
       </span>
 
@@ -118,14 +118,14 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
             <div
               key={item.key}
               className={`relative flex items-start gap-3 py-2.5 ${
-                isActive ? 'bg-[#D4864A]/5 px-2.5 -mx-2.5 rounded-sm' : ''
+                isActive ? 'bg-[#EAF1F8] px-2.5 -mx-2.5 rounded-[2px]' : ''
               }`}
             >
               {/* Vertical connector line */}
               <div className="flex flex-col items-center shrink-0 pt-0.5">
                 <span className={`h-2 w-2 rounded-full ${indicator.dot} shrink-0`} />
                 {idx < stageList.length - 1 && (
-                  <span className="w-px flex-1 min-h-[24px] bg-[#242825] mt-1" />
+                  <span className="w-px flex-1 min-h-[24px] bg-[#D6D2C9] mt-1" />
                 )}
               </div>
 
@@ -133,10 +133,10 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
               <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-[#666963] font-mono">0{idx + 1}</span>
-                    <span className="text-xs font-medium text-[#E6E4DD]">{item.title}</span>
+                    <span className="text-[10px] text-[#7E8B96] font-mono">0{idx + 1}</span>
+                    <span className="text-xs font-semibold text-[#17202A]">{item.title}</span>
                   </div>
-                  <span className="text-[11px] text-[#9A9C96] mt-0.5 block">{item.subtext}</span>
+                  <span className="text-[11px] text-[#56616A] mt-0.5 block">{item.subtext}</span>
                 </div>
                 <span className={`text-[11px] font-medium ${indicator.labelColor} shrink-0`}>
                   {indicator.label}

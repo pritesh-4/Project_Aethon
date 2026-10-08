@@ -35,7 +35,7 @@ export function ArchiveTimeline({
   return (
     <div className="select-none space-y-4 font-sans">
       {/* Table Column Headers (Desktop) */}
-      <div className="hidden sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 px-3.5 py-2 text-[10px] font-mono uppercase tracking-wider text-[#767973] border-b border-[#242825]">
+      <div className="hidden sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 px-3.5 py-2 text-[11px] font-mono uppercase tracking-wider text-[#56616A] border-b border-[#D6D2C9]">
         <div className="col-span-3">Timestamp (UTC)</div>
         <div className="col-span-3">Observation ID</div>
         <div className="col-span-2">Detections</div>
@@ -48,19 +48,21 @@ export function ArchiveTimeline({
         {groupedByDate.map((group) => {
           return (
             <div key={group.date} className="space-y-1.5">
-              {/* Subtle Date Header */}
-              <div className="flex items-center justify-between px-1 text-xs text-[#848780]">
+              {/* Date Header */}
+              <div className="flex items-center justify-between px-1 text-xs text-[#56616A]">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] text-[#C9C8C0]">{group.date}</span>
-                  <span className="text-[#4D504A]">/</span>
-                  <span className="text-[11px] font-mono text-[#767973]">
+                  <span className="font-mono text-xs font-semibold text-[#17202A]">
+                    {group.date}
+                  </span>
+                  <span className="text-[#D6D2C9]">/</span>
+                  <span className="text-[11px] font-mono text-[#76828D]">
                     {group.items.length} {group.items.length === 1 ? 'pointing' : 'pointings'}
                   </span>
                 </div>
               </div>
 
               {/* Observation Records Ledger under this date */}
-              <div className="border border-[#242825] bg-[#101211] rounded-[2px] divide-y divide-[#1D211F] overflow-hidden">
+              <div className="border border-[#D6D2C9] bg-[#FAF8F5] rounded-[3px] divide-y divide-[#D6D2C9] overflow-hidden shadow-xs">
                 {group.items.map((obs) => {
                   const isSelected = obs.id === selectedObservationId;
                   return (

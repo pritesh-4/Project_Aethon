@@ -55,13 +55,13 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Color definitions: Observatory mineral & copper palette
-    const COLOR_BG = '#0F1110';
-    const COLOR_GRID = 'rgba(154, 156, 150, 0.12)';
-    const COLOR_TICK = 'rgba(154, 156, 150, 0.22)';
-    const COLOR_SIGNAL = '#D4864A';
-    const COLOR_NOISE = 'rgba(154, 156, 150, 0.25)';
-    const COLOR_AMBER = '#D4864A';
+    // Color definitions: Instrument deep midnight & observatory blue / gold palette
+    const COLOR_BG = '#0D141A';
+    const COLOR_GRID = 'rgba(106, 126, 143, 0.15)';
+    const COLOR_TICK = 'rgba(106, 126, 143, 0.28)';
+    const COLOR_SIGNAL = '#5C89B7';
+    const COLOR_NOISE = 'rgba(106, 126, 143, 0.22)';
+    const COLOR_AMBER = '#C19348';
 
     const render = (now: number) => {
       const t = shouldReduceMotion ? 0 : (now - startTime) * 0.001;
@@ -86,8 +86,8 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
         centerY,
         Math.max(width, height) * 0.65
       );
-      radGrad.addColorStop(0, 'rgba(26, 30, 27, 0.45)');
-      radGrad.addColorStop(1, '#0F1110');
+      radGrad.addColorStop(0, 'rgba(17, 26, 34, 0.45)');
+      radGrad.addColorStop(1, '#0D141A');
       ctx.fillStyle = radGrad;
       ctx.fillRect(0, 0, width, height);
 

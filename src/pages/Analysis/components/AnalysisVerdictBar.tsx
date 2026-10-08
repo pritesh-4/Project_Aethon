@@ -60,19 +60,19 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
   };
 
   return (
-    <div className="border-t border-[#242825] bg-[#0F1110] px-4 sm:px-6 py-3 select-none">
+    <div className="border-t border-[#D6D2C9] bg-[#FAF8F5] px-4 sm:px-6 py-3 select-none">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Review Status — inline label, not a bordered pill */}
+        {/* Review Status */}
         <div className="flex items-center gap-2 text-xs">
           {isMarked ? (
             <>
-              <CheckCircle2 className="h-3.5 w-3.5 text-[#529E72]" />
-              <span className="font-medium text-[#E6E4DD]">Marked for follow-up</span>
+              <CheckCircle2 className="h-4 w-4 text-[#3D7D54]" />
+              <span className="font-semibold text-[#17202A]">Marked for follow-up</span>
             </>
           ) : (
             <>
-              <Clock className="h-3.5 w-3.5 text-[#D4864A]" />
-              <span className="font-medium text-[#9A9C96]">Pending researcher verdict</span>
+              <Clock className="h-4 w-4 text-[#C19348]" />
+              <span className="font-medium text-[#56616A]">Pending researcher verdict</span>
             </>
           )}
         </div>
@@ -80,12 +80,12 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
         {/* Primary Actions */}
         <div className="flex flex-wrap items-center gap-2.5">
           <Button
-            variant={isMarked ? 'outline' : 'primary'}
+            variant={isMarked ? 'secondary' : 'primary'}
             size="sm"
             onClick={handleMarkForInvestigation}
             icon={
               isMarked ? (
-                <CheckCircle2 className="h-3.5 w-3.5" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#3D7D54]" />
               ) : (
                 <ArrowRight className="h-3.5 w-3.5" />
               )
@@ -95,7 +95,7 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
           </Button>
 
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             icon={<Download className="h-3.5 w-3.5" />}
             onClick={handleExportAnalysis}

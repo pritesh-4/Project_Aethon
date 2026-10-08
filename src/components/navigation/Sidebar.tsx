@@ -16,26 +16,26 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
       animate={{ width: isCollapsed ? 52 : 200 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        'hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r border-[#262C28] bg-[#131614] select-none font-sans z-30',
+        'hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r border-[#D6D2C9] bg-[#EAE7E0] select-none font-sans z-30',
         className
       )}
     >
       {/* 1. Header: Wordmark & Collapse Toggle */}
-      <div className="h-12 border-b border-[#262C28] px-3.5 flex items-center justify-between overflow-hidden">
+      <div className="h-12 border-b border-[#D6D2C9] px-3.5 flex items-center justify-between overflow-hidden">
         {!isCollapsed ? (
           <>
             <div className="flex flex-col">
-              <span className="text-xs font-semibold tracking-wider text-[#E6E4DD] font-mono">
+              <span className="text-xs font-semibold tracking-wider text-[#17202A] font-mono">
                 AETHON
               </span>
-              <span className="text-[10px] text-[#9A9C96] tracking-tight">Signal observatory</span>
+              <span className="text-[11px] text-[#56616A] tracking-tight">Signal observatory</span>
             </div>
             <button
               type="button"
               onClick={onToggleCollapse}
               title="Collapse sidebar rail"
               aria-label="Collapse sidebar rail"
-              className="h-6 w-6 flex items-center justify-center rounded-[2px] text-[#9A9C96] hover:text-[#E6E4DD] hover:bg-[#1A1E1B] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+              className="h-6 w-6 flex items-center justify-center rounded-[2px] text-[#56616A] hover:text-[#17202A] hover:bg-[#DFDCD5] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B]"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
@@ -47,7 +47,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
               onClick={onToggleCollapse}
               title="Expand sidebar rail"
               aria-label="Expand sidebar rail"
-              className="h-7 w-7 flex items-center justify-center rounded-[2px] text-[#9A9C96] hover:text-[#E6E4DD] hover:bg-[#1A1E1B] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+              className="h-7 w-7 flex items-center justify-center rounded-[2px] text-[#56616A] hover:text-[#17202A] hover:bg-[#DFDCD5] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B]"
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
@@ -68,7 +68,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
           />
         ))}
 
-        <div className="pt-2 my-2 border-t border-[#262C28]" />
+        <div className="pt-2 my-2 border-t border-[#D6D2C9]" />
 
         {SECONDARY_NAV.map((item) => (
           <SidebarItem
@@ -83,14 +83,14 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
       </nav>
 
       {/* 3. Quiet Scientific Footer */}
-      <div className="border-t border-[#262C28] p-3 bg-[#131614] text-[#9A9C96] text-[11px] select-none">
+      <div className="border-t border-[#D6D2C9] p-3 bg-[#EAE7E0] text-[#56616A] text-[11px] select-none">
         {!isCollapsed ? (
           <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] text-[#9A9C96]">Receiver 1.42 GHz</span>
-            <span className="text-[10px] text-[#6B706A] font-mono">HI Band</span>
+            <span className="text-[11px] text-[#56616A]">Receiver 1.42 GHz</span>
+            <span className="text-[10px] text-[#7E8B96] font-mono">HI Band</span>
           </div>
         ) : (
-          <div className="flex justify-center text-[10px] text-[#6B706A] font-mono">1.42G</div>
+          <div className="flex justify-center text-[10px] text-[#7E8B96] font-mono">1.42G</div>
         )}
       </div>
     </motion.aside>

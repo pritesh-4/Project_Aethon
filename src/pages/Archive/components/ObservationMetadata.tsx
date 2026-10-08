@@ -35,20 +35,22 @@ export function ObservationMetadata({ observation }: ObservationMetadataProps) {
   ];
 
   return (
-    <div className="text-xs select-none">
-      <div className="rounded-[2px] border border-[#242825] bg-[#101211] overflow-hidden">
-        <div className="border-b border-[#242825] bg-[#141715] px-3 py-1.5 text-[11px] text-[#9A9C96] font-medium">
+    <div className="text-xs select-none font-sans">
+      <div className="rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] overflow-hidden shadow-xs">
+        <div className="border-b border-[#D6D2C9] bg-[#EAE7E0] px-3.5 py-2 text-[11px] text-[#17202A] font-semibold">
           Observation parameters
         </div>
 
-        <div className="divide-y divide-[#242825]/60">
+        <div className="divide-y divide-[#D6D2C9]">
           {metadataRows.map((row) => (
             <div
               key={row.label}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 py-1.5 gap-0.5 sm:gap-2 text-[11px]"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3.5 py-2 gap-0.5 sm:gap-2 text-xs"
             >
-              <span className="text-[#666963] text-[10px] shrink-0">{row.label}</span>
-              <span className={`text-[#E6E4DD] truncate text-right ${row.mono ? 'font-mono' : ''}`}>
+              <span className="text-[#56616A] text-[11px] shrink-0">{row.label}</span>
+              <span
+                className={`text-[#17202A] truncate text-right font-medium ${row.mono ? 'font-mono' : ''}`}
+              >
                 {row.value}
               </span>
             </div>

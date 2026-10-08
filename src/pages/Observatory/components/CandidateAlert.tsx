@@ -15,23 +15,23 @@ export function CandidateAlert({ observation }: CandidateAlertProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.18, ease: 'easeOut' }}
-      className="rounded-[2px] border border-[#D4864A]/40 bg-[#1A1E1B] p-4 select-none font-sans"
+      className="rounded-[3px] border border-[#E8D2A3] bg-[#FDF8EE] p-4 select-none font-sans shadow-2xs"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Left: Candidate Identification */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Radio className="h-3.5 w-3.5 text-[#D4864A]" />
-            <span className="text-xs font-medium text-[#D4864A]">Candidate event detected</span>
-            <span className="text-[#363C38]">|</span>
-            <span className="rounded-[2px] border border-[#D4864A]/40 bg-[#241A14] px-1.5 py-0.2 text-[10px] font-mono text-[#D4864A]">
+            <Radio className="h-3.5 w-3.5 text-[#C19348]" />
+            <span className="text-xs font-semibold text-[#C19348]">Candidate event detected</span>
+            <span className="text-[#D6D2C9]">|</span>
+            <span className="rounded-[2px] border border-[#E8D2A3] bg-[#FAF3E3] px-1.5 py-0.2 text-[10px] font-mono text-[#C19348] font-medium">
               Priority: {observation.priority.toLowerCase()}
             </span>
           </div>
 
-          <p className="text-xs text-[#E6E4DD] leading-relaxed">
+          <p className="text-xs text-[#17202A] leading-relaxed">
             Narrowband carrier persistent across the observation window with linear Doppler drift of{' '}
-            <span className="font-mono text-[#D4864A]">
+            <span className="font-mono text-[#C19348] font-semibold">
               {observation.driftRateHzPerSec.toFixed(2)} Hz/s
             </span>
             .

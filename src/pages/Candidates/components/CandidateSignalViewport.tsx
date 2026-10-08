@@ -75,7 +75,7 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
       const t = (now - startTime) * 0.001;
       const current = candidateRef.current;
 
-      const paddingLeft = 44;
+      const paddingLeft = 46;
       const paddingRight = 16;
       const paddingTop = 14;
       const paddingBottom = 22;
@@ -83,16 +83,16 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
       const plotW = Math.max(10, width - paddingLeft - paddingRight);
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
 
-      // Background
-      ctx.fillStyle = '#0F1110';
+      // Instrument Background (#0D141A)
+      ctx.fillStyle = '#0D141A';
       ctx.fillRect(0, 0, width, height);
 
-      // Plot Area Fill
-      ctx.fillStyle = '#141715';
+      // Plot Area Fill (#111A22)
+      ctx.fillStyle = '#111A22';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Reticle Grid
-      ctx.strokeStyle = 'rgba(154, 156, 150, 0.12)';
+      ctx.strokeStyle = '#1D2A37';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -113,7 +113,7 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
       }
       ctx.setLineDash([]);
 
-      // Spectrogram Noise & Carrier (Warm copper & mineral palette)
+      // Spectrogram Noise & Carrier (Deep midnight to observatory blue to solar gold highlight)
       const cellW = plotW / cols;
       const cellH = plotH / rows;
       const driftSlope = current.driftRateHzPerSec;
@@ -139,22 +139,21 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
             let cg: number;
             let cb: number;
 
-            // Restrained scientific colormap: Charcoal -> Mineral ochre -> Copper -> Warm white
             if (cl < 0.35) {
               const factor = cl / 0.35;
-              cr = Math.floor(26 + 45 * factor);
-              cg = Math.floor(30 + 35 * factor);
-              cb = Math.floor(27 + 25 * factor);
+              cr = Math.floor(13 + 30 * factor);
+              cg = Math.floor(20 + 60 * factor);
+              cb = Math.floor(26 + 100 * factor);
             } else if (cl < 0.75) {
               const factor = (cl - 0.35) / 0.4;
-              cr = Math.floor(71 + 141 * factor);
-              cg = Math.floor(65 + 69 * factor);
-              cb = Math.floor(52 + 22 * factor);
+              cr = Math.floor(25 + 60 * factor);
+              cg = Math.floor(44 + 90 * factor);
+              cb = Math.floor(66 + 115 * factor);
             } else {
               const factor = (cl - 0.75) / 0.25;
-              cr = Math.floor(212 + 33 * factor);
-              cg = Math.floor(134 + 101 * factor);
-              cb = Math.floor(74 + 146 * factor);
+              cr = Math.floor(85 + 120 * factor);
+              cg = Math.floor(134 + 60 * factor);
+              cb = Math.floor(181 - 70 * factor);
             }
 
             ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
@@ -164,13 +163,13 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
       }
 
       // Outer Plot Border
-      ctx.strokeStyle = '#242825';
+      ctx.strokeStyle = '#213240';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Clean Axis Ticks
-      ctx.fillStyle = '#9A9C96';
-      ctx.font = '10px ui-monospace, SFMono-Regular, monospace';
+      ctx.fillStyle = '#7C8E9E';
+      ctx.font = '10px "IBM Plex Mono", monospace';
 
       // Left Frequency Axis
       ctx.textAlign = 'right';
@@ -199,26 +198,30 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
   }, [candidate]);
 
   return (
-    <div className="rounded-[2px] border border-[#242825] bg-[#0F1110] overflow-hidden select-none">
-      <div className="flex items-center justify-between border-b border-[#242825] bg-[#141715] px-3 py-1.5 text-xs text-[#9A9C96]">
-        <span className="font-medium text-[#E6E4DD]">Spectrogram slice</span>
+    <div className="rounded-[3px] border border-[#213240] bg-[#0D141A] overflow-hidden select-none">
+      <div className="flex items-center justify-between border-b border-[#213240] bg-[#111A22] px-3.5 py-2 text-xs text-[#7C8E9E]">
+        <span className="font-semibold text-[#E3EBF2]">Spectrogram slice</span>
 
         <button
           type="button"
           aria-pressed={isAudioActive}
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
+          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] ${
             isAudioActive
-              ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
-              : 'border-[#242825] bg-[#1A1E1B] text-[#9A9C96] hover:text-[#E6E4DD]'
+              ? 'border-[#376A9B] bg-[#376A9B]/20 text-[#5C89B7]'
+              : 'border-[#213240] bg-[#1D2A37] text-[#7C8E9E] hover:text-[#E3EBF2]'
           }`}
         >
-          {isAudioActive ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
+          {isAudioActive ? (
+            <Volume2 className="h-3.5 w-3.5" />
+          ) : (
+            <VolumeX className="h-3.5 w-3.5" />
+          )}
           <span>{isAudioActive ? 'Monitoring' : 'Audio feed'}</span>
         </button>
       </div>
 
-      <div ref={containerRef} className="relative h-[160px] sm:h-[180px] w-full bg-[#0F1110]">
+      <div ref={containerRef} className="relative h-[160px] sm:h-[180px] w-full bg-[#0D141A]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>
     </div>

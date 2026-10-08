@@ -8,22 +8,22 @@ export interface ArchiveEmptyStateProps {
 
 export function ArchiveEmptyState({ searchQuery, onClearFilters }: ArchiveEmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-[2px] border border-[#242825] bg-[#141715] p-10 text-center select-none my-6">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[2px] border border-[#242825] bg-[#1A1E1B] text-[#666963]">
-        <Search className="h-4 w-4 text-[#9A9C96]" />
+    <div className="flex flex-col items-center justify-center rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] p-10 text-center select-none my-6 shadow-xs font-sans">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[2px] border border-[#D6D2C9] bg-[#EAE7E0] text-[#76828D]">
+        <Search className="h-4 w-4 text-[#56616A]" />
       </div>
 
       <div className="space-y-3 max-w-md">
-        <h3 className="text-sm font-medium text-[#E6E4DD]">
+        <h3 className="text-sm font-semibold text-[#17202A]">
           No matching observation records found
         </h3>
 
-        <p className="text-xs text-[#9A9C96] leading-relaxed">
+        <p className="text-xs text-[#56616A] leading-relaxed">
           {searchQuery ? (
             <>
               No archived records matched{' '}
-              <span className="text-[#D4864A] font-mono">"{searchQuery}"</span>. Try adjusting the
-              observation ID format or resetting date and status filters.
+              <span className="text-[#376A9B] font-mono font-medium">"{searchQuery}"</span>. Try
+              adjusting the observation ID format or resetting date and status filters.
             </>
           ) : (
             <>
@@ -35,10 +35,10 @@ export function ArchiveEmptyState({ searchQuery, onClearFilters }: ArchiveEmptyS
 
         <div className="pt-2">
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClearFilters}
-            icon={<RotateCcw className="h-3 w-3" />}
+            icon={<RotateCcw className="h-3.5 w-3.5" />}
           >
             Reset search and filters
           </Button>

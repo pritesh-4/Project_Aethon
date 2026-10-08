@@ -28,14 +28,14 @@ export default function LandingPage() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full bg-[#0F1110] text-[#E6E4DD]"
+      className="relative w-full bg-[#0D141A] text-[#E3EBF2]"
       style={{ height: '460vh' }}
     >
       {/* Sticky Viewport Shell */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#0F1110] flex flex-col justify-between">
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#0D141A] flex flex-col justify-between">
         {/* Subtle deep-space background radial gradient */}
         <div
-          className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(212,134,74,0.03),rgba(15,17,16,0.98))] pointer-events-none z-0"
+          className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(55,106,155,0.06),rgba(13,20,26,0.98))] pointer-events-none z-0"
           aria-hidden="true"
         />
 

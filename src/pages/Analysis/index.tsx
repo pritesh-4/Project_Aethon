@@ -55,14 +55,19 @@ export default function AnalysisPage() {
   // Invalid candidate error state
   if (!record) {
     return (
-      <PageTransition className="space-y-6">
-        <div className="rounded-[2px] border border-[#242825] bg-[#141715] p-8 text-center">
+      <PageTransition className="space-y-6 max-w-4xl mx-auto py-12 px-4">
+        <div className="rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] p-10 text-center shadow-xs">
           <div className="flex flex-col items-center gap-3">
-            <AlertTriangle className="h-8 w-8 text-[#D4864A]" />
-            <h2 className="text-base font-medium text-[#E6E4DD]">Candidate record not found</h2>
-            <p className="max-w-md text-xs text-[#9A9C96] leading-relaxed">
+            <AlertTriangle className="h-8 w-8 text-[#9E6E20]" />
+            <h2 className="text-xl font-normal text-[#17202A] font-serif">
+              Candidate record not found
+            </h2>
+            <p className="max-w-md text-xs text-[#56616A] leading-relaxed">
               No analysis record resolved for identifier{' '}
-              <span className="text-[#D4864A] font-mono">{signalId || 'unknown'}</span>.
+              <span className="text-[#376A9B] font-mono font-semibold">
+                {signalId || 'unknown'}
+              </span>
+              .
             </p>
             <div className="mt-4 flex items-center gap-3">
               <Link to="/analysis/AET-04721">
@@ -71,7 +76,7 @@ export default function AnalysisPage() {
                 </Button>
               </Link>
               <Link to="/candidates">
-                <Button variant="outline" size="sm" icon={<ArrowLeft className="h-3.5 w-3.5" />}>
+                <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-3.5 w-3.5" />}>
                   Return to candidate ledger
                 </Button>
               </Link>
@@ -101,7 +106,7 @@ export default function AnalysisPage() {
       <div className="flex-1 min-h-0 flex flex-col">
         <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 flex-1 min-h-0 flex flex-col">
           {/* Stage Pipeline Ribbon — directly attached to viewport */}
-          <div className="border-b border-[#242825] bg-[#0F1110]">
+          <div className="border-b border-[#D6D2C9] bg-[#FAF8F5]">
             <StageSelector activeStage={activeStage} onSelectStage={setActiveStage} />
           </div>
 
@@ -118,12 +123,12 @@ export default function AnalysisPage() {
             {/* INSPECTOR COLUMN: Evidence & Metrics for the active stage */}
             <aside
               aria-label="Analytical Stage Evidence"
-              className="lg:w-[340px] xl:w-[380px] shrink-0 lg:border-l lg:border-[#242825] lg:pl-5 xl:pl-6 pt-4 lg:pt-0 lg:ml-5 xl:ml-6 overflow-y-auto"
+              className="lg:w-[340px] xl:w-[380px] shrink-0 lg:border-l lg:border-[#D6D2C9] lg:pl-5 xl:pl-6 pt-4 lg:pt-0 lg:ml-5 xl:ml-6 overflow-y-auto"
             >
               <StageExplanationPanel record={record} activeStage={activeStage} />
 
               {/* Scientific caution — progressive disclosure */}
-              <div className="mt-4 border-t border-[#242825] pt-2">
+              <div className="mt-4 border-t border-[#D6D2C9] pt-2">
                 <ScientificCaution />
               </div>
             </aside>

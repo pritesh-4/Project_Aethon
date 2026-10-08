@@ -70,7 +70,7 @@ function buildContent(record: SignalAnalysisRecord): Record<AnalysisStageId, Sta
       ],
     },
     comparison: {
-      question: 'How does it compare against cataloged sources?',
+      question: 'Does this signal fit the known population?',
       summary: `Cross-referenced against cataloged natural astrophysical emitters (pulsars, fast radio bursts, masers) and known terrestrial transmitters. The signal exhibits divergence from natural sources (${(record.knownPatternSimilarity * 100).toFixed(1)}% match).`,
       metrics: [
         {
@@ -106,7 +106,7 @@ function buildContent(record: SignalAnalysisRecord): Record<AnalysisStageId, Sta
       ],
     },
     anomaly: {
-      question: 'Why is it anomalous?',
+      question: 'Why is this unusual?',
       summary: `Prioritized because it deviates significantly from expected Gaussian thermal background noise (+4.8σ residual) while maintaining a persistent Doppler drift (${record.driftRateHzPerSec.toFixed(2)} Hz/s) across all observation pointings.`,
       metrics: [
         {
@@ -154,53 +154,55 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
 
   return (
     <div className="select-none font-sans space-y-4">
-      {/* Guiding Question & Summary */}
-      <div className="space-y-1.5 pb-2">
-        <h2 className="text-base font-medium tracking-tight text-[#E6E4DD]">{current.question}</h2>
-        <p className="text-xs text-[#9A9C96] leading-relaxed">{current.summary}</p>
+      {/* Editorial Scientific Question & Interpretation */}
+      <div className="space-y-2 pb-2">
+        <h2 className="text-xl font-normal tracking-tight text-[#17202A] font-serif">
+          {current.question}
+        </h2>
+        <p className="text-xs text-[#56616A] leading-relaxed">{current.summary}</p>
       </div>
 
-      {/* Role 2: Explanatory Evidence First (Per Rule 24) */}
-      <div className="border-t border-[#242825] pt-3 space-y-2.5">
-        <span className="block text-[10px] font-mono uppercase tracking-wider text-[#767973] font-semibold">
-          Why AETHON Flagged This
+      {/* Explanatory Evidence First (Per Rule 24) */}
+      <div className="border-t border-[#D6D2C9] pt-3.5 space-y-2.5">
+        <span className="block text-[11px] font-mono uppercase tracking-wider text-[#76828D] font-semibold">
+          Screening Evidence
         </span>
 
         <div className="space-y-2.5 text-xs">
           {current.evidence.map((ev) => (
             <div key={ev.title} className="flex items-start gap-2.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4864A] mt-1.5 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#376A9B] mt-1.5 shrink-0" />
               <div className="min-w-0">
-                <span className="font-medium text-[#E6E4DD] block">{ev.title}</span>
-                <p className="text-[11px] text-[#9A9C96] leading-relaxed mt-0.5">{ev.text}</p>
+                <span className="font-semibold text-[#17202A] block">{ev.title}</span>
+                <p className="text-[11px] text-[#56616A] leading-relaxed mt-0.5">{ev.text}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Role 3: Level 3 Progressive Disclosure — [ Inspect measurements ] */}
-      <div className="border-t border-[#242825] pt-2">
+      {/* Progressive Disclosure — [ Inspect measurements ] */}
+      <div className="border-t border-[#D6D2C9] pt-2.5">
         <button
           type="button"
           aria-expanded={showMeasurements}
           onClick={() => setShowMeasurements(!showMeasurements)}
-          className="flex items-center justify-between w-full text-xs font-mono text-[#848780] hover:text-[#E6E4DD] py-1.5 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+          className="flex items-center justify-between w-full text-xs font-mono text-[#56616A] hover:text-[#17202A] py-1.5 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B]"
         >
           <span>{showMeasurements ? 'HIDE MEASUREMENTS' : 'INSPECT MEASUREMENTS'}</span>
           {showMeasurements ? (
-            <ChevronDown className="h-3.5 w-3.5 text-[#D4864A]" />
+            <ChevronDown className="h-3.5 w-3.5 text-[#376A9B]" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-[#767973]" />
+            <ChevronRight className="h-3.5 w-3.5 text-[#76828D]" />
           )}
         </button>
 
         {showMeasurements && (
-          <div className="mt-2 divide-y divide-[#1D211F] border border-[#242825] bg-[#0E100F] rounded-[2px] p-3 text-xs font-mono space-y-1 animate-in fade-in duration-150">
+          <div className="mt-2 divide-y divide-[#D6D2C9] border border-[#D6D2C9] bg-[#EAE7E0] rounded-[2px] p-3 text-xs font-mono space-y-1 animate-in fade-in duration-150">
             {current.metrics.map((m) => (
               <div key={m.label} className="flex items-baseline justify-between py-1.5 gap-2">
-                <span className="text-[#767973] text-[11px]">{m.label}</span>
-                <span className="text-[#E6E4DD] text-right font-medium">{m.value}</span>
+                <span className="text-[#56616A] text-[11px]">{m.label}</span>
+                <span className="text-[#17202A] text-right font-semibold">{m.value}</span>
               </div>
             ))}
           </div>

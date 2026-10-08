@@ -37,15 +37,15 @@ export function DriftRateChart({
   driftRateHzPerSec = -0.32,
 }: DriftRateChartProps) {
   return (
-    <div className="w-full rounded-[2px] border border-[#262C28] bg-[#141715] p-4 font-sans text-xs">
-      <div className="mb-3 flex items-center justify-between border-b border-[#262C28] pb-2">
+    <div className="w-full rounded-[2px] border border-[#213240] bg-[#0D141A] p-4 font-sans text-xs">
+      <div className="mb-3 flex items-center justify-between border-b border-[#213240] pb-2">
         <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
-          <span className="font-medium text-[#E6E4DD]">Doppler drift cadence (Δf / Δt)</span>
+          <span className="h-1.5 w-1.5 rounded-full bg-[#C19348]" />
+          <span className="font-medium text-[#E3EBF2]">Doppler drift cadence (Δf / Δt)</span>
         </div>
-        <div className="text-[#9A9C96] font-mono text-[11px]">
+        <div className="text-[#6A7E8F] font-mono text-[11px]">
           Drift:{' '}
-          <span className="text-[#D4864A]">
+          <span className="text-[#C19348]">
             {driftRateHzPerSec > 0 ? `+${driftRateHzPerSec}` : driftRateHzPerSec} Hz/s
           </span>
         </div>
@@ -54,16 +54,16 @@ export function DriftRateChart({
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1E221F" opacity={0.8} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#213240" opacity={0.6} />
             <XAxis
               dataKey="timeOffsetSec"
-              stroke="#9A9C96"
-              tick={{ fill: '#9A9C96', fontSize: 10 }}
+              stroke="#6A7E8F"
+              tick={{ fill: '#6A7E8F', fontSize: 10, fontFamily: 'var(--font-data)' }}
               tickFormatter={(v: number) => `${v}s`}
             />
             <YAxis
-              stroke="#9A9C96"
-              tick={{ fill: '#9A9C96', fontSize: 10 }}
+              stroke="#6A7E8F"
+              tick={{ fill: '#6A7E8F', fontSize: 10, fontFamily: 'var(--font-data)' }}
               tickFormatter={(v: number) => `${v} Hz`}
             />
             <Tooltip
@@ -71,14 +71,14 @@ export function DriftRateChart({
                 if (!active || !payload || !payload.length) return null;
                 const pt = payload[0].payload as DriftDataPoint;
                 return (
-                  <div className="rounded-[2px] border border-[#262C28] bg-[#1A1E1B] p-2.5 shadow-md">
-                    <p className="text-[11px] text-[#9A9C96] font-sans">
+                  <div className="rounded-[2px] border border-[#213240] bg-[#131E27] p-2.5 shadow-md">
+                    <p className="text-[11px] text-[#6A7E8F] font-sans">
                       Cadence step: {pt.timeOffsetSec}s
                     </p>
-                    <p className="font-medium text-[#D4864A] font-mono">
+                    <p className="font-medium text-[#C19348] font-mono">
                       Offset: {pt.frequencyOffsetHz} Hz
                     </p>
-                    <p className="text-[#E6E4DD] font-mono text-xs">SNR: {pt.snr} dB</p>
+                    <p className="text-[#E3EBF2] font-mono text-xs">SNR: {pt.snr} dB</p>
                   </div>
                 );
               }}
@@ -86,10 +86,10 @@ export function DriftRateChart({
             <Line
               type="monotone"
               dataKey="frequencyOffsetHz"
-              stroke="#D4864A"
+              stroke="#C19348"
               strokeWidth={1.3}
-              dot={{ r: 2, fill: '#D4864A' }}
-              activeDot={{ r: 3.5, stroke: '#0F1110', strokeWidth: 1.5 }}
+              dot={{ r: 2, fill: '#C19348' }}
+              activeDot={{ r: 3.5, stroke: '#0D141A', strokeWidth: 1.5 }}
             />
           </LineChart>
         </ResponsiveContainer>

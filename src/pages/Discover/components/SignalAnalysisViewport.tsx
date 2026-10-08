@@ -60,7 +60,7 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
       const t = (now - startTime) * 0.001;
       const { stage: currentStage } = stateRef.current;
 
-      const paddingLeft = 48;
+      const paddingLeft = 52;
       const paddingRight = 24;
       const paddingTop = 20;
       const paddingBottom = 28;
@@ -69,16 +69,16 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
       const cy = paddingTop + plotH * 0.5;
 
-      // 1. Clear Background
-      ctx.fillStyle = '#0F1110';
+      // 1. Instrument Background (#0D141A)
+      ctx.fillStyle = '#0D141A';
       ctx.fillRect(0, 0, width, height);
 
-      // Plot Area Fill
-      ctx.fillStyle = '#121513';
+      // Plot Area Fill (#111A22)
+      ctx.fillStyle = '#111A22';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 2. Reticle Grid
-      ctx.strokeStyle = '#1E221F';
+      ctx.strokeStyle = '#1D2A37';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -105,11 +105,11 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
       const isSearch = currentStage === 'search';
       const isRankOrComplete = currentStage === 'rank' || currentStage === 'complete';
 
-      // Waveform display during prepare
+      // Waveform display during prepare (Observatory Blue)
       if (isPrepare) {
         ctx.save();
-        ctx.strokeStyle = '#D4864A';
-        ctx.lineWidth = 1.3;
+        ctx.strokeStyle = '#5C89B7';
+        ctx.lineWidth = 1.4;
 
         ctx.beginPath();
         for (let x = 0; x <= plotW; x += 2) {
@@ -158,19 +158,22 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
               let cb: number;
 
               if (cl < 0.4) {
-                cr = Math.floor(18 + 10 * cl);
-                cg = Math.floor(22 + 20 * cl);
-                cb = Math.floor(20 + 15 * cl);
+                // Dark midnight to observatory blue
+                cr = Math.floor(13 + 30 * cl);
+                cg = Math.floor(20 + 60 * cl);
+                cb = Math.floor(26 + 100 * cl);
               } else if (cl < 0.8) {
+                // Observatory blue to sky cyan
                 const f = (cl - 0.4) / 0.4;
-                cr = Math.floor(40 + 140 * f);
-                cg = Math.floor(45 + 80 * f);
-                cb = Math.floor(40 + 20 * f);
+                cr = Math.floor(25 + 60 * f);
+                cg = Math.floor(44 + 90 * f);
+                cb = Math.floor(66 + 115 * f);
               } else {
+                // Peak highlight to solar gold
                 const f = (cl - 0.8) / 0.2;
-                cr = Math.floor(180 + 55 * f);
-                cg = Math.floor(125 + 100 * f);
-                cb = Math.floor(60 + 140 * f);
+                cr = Math.floor(85 + 110 * f);
+                cg = Math.floor(134 + 60 * f);
+                cb = Math.floor(181 - 70 * f);
               }
 
               ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
@@ -186,7 +189,7 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
         ctx.restore();
       }
 
-      // Anomaly isolation bracket during search, rank, and complete
+      // Anomaly isolation bracket during search, rank, and complete (Solar Gold #C19348)
       if (isSearch || isRankOrComplete) {
         ctx.save();
         const bx = paddingLeft + plotW * 0.42;
@@ -194,8 +197,8 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
         const by = paddingTop + plotH * 0.32;
         const bh = plotH * 0.34;
 
-        ctx.strokeStyle = '#D4864A';
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = '#C19348';
+        ctx.lineWidth = 1.3;
         const cLen = 10;
 
         // Top-left
@@ -233,8 +236,8 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
         ctx.stroke();
 
         // Clean label
-        ctx.font = '10px Inter, sans-serif';
-        ctx.fillStyle = '#D4864A';
+        ctx.font = '500 11px "Source Sans 3", sans-serif';
+        ctx.fillStyle = '#C19348';
         ctx.textAlign = 'left';
         ctx.fillText(
           isRankOrComplete ? 'Candidate signal isolated' : 'Anomaly detected',
@@ -246,13 +249,13 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
       }
 
       // Outer Plot Border
-      ctx.strokeStyle = '#262C28';
+      ctx.strokeStyle = '#213240';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Clean Scientific Axes
-      ctx.fillStyle = '#9A9C96';
-      ctx.font = '10px Inter, sans-serif';
+      ctx.fillStyle = '#7C8E9E';
+      ctx.font = '10px "IBM Plex Mono", monospace';
 
       // Frequency axis (Y)
       const f0 = observation.frequencyMHz;
@@ -280,13 +283,13 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
   }, [observation]);
 
   return (
-    <div className="rounded-[2px] border border-[#262C28] bg-[#0F1110] overflow-hidden select-none font-sans">
-      <div className="flex items-center justify-between border-b border-[#262C28] bg-[#141715] px-3.5 py-2 text-xs">
-        <span className="font-medium text-[#E6E4DD]">Time–frequency spectrogram</span>
-        <span className="text-[11px] text-[#9A9C96] font-mono">{observation.name}</span>
+    <div className="rounded-[3px] border border-[#213240] bg-[#0D141A] overflow-hidden select-none font-sans shadow-md">
+      <div className="flex items-center justify-between border-b border-[#213240] bg-[#111A22] px-4 py-2.5 text-xs">
+        <span className="font-semibold text-[#E3EBF2]">Time–frequency spectrogram</span>
+        <span className="text-[11px] text-[#7C8E9E] font-mono">{observation.name}</span>
       </div>
 
-      <div ref={containerRef} className="relative h-[220px] sm:h-[260px] w-full bg-[#0F1110]">
+      <div ref={containerRef} className="relative h-[220px] sm:h-[260px] w-full bg-[#0D141A]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>
     </div>

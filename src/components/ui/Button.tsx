@@ -42,21 +42,21 @@ export function Button({
   };
 
   const variantStyles: Record<ButtonVariant, string> = {
-    // Primary: Key action (Analyze, Investigate, Open Record) - restrained warm copper
+    // Primary: Key action (Analyze, Investigate, Open Record) - confident observatory blue
     primary:
-      'bg-[#141715] text-[#D4864A] border border-[#D4864A]/70 hover:bg-[#1A1E1B] hover:border-[#D4864A] hover:text-[#E0955B] active:bg-[#0F1110]',
-    // Secondary: Standard action (Load, Inspect, Reset)
+      'bg-[#376A9B] text-white border border-[#2E5983] hover:bg-[#2F5E8C] active:bg-[#254C72] shadow-2xs font-semibold',
+    // Secondary: Standard action (Load, Inspect, Reset) - quiet paper card surface
     secondary:
-      'bg-[#141715] text-[#E6E4DD] border border-[#262C28] hover:border-[#363C38] hover:bg-[#1A1E1B] active:bg-[#0F1110]',
+      'bg-[#FAF8F5] text-[#17202A] border border-[#D6D2C9] hover:bg-[#EAE7E0] hover:border-[#BCB6A8] active:bg-[#E2DFD7]',
     // Tertiary: Quiet utilities
     tertiary:
-      'bg-transparent text-[#9A9C96] border border-[#262C28] hover:text-[#E6E4DD] hover:border-[#363C38] hover:bg-[#141715] active:bg-[#0F1110]',
+      'bg-transparent text-[#56616A] border border-[#D6D2C9] hover:text-[#17202A] hover:bg-[#EAE7E0] hover:border-[#BCB6A8] active:bg-[#E2DFD7]',
     outline:
-      'bg-transparent text-[#9A9C96] border border-[#262C28] hover:text-[#E6E4DD] hover:border-[#363C38] hover:bg-[#141715] active:bg-[#0F1110]',
+      'bg-transparent text-[#17202A] border border-[#D6D2C9] hover:bg-[#EAE7E0] hover:border-[#BCB6A8] active:bg-[#E2DFD7]',
     ghost:
-      'bg-transparent text-[#9A9C96] border border-transparent hover:text-[#E6E4DD] hover:bg-[#141715] active:bg-[#0F1110]',
+      'bg-transparent text-[#56616A] border border-transparent hover:text-[#17202A] hover:bg-[#EAE7E0] active:bg-[#E2DFD7]',
     danger:
-      'bg-[#141715] text-[#C84A4A] border border-[#C84A4A]/40 hover:border-[#C84A4A] hover:bg-[#1C1111] active:bg-[#0F1110]',
+      'bg-[#FDF0F0] text-[#B64B4B] border border-[#E8B4B4] hover:bg-[#FBE4E4] active:bg-[#F9D6D6]',
   };
 
   const isDisabled = disabled || state === 'loading';
@@ -64,8 +64,8 @@ export function Button({
   return (
     <button
       className={cn(
-        'group relative inline-flex items-center justify-center rounded-[2px] font-sans font-medium text-xs tracking-normal transition-colors duration-150 select-none outline-none cursor-pointer',
-        'focus-visible:ring-1 focus-visible:ring-[#D4864A] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0F1110]',
+        'group relative inline-flex items-center justify-center rounded-[3px] font-sans font-medium text-xs tracking-normal transition-colors duration-150 select-none outline-none cursor-pointer',
+        'focus-visible:ring-1 focus-visible:ring-[#376A9B] focus-visible:ring-offset-1 focus-visible:ring-offset-[#F4F1EA]',
         'disabled:opacity-40 disabled:pointer-events-none',
         sizeStyles[size],
         variantStyles[variant],
@@ -76,7 +76,12 @@ export function Button({
     >
       {/* State: Loading */}
       {state === 'loading' && (
-        <span className="inline-flex items-center gap-1.5 text-[#D4864A]">
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5',
+            variant === 'primary' ? 'text-white' : 'text-[#376A9B]'
+          )}
+        >
           <span>{loadingText || children || 'Loading...'}</span>
           <span className="inline-block animate-spin font-sans text-xs">◌</span>
         </span>
@@ -84,7 +89,7 @@ export function Button({
 
       {/* State: Success */}
       {state === 'success' && (
-        <span className="inline-flex items-center gap-1.5 text-[#529E72]">
+        <span className="inline-flex items-center gap-1.5 text-[#3D7D54]">
           <span>{successText || 'Complete'}</span>
           <Check className="h-3.5 w-3.5" />
         </span>
@@ -92,7 +97,7 @@ export function Button({
 
       {/* State: Error */}
       {state === 'error' && (
-        <span className="inline-flex items-center gap-1.5 text-[#C84A4A]">
+        <span className="inline-flex items-center gap-1.5 text-[#B64B4B]">
           <span>{errorText || 'Error'}</span>
           <X className="h-3.5 w-3.5" />
         </span>
@@ -108,7 +113,7 @@ export function Button({
           <div className="flex flex-col items-start leading-tight">
             <span>{children}</span>
             {metadata && (
-              <span className="text-[10px] text-[#9A9C96] font-mono font-normal tracking-tight -mt-0.5">
+              <span className="text-[10px] text-[#7E8B96] font-mono font-normal tracking-tight -mt-0.5">
                 {metadata}
               </span>
             )}

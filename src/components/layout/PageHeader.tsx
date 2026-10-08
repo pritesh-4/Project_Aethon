@@ -10,22 +10,22 @@ export interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, badge, actions, category }: PageHeaderProps) {
   return (
-    <div className="mb-6 border-b border-[#262C28] pb-4">
+    <div className="mb-6 border-b border-[#D6D2C9] pb-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           {(category || badge) && (
             <div className="flex items-center gap-2 mb-1.5">
               {category && (
-                <span className="font-sans text-xs font-medium text-[#9A9C96]">{category}</span>
+                <span className="font-sans text-xs font-medium text-[#7E8B96]">{category}</span>
               )}
               {badge}
             </div>
           )}
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#E6E4DD] font-sans">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#17202A] font-sans">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-1 text-sm text-[#9A9C96] font-sans max-w-3xl leading-relaxed">
+            <p className="mt-1 text-sm text-[#56616A] font-sans max-w-3xl leading-relaxed">
               {subtitle}
             </p>
           )}

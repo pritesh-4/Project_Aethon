@@ -16,19 +16,19 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
     switch (priority) {
       case 'HIGH':
         return (
-          <span className="font-mono text-[10px] uppercase tracking-wider text-[#D4864A] bg-[#221B16] px-1.5 py-0.5 rounded-[2px] border border-[#D4864A]/30">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[#9E6E20] bg-[#FDF6E9] px-2 py-0.5 rounded-[2px] border border-[#E8CFA0] font-semibold">
             HIGH
           </span>
         );
       case 'MEDIUM':
         return (
-          <span className="font-mono text-[10px] uppercase tracking-wider text-[#9A9C96] bg-[#181B19] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[#56616A] bg-[#EAE7E0] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
             MED
           </span>
         );
       case 'LOW':
         return (
-          <span className="font-mono text-[10px] uppercase tracking-wider text-[#666963] bg-[#121413] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[#76828D] bg-[#F4F1EA] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
             LOW
           </span>
         );
@@ -37,38 +37,38 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
 
   return (
     <section className="space-y-3 select-none font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#242825] pb-2.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#D6D2C9] pb-2.5">
         <div>
-          <h3 className="text-sm font-medium text-[#E6E4DD]">Detected Signals</h3>
-          <p className="text-xs text-[#848780]">
+          <h3 className="text-sm font-semibold text-[#17202A]">Detected Signals</h3>
+          <p className="text-xs text-[#56616A]">
             Candidate carriers screened in observation {observationId || ''}
           </p>
         </div>
 
         <Link to="/candidates">
-          <Button variant="ghost" size="sm" icon={<ArrowRight className="h-3 w-3" />}>
+          <Button variant="ghost" size="sm" icon={<ArrowRight className="h-3.5 w-3.5" />}>
             Candidate Review Ledger
           </Button>
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 border border-[#242825] bg-[#101211] rounded-[2px] overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-[#242825]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 border border-[#D6D2C9] bg-[#FAF8F5] rounded-[3px] overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-[#D6D2C9] shadow-xs">
         {/* Candidate Ranking List / Table (8 cols) */}
         <div className="lg:col-span-8 overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[#242825] bg-[#0C0E0D] text-[10px] font-mono uppercase tracking-wider text-[#767973]">
-                <th className="py-2.5 px-3 font-normal hidden sm:table-cell">Rank</th>
-                <th className="py-2.5 px-3 font-normal">Identifier</th>
-                <th className="py-2.5 px-3 font-normal hidden sm:table-cell">Frequency</th>
-                <th className="py-2.5 px-3 font-normal text-right hidden md:table-cell">
+              <tr className="border-b border-[#D6D2C9] bg-[#EAE7E0] text-[11px] font-mono uppercase tracking-wider text-[#56616A]">
+                <th className="py-2.5 px-3.5 font-normal hidden sm:table-cell">Rank</th>
+                <th className="py-2.5 px-3.5 font-normal">Identifier</th>
+                <th className="py-2.5 px-3.5 font-normal hidden sm:table-cell">Frequency</th>
+                <th className="py-2.5 px-3.5 font-normal text-right hidden md:table-cell">
                   Drift Rate
                 </th>
-                <th className="py-2.5 px-3 font-normal text-center">Priority</th>
-                <th className="py-2.5 px-3 font-normal text-right">Inspect</th>
+                <th className="py-2.5 px-3.5 font-normal text-center">Priority</th>
+                <th className="py-2.5 px-3.5 font-normal text-right">Inspect</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1D211F]">
+            <tbody className="divide-y divide-[#D6D2C9]">
               {candidates.map((cand) => {
                 const isSelected = cand.id === selectedCandidate.id;
 
@@ -84,40 +84,40 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
                         setSelectedCandidate(cand);
                       }
                     }}
-                    className={`transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] focus-visible:ring-inset ${
+                    className={`transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] focus-visible:ring-inset ${
                       isSelected
-                        ? 'bg-[#181B19] text-[#E6E4DD]'
-                        : 'hover:bg-[#141615] text-[#9A9C96]'
+                        ? 'bg-[#EAE7E0] text-[#17202A] border-l-2 border-l-[#376A9B]'
+                        : 'hover:bg-[#F4F1EA] text-[#56616A]'
                     }`}
                   >
-                    <td className="py-2.5 px-3 font-mono text-[#666963] hidden sm:table-cell">
+                    <td className="py-3 px-3.5 font-mono text-[#76828D] hidden sm:table-cell">
                       0{cand.rank}
                     </td>
-                    <td className="py-2.5 px-3 font-mono font-medium text-[#E6E4DD]">
-                      <div className="flex items-center gap-1.5">
-                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#D4864A]" />}
+                    <td className="py-3 px-3.5 font-mono font-medium text-[#17202A]">
+                      <div className="flex items-center gap-2">
+                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#376A9B]" />}
                         <span>{cand.id}</span>
                       </div>
-                      <div className="sm:hidden text-[10px] text-[#848780] font-normal">
+                      <div className="sm:hidden text-[11px] text-[#76828D] font-normal">
                         {cand.frequencyMHz.toFixed(3)} MHz
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 font-mono text-[#C9C8C0] hidden sm:table-cell">
+                    <td className="py-3 px-3.5 font-mono text-[#17202A] hidden sm:table-cell">
                       {cand.frequencyMHz.toFixed(3)} MHz
                     </td>
-                    <td className="py-2.5 px-3 font-mono text-right text-[#9A9C96] hidden md:table-cell">
+                    <td className="py-3 px-3.5 font-mono text-right text-[#56616A] hidden md:table-cell">
                       {cand.driftRateHzPerSec > 0
                         ? `+${cand.driftRateHzPerSec}`
                         : cand.driftRateHzPerSec}{' '}
                       Hz/s
                     </td>
-                    <td className="py-2.5 px-3 text-center">{getPriorityTag(cand.priority)}</td>
-                    <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3 px-3.5 text-center">{getPriorityTag(cand.priority)}</td>
+                    <td className="py-3 px-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                       <Link to={`/analysis/${cand.id}`}>
                         <Button
                           variant="ghost"
                           size="sm"
-                          icon={<ExternalLink className="h-3 w-3" />}
+                          icon={<ExternalLink className="h-3.5 w-3.5" />}
                         >
                           <span className="sr-only">Inspect {cand.id}</span>
                         </Button>
@@ -131,33 +131,33 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
         </div>
 
         {/* Selected Candidate Quick Review Inspector (4 cols) */}
-        <div className="lg:col-span-4 p-4 flex flex-col justify-between bg-[#0E100F] space-y-4">
+        <div className="lg:col-span-4 p-4 flex flex-col justify-between bg-[#F4F1EA] space-y-4">
           <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-[#242825] pb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-[#767973]">
+            <div className="flex items-center justify-between border-b border-[#D6D2C9] pb-2">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-[#76828D]">
                 Candidate Profile
               </span>
               {getPriorityTag(selectedCandidate.priority)}
             </div>
 
             <div>
-              <span className="text-sm font-semibold text-[#D4864A] font-mono">
+              <span className="text-base font-semibold text-[#17202A] font-mono">
                 {selectedCandidate.id}
               </span>
-              <p className="text-xs text-[#9A9C96] mt-0.5">{selectedCandidate.targetName}</p>
+              <p className="text-xs text-[#56616A] mt-0.5">{selectedCandidate.targetName}</p>
             </div>
 
             {/* Ruled Telemetry List */}
-            <div className="divide-y divide-[#1D211F] border-y border-[#242825] text-xs">
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-[11px] font-mono text-[#767973]">Frequency</span>
-                <span className="font-mono text-[#E6E4DD]">
+            <div className="divide-y divide-[#D6D2C9] border-y border-[#D6D2C9] text-xs">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-[11px] font-mono text-[#76828D]">Frequency</span>
+                <span className="font-mono text-[#17202A] font-medium">
                   {selectedCandidate.frequencyMHz.toFixed(3)} MHz
                 </span>
               </div>
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-[11px] font-mono text-[#767973]">Drift rate</span>
-                <span className="font-mono text-[#D4864A]">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-[11px] font-mono text-[#76828D]">Drift rate</span>
+                <span className="font-mono text-[#376A9B] font-medium">
                   {selectedCandidate.driftRateHzPerSec} Hz/s
                 </span>
               </div>
@@ -165,18 +165,23 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
 
             {/* Scientific Explanation */}
             <div className="space-y-1">
-              <span className="block text-[10px] font-mono uppercase tracking-wider text-[#767973]">
+              <span className="block text-[11px] font-mono uppercase tracking-wider text-[#76828D]">
                 Screening Notes
               </span>
-              <p className="text-xs text-[#9A9C96] leading-relaxed">
+              <p className="text-xs text-[#56616A] leading-relaxed">
                 {selectedCandidate.explanation.persistenceReason}
               </p>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-[#242825]">
+          <div className="pt-3 border-t border-[#D6D2C9]">
             <Link to={`/analysis/${selectedCandidate.id}`} className="block w-full">
-              <Button variant="primary" size="sm" withArrow className="w-full text-xs">
+              <Button
+                variant="primary"
+                size="sm"
+                withArrow
+                className="w-full text-xs font-semibold"
+              >
                 Inspect candidate in detail
               </Button>
             </Link>

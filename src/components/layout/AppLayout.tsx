@@ -6,22 +6,22 @@ export function AppLayout() {
   const location = useLocation();
   const isLanding = location.pathname === '/';
 
-  // Landing Page: preserve full-bleed scroll narrative intact
+  // Landing Page: Full-bleed astronomical prologue
   if (isLanding) {
     return (
-      <div className="min-h-screen bg-[#0F1110] text-[#E6E4DD] flex flex-col font-sans selection:bg-[#D4864A]/25 selection:text-[#E6E4DD]">
+      <div className="min-h-screen bg-[#0D141A] text-[#E3EBF2] flex flex-col font-sans selection:bg-[#376A9B]/30 selection:text-[#E3EBF2]">
         <Outlet />
         <Toaster
           theme="dark"
           position="bottom-right"
           toastOptions={{
             style: {
-              background: '#141715',
-              border: '1px solid #262C28',
-              color: '#E6E4DD',
-              fontFamily: 'Inter, sans-serif',
+              background: '#131E27',
+              border: '1px solid #213240',
+              color: '#E3EBF2',
+              fontFamily: "'Source Sans 3', sans-serif",
               fontSize: '12px',
-              borderRadius: '2px',
+              borderRadius: '3px',
             },
           }}
         />
@@ -29,26 +29,27 @@ export function AppLayout() {
     );
   }
 
-  // Workstation Shell: TopSystemBar + Sidebar Rail + Application Content
+  // Workstation Shell: Research Desk Workspace
   return (
-    <>
+    <div className="min-h-screen bg-[#F4F1EA] text-[#17202A] flex flex-col font-sans selection:bg-[#376A9B]/15 selection:text-[#17202A]">
       <AppShell>
         <Outlet />
       </AppShell>
       <Toaster
-        theme="dark"
+        theme="light"
         position="bottom-right"
         toastOptions={{
           style: {
-            background: '#141715',
-            border: '1px solid #262C28',
-            color: '#E6E4DD',
-            fontFamily: 'Inter, sans-serif',
+            background: '#FAF8F5',
+            border: '1px solid #D6D2C9',
+            color: '#17202A',
+            fontFamily: "'Source Sans 3', sans-serif",
             fontSize: '12px',
-            borderRadius: '2px',
+            borderRadius: '3px',
+            boxShadow: '0 2px 8px rgba(23, 32, 42, 0.08)',
           },
         }}
       />
-    </>
+    </div>
   );
 }

@@ -41,12 +41,12 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
   };
 
   return (
-    <div className="select-none font-sans border-y border-[#242825] py-3.5 my-2">
-      <div className="flex items-center justify-between pb-3 text-xs">
-        <span className="font-mono text-[11px] uppercase tracking-wider text-[#9A9C96]">
+    <div className="select-none font-sans border border-[#D6D2C9] bg-[#FAF8F5] rounded-[3px] p-4 my-2 shadow-xs">
+      <div className="flex items-center justify-between pb-3 border-b border-[#D6D2C9] text-xs">
+        <span className="font-mono text-[11px] uppercase tracking-wider text-[#76828D]">
           Execution Pipeline
         </span>
-        <span className="text-[11px] font-mono text-[#767973]">
+        <span className="text-[11px] font-mono text-[#56616A]">
           {stage === 'complete'
             ? 'Execution completed'
             : stage === 'idle'
@@ -55,7 +55,7 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#242825]">
+      <div className="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#D6D2C9] pt-3">
         {steps.map((step, idx) => {
           const status = getStepStatus(step.id);
           const isComplete = status === 'complete';
@@ -64,23 +64,23 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
           return (
             <div
               key={step.id}
-              className={`py-2 sm:py-0 px-0 sm:px-4 first:sm:pl-0 last:sm:pr-0 flex flex-col justify-between transition-colors`}
+              className="py-2 sm:py-0 px-0 sm:px-4 first:sm:pl-0 last:sm:pr-0 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] text-[#666963] font-mono">0{idx + 1}</span>
+                  <span className="text-[11px] text-[#76828D] font-mono">0{idx + 1}</span>
                   {isComplete ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#529E72] font-mono">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#3D7D54] font-mono">
                       <Check className="h-3 w-3" />
                       OK
                     </span>
                   ) : isActive ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#D4864A] font-mono">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#376A9B] font-mono">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       RUN
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-[#666963] font-mono">
+                    <span className="inline-flex items-center gap-1 text-[11px] text-[#76828D] font-mono">
                       <Circle className="h-2 w-2" />
                       IDLE
                     </span>
@@ -88,15 +88,15 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
                 </div>
 
                 <div
-                  className={`text-xs font-medium tracking-wide ${
-                    isActive ? 'text-[#D4864A]' : isComplete ? 'text-[#E6E4DD]' : 'text-[#767973]'
+                  className={`text-xs font-semibold tracking-normal ${
+                    isActive ? 'text-[#376A9B]' : isComplete ? 'text-[#17202A]' : 'text-[#76828D]'
                   }`}
                 >
                   {step.name}
                 </div>
               </div>
 
-              <p className="mt-1 text-[11px] text-[#848780] leading-snug">{step.desc}</p>
+              <p className="mt-1 text-[11px] text-[#56616A] leading-snug">{step.desc}</p>
             </div>
           );
         })}

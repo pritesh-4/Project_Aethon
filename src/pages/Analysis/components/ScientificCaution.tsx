@@ -20,20 +20,20 @@ export function ScientificCaution() {
   ];
 
   return (
-    <aside className="select-none">
+    <aside className="select-none font-sans">
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between py-3 text-left cursor-pointer group transition-colors outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] rounded-sm"
+        className="w-full flex items-center justify-between py-2.5 text-left cursor-pointer group transition-colors outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] rounded-sm"
       >
         <div className="flex items-center gap-2">
-          <AlertCircle className="h-3.5 w-3.5 text-[#D4864A] shrink-0" />
-          <span className="text-xs font-medium text-[#9A9C96] group-hover:text-[#E6E4DD] transition-colors">
+          <AlertCircle className="h-3.5 w-3.5 text-[#C19348] shrink-0" />
+          <span className="text-xs font-medium text-[#56616A] group-hover:text-[#17202A] transition-colors">
             Methodological uncertainty & research boundaries
           </span>
         </div>
         <ChevronDown
-          className={`h-3.5 w-3.5 text-[#666963] transition-transform duration-200 ${
+          className={`h-3.5 w-3.5 text-[#76828D] transition-transform duration-200 ${
             isExpanded ? 'rotate-180' : ''
           }`}
         />
@@ -41,13 +41,13 @@ export function ScientificCaution() {
 
       {isExpanded && (
         <div className="pb-2 space-y-3 pl-5.5">
-          <p className="text-[11px] text-[#666963] italic leading-relaxed">
+          <p className="text-xs text-[#56616A] italic font-serif leading-relaxed">
             "An anomaly is not an answer. It is a reason to look closer."
           </p>
           {cautions.map((c) => (
             <div key={c.heading} className="space-y-0.5">
-              <span className="text-xs font-medium text-[#E6E4DD]">{c.heading}</span>
-              <p className="text-[11px] text-[#9A9C96] leading-relaxed">{c.body}</p>
+              <span className="text-xs font-semibold text-[#17202A]">{c.heading}</span>
+              <p className="text-[11px] text-[#56616A] leading-relaxed">{c.body}</p>
             </div>
           ))}
         </div>

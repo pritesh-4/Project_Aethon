@@ -20,23 +20,23 @@ export function SystemStatus({
     { dot: string; text: string; defaultLabel: string }
   > = {
     online: {
-      dot: 'bg-[#9A9C96]',
-      text: 'text-[#E6E4DD]',
+      dot: 'bg-[#7E8B96]',
+      text: 'text-[#17202A]',
       defaultLabel: 'Online',
     },
     ready: {
-      dot: 'bg-[#529E72]',
-      text: 'text-[#529E72]',
+      dot: 'bg-[#3D7D54]',
+      text: 'text-[#3D7D54]',
       defaultLabel: 'Ready',
     },
     analyzing: {
-      dot: 'bg-[#D4864A]',
-      text: 'text-[#D4864A]',
+      dot: 'bg-[#376A9B]',
+      text: 'text-[#376A9B]',
       defaultLabel: 'Analyzing',
     },
     offline: {
-      dot: 'bg-[#666963]',
-      text: 'text-[#9A9C96]',
+      dot: 'bg-[#A3ADB6]',
+      text: 'text-[#7E8B96]',
       defaultLabel: 'Offline',
     },
   };

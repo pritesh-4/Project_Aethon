@@ -1,130 +1,114 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Surface palette: Deep graphite / charcoal / mineral */
-  --color-bg-base: #0f1110;
-  --color-surface-base: #141715;
-  --color-surface-elevated: #1a1e1b;
-  --color-border-subtle: #1c211e;
-  --color-border-medium: #262c28;
-  --color-border-focus: #d4864a;
-  --color-text-primary: #e6e4dd;
-  --color-text-secondary: #9a9c96;
-  --color-text-muted: #6b706a;
+  /* ========================================================
+     AETHON — REFOUNDED DESIGN SYSTEM TOKENS
+     Direction: Hybrid Scientific Editorial + Observatory Instrument
+     ======================================================== */
 
-  /* Primary scientific interaction accent: Muted warm copper / burnt amber */
-  --color-accent-copper: #d4864a;
-  --color-accent-amber: #d4864a;
-  --color-status-amber: #d4864a;
-  --color-status-green: #529e72;
-  --color-status-red: #c84a4a;
-
-  /* Unified observatory semantic aliases */
-  --color-obs-bg: #0f1110;
-  --color-obs-surface: #141715;
-  --color-obs-surface-elevated: #1a1e1b;
-  --color-obs-panel: #141715;
-  --color-obs-border: #262c28;
-  --color-obs-border-subtle: #1c211e;
-  --color-obs-border-focus: #d4864a;
-
-  /* Replace sci-fi cyan with restrained copper & mineral warm white */
-  --color-obs-cyan: #d4864a;
-  --color-obs-cyan-light: #e0955b;
-  --color-obs-cyan-dim: #231a14;
-  --color-obs-blue: #d4864a;
-  --color-obs-teal: #d4864a;
-  --color-obs-indigo: #9a9c96;
-
-  --color-obs-success: #529e72;
-  --color-obs-warning: #d4864a;
-  --color-obs-critical: #c84a4a;
-  --color-obs-info: #d4864a;
-
-  /* Mineral Graphite & Slate palette normalization */
-  --color-slate-950: #0f1110;
-  --color-slate-900: #141715;
-  --color-slate-850: #171b19;
-  --color-slate-800: #232825;
-  --color-slate-700: #313733;
-  --color-slate-600: #4b534e;
-  --color-slate-500: #6b706a;
-  --color-slate-400: #9a9c96;
-  --color-slate-300: #c8c7bf;
-  --color-slate-200: #e6e4dd;
-  --color-slate-100: #f2f1ec;
-
-  /* Remap cyan to warm copper / restrained signal accent */
-  --color-cyan-400: #d4864a;
-  --color-cyan-300: #e0955b;
-  --color-cyan-500: #d4864a;
-  --color-cyan-600: #b9683d;
-  --color-cyan-950: #191410;
-  --color-cyan-900: #231a14;
-  --color-cyan-800: #332319;
-
-  /* Remap emerald to quiet laboratory sage green */
-  --color-emerald-400: #529e72;
-  --color-emerald-500: #529e72;
-  --color-emerald-300: #6cb68b;
-  --color-emerald-950: #111a14;
-  --color-emerald-900: #16241c;
-  --color-emerald-800: #1e3327;
-
-  /* Warm amber / review accent */
-  --color-amber-400: #d4864a;
-  --color-amber-500: #d4864a;
-  --color-amber-300: #e59d64;
-  --color-amber-950: #1c1510;
-  --color-amber-900: #281d14;
-  --color-amber-800: #3c2a1c;
-
-  /* Error / Flagged palette */
-  --color-rose-400: #c84a4a;
-  --color-rose-500: #c84a4a;
-  --color-rose-300: #dd6262;
-  --color-rose-950: #1c1111;
-  --color-rose-900: #291616;
-  --color-rose-800: #3d1e1e;
-
+  /* Typography System */
   --font-sans:
-    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    'Source Sans 3', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-ui:
+    'Source Sans 3', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-editorial: 'Newsreader', Georgia, Cambria, 'Times New Roman', serif;
+  --font-serif: 'Newsreader', Georgia, Cambria, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-data: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Sharp architectural geometry */
+  /* Environment 1: The Research Workspace (Warm Paper / Mineral Desk) */
+  --color-canvas: #f4f1ea;
+  --color-canvas-subtle: #ece8e1;
+  --color-surface: #eae7e0;
+  --color-surface-card: #faf8f5;
+  --color-surface-elevated: #faf8f5;
+  --color-surface-hover: #e2dfd7;
+  --color-surface-sunken: #e5e1d8;
+
+  /* Workspace Inks */
+  --color-ink: #17202a;
+  --color-ink-secondary: #56616a;
+  --color-ink-muted: #7e8b96;
+  --color-ink-faint: #a3adb6;
+
+  /* Workspace Structural Rules & Borders */
+  --color-border-subtle: #e4e1d9;
+  --color-border-default: #d6d2c9;
+  --color-border-medium: #c7c2b6;
+  --color-border-strong: #a8a295;
+
+  /* Primary Scientific Accent: Restrained Observatory Blue */
+  --color-scientific: #376a9b;
+  --color-scientific-focus: #5c89b7;
+  --color-scientific-subtle: #eaf1f8;
+  --color-scientific-border: #b6cde2;
+
+  /* Attention / Anomaly / Candidate: Muted Solar Gold */
+  --color-attention: #c19348;
+  --color-attention-subtle: #fdf8ee;
+  --color-attention-border: #e8d2a3;
+
+  /* Error / Flagged: Restrained True Red */
+  --color-error: #b64b4b;
+  --color-error-subtle: #fdf0f0;
+  --color-error-border: #e8b4b4;
+
+  /* Verified / Healthy: Restrained Laboratory Sage Green */
+  --color-verified: #3d7d54;
+  --color-verified-subtle: #eff7f2;
+  --color-verified-border: #b2d8c0;
+
+  /* Environment 2: The Scientific Instrument (Deep Midnight Viewport) */
+  --color-instrument: #0d141a;
+  --color-instrument-surface: #131e27;
+  --color-instrument-elevated: #182632;
+  --color-instrument-border: #213240;
+  --color-instrument-grid: rgba(86, 97, 106, 0.22);
+  --color-instrument-ink: #e3ebf2;
+  --color-instrument-muted: #6a7e8f;
+
+  /* Architectural Radii: Crisp & Precision-cut */
   --radius-xs: 2px;
   --radius-sm: 2px;
   --radius-md: 3px;
-  --radius-lg: 3px;
+  --radius-lg: 4px;
   --radius-xl: 4px;
-  --radius-2xl: 4px;
+  --radius-2xl: 6px;
 }
 
 :root {
-  color-scheme: dark;
-  --bg-primary: #0f1110;
-  --surface-primary: #141715;
-  --surface-secondary: #1a1e1b;
-  --border-primary: #262c28;
-  --border-subtle: #1c211e;
-  --border-medium: #313733;
-  --accent-copper: #d4864a;
-  --accent-amber: #d4864a;
-  --accent-red: #c84a4a;
-  --accent-green: #529e72;
-  --text-primary: #e6e4dd;
-  --text-secondary: #9a9c96;
-  --text-muted: #6b706a;
+  color-scheme: light;
+  --color-canvas: #f4f1ea;
+  --color-surface: #eae7e0;
+  --color-card: #faf8f5;
+  --color-ink: #17202a;
+  --color-ink-secondary: #56616a;
+  --color-ink-muted: #7e8b96;
+  --color-border: #d6d2c9;
+  --color-border-subtle: #e4e1d9;
+  --color-scientific: #376a9b;
+  --color-scientific-focus: #5c89b7;
+  --color-attention: #c19348;
+  --color-error: #b64b4b;
+  --color-verified: #3d7d54;
+  --color-instrument: #0d141a;
+  --color-instrument-surface: #131e27;
+  --color-instrument-border: #213240;
+
+  --font-ui: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+  --font-editorial: 'Newsreader', Georgia, serif;
+  --font-data: 'IBM Plex Mono', monospace;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Base form inputs normalization */
@@ -133,15 +117,16 @@ input[type='search'],
 input[type='number'],
 select,
 textarea {
-  background-color: var(--surface-primary);
-  border: 1px solid var(--border-primary);
-  color: var(--text-primary);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
   border-radius: 2px;
-  font-family: var(--font-sans);
+  font-family: var(--font-ui);
   font-size: 0.8125rem;
   transition:
     border-color 0.15s ease,
-    background-color 0.15s ease;
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 input[type='text']:focus,
@@ -150,18 +135,19 @@ input[type='number']:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--accent-copper);
+  border-color: var(--color-scientific);
+  box-shadow: 0 0 0 1px var(--color-scientific);
 }
 
 :focus-visible {
-  outline: 1px solid var(--accent-copper);
+  outline: 1px solid var(--color-scientific-focus);
   outline-offset: 1px;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.75;
+  color: var(--color-ink-muted);
+  opacity: 0.85;
 }
 
 /* Base table normalization */
@@ -171,46 +157,67 @@ table {
 }
 
 th {
-  font-family: var(--font-sans);
+  font-family: var(--font-ui);
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--color-ink-secondary);
 }
 
-/* Quiet laboratory backdrop rule grid */
-.observatory-grid-bg {
+/* Laboratory Desk Rule Grid */
+.research-desk-bg {
   background-image:
-    linear-gradient(to right, rgba(230, 228, 221, 0.015) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(230, 228, 221, 0.015) 1px, transparent 1px);
+    linear-gradient(to right, rgba(23, 32, 42, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(23, 32, 42, 0.03) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
-/* Code, IDs and numbers strictly monospace */
+/* Numerical and Scientific Data Typography */
 .num,
 .mono,
 [data-mono='true'] {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-feature-settings:
     'tnum' on,
     'zero' on;
 }
 
-/* Custom scrollbars for data panels */
+/* Editorial / Human Character Typography */
+.editorial,
+.serif,
+[data-editorial='true'] {
+  font-family: var(--font-editorial);
+}
+
+/* Custom scrollbars for clean desk panels */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f1110;
+  background: #eae7e0;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #232825;
+  background: #c7c2b6;
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #313733;
+  background: #a8a295;
+}
+
+/* Instrument dark viewport custom scrollbar */
+.instrument-viewport ::-webkit-scrollbar-track {
+  background: #0d141a;
+}
+
+.instrument-viewport ::-webkit-scrollbar-thumb {
+  background: #213240;
+  border-radius: 2px;
+}
+
+.instrument-viewport ::-webkit-scrollbar-thumb:hover {
+  background: #31495d;
 }
 
 /* Accessible reduced motion support */

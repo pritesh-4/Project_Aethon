@@ -205,7 +205,7 @@ export default function ArchivePage() {
 
   return (
     <PageTransition>
-      <div className="min-h-[calc(100vh-2.5rem)] bg-[#0F1110] text-[#E6E4DD] flex flex-col selection:bg-[#D4864A]/20 selection:text-[#D4864A]">
+      <div className="min-h-[calc(100vh-2.5rem)] bg-[#F4F1EA] text-[#17202A] flex flex-col selection:bg-[#376A9B]/20 selection:text-[#376A9B]">
         {/* 1. Header */}
         <ArchiveHeader stats={ARCHIVE_SUMMARY_STATS} />
 

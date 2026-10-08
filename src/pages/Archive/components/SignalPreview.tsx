@@ -84,7 +84,7 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
       const topCand = current.candidates[0];
       const driftSlope = topCand ? topCand.driftRateHzPerSec : -0.2;
 
-      const paddingLeft = 40;
+      const paddingLeft = 44;
       const paddingRight = 14;
       const paddingTop = 16;
       const paddingBottom = 26;
@@ -92,16 +92,16 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
       const plotW = Math.max(10, width - paddingLeft - paddingRight);
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
 
-      // Background
-      ctx.fillStyle = '#0F1110';
+      // Instrument Background (#0D141A)
+      ctx.fillStyle = '#0D141A';
       ctx.fillRect(0, 0, width, height);
 
-      // Plot Box
-      ctx.fillStyle = '#141715';
+      // Plot Box (#111A22)
+      ctx.fillStyle = '#111A22';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
-      // Grid
-      ctx.strokeStyle = 'rgba(154, 156, 150, 0.12)';
+      // Reticle Grid
+      ctx.strokeStyle = '#1D2A37';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -150,22 +150,21 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
             let cg: number;
             let cb: number;
 
-            // Restrained colormap: Charcoal -> Mineral ochre -> Copper -> Pale warm white
             if (cl < 0.35) {
               const factor = cl / 0.35;
-              cr = Math.floor(26 + 45 * factor);
-              cg = Math.floor(30 + 35 * factor);
-              cb = Math.floor(27 + 25 * factor);
+              cr = Math.floor(13 + 30 * factor);
+              cg = Math.floor(20 + 60 * factor);
+              cb = Math.floor(26 + 100 * factor);
             } else if (cl < 0.75) {
               const factor = (cl - 0.35) / 0.4;
-              cr = Math.floor(71 + 141 * factor);
-              cg = Math.floor(65 + 69 * factor);
-              cb = Math.floor(52 + 22 * factor);
+              cr = Math.floor(25 + 60 * factor);
+              cg = Math.floor(44 + 90 * factor);
+              cb = Math.floor(66 + 115 * factor);
             } else {
               const factor = (cl - 0.75) / 0.25;
-              cr = Math.floor(212 + 33 * factor);
-              cg = Math.floor(134 + 101 * factor);
-              cb = Math.floor(74 + 146 * factor);
+              cr = Math.floor(85 + 120 * factor);
+              cg = Math.floor(134 + 60 * factor);
+              cb = Math.floor(181 - 70 * factor);
             }
 
             ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
@@ -182,11 +181,11 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
         const ah = plotH * 0.42;
 
         ctx.save();
-        ctx.fillStyle = 'rgba(212, 134, 74, 0.06)';
+        ctx.fillStyle = 'rgba(193, 147, 72, 0.08)';
         ctx.fillRect(ax, ay, aw, ah);
 
         const cornerSize = 6;
-        ctx.strokeStyle = '#D4864A';
+        ctx.strokeStyle = '#C19348';
         ctx.lineWidth = 1.2;
 
         // Top-left
@@ -218,24 +217,25 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
         ctx.stroke();
 
         // Anomaly Label
-        ctx.font = '9px ui-monospace, SFMono-Regular, monospace';
-        ctx.fillStyle = '#D4864A';
+        ctx.font = '10px "Source Sans 3", sans-serif';
+        ctx.fillStyle = '#C19348';
         ctx.textAlign = 'left';
-        ctx.fillText(`Anomalous region`, ax + 4, ay - 3);
+        ctx.fillText(`Anomalous region`, ax + 4, ay - 4);
 
         ctx.textAlign = 'right';
-        ctx.fillText(`df/dt = ${driftSlope.toFixed(2)} Hz/s`, ax + aw - 4, ay - 3);
+        ctx.font = '9px "IBM Plex Mono", monospace';
+        ctx.fillText(`df/dt = ${driftSlope.toFixed(2)} Hz/s`, ax + aw - 4, ay - 4);
         ctx.restore();
       }
 
       // Outer Border
-      ctx.strokeStyle = '#242825';
+      ctx.strokeStyle = '#213240';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Axis Ticks
-      ctx.fillStyle = '#9A9C96';
-      ctx.font = '9px ui-monospace, SFMono-Regular, monospace';
+      ctx.fillStyle = '#7C8E9E';
+      ctx.font = '10px "IBM Plex Mono", monospace';
 
       // Left Frequency Axis
       ctx.textAlign = 'right';
@@ -245,13 +245,13 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
 
       // Bottom Time Axis
       ctx.textAlign = 'center';
-      ctx.fillText('T+00s', paddingLeft + 12, paddingTop + plotH + 11);
-      ctx.fillText(`T+${current.duration}s`, paddingLeft + plotW - 14, paddingTop + plotH + 11);
+      ctx.fillText('T+00s', paddingLeft + 12, paddingTop + plotH + 12);
+      ctx.fillText(`T+${current.duration}s`, paddingLeft + plotW - 14, paddingTop + plotH + 12);
 
       // Docked Signal Trace Line
       const traceY = paddingTop + plotH + 17;
       ctx.save();
-      ctx.strokeStyle = hasAnomaly ? '#D4864A' : '#666963';
+      ctx.strokeStyle = hasAnomaly ? '#5C89B7' : '#2B557A';
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let x = 0; x <= plotW; x += 2) {
@@ -277,11 +277,11 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
   }, [observation]);
 
   return (
-    <div className="rounded-[2px] border border-[#242825] bg-[#0F1110] overflow-hidden select-none">
+    <div className="rounded-[3px] border border-[#213240] bg-[#0D141A] overflow-hidden select-none shadow-xs">
       {/* Viewport Header */}
-      <div className="flex items-center justify-between border-b border-[#242825] bg-[#141715] px-3 py-1.5 text-xs text-[#9A9C96]">
-        <span className="flex items-center gap-1.5 font-medium text-[#E6E4DD]">
-          <Activity className="h-3 w-3 text-[#D4864A]" />
+      <div className="flex items-center justify-between border-b border-[#213240] bg-[#111A22] px-3.5 py-2 text-xs text-[#7C8E9E]">
+        <span className="flex items-center gap-1.5 font-semibold text-[#E3EBF2]">
+          <Activity className="h-3.5 w-3.5 text-[#376A9B]" />
           Spectral morphology
         </span>
 
@@ -289,18 +289,22 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
           type="button"
           aria-pressed={isAudioActive}
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
+          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] ${
             isAudioActive
-              ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
-              : 'border-[#242825] bg-[#1A1E1B] text-[#9A9C96] hover:text-[#E6E4DD]'
+              ? 'border-[#376A9B] bg-[#376A9B]/20 text-[#5C89B7]'
+              : 'border-[#213240] bg-[#1D2A37] text-[#7C8E9E] hover:text-[#E3EBF2]'
           }`}
         >
-          {isAudioActive ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
+          {isAudioActive ? (
+            <Volume2 className="h-3.5 w-3.5" />
+          ) : (
+            <VolumeX className="h-3.5 w-3.5" />
+          )}
           <span>{isAudioActive ? 'Monitoring' : 'Audio feed'}</span>
         </button>
       </div>
 
-      <div ref={containerRef} className="relative h-[150px] w-full bg-[#0F1110]">
+      <div ref={containerRef} className="relative h-[150px] w-full bg-[#0D141A]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>
     </div>

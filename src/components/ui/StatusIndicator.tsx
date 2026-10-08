@@ -19,38 +19,38 @@ export function StatusIndicator({
 }: StatusIndicatorProps) {
   const statusStyles: Record<SystemStatus, { led: string; text: string; defaultLabel: string }> = {
     online: {
-      led: 'bg-[#529E72]',
-      text: 'text-[#E6E4DD]',
+      led: 'bg-[#3D7D54]',
+      text: 'text-[#17202A]',
       defaultLabel: 'Online',
     },
     nominal: {
-      led: 'bg-[#529E72]',
-      text: 'text-[#E6E4DD]',
+      led: 'bg-[#3D7D54]',
+      text: 'text-[#17202A]',
       defaultLabel: 'Nominal',
     },
     active: {
-      led: 'bg-[#D4864A]',
-      text: 'text-[#D4864A]',
+      led: 'bg-[#376A9B]',
+      text: 'text-[#376A9B]',
       defaultLabel: 'Active',
     },
     warning: {
-      led: 'bg-[#D4864A]',
-      text: 'text-[#D4864A]',
+      led: 'bg-[#C19348]',
+      text: 'text-[#9E6E20]',
       defaultLabel: 'Attention',
     },
     critical: {
-      led: 'bg-[#C84A4A]',
-      text: 'text-[#C84A4A]',
+      led: 'bg-[#B64B4B]',
+      text: 'text-[#B64B4B]',
       defaultLabel: 'Anomaly detected',
     },
     calibrating: {
-      led: 'bg-[#D4864A]',
-      text: 'text-[#D4864A]',
+      led: 'bg-[#376A9B]',
+      text: 'text-[#376A9B]',
       defaultLabel: 'Calibrating',
     },
     standby: {
-      led: 'bg-[#6B706A]',
-      text: 'text-[#9A9C96]',
+      led: 'bg-[#76828D]',
+      text: 'text-[#56616A]',
       defaultLabel: 'Standby',
     },
   };
@@ -61,8 +61,8 @@ export function StatusIndicator({
   return (
     <div className={cn('inline-flex items-center gap-2 font-sans text-xs select-none', className)}>
       <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', current.led)} />
-      <span className={cn('font-medium', current.text)}>{displayLabel}</span>
-      {subtext && <span className="text-[#9A9C96] text-xs font-mono">{subtext}</span>}
+      <span className={cn('font-semibold', current.text)}>{displayLabel}</span>
+      {subtext && <span className="text-[#56616A] text-xs font-mono">{subtext}</span>}
     </div>
   );
 }

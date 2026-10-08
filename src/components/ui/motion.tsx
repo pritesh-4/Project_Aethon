@@ -33,16 +33,16 @@ interface PulseIndicatorProps {
 
 export function PulseIndicator({ status = 'active', label }: PulseIndicatorProps) {
   const colorMap = {
-    active: 'bg-[#D4864A]',
-    warning: 'bg-[#D4864A]',
-    critical: 'bg-[#C84A4A]',
-    calibrating: 'bg-[#9A9C96]',
+    active: 'bg-[#376A9B]',
+    warning: 'bg-[#C19348]',
+    critical: 'bg-[#B64B4B]',
+    calibrating: 'bg-[#76828D]',
   };
 
   return (
-    <span className="inline-flex items-center gap-2 font-sans text-xs text-[#9A9C96]">
+    <span className="inline-flex items-center gap-2 font-sans text-xs text-[#56616A]">
       <span className={`inline-block rounded-full h-1.5 w-1.5 shrink-0 ${colorMap[status]}`} />
-      {label && <span className="text-[#E6E4DD] font-medium">{label}</span>}
+      {label && <span className="text-[#17202A] font-semibold">{label}</span>}
     </span>
   );
 }
@@ -56,7 +56,7 @@ export function ObservatoryPanel({ children, className = '', ...props }: HTMLMot
       variants={panelVariants}
       initial="hidden"
       animate="visible"
-      className={`rounded-[2px] border border-[#262C28] bg-[#141715] p-4 transition-colors hover:border-[#313733] ${className}`}
+      className={`rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] p-4 transition-colors hover:border-[#B8B3A8] shadow-xs ${className}`}
       {...props}
     >
       {children}

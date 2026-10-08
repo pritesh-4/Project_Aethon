@@ -142,15 +142,17 @@ function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemPr
     >
       {/* Restrained tag */}
       {scene.tag && (
-        <p className="text-[11px] sm:text-xs font-mono tracking-widest text-[#9A9C96] uppercase mb-3">
+        <p className="text-[11px] sm:text-xs font-mono tracking-widest text-[#6A7E8F] uppercase mb-3">
           {scene.tag}
         </p>
       )}
 
-      {/* Primary Narrative Statement */}
+      {/* Primary Narrative Statement: Newsreader Serif for high-level editorial wonder */}
       <h2
-        className={`tracking-tight text-[#E6E4DD] leading-tight font-normal ${
-          isTerminal ? 'text-3xl sm:text-5xl md:text-6xl' : 'text-2xl sm:text-4xl md:text-5xl'
+        className={`tracking-tight text-[#E3EBF2] leading-tight ${
+          isTerminal
+            ? 'text-3xl sm:text-5xl md:text-6xl font-normal font-sans'
+            : 'text-2xl sm:text-4xl md:text-5xl font-serif italic font-normal'
         }`}
       >
         {scene.title}
@@ -158,15 +160,15 @@ function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemPr
 
       {/* Subtitle / Context phrase */}
       {scene.subtitle && (
-        <p className="mt-3 text-sm sm:text-base font-normal text-[#9A9C96] max-w-lg leading-relaxed">
+        <p className="mt-3 text-sm sm:text-base font-normal text-[#A6B7C6] max-w-lg leading-relaxed font-sans">
           {scene.subtitle}
         </p>
       )}
 
       {/* Technical Telemetry Tag (Scene 5) */}
       {scene.telemetryTag && (
-        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-[2px] bg-[#141715] border border-[#242825] text-[11px] font-mono text-[#D4864A]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
+        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-[2px] bg-[#131E27] border border-[#213240] text-[11px] font-mono text-[#C19348]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#C19348]" />
           <span>{scene.telemetryTag}</span>
         </div>
       )}
@@ -176,7 +178,7 @@ function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemPr
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             to="/observatory"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-[2px] bg-[#D4864A] text-[#0F1110] hover:bg-[#E0955B] transition-colors text-xs font-medium cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-[3px] bg-[#376A9B] text-white hover:bg-[#2F5E8C] transition-colors text-xs font-semibold cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5C89B7] shadow-sm"
           >
             <span>Enter the observatory</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -184,10 +186,10 @@ function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemPr
 
           <Link
             to="/candidates"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono text-[#9A9C96] hover:text-[#E6E4DD] border border-[#242825] bg-[#141715] hover:bg-[#1A1E1B] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] rounded-[2px]"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono text-[#A6B7C6] hover:text-[#E3EBF2] border border-[#213240] bg-[#131E27] hover:bg-[#1A2834] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5C89B7] rounded-[3px]"
           >
             <span>Candidate review ledger</span>
-            <ArrowRight className="h-3 w-3 text-[#D4864A]" />
+            <ArrowRight className="h-3 w-3 text-[#5C89B7]" />
           </Link>
         </div>
       )}
@@ -219,10 +221,10 @@ export function NarrativeOrchestrator({ scrollYProgress }: NarrativeOrchestrator
       {/* Gentle Initial Scroll Indicator */}
       <motion.div
         style={{ opacity: scrollHintOpacity }}
-        className="absolute bottom-10 inset-x-0 mx-auto flex flex-col items-center gap-1.5 text-[11px] text-[#9A9C96] font-mono pointer-events-none"
+        className="absolute bottom-10 inset-x-0 mx-auto flex flex-col items-center gap-1.5 text-[11px] text-[#6A7E8F] font-mono pointer-events-none"
       >
         <span>Scroll to explore</span>
-        <ChevronDown className="h-3.5 w-3.5 text-[#D4864A] animate-bounce" />
+        <ChevronDown className="h-3.5 w-3.5 text-[#5C89B7] animate-bounce" />
       </motion.div>
     </div>
   );

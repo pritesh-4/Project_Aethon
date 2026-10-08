@@ -28,13 +28,13 @@ export function IconButton({
 
   const variantStyles: Record<IconButtonVariant, string> = {
     primary:
-      'bg-[#141715] text-[#D4864A] border border-[#D4864A]/70 hover:bg-[#1A1E1B] hover:text-[#E0955B] active:bg-[#0F1110]',
+      'bg-[#376A9B] text-white border border-[#2E5983] hover:bg-[#2F5E8C] active:bg-[#254C72]',
     secondary:
-      'bg-[#141715] text-[#9A9C96] border border-[#262C28] hover:text-[#E6E4DD] hover:border-[#313733] hover:bg-[#1A1E1B] active:bg-[#0F1110]',
+      'bg-[#FAF8F5] text-[#56616A] border border-[#D6D2C9] hover:text-[#17202A] hover:border-[#BCB6A8] hover:bg-[#EAE7E0] active:bg-[#E2DFD7]',
     tertiary:
-      'bg-transparent text-[#9A9C96] border border-[#262C28] hover:text-[#E6E4DD] hover:border-[#313733] hover:bg-[#141715] active:bg-[#0F1110]',
+      'bg-transparent text-[#56616A] border border-[#D6D2C9] hover:text-[#17202A] hover:border-[#BCB6A8] hover:bg-[#EAE7E0] active:bg-[#E2DFD7]',
     ghost:
-      'bg-transparent text-[#9A9C96] border border-transparent hover:text-[#E6E4DD] hover:bg-[#141715] active:bg-[#0F1110]',
+      'bg-transparent text-[#56616A] border border-transparent hover:text-[#17202A] hover:bg-[#EAE7E0] active:bg-[#E2DFD7]',
   };
 
   return (
@@ -42,8 +42,8 @@ export function IconButton({
       type="button"
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex items-center justify-center rounded-[2px] transition-colors duration-150 select-none outline-none cursor-pointer',
-        'focus-visible:ring-1 focus-visible:ring-[#D4864A] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0F1110]',
+        'inline-flex items-center justify-center rounded-[3px] transition-colors duration-150 select-none outline-none cursor-pointer',
+        'focus-visible:ring-1 focus-visible:ring-[#376A9B] focus-visible:ring-offset-1 focus-visible:ring-offset-[#F4F1EA]',
         'disabled:opacity-40 disabled:pointer-events-none',
         sizeStyles[size],
         variantStyles[variant],

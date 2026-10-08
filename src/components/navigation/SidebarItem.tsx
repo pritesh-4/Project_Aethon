@@ -27,23 +27,23 @@ export function SidebarItem({
       className={({ isActive }) =>
         cn(
           'group relative flex items-center transition-colors duration-150 select-none font-sans outline-none',
-          'focus-visible:ring-1 focus-visible:ring-[#D4864A] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0F1110]',
+          'focus-visible:ring-1 focus-visible:ring-[#376A9B] focus-visible:ring-offset-1 focus-visible:ring-offset-[#EAE7E0]',
           isCollapsed
-            ? 'h-8.5 w-8.5 mx-auto justify-center rounded-[2px]'
-            : 'h-8.5 w-full px-3 gap-3 rounded-[2px] text-xs',
+            ? 'h-8.5 w-8.5 mx-auto justify-center rounded-[3px]'
+            : 'h-8.5 w-full px-3 gap-3 rounded-[3px] text-xs',
           isActive
-            ? 'bg-[#1A1E1B] text-[#E6E4DD] font-medium'
-            : 'text-[#9A9C96] hover:text-[#E6E4DD] hover:bg-[#141715]'
+            ? 'bg-[#FAF8F5] text-[#17202A] font-medium shadow-2xs'
+            : 'text-[#56616A] hover:text-[#17202A] hover:bg-[#E2DFD7]'
         )
       }
     >
       {({ isActive }) => (
         <>
-          {/* Active State: Quiet 2px warm copper left rule */}
+          {/* Active State: Restrained 2px Observatory Blue left rule */}
           {isActive && (
             <motion.span
               layoutId="activeNavIndicator"
-              className="absolute left-0 top-1 bottom-1 w-[2px] bg-[#D4864A]"
+              className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-[#376A9B]"
               transition={{ duration: 0.15, ease: 'easeOut' }}
             />
           )}
@@ -53,7 +53,7 @@ export function SidebarItem({
             <Icon
               className={cn(
                 'h-3.5 w-3.5 transition-colors duration-150',
-                isActive ? 'text-[#D4864A]' : 'text-[#9A9C96] group-hover:text-[#E6E4DD]'
+                isActive ? 'text-[#376A9B]' : 'text-[#7E8B96] group-hover:text-[#17202A]'
               )}
             />
           </span>
