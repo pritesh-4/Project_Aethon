@@ -1,23 +1,12 @@
 # ROADMAP.md — Project Roadmap: AETHON
 
-> **Milestone:** v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine  
-> **Version:** 2.0.0  
-> **Updated:** 2026-10-09
+> **Current Milestone:** v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine  
+> **Goal:** Ingest real Breakthrough Listen observations, perform interactive Doppler drift & de-Doppler correction, mitigate RFI via explainable cadence logic, score candidates with layered models, and export research-grade scientific PDF dossiers for a flawless 3-minute hackathon demo.  
+> **Status:** Active · Ready for Phase 5 Planning
 
 ---
 
-## Completed Milestone (v1.0.0 — Core Web Architecture & Visual Refoundation)
-
-- [x] **Phase 1:** Foundation & Visual Identity Refoundation (Direction H: Paper Desk `#F4F1EA` + Midnight Instrument `#0D141A`)
-- [x] **Phase 2:** Observation & Discovery Pipelines (HTML5 Canvas DPR spectrogram rasterizers + Web Audio sonification)
-- [x] **Phase 3:** Candidate Triage & Digital Research Bench (Interactive 4-stage analytical bench + candidate ledger)
-- [x] **Phase 4:** Chronological Repository & Methodology Publication (Archive browser + 5-stage ML guide + Latent Manifold map)
-
----
-
-## Active Milestone (v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine)
-
-### Must-Haves (from SPEC.md)
+## Must-Haves
 
 - [ ] Offline ingestion and header extraction of Breakthrough Listen `.fil` and `.fits` observations
 - [ ] Format-agnostic normalized spectral slice model with complete provenance
@@ -31,7 +20,16 @@
 
 ---
 
-## Detailed Phase Breakdown
+## Archived Milestone (v1.0.0 — Core Web Architecture & Visual Refoundation)
+
+- [x] **Phase 1:** Foundation & Visual Identity Refoundation (Direction H: Paper Desk `#F4F1EA` + Midnight Instrument `#0D141A`)
+- [x] **Phase 2:** Observation & Discovery Pipelines (HTML5 Canvas DPR spectrogram rasterizers + Web Audio sonification)
+- [x] **Phase 3:** Candidate Triage & Digital Research Bench (Interactive 4-stage analytical bench + candidate ledger)
+- [x] **Phase 4:** Chronological Repository & Methodology Publication (Archive browser + 5-stage ML guide + Latent Manifold map)
+
+---
+
+## Active Milestone Phases (v2.0.0)
 
 ### Phase 5: Scientific Ingestion Foundation & Normalized Data Model
 
