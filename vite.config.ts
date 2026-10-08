@@ -38,6 +38,9 @@ export default defineConfig({
             if (normalized.includes('/motion/')) {
               return 'vendor-motion';
             }
+            if (normalized.includes('/three/')) {
+              return 'vendor-three';
+            }
             if (normalized.includes('/lucide-react/')) {
               return 'vendor-icons';
             }
