@@ -36,9 +36,9 @@ export function Button({
   ...props
 }: ButtonProps) {
   const sizeStyles = {
-    sm: 'h-7 px-2.5 text-xs gap-1.5',
-    md: 'h-8 px-3.5 text-xs gap-2',
-    lg: 'h-9 px-4 text-sm gap-2.5',
+    sm: 'h-8 px-2.5 text-xs gap-1.5 min-h-[32px]',
+    md: 'h-8.5 px-3.5 text-xs gap-2 min-h-[34px]',
+    lg: 'h-9.5 px-4 text-sm gap-2.5 min-h-[38px]',
   };
 
   const variantStyles: Record<ButtonVariant, string> = {

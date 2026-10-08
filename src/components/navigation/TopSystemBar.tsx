@@ -11,14 +11,14 @@ export function TopSystemBar({ onOpenMobileNav, className }: TopSystemBarProps) 
   const location = useLocation();
 
   const getSubsystemTitle = (path: string) => {
-    if (path.startsWith('/observatory')) return 'OBSERVATORY';
-    if (path.startsWith('/discover')) return 'DISCOVERY';
-    if (path.startsWith('/candidates')) return 'CANDIDATES';
-    if (path.startsWith('/analysis')) return 'ANALYSIS';
-    if (path.startsWith('/model')) return 'MODEL';
-    if (path.startsWith('/archive')) return 'ARCHIVE';
-    if (path.startsWith('/about')) return 'ABOUT';
-    return 'OBSERVATORY';
+    if (path.startsWith('/observatory')) return 'Observatory';
+    if (path.startsWith('/discover')) return 'Discovery';
+    if (path.startsWith('/candidates')) return 'Candidates';
+    if (path.startsWith('/analysis')) return 'Analysis';
+    if (path.startsWith('/model')) return 'Intelligence';
+    if (path.startsWith('/archive')) return 'Archive';
+    if (path.startsWith('/about')) return 'About';
+    return 'Observatory';
   };
 
   const activeSubsystem = getSubsystemTitle(location.pathname);
@@ -37,22 +37,21 @@ export function TopSystemBar({ onOpenMobileNav, className }: TopSystemBarProps) 
           onClick={onOpenMobileNav}
           aria-label="Open Navigation"
           title="Open Navigation"
-          className="lg:hidden flex h-7 w-7 items-center justify-center rounded-[4px] border border-[#172230] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2] hover:border-[#243345] transition-colors outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
+          className="lg:hidden flex h-8 w-8 items-center justify-center rounded border border-[#172230] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2] hover:border-[#243345] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
         >
           <Menu className="h-4 w-4" />
         </button>
 
-        <div className="flex items-center gap-2 text-xs font-mono">
-          <span className="text-[#7F8B95] font-semibold tracking-wider">AETHON</span>
+        <div className="flex items-center gap-2 text-xs font-sans">
+          <span className="text-[#7F8B95] font-semibold">Aethon</span>
           <span className="text-[#243345]">/</span>
-          <span className="text-[#E6EDF2] font-medium tracking-wide">{activeSubsystem}</span>
+          <span className="text-[#E6EDF2] font-medium">{activeSubsystem}</span>
         </div>
       </div>
 
-      {/* Right: System Availability */}
-      <div className="flex items-center gap-2 text-xs font-mono text-[#7F8B95]">
-        <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
-        <span className="text-[11px] hidden sm:inline">Online</span>
+      {/* Right: Subtle Session Context */}
+      <div className="flex items-center gap-2 text-xs text-[#7F8B95]">
+        <span className="text-[11px] hidden sm:inline">Active session</span>
       </div>
     </header>
   );

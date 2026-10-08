@@ -1,4 +1,4 @@
-import { RotateCcw, SearchX } from 'lucide-react';
+import { RotateCcw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button.tsx';
 
 export interface ArchiveEmptyStateProps {
@@ -8,53 +8,41 @@ export interface ArchiveEmptyStateProps {
 
 export function ArchiveEmptyState({ searchQuery, onClearFilters }: ArchiveEmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-10 text-center font-mono select-none my-6">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[2px] border border-[#1C2630] bg-[#06080B] text-slate-500">
-        <SearchX className="h-6 w-6 text-slate-400" />
+    <div className="flex flex-col items-center justify-center rounded border border-[#1C2630] bg-[#0B0F14] p-10 text-center font-mono select-none my-6">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded border border-[#1C2630] bg-[#06080B] text-[#7F8B95]">
+        <Search className="h-4 w-4 text-[#7F8B95]" />
       </div>
 
-      {searchQuery ? (
-        <div className="space-y-3 max-w-md">
-          <div className="text-xs text-[#5BD8F5]">Search query: {searchQuery}</div>
-          <div className="text-sm font-semibold tracking-wider text-[#E6EDF2]">
-            No matching observations
-          </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            No observations match the search parameters.
-            <br />
-            Adjust search terms or clear filters to view archived observations.
-          </p>
-          <div className="pt-2">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={onClearFilters}
-              icon={<RotateCcw className="h-3 w-3" />}
-            >
-              Clear search
-            </Button>
-          </div>
+      <div className="space-y-3 max-w-md">
+        <h3 className="text-sm font-semibold tracking-wide text-[#E6EDF2] uppercase">
+          No observations match your search.
+        </h3>
+
+        <p className="text-xs text-[#7F8B95] leading-relaxed">
+          {searchQuery ? (
+            <>
+              No archived records matched <span className="text-[#5BD8F5]">"{searchQuery}"</span>.
+              Try checking the observation ID format or removing date and status filters.
+            </>
+          ) : (
+            <>
+              No archived observations match the selected filters. Adjust status, date, or priority
+              criteria to view historical records.
+            </>
+          )}
+        </p>
+
+        <div className="pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClearFilters}
+            icon={<RotateCcw className="h-3 w-3" />}
+          >
+            Reset search and filters
+          </Button>
         </div>
-      ) : (
-        <div className="space-y-3 max-w-md">
-          <div className="text-sm font-semibold tracking-wider text-[#E6EDF2]">
-            No observations match the selected filters
-          </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Adjust status, date, or priority filters to view observation records.
-          </p>
-          <div className="pt-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onClearFilters}
-              icon={<RotateCcw className="h-3 w-3" />}
-            >
-              Reset filters
-            </Button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

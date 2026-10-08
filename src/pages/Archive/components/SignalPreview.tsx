@@ -285,8 +285,9 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
 
         <button
           type="button"
+          aria-pressed={isAudioActive}
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1 rounded-[1px] border px-1.5 py-0.5 text-[9px] font-mono transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-1 rounded-[1px] border px-1.5 py-0.5 text-[9px] font-mono transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
             isAudioActive
               ? 'border-[#5BD8F5] bg-[#5BD8F5]/15 text-[#5BD8F5]'
               : 'border-[#1C2630] bg-[#10161D] text-slate-400 hover:text-slate-200'

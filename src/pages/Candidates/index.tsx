@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { PageTransition } from '@/components/ui/motion.tsx';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -48,8 +48,15 @@ export default function CandidatesPage() {
     });
   }, [filters]);
 
+  const detailRef = useRef<HTMLDivElement | null>(null);
+
   const handleSelectCandidate = (candidate: CandidateSignalData) => {
     setSelectedCandidate(candidate);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setTimeout(() => {
+        detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    }
   };
 
   const handleCloseDetail = () => {
@@ -96,6 +103,7 @@ export default function CandidatesPage() {
           <AnimatePresence mode="wait">
             {selectedCandidate && (
               <motion.div
+                ref={detailRef}
                 key={selectedCandidate.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}

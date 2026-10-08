@@ -1,130 +1,116 @@
-import { PageHeader } from '@/components/layout/PageHeader.tsx';
 import { PageTransition } from '@/components/ui/motion.tsx';
-import { Telescope, Radio, Terminal, Award } from 'lucide-react';
 
 export default function AboutPage() {
   return (
-    <PageTransition className="space-y-6">
-      <PageHeader
-        category="Overview"
-        title="About Project AETHON"
-        subtitle="An open-source prototype evaluating neural representations for candidate radio anomaly detection."
-      />
+    <PageTransition className="space-y-8 max-w-4xl mx-auto py-6 font-sans">
+      {/* Title & Scientific Mission */}
+      <div className="space-y-2 border-b border-[#172230] pb-6">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#E6EDF2]">
+          About Project Aethon
+        </h1>
+        <p className="text-sm text-[#7F8B95] leading-relaxed max-w-2xl">
+          An unsupervised discovery instrument for detecting anomalous spectrotemporal signatures in
+          high-cadence radio astronomy surveys.
+        </p>
+      </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-          {/* Scientific Context */}
-          <section className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-6 space-y-4">
-            <h3 className="text-base font-semibold text-[#E6EDF2] flex items-center gap-2">
-              <Telescope className="h-4 w-4 text-[#5BD8F5]" />
-              The Radio Frequency Interference Challenge
-            </h3>
-            <p className="text-sm text-[#7F8B95] leading-relaxed">
-              Modern radio astronomy facilities collect large volumes of spectral data. Traditional
-              thresholding algorithms struggle under the increasing density of terrestrial radio
-              frequency interference (RFI) from orbital satellite constellations, aviation
-              communications, and ground transmitters.
-            </p>
-            <p className="text-sm text-[#7F8B95] leading-relaxed">
-              AETHON explores an anomaly-detection approach trained directly on spectral waterfall
-              representations. By isolating characteristic drift patterns from local stationary
-              interference, the pipeline surfaces anomalous candidate events for scientific
-              verification.
-            </p>
-          </section>
+      {/* Main Content Body */}
+      <div className="space-y-8 text-sm text-[#7F8B95] leading-relaxed">
+        {/* Section 1: The Scientific Problem */}
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold text-[#E6EDF2]">
+            The Radio Frequency Interference Challenge
+          </h2>
+          <p>
+            Modern radio observatories record petabytes of wideband baseband data every day.
+            Traditional search algorithms rely on rigid thresholding and matched filters, which
+            struggle under the escalating density of terrestrial and orbital radio frequency
+            interference (RFI)—including low-Earth orbit megaconstellations, aircraft transponders,
+            and mobile cellular networks.
+          </p>
+          <p>
+            Aethon approaches the problem from an unsupervised perspective. Rather than searching
+            only for known, hand-engineered signal templates, the instrument learns high-dimensional
+            representations of nominal cosmic background noise and isolates coherent statistical
+            deviations.
+          </p>
+        </section>
 
-          {/* Key Astronomical Concepts */}
-          <section className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-6 space-y-4">
-            <h3 className="text-base font-semibold text-[#E6EDF2] flex items-center gap-2">
-              <Radio className="h-4 w-4 text-[#5BD8F5]" />
-              Astronomical concepts
-            </h3>
-
-            <div className="grid sm:grid-cols-2 gap-4 text-xs font-mono">
-              <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4 space-y-1.5">
-                <span className="text-[#5BD8F5] font-semibold">
-                  1420.405 MHz (Neutral Hydrogen Line)
-                </span>
-                <p className="text-[#7F8B95] text-[11px] leading-relaxed font-sans">
-                  The 21 cm emission line of neutral hydrogen. A standard astronomical baseline
-                  frequency frequently surveyed for narrow spectral features.
-                </p>
-              </div>
-
-              <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4 space-y-1.5">
-                <span className="text-[#E6EDF2] font-semibold">Doppler Drift Rate (Δf/Δt)</span>
-                <p className="text-[#7F8B95] text-[11px] leading-relaxed font-sans">
-                  A signal source in relative orbital motion with respect to the receiver produces a
-                  characteristic drift in frequency over time.
-                </p>
-              </div>
-
-              <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4 space-y-1.5">
-                <span className="text-[#E8AE50] font-semibold">Interference Rejection</span>
-                <p className="text-[#7F8B95] text-[11px] leading-relaxed font-sans">
-                  Signals that appear across multiple antenna pointings or adjacent beams are
-                  flagged as local terrestrial interference rather than celestial sources.
-                </p>
-              </div>
-
-              <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] p-4 space-y-1.5">
-                <span className="text-[#5BD8F5] font-semibold">Polyphase Filterbanks (PFB)</span>
-                <p className="text-[#7F8B95] text-[11px] leading-relaxed font-sans">
-                  Channelization that decomposes wideband signals into fine frequency channels with
-                  minimal spectral leakage.
-                </p>
-              </div>
+        {/* Section 2: Core Methodology */}
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold text-[#E6EDF2]">Methodological Architecture</h2>
+          <div className="grid sm:grid-cols-2 gap-4 pt-1">
+            <div className="rounded border border-[#172230] bg-[#0B0F14] p-4 space-y-1.5">
+              <h3 className="text-xs font-semibold text-[#E6EDF2]">Polyphase Filterbanks (PFB)</h3>
+              <p className="text-xs text-[#7F8B95] leading-relaxed">
+                Raw dual-polarization voltages are decomposed into fine frequency channels (3.8 Hz
+                resolution) with steep out-of-band rejection to prevent spectral leakage between
+                adjacent channels.
+              </p>
             </div>
-          </section>
-        </div>
 
-        {/* Sidebar Specifications */}
-        <div className="space-y-6">
-          <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-[#E6EDF2] flex items-center gap-2">
-              <Terminal className="h-4 w-4 text-[#5BD8F5]" />
-              Software stack
-            </h3>
+            <div className="rounded border border-[#172230] bg-[#0B0F14] p-4 space-y-1.5">
+              <h3 className="text-xs font-semibold text-[#E6EDF2]">
+                Spectrotemporal Representation
+              </h3>
+              <p className="text-xs text-[#7F8B95] leading-relaxed">
+                Channelized waterfall patches are transformed into continuous embeddings capturing
+                carrier morphology, bandwidth, and Doppler drift rates across integration windows.
+              </p>
+            </div>
 
-            <div className="space-y-2 text-xs font-mono text-[#E6EDF2]">
-              <div className="flex justify-between py-1 border-b border-[#1C2630]">
-                <span className="text-slate-400">Frontend:</span>
-                <span className="text-[#5BD8F5]">React 19 + TypeScript</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#1C2630]">
-                <span className="text-slate-400">Build Tool:</span>
-                <span className="text-slate-200">Vite 8</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#1C2630]">
-                <span className="text-slate-400">Styling:</span>
-                <span className="text-slate-200">Tailwind CSS v4</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#1C2630]">
-                <span className="text-slate-400">Animation:</span>
-                <span className="text-slate-200">Motion</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#1C2630]">
-                <span className="text-slate-400">Data Viz:</span>
-                <span className="text-slate-200">Recharts</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-slate-400">Audio:</span>
-                <span className="text-slate-200">Web Audio API</span>
-              </div>
+            <div className="rounded border border-[#172230] bg-[#0B0F14] p-4 space-y-1.5">
+              <h3 className="text-xs font-semibold text-[#E6EDF2]">Multi-Beam Differencing</h3>
+              <p className="text-xs text-[#7F8B95] leading-relaxed">
+                Signals appearing simultaneously in on-target and off-target antenna pointings are
+                automatically rejected as local terrestrial interference rather than celestial
+                sources.
+              </p>
+            </div>
+
+            <div className="rounded border border-[#172230] bg-[#0B0F14] p-4 space-y-1.5">
+              <h3 className="text-xs font-semibold text-[#E6EDF2]">Doppler Frame Consistency</h3>
+              <p className="text-xs text-[#7F8B95] leading-relaxed">
+                Surviving candidates are validated against topocentric acceleration and Earth
+                orbital motion models, verifying physical drift characteristics before queuing for
+                review.
+              </p>
             </div>
           </div>
+        </section>
 
-          <div className="rounded-[2px] border border-[#1C2630] bg-[#0B0F14] p-6 space-y-3 font-mono text-xs">
-            <div className="flex items-center gap-2 text-[#5BD8F5]">
-              <Award className="h-4 w-4" />
-              <span className="font-semibold">Format compatibility</span>
-            </div>
-            <p className="text-[#7F8B95] font-sans text-xs leading-relaxed">
-              Designed to interface with standard astronomical open data formats including SIGPROC
-              Filterbank (.fil), HDF5 (.h5), and FITS standards from open archives.
-            </p>
-          </div>
-        </div>
+        {/* Section 3: Data Interoperability & Formats */}
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold text-[#E6EDF2]">Data Interoperability</h2>
+          <p>
+            Aethon interfaces with open astronomical data pipelines and supports standard raw and
+            processed container formats:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-xs">
+            <li>
+              <strong className="text-[#E6EDF2]">SIGPROC Filterbank (.fil):</strong> Standard format
+              for pulsar and continuous-wave search surveys.
+            </li>
+            <li>
+              <strong className="text-[#E6EDF2]">HDF5 (.h5):</strong> Hierarchical spectral
+              collections used by high-cadence observing campaigns.
+            </li>
+            <li>
+              <strong className="text-[#E6EDF2]">FITS (.fits):</strong> Calibrated radio spectral
+              cubes and astronomical metadata archives.
+            </li>
+          </ul>
+        </section>
+
+        {/* Section 4: Operational Principles */}
+        <section className="space-y-2 border-t border-[#172230] pt-6">
+          <h2 className="text-base font-semibold text-[#E6EDF2]">Human-in-the-Loop Protocol</h2>
+          <p className="text-xs text-[#7F8B95] leading-relaxed">
+            Aethon is an anomaly screening instrument, not an autonomous discovery engine.
+            Algorithms surface statistical outliers across petabyte archives; astronomers inspect,
+            cross-match, and verify physical hypotheses.
+          </p>
+        </section>
       </div>
     </PageTransition>
   );

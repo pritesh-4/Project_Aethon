@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SidebarItem } from './SidebarItem.tsx';
 import { cn } from '@/lib/utils.ts';
-import { MAIN_NAV } from '@/app/navigation.ts';
+import { MAIN_NAV, SECONDARY_NAV } from '@/app/navigation.ts';
 
 export interface SidebarProps {
   isCollapsed: boolean;
@@ -25,17 +25,14 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
         {!isCollapsed ? (
           <>
             <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
-              <span className="text-xs font-semibold tracking-wider text-[#E6EDF2] font-mono">
-                AETHON
-              </span>
+              <span className="text-sm font-semibold tracking-tight text-[#E6EDF2]">Aethon</span>
             </div>
             <button
               type="button"
               onClick={onToggleCollapse}
               title="Collapse sidebar rail"
               aria-label="Collapse sidebar rail"
-              className="h-6 w-6 flex items-center justify-center rounded-[4px] text-[#7F8B95] hover:text-[#E6EDF2] hover:bg-[#10161D] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
+              className="h-6 w-6 flex items-center justify-center rounded text-[#7F8B95] hover:text-[#E6EDF2] hover:bg-[#10161D] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
@@ -47,7 +44,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
               onClick={onToggleCollapse}
               title="Expand sidebar rail"
               aria-label="Expand sidebar rail"
-              className="h-7 w-7 flex items-center justify-center rounded-[4px] text-[#7F8B95] hover:text-[#E6EDF2] hover:bg-[#10161D] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
+              className="h-7 w-7 flex items-center justify-center rounded text-[#7F8B95] hover:text-[#E6EDF2] hover:bg-[#10161D] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
@@ -55,7 +52,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
         )}
       </div>
 
-      {/* 2. Calm Navigation Rail (The 6 Core Destinations) */}
+      {/* 2. Calm Navigation Rail (Core Destinations + Secondary) */}
       <nav aria-label="Main navigation" className="flex-1 px-2 py-3 space-y-1 overflow-y-auto">
         {MAIN_NAV.map((item) => (
           <SidebarItem
@@ -67,19 +64,30 @@ export function Sidebar({ isCollapsed, onToggleCollapse, className }: SidebarPro
             isCollapsed={isCollapsed}
           />
         ))}
+
+        <div className="pt-1.5 my-1.5 border-t border-[#172230]/60" />
+
+        {SECONDARY_NAV.map((item) => (
+          <SidebarItem
+            key={item.id}
+            id={item.id}
+            label={item.label}
+            path={item.path}
+            icon={item.icon}
+            isCollapsed={isCollapsed}
+          />
+        ))}
       </nav>
 
-      {/* 3. Minimal Footer */}
-      <div className="border-t border-[#172230] p-2.5 bg-[#0B0F14] text-[#7F8B95] text-[11px] font-mono select-none">
+      {/* 3. Quiet Footer */}
+      <div className="border-t border-[#172230] p-2.5 bg-[#0B0F14] text-[#7F8B95] text-[11px] select-none">
         {!isCollapsed ? (
           <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] text-[#7F8B95]/80">Astronomical System</span>
-            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" title="System ready" />
+            <span className="text-[10px] text-[#7F8B95]">Prototype v0.1</span>
+            <span className="text-[10px] text-slate-600 font-mono">L-Band</span>
           </div>
         ) : (
-          <div className="flex justify-center" title="System ready">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
-          </div>
+          <div className="flex justify-center text-[10px] text-slate-600 font-mono">v0.1</div>
         )}
       </div>
     </motion.aside>

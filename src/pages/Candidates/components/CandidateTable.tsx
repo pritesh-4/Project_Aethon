@@ -32,12 +32,14 @@ export function CandidateTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-[#1C2630] bg-[#06080B] text-[11px] text-[#7F8B95] uppercase tracking-wider font-mono">
-              <th className="py-2.5 px-4 font-medium">Candidate</th>
-              <th className="py-2.5 px-3 font-medium text-right">Anomaly</th>
-              <th className="py-2.5 px-3 font-medium text-right">Persistence</th>
-              <th className="py-2.5 px-3 font-medium text-right">RFI</th>
-              <th className="py-2.5 px-4 font-medium text-center">Priority</th>
+            <tr className="border-b border-[#1C2630] bg-[#06080B] text-xs text-[#7F8B95] font-mono">
+              <th className="py-2.5 px-3 sm:px-4 font-normal">Candidate</th>
+              <th className="py-2.5 px-3 font-normal text-right">Anomaly score</th>
+              <th className="py-2.5 px-3 font-normal text-right hidden sm:table-cell">
+                Persistence
+              </th>
+              <th className="py-2.5 px-3 font-normal text-right hidden md:table-cell">RFI risk</th>
+              <th className="py-2.5 px-3 sm:px-4 font-normal text-center">Priority</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1C2630]/60">

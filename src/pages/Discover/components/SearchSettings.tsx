@@ -25,8 +25,10 @@ export function SearchSettings({ config, onChange, disabled = false }: SearchSet
       <button
         type="button"
         disabled={disabled}
+        aria-expanded={isOpen}
+        aria-controls="search-settings-panel"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-[#10161D] cursor-pointer"
+        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-[#10161D] cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
       >
         <div className="flex items-center gap-2.5">
           <Sliders className="h-4 w-4 text-[#5BD8F5]" />
@@ -47,7 +49,10 @@ export function SearchSettings({ config, onChange, disabled = false }: SearchSet
 
       {/* Expanded Meaningful Settings */}
       {isOpen && (
-        <div className="border-t border-[#1C2630] p-4 space-y-4 bg-[#06080B]/50">
+        <div
+          id="search-settings-panel"
+          className="border-t border-[#1C2630] p-4 space-y-4 bg-[#06080B]/50"
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Search Sensitivity */}
             <div className="space-y-2">
@@ -55,9 +60,10 @@ export function SearchSettings({ config, onChange, disabled = false }: SearchSet
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
+                  aria-pressed={config.sensitivity === 'standard'}
                   disabled={disabled}
                   onClick={() => handleSensitivityChange('standard')}
-                  className={`flex flex-col items-start p-2.5 rounded border text-left transition-colors cursor-pointer ${
+                  className={`flex flex-col items-start p-2.5 rounded border text-left transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
                     config.sensitivity === 'standard'
                       ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#E6EDF2]'
                       : 'border-[#1C2630] bg-[#0B0F14] text-[#7F8B95] hover:text-[#E6EDF2] hover:border-[#1C2630]/80'
@@ -71,9 +77,10 @@ export function SearchSettings({ config, onChange, disabled = false }: SearchSet
 
                 <button
                   type="button"
+                  aria-pressed={config.sensitivity === 'high'}
                   disabled={disabled}
                   onClick={() => handleSensitivityChange('high')}
-                  className={`flex flex-col items-start p-2.5 rounded border text-left transition-colors cursor-pointer ${
+                  className={`flex flex-col items-start p-2.5 rounded border text-left transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
                     config.sensitivity === 'high'
                       ? 'border-[#E8AE50] bg-[#E8AE50]/10 text-[#E6EDF2]'
                       : 'border-[#1C2630] bg-[#0B0F14] text-[#7F8B95] hover:text-[#E6EDF2] hover:border-[#1C2630]/80'
@@ -109,9 +116,10 @@ export function SearchSettings({ config, onChange, disabled = false }: SearchSet
 
                 <button
                   type="button"
+                  aria-pressed={config.rejectTerrestrialRfi}
                   disabled={disabled}
                   onClick={handleToggleRfi}
-                  className={`shrink-0 rounded border px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
+                  className={`shrink-0 rounded border px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
                     config.rejectTerrestrialRfi
                       ? 'border-[#5BD8F5]/40 bg-[#5BD8F5]/10 text-[#5BD8F5]'
                       : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95]'

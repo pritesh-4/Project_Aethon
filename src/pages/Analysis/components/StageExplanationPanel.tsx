@@ -163,7 +163,7 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
 
       {/* Relevant Evidence Metrics (Only 4 relevant metrics per stage) */}
       <div>
-        <span className="block text-[11px] font-semibold text-[#7F8B95] uppercase tracking-wider mb-2.5">
+        <span className="block text-xs font-medium text-[#7F8B95] mb-2.5">
           Decision-relevant metrics
         </span>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -184,9 +184,7 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
 
       {/* Human-Readable Evidence ("Why flagged / supported facts") */}
       <div className="pt-1">
-        <span className="block text-[11px] font-semibold text-[#E6EDF2] uppercase tracking-wider mb-2.5">
-          Verified evidence
-        </span>
+        <span className="block text-xs font-medium text-[#E6EDF2] mb-2.5">Verified evidence</span>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           {current.evidence.map((ev) => (
             <div

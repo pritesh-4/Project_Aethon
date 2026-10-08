@@ -1,41 +1,24 @@
-export type ModelStageId =
-  'observation' | 'preprocessing' | 'transform' | 'representation' | 'anomaly' | 'ranking';
+export type ArchitectureStageId =
+  'observation' | 'representation' | 'latent_space' | 'anomaly_detection' | 'candidate';
 
-export interface ArchitectureStage {
-  id: ModelStageId;
-  index: string;
-  name: string;
+export interface ArchitectureStageData {
+  id: ArchitectureStageId;
+  stepNumber: string;
+  title: string;
   subtitle: string;
-  description: string;
-  inputFormat: string;
-  outputFormat: string;
-  operationalStatus: 'READY' | 'ACTIVE' | 'STANDBY';
-  telemetry: {
-    label: string;
-    value: string;
-  }[];
-  algorithmDetails: string;
+  simpleExplanation: string;
+  technicalDetails: {
+    mechanism: string;
+    inputFormat: string;
+    outputFormat: string;
+    algorithmSummary: string;
+  };
 }
 
 export interface FalsePositiveSource {
   id: string;
-  name: string;
-  origin: string;
-  frequencyProfile: string;
-  mitigationStrategy: string;
-  riskFactor: 'CRITICAL' | 'ELEVATED' | 'NOMINAL';
-}
-
-export interface TechnicalDetailSection {
-  id: string;
   title: string;
-  tag: string;
-  summary: string;
-  formalDefinition: string;
-  equations?: string[];
-  parameters: {
-    name: string;
-    spec: string;
-    description: string;
-  }[];
+  origin: string;
+  description: string;
+  mitigation: string;
 }

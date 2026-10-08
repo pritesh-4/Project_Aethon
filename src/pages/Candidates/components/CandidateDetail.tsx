@@ -120,7 +120,7 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
           type="button"
           onClick={onClose}
           aria-label="Close candidate detail"
-          className="rounded border border-[#1C2630] bg-[#10161D] p-1.5 text-[#7F8B95] hover:border-[#5BD8F5]/40 hover:text-[#E6EDF2] transition-colors cursor-pointer"
+          className="h-8 w-8 flex items-center justify-center rounded border border-[#1C2630] bg-[#10161D] text-[#7F8B95] hover:border-[#5BD8F5]/40 hover:text-[#E6EDF2] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
         >
           <X className="h-4 w-4" />
         </button>
@@ -133,9 +133,7 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
 
         {/* 2. ANOMALY READOUT */}
         <div className="rounded border border-[#1C2630] bg-[#10161D] p-3 text-xs space-y-1">
-          <span className="block text-[11px] font-semibold text-[#7F8B95] uppercase tracking-wider">
-            Anomaly assessment
-          </span>
+          <span className="block text-xs font-medium text-[#7F8B95]">Anomaly assessment</span>
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-semibold font-mono text-[#5BD8F5]">
               Index: {candidate.anomalyIndex.toFixed(3)}
@@ -149,9 +147,7 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
 
         {/* 3. KEY EVIDENCE (PLAIN LANGUAGE) */}
         <div className="rounded border border-[#1C2630] bg-[#06080B] p-3.5 space-y-2.5">
-          <span className="block text-[11px] font-semibold text-[#E6EDF2] uppercase tracking-wider">
-            Key evidence
-          </span>
+          <span className="block text-xs font-medium text-[#E6EDF2]">Key evidence</span>
 
           <div className="space-y-2 text-xs">
             {evidenceClaims.map((claim) => (

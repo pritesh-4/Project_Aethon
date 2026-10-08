@@ -1,5 +1,4 @@
 import { Link } from 'react-router';
-import { StatusIndicator } from '@/components/ui/StatusIndicator.tsx';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import type { SignalAnalysisRecord } from '../types.ts';
 
@@ -26,9 +25,7 @@ export function AnalysisHeader({ record, prevCandidateId, nextCandidateId }: Ana
               <span>Candidates</span>
             </Link>
             <span>/</span>
-            <span className="text-[#E6EDF2] font-mono">{record.candidateId}</span>
-            <span>/</span>
-            <span className="text-[#5BD8F5]">Scientific investigation</span>
+            <span className="text-[#5BD8F5] font-mono">{record.candidateId}</span>
           </div>
 
           {/* Prev / Next Candidate Switcher */}
@@ -86,7 +83,7 @@ export function AnalysisHeader({ record, prevCandidateId, nextCandidateId }: Ana
             </span>
           </div>
 
-          <StatusIndicator status="nominal" label="Investigation active" className="text-xs" />
+          <div className="text-xs text-[#7F8B95] font-mono">{record.telescope}</div>
         </div>
       </div>
     </header>

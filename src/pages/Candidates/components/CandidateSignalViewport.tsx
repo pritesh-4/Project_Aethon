@@ -203,8 +203,9 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
 
         <button
           type="button"
+          aria-pressed={isAudioActive}
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
             isAudioActive
               ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5]'
               : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2]'

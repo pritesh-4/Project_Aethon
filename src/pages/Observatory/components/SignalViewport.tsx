@@ -462,9 +462,10 @@ export function SignalViewport({
         <div className="flex items-center gap-2">
           <button
             type="button"
+            aria-pressed={isAudioActive}
             onClick={toggleAudio}
             title={isAudioActive ? 'Mute audio' : 'Enable audio carrier'}
-            className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-xs transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-xs transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] min-h-[30px] ${
               isAudioActive
                 ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5]'
                 : 'border-[#172230] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2]'
@@ -476,9 +477,10 @@ export function SignalViewport({
 
           <button
             type="button"
+            aria-pressed={zoomLevel === 2}
             onClick={() => setZoomLevel(zoomLevel === 1 ? 2 : 1)}
             title="Toggle zoom level"
-            className={`inline-flex items-center gap-1 rounded-[4px] border px-2 py-1 text-xs transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1 rounded-[4px] border px-2.5 py-1 text-xs transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] min-h-[30px] ${
               zoomLevel === 2
                 ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5]'
                 : 'border-[#172230] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2]'

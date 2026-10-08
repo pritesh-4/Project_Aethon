@@ -16,15 +16,13 @@ export function DiscoveryResults({ summary, onReset, onViewCandidates }: Discove
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-[#5BD8F5]" />
-            <span className="text-xs font-semibold tracking-wider text-[#5BD8F5] uppercase">
-              Observation Analyzed
-            </span>
+            <span className="text-xs font-medium text-[#5BD8F5]">Observation analyzed</span>
             <span className="text-[#7F8B95]">•</span>
             <span className="text-xs text-[#7F8B95] font-mono">{summary.observationId}</span>
           </div>
 
-          <h3 className="text-base sm:text-lg font-semibold tracking-tight text-[#E6EDF2]">
-            {summary.candidates.length} CANDIDATES IDENTIFIED
+          <h3 className="text-base sm:text-lg font-medium tracking-tight text-[#E6EDF2]">
+            {summary.candidates.length} candidates identified
           </h3>
 
           <p className="text-xs text-[#7F8B95]">

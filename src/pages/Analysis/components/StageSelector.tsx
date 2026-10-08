@@ -17,28 +17,28 @@ export function StageSelector({ activeStage, onSelectStage }: StageSelectorProps
     {
       id: 'observation',
       num: '01',
-      label: 'OBSERVATION',
+      label: 'Observation',
       question: 'What is the signal?',
       icon: Radio,
     },
     {
       id: 'representation',
       num: '02',
-      label: 'REPRESENTATION',
+      label: 'Representation',
       question: 'How was it represented?',
       icon: Cpu,
     },
     {
       id: 'comparison',
       num: '03',
-      label: 'PATTERN COMPARISON',
+      label: 'Pattern Comparison',
       question: 'How does it compare?',
       icon: GitCompare,
     },
     {
       id: 'anomaly',
       num: '04',
-      label: 'ANOMALY',
+      label: 'Anomaly Detection',
       question: 'Why is it anomalous?',
       icon: Zap,
     },
@@ -51,7 +51,11 @@ export function StageSelector({ activeStage, onSelectStage }: StageSelectorProps
         <span className="text-[11px] text-[#7F8B95]">Inspect one analytical stage at a time</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+      <div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2"
+        role="tablist"
+        aria-label="Investigation stages"
+      >
         {stages.map((st) => {
           const isSelected = activeStage === st.id;
           const Icon = st.icon;
@@ -60,8 +64,10 @@ export function StageSelector({ activeStage, onSelectStage }: StageSelectorProps
             <button
               key={st.id}
               type="button"
+              role="tab"
+              aria-selected={isSelected}
               onClick={() => onSelectStage(st.id)}
-              className={`relative flex flex-col items-start p-3 rounded border text-left transition-all cursor-pointer ${
+              className={`relative flex flex-col items-start p-3 rounded border text-left transition-all cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
                 isSelected
                   ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#E6EDF2]'
                   : 'border-[#1C2630] bg-[#06080B] text-[#7F8B95] hover:border-[#1C2630]/80 hover:bg-[#10161D] hover:text-[#E6EDF2]'

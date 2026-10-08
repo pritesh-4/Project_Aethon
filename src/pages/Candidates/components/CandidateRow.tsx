@@ -44,17 +44,16 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
 
   return (
     <tr
-      role="button"
       tabIndex={0}
-      aria-pressed={isSelected}
+      aria-selected={isSelected}
       onClick={() => onSelect(candidate)}
       onKeyDown={handleKeyDown}
-      className={`group transition-colors cursor-pointer select-none text-xs outline-none ${
+      className={`group transition-colors cursor-pointer select-none text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] focus-visible:ring-inset ${
         isSelected ? 'bg-[#5BD8F5]/10 text-[#E6EDF2]' : 'hover:bg-[#10161D] text-[#7F8B95]'
       }`}
     >
       {/* 1. CANDIDATE */}
-      <td className="py-3 px-4">
+      <td className="py-3 px-3 sm:px-4">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <span
@@ -93,13 +92,13 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
         </div>
       </td>
 
-      {/* 3. PERSISTENCE */}
-      <td className="py-3 px-3 text-right font-mono text-[#E6EDF2]">
+      {/* 3. PERSISTENCE (Tablet & Desktop) */}
+      <td className="py-3 px-3 text-right font-mono text-[#E6EDF2] hidden sm:table-cell">
         {(candidate.persistence * 100).toFixed(1)}%
       </td>
 
-      {/* 4. RFI */}
-      <td className="py-3 px-3 text-right font-mono">
+      {/* 4. RFI (Desktop only) */}
+      <td className="py-3 px-3 text-right font-mono hidden md:table-cell">
         <span
           className={
             candidate.interferenceProbability < 0.1
@@ -114,7 +113,7 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
       </td>
 
       {/* 5. PRIORITY */}
-      <td className="py-3 px-4 text-center">{getPriorityBadge(candidate.priority)}</td>
+      <td className="py-3 px-3 sm:px-4 text-center">{getPriorityBadge(candidate.priority)}</td>
     </tr>
   );
 }

@@ -28,13 +28,13 @@ export function ObservatoryDetails({ observation, status }: ObservatoryDetailsPr
   const formatRisk = (risk: ObservationData['rfiRisk']) => {
     switch (risk) {
       case 'LOW':
-        return '4.1% (Low)';
+        return 'Low (<5%)';
       case 'MODERATE':
-        return '42.8% (Moderate)';
+        return 'Moderate (~40%)';
       case 'ELEVATED':
-        return '68.5% (Elevated)';
+        return 'Elevated (~70%)';
       case 'HIGH':
-        return '94.2% (High)';
+        return 'High (>90%)';
     }
   };
 
@@ -94,27 +94,29 @@ export function ObservatoryDetails({ observation, status }: ObservatoryDetailsPr
           </div>
         </div>
 
-        {/* Key Observation Context Bar */}
+        {/* Observation Parameters & Diagnostics Toggle */}
         <div className="mt-5 pt-3.5 border-t border-[#172230] flex flex-wrap items-center justify-between gap-y-2 text-xs text-[#7F8B95]">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-[#E6EDF2] font-medium">{observation.targetName}</span>
-            <span>·</span>
-            <span>{observation.id}</span>
-            <span>·</span>
-            <span className="font-mono text-[#5BD8F5]">
-              {observation.frequencyMHz.toFixed(4)} MHz
+            <span>
+              Bandwidth:{' '}
+              <span className="text-[#E6EDF2] font-mono">
+                {observation.bandwidthMHz.toFixed(1)} MHz
+              </span>
             </span>
             <span>·</span>
-            <span>Bandwidth: {observation.bandwidthMHz.toFixed(1)} MHz</span>
-            <span>·</span>
-            <span>Duration: {observation.windowDuration}</span>
+            <span>
+              Integration window:{' '}
+              <span className="text-[#E6EDF2] font-mono">{observation.windowDuration}</span>
+            </span>
           </div>
 
           {/* Progressive Disclosure Toggle */}
           <button
             type="button"
+            aria-expanded={showDiagnostics}
+            aria-controls="observatory-diagnostics-panel"
             onClick={() => setShowDiagnostics(!showDiagnostics)}
-            className="inline-flex items-center gap-1.5 text-xs text-[#7F8B95] hover:text-[#5BD8F5] transition-colors cursor-pointer py-0.5"
+            className="inline-flex items-center gap-1.5 text-xs text-[#7F8B95] hover:text-[#5BD8F5] transition-colors cursor-pointer py-1 px-1.5 rounded outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
           >
             {showDiagnostics ? (
               <ChevronUp className="h-3.5 w-3.5" />
@@ -130,7 +132,10 @@ export function ObservatoryDetails({ observation, status }: ObservatoryDetailsPr
 
       {/* 2. Secondary Diagnostics (Tucked away via Progressive Disclosure) */}
       {showDiagnostics && (
-        <div className="rounded-[4px] border border-[#172230] bg-[#06080B] p-4 sm:p-5 space-y-4 animate-in fade-in duration-200">
+        <div
+          id="observatory-diagnostics-panel"
+          className="rounded-[4px] border border-[#172230] bg-[#06080B] p-4 sm:p-5 space-y-4 animate-in fade-in duration-200"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* Left: 4-stage pipeline */}
             <div className="lg:col-span-6">

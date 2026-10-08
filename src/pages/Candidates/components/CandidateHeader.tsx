@@ -40,14 +40,14 @@ export function CandidateHeader({
         {/* Search & Priority Filter Controls */}
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Quick Search */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#7F8B95]" />
             <input
               type="text"
               value={filters.searchQuery}
               onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
               placeholder="Search candidate ID..."
-              className="h-8 w-44 sm:w-56 rounded border border-[#1C2630] bg-[#06080B] pl-8 pr-2.5 text-xs text-[#E6EDF2] placeholder-[#7F8B95] focus:border-[#5BD8F5] focus:outline-none transition-colors font-mono"
+              className="h-8 w-full sm:w-56 rounded border border-[#1C2630] bg-[#06080B] pl-8 pr-2.5 text-xs text-[#E6EDF2] placeholder-[#7F8B95] focus:border-[#5BD8F5] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] transition-colors font-mono"
             />
           </div>
 
@@ -63,7 +63,7 @@ export function CandidateHeader({
                 })
               }
               aria-label="Filter candidates by priority"
-              className="h-8 rounded border border-[#1C2630] bg-[#10161D] px-2 text-xs text-[#E6EDF2] focus:border-[#5BD8F5] focus:outline-none transition-colors cursor-pointer"
+              className="h-8 rounded border border-[#1C2630] bg-[#10161D] px-2 text-xs text-[#E6EDF2] focus:border-[#5BD8F5] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] transition-colors cursor-pointer"
             >
               <option value="ALL">All priorities ({totalCount})</option>
               <option value="HIGH">High priority ({highPriorityCount})</option>

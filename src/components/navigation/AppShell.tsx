@@ -50,14 +50,11 @@ export function AppShell({ children }: AppShellProps) {
           </main>
 
           {/* Quiet Footer */}
-          <footer className="border-t border-[#172230] bg-[#0B0F14] py-2 px-4 text-xs text-[#7F8B95] select-none">
+          <footer className="border-t border-[#172230] bg-[#0B0F14] py-2 px-4 text-xs text-[#7F8B95] select-none font-sans">
             <div className="mx-auto max-w-7xl flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
-                <span className="font-sans text-xs text-[#7F8B95]">AETHON</span>
-              </div>
-              <span className="text-[11px] text-[#7F8B95]/70 font-mono">
-                Astronomical Discovery
+              <span className="text-xs text-[#7F8B95]">Aethon</span>
+              <span className="text-[11px] text-[#7F8B95]/80">
+                Radio anomaly discovery instrument
               </span>
             </div>
           </footer>

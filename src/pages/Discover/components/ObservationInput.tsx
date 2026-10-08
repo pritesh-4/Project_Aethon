@@ -89,9 +89,10 @@ export function ObservationInput({
               <button
                 key={obs.id}
                 type="button"
+                aria-pressed={isSelected}
                 disabled={disabled}
                 onClick={() => onSelectObservation(obs)}
-                className={`relative flex flex-col items-start p-3.5 rounded border text-left transition-all cursor-pointer ${
+                className={`relative flex flex-col items-start p-3.5 rounded border text-left transition-all cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
                   isSelected
                     ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#E6EDF2] ring-1 ring-[#5BD8F5]/30'
                     : 'border-[#1C2630] bg-[#0B0F14] text-[#7F8B95] hover:border-[#1C2630]/80 hover:bg-[#10161D] hover:text-[#E6EDF2]'
@@ -128,7 +129,7 @@ export function ObservationInput({
 
         <div
           {...getRootProps()}
-          className={`relative flex min-h-[140px] sm:min-h-[160px] flex-col items-center justify-center rounded border border-dashed transition-all duration-200 cursor-pointer select-none p-6 text-center ${
+          className={`relative flex min-h-[140px] sm:min-h-[160px] flex-col items-center justify-center rounded border border-dashed transition-all duration-200 cursor-pointer select-none p-6 text-center outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] focus-visible:ring-offset-1 focus-visible:ring-offset-[#06080B] ${
             disabled ? 'opacity-50 cursor-not-allowed' : ''
           } ${
             isDragActive

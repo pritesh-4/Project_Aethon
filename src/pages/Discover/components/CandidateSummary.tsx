@@ -59,10 +59,12 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#1C2630] bg-[#06080B] text-[11px] text-[#7F8B95]">
-                  <th className="py-2.5 px-3 font-medium">Rank</th>
+                  <th className="py-2.5 px-3 font-medium hidden sm:table-cell">Rank</th>
                   <th className="py-2.5 px-3 font-medium">Candidate</th>
-                  <th className="py-2.5 px-3 font-medium">Frequency</th>
-                  <th className="py-2.5 px-3 font-medium text-right">Drift rate</th>
+                  <th className="py-2.5 px-3 font-medium hidden sm:table-cell">Frequency</th>
+                  <th className="py-2.5 px-3 font-medium text-right hidden md:table-cell">
+                    Drift rate
+                  </th>
                   <th className="py-2.5 px-3 font-medium text-center">Priority</th>
                   <th className="py-2.5 px-3 font-medium text-right">Action</th>
                 </tr>
@@ -74,9 +76,8 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
                   return (
                     <tr
                       key={cand.id}
-                      role="button"
                       tabIndex={0}
-                      aria-pressed={isSelected}
+                      aria-selected={isSelected}
                       onClick={() => setSelectedCandidate(cand)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -84,20 +85,25 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
                           setSelectedCandidate(cand);
                         }
                       }}
-                      className={`transition-colors cursor-pointer focus:outline-none ${
+                      className={`transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] focus-visible:ring-inset ${
                         isSelected
                           ? 'bg-[#5BD8F5]/10 text-[#E6EDF2]'
                           : 'hover:bg-[#10161D] text-[#7F8B95]'
                       }`}
                     >
-                      <td className="py-2.5 px-3 font-mono text-[#7F8B95]">0{cand.rank}</td>
-                      <td className="py-2.5 px-3 font-mono font-medium text-[#5BD8F5]">
-                        {cand.id}
+                      <td className="py-2.5 px-3 font-mono text-[#7F8B95] hidden sm:table-cell">
+                        0{cand.rank}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[#E6EDF2]">
+                      <td className="py-2.5 px-3 font-mono font-medium text-[#5BD8F5]">
+                        <div>{cand.id}</div>
+                        <div className="sm:hidden text-[10px] text-[#7F8B95] font-normal">
+                          {cand.frequencyMHz.toFixed(3)} MHz
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-[#E6EDF2] hidden sm:table-cell">
                         {cand.frequencyMHz.toFixed(3)} MHz
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-right text-[#7F8B95]">
+                      <td className="py-2.5 px-3 font-mono text-right text-[#7F8B95] hidden md:table-cell">
                         {cand.driftRateHzPerSec > 0
                           ? `+${cand.driftRateHzPerSec}`
                           : cand.driftRateHzPerSec}{' '}

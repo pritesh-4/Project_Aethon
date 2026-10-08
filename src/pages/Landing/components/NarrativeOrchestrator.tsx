@@ -132,7 +132,7 @@ export function NarrativeOrchestrator({ scrollYProgress }: NarrativeOrchestrator
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/observatory"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[4px] bg-[#10161D] text-[#5BD8F5] border border-[#5BD8F5]/60 hover:bg-[#15202B] hover:border-[#5BD8F5] transition-all text-xs font-medium cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[4px] bg-[#10161D] text-[#5BD8F5] border border-[#5BD8F5]/60 hover:bg-[#15202B] hover:border-[#5BD8F5] transition-all text-xs font-medium cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
             >
               <span>Launch console</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -140,7 +140,7 @@ export function NarrativeOrchestrator({ scrollYProgress }: NarrativeOrchestrator
 
             <Link
               to="/candidates"
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs text-[#7F8B95] hover:text-[#E6EDF2] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs text-[#7F8B95] hover:text-[#E6EDF2] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] rounded"
             >
               <span>Review candidate events</span>
               <ArrowRight className="h-3 w-3" />
@@ -155,7 +155,7 @@ export function NarrativeOrchestrator({ scrollYProgress }: NarrativeOrchestrator
         className="absolute bottom-10 inset-x-0 mx-auto flex flex-col items-center gap-1 text-[11px] text-[#7F8B95] font-mono pointer-events-none"
       >
         <span>Scroll to continue</span>
-        <ChevronDown className="h-3.5 w-3.5 text-[#5BD8F5]/70 animate-bounce" />
+        <ChevronDown className="h-3.5 w-3.5 text-[#5BD8F5]/70" />
       </motion.div>
     </div>
   );

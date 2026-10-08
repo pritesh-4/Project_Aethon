@@ -265,7 +265,12 @@ export default function ArchivePage() {
 
           {/* Mobile / Tablet Drawer Overlay / Sheet */}
           {isMobileDrawerOpen && selectedObservation && (
-            <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setIsMobileDrawerOpen(false);
+              }}
+              className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+            >
               <div
                 className="w-full h-[85vh] bg-[#0B0F14] rounded-t-lg border-t border-[#1C2630] shadow-2xl flex flex-col overflow-hidden"
                 role="dialog"

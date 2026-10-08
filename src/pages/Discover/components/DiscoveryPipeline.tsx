@@ -9,22 +9,22 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
   const steps = [
     {
       id: 'prepare',
-      name: 'PREPARE',
+      name: 'Prepare',
       desc: 'Channelization & baseline calibration',
     },
     {
       id: 'represent',
-      name: 'REPRESENT',
+      name: 'Represent',
       desc: 'Time–frequency latent representation',
     },
     {
       id: 'search',
-      name: 'SEARCH',
+      name: 'Search',
       desc: 'Narrowband anomaly screening',
     },
     {
       id: 'rank',
-      name: 'RANK',
+      name: 'Rank',
       desc: 'Doppler drift & candidate classification',
     },
   ];

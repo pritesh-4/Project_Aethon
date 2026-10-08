@@ -1,6 +1,6 @@
 import type { ObservationStatus } from '../types.ts';
 import { Button } from '@/components/ui/Button.tsx';
-import { Sparkles, Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw } from 'lucide-react';
 
 export interface ObservatoryHeaderProps {
   observationId: string;
@@ -73,27 +73,23 @@ export function ObservatoryHeader({
         {/* Left: Title, Simulated Badge & Observation Context */}
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm tracking-wide text-[#E6EDF2]">Observatory</span>
-            <span className="rounded-[3px] border border-[#172230] bg-[#10161D] px-2 py-0.5 text-[10px] font-mono text-[#7F8B95]">
-              SIMULATED OBSERVATION
+            <span className="font-semibold text-sm tracking-tight text-[#E6EDF2]">Observatory</span>
+            <span className="rounded border border-[#172230] bg-[#10161D] px-2 py-0.5 text-[11px] text-[#7F8B95]">
+              Simulated observation
             </span>
           </div>
-
-          <span className="text-[#172230] hidden sm:inline">|</span>
 
           {/* Target & Frequency Context */}
           <div className="flex items-center gap-2 text-[#7F8B95]">
             <span>Target:</span>
             <span className="text-[#E6EDF2] font-medium">{targetName}</span>
             <span>·</span>
-            <span className="text-[#5BD8F5] font-mono">{frequencyMHz.toFixed(4)} MHz</span>
+            <span className="text-[#E6EDF2] font-mono">{frequencyMHz.toFixed(4)} MHz</span>
           </div>
-
-          <span className="text-[#172230] hidden sm:inline">|</span>
 
           {/* Status Indicator */}
           <div
-            className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2 py-0.5 text-xs font-medium ${statusBadge.style}`}
+            className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium ${statusBadge.style}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${statusBadge.dot}`} />
             <span>{statusBadge.label}</span>
@@ -105,7 +101,7 @@ export function ObservatoryHeader({
           {/* Secondary Action: Load Observation */}
           <div className="flex items-center gap-1.5">
             <label htmlFor="obs-selector" className="text-xs text-[#7F8B95]">
-              Load:
+              Record:
             </label>
             <select
               id="obs-selector"
@@ -113,7 +109,7 @@ export function ObservatoryHeader({
               value={observationId}
               onChange={(e) => onSelectObservation(e.target.value)}
               disabled={isAnalyzing}
-              className="h-7 rounded-[4px] border border-[#172230] bg-[#10161D] px-2 text-xs font-mono text-[#E6EDF2] focus:border-[#5BD8F5] focus:outline-none transition-colors cursor-pointer"
+              className="h-8 rounded border border-[#172230] bg-[#10161D] px-2 text-xs font-mono text-[#E6EDF2] focus:border-[#5BD8F5] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] transition-colors cursor-pointer"
             >
               {observationList.map((obs) => (
                 <option key={obs.id} value={obs.id}>
@@ -154,7 +150,6 @@ export function ObservatoryHeader({
           <Button
             variant="primary"
             size="sm"
-            icon={<Sparkles className="h-3.5 w-3.5" />}
             onClick={onStartAnalysis}
             state={isAnalyzing ? 'loading' : 'idle'}
             loadingText="Analyzing..."
