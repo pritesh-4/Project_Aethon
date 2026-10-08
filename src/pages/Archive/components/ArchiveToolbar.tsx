@@ -35,12 +35,12 @@ export function ArchiveToolbar({
   };
 
   return (
-    <div className="border-b border-[#1C2630] bg-[#0B0F14] px-4 py-3 sm:px-6 select-none font-mono">
+    <div className="border-b border-[#242825] bg-[#141715] px-4 py-3 sm:px-6 select-none">
       <div className="flex flex-col gap-3">
         {/* Top Line: Search Input & Result Count */}
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-xl">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#7F8B95]">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#666963]">
               <Search className="h-3.5 w-3.5" />
             </div>
             <input
@@ -48,13 +48,13 @@ export function ArchiveToolbar({
               value={filters.searchQuery}
               onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
               placeholder="Search observations by ID or date..."
-              className="h-8 w-full rounded border border-[#1C2630] bg-[#06080B] pl-9 pr-8 text-xs text-[#E6EDF2] placeholder:text-[#7F8B95] focus:border-[#5BD8F5]/70 focus:outline-none focus:ring-1 focus:ring-[#5BD8F5]/30 transition-colors font-mono"
+              className="h-8 w-full rounded-[2px] border border-[#242825] bg-[#101211] pl-9 pr-8 text-xs text-[#E6E4DD] placeholder:text-[#666963] focus:border-[#D4864A] focus:outline-none focus:ring-1 focus:ring-[#D4864A]/30 transition-colors font-mono"
             />
             {filters.searchQuery && (
               <button
                 type="button"
                 onClick={() => onFilterChange({ ...filters, searchQuery: '' })}
-                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-[#7F8B95] hover:text-[#E6EDF2] transition-colors"
+                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-[#666963] hover:text-[#E6E4DD] transition-colors"
                 title="Clear search"
               >
                 <X className="h-3.5 w-3.5" />
@@ -62,19 +62,19 @@ export function ArchiveToolbar({
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-[#7F8B95] justify-between sm:justify-end">
+          <div className="flex items-center gap-3 text-xs text-[#9A9C96] justify-between sm:justify-end">
             <div>
               <span>Observations: </span>
-              <span className="font-semibold text-[#E6EDF2] tabular-nums">{filteredCount}</span>
-              <span className="text-slate-600"> / </span>
-              <span className="tabular-nums text-slate-500">{totalRecords}</span>
+              <span className="font-mono text-[#E6E4DD] tabular-nums">{filteredCount}</span>
+              <span className="text-[#666963]"> / </span>
+              <span className="tabular-nums font-mono text-[#666963]">{totalRecords}</span>
             </div>
 
             {hasActiveFilters && (
               <button
                 type="button"
                 onClick={resetFilters}
-                className="inline-flex items-center gap-1 text-[11px] text-[#5BD8F5] hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1 text-[11px] text-[#D4864A] hover:underline cursor-pointer"
               >
                 <RotateCcw className="h-3 w-3" />
                 <span>Reset filters</span>
@@ -84,17 +84,17 @@ export function ArchiveToolbar({
         </div>
 
         {/* Bottom Line: Clean Filters & Sorting */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-[#1C2630]/60 text-xs text-[#7F8B95]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-[#242825]/60 text-xs text-[#9A9C96]">
           {/* DATE Filter */}
           <div className="flex items-center gap-1.5">
-            <label htmlFor="filter-date" className="text-[10px] text-[#7F8B95]">
+            <label htmlFor="filter-date" className="text-[11px] text-[#9A9C96]">
               Date:
             </label>
             <select
               id="filter-date"
               value={filters.dateFilter}
               onChange={(e) => onFilterChange({ ...filters, dateFilter: e.target.value })}
-              className="h-8 rounded border border-[#1C2630] bg-[#06080B] px-2 text-xs text-[#E6EDF2] focus:border-[#5BD8F5]/70 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] font-mono cursor-pointer"
+              className="h-8 rounded-[2px] border border-[#242825] bg-[#101211] px-2 text-xs text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] font-mono cursor-pointer"
             >
               <option value="ALL">All dates</option>
               {availableDates.map((date) => (
@@ -107,7 +107,7 @@ export function ArchiveToolbar({
 
           {/* STATUS Filter */}
           <div className="flex items-center gap-1.5">
-            <label htmlFor="filter-status" className="text-[10px] text-[#7F8B95]">
+            <label htmlFor="filter-status" className="text-[11px] text-[#9A9C96]">
               Status:
             </label>
             <select
@@ -119,7 +119,7 @@ export function ArchiveToolbar({
                   statusFilter: e.target.value as ArchiveStatus | 'ALL',
                 })
               }
-              className="h-8 rounded border border-[#1C2630] bg-[#06080B] px-2 text-xs text-[#E6EDF2] focus:border-[#5BD8F5]/70 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] font-mono cursor-pointer"
+              className="h-8 rounded-[2px] border border-[#242825] bg-[#101211] px-2 text-xs text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] cursor-pointer"
             >
               <option value="ALL">All statuses</option>
               <option value="review">Under review</option>
@@ -132,7 +132,7 @@ export function ArchiveToolbar({
 
           {/* PRIORITY Filter */}
           <div className="flex items-center gap-1.5">
-            <label htmlFor="filter-priority" className="text-[10px] text-[#7F8B95]">
+            <label htmlFor="filter-priority" className="text-[11px] text-[#9A9C96]">
               Priority:
             </label>
             <select
@@ -144,7 +144,7 @@ export function ArchiveToolbar({
                   priorityFilter: e.target.value as ArchiveFilterState['priorityFilter'],
                 })
               }
-              className="h-8 rounded border border-[#1C2630] bg-[#06080B] px-2 text-xs text-[#E6EDF2] focus:border-[#5BD8F5]/70 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] font-mono cursor-pointer"
+              className="h-8 rounded-[2px] border border-[#242825] bg-[#101211] px-2 text-xs text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] cursor-pointer"
             >
               <option value="ALL">All priorities</option>
               <option value="HIGH">High priority</option>
@@ -159,7 +159,7 @@ export function ArchiveToolbar({
           <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
             <label
               htmlFor="sort-archive"
-              className="flex items-center gap-1 text-[10px] text-[#7F8B95]"
+              className="flex items-center gap-1 text-[11px] text-[#9A9C96]"
             >
               <ArrowUpDown className="h-3 w-3" />
               <span>Sort:</span>
@@ -170,7 +170,7 @@ export function ArchiveToolbar({
               onChange={(e) =>
                 onFilterChange({ ...filters, sortBy: e.target.value as ArchiveSortOption })
               }
-              className="h-8 rounded border border-[#1C2630] bg-[#06080B] px-2 text-xs text-[#E6EDF2] focus:border-[#5BD8F5]/70 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] font-mono cursor-pointer"
+              className="h-8 rounded-[2px] border border-[#242825] bg-[#101211] px-2 text-xs text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] cursor-pointer"
             >
               <option value="newest">Most recent</option>
               <option value="oldest">Oldest first</option>

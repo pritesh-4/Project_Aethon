@@ -27,23 +27,23 @@ export function SidebarItem({
       className={({ isActive }) =>
         cn(
           'group relative flex items-center transition-colors duration-150 select-none font-sans outline-none',
-          'focus-visible:ring-1 focus-visible:ring-[#5BD8F5] focus-visible:ring-offset-1 focus-visible:ring-offset-[#06080B]',
+          'focus-visible:ring-1 focus-visible:ring-[#D4864A] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0F1110]',
           isCollapsed
-            ? 'h-9 w-9 mx-auto justify-center rounded-[4px]'
-            : 'h-9 w-full px-3 gap-3 rounded-[4px] text-xs',
+            ? 'h-8.5 w-8.5 mx-auto justify-center rounded-[2px]'
+            : 'h-8.5 w-full px-3 gap-3 rounded-[2px] text-xs',
           isActive
-            ? 'bg-[#10161D] text-[#E6EDF2] font-medium'
-            : 'text-[#7F8B95] hover:text-[#E6EDF2] hover:bg-[#10161D]/50'
+            ? 'bg-[#1A1E1B] text-[#E6E4DD] font-medium'
+            : 'text-[#9A9C96] hover:text-[#E6E4DD] hover:bg-[#141715]'
         )
       }
     >
       {({ isActive }) => (
         <>
-          {/* Active State: One thin cyan indicator */}
+          {/* Active State: Quiet 2px warm copper left rule */}
           {isActive && (
             <motion.span
               layoutId="activeNavIndicator"
-              className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-[#5BD8F5]"
+              className="absolute left-0 top-1 bottom-1 w-[2px] bg-[#D4864A]"
               transition={{ duration: 0.15, ease: 'easeOut' }}
             />
           )}
@@ -52,14 +52,16 @@ export function SidebarItem({
           <span className="relative shrink-0">
             <Icon
               className={cn(
-                'h-4 w-4 transition-colors duration-150',
-                isActive ? 'text-[#5BD8F5]' : 'text-[#7F8B95] group-hover:text-[#E6EDF2]'
+                'h-3.5 w-3.5 transition-colors duration-150',
+                isActive ? 'text-[#D4864A]' : 'text-[#9A9C96] group-hover:text-[#E6E4DD]'
               )}
             />
           </span>
 
-          {/* Label when expanded */}
-          {!isCollapsed && <span className="truncate tracking-wide text-xs">{label}</span>}
+          {/* Humanist mixed-case label */}
+          {!isCollapsed && (
+            <span className="truncate text-xs font-normal tracking-normal">{label}</span>
+          )}
         </>
       )}
     </NavLink>

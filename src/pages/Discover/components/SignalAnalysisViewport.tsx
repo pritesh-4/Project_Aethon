@@ -70,15 +70,15 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
       const cy = paddingTop + plotH * 0.5;
 
       // 1. Clear Background
-      ctx.fillStyle = '#06080B';
+      ctx.fillStyle = '#0F1110';
       ctx.fillRect(0, 0, width, height);
 
       // Plot Area Fill
-      ctx.fillStyle = '#0B0F14';
+      ctx.fillStyle = '#121513';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 2. Reticle Grid
-      ctx.strokeStyle = 'rgba(23, 34, 48, 0.7)';
+      ctx.strokeStyle = '#1E221F';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -108,7 +108,7 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
       // Waveform display during prepare
       if (isPrepare) {
         ctx.save();
-        ctx.strokeStyle = '#5BD8F5';
+        ctx.strokeStyle = '#D4864A';
         ctx.lineWidth = 1.3;
 
         ctx.beginPath();
@@ -158,19 +158,19 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
               let cb: number;
 
               if (cl < 0.4) {
-                cr = Math.floor(10 * cl);
-                cg = Math.floor(40 * cl * 2);
-                cb = Math.floor(100 * cl * 2.5);
+                cr = Math.floor(18 + 10 * cl);
+                cg = Math.floor(22 + 20 * cl);
+                cb = Math.floor(20 + 15 * cl);
               } else if (cl < 0.8) {
                 const f = (cl - 0.4) / 0.4;
-                cr = Math.floor(14 + 30 * f);
-                cg = Math.floor(90 + 100 * f);
-                cb = Math.floor(150 + 90 * f);
+                cr = Math.floor(40 + 140 * f);
+                cg = Math.floor(45 + 80 * f);
+                cb = Math.floor(40 + 20 * f);
               } else {
                 const f = (cl - 0.8) / 0.2;
-                cr = Math.floor(91 + 140 * f);
-                cg = Math.floor(216 + 25 * f);
-                cb = 245;
+                cr = Math.floor(180 + 55 * f);
+                cg = Math.floor(125 + 100 * f);
+                cb = Math.floor(60 + 140 * f);
               }
 
               ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
@@ -194,7 +194,7 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
         const by = paddingTop + plotH * 0.32;
         const bh = plotH * 0.34;
 
-        ctx.strokeStyle = isRankOrComplete ? '#5BD8F5' : '#E8AE50';
+        ctx.strokeStyle = '#D4864A';
         ctx.lineWidth = 1.2;
         const cLen = 10;
 
@@ -234,7 +234,7 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
 
         // Clean label
         ctx.font = '10px Inter, sans-serif';
-        ctx.fillStyle = isRankOrComplete ? '#5BD8F5' : '#E8AE50';
+        ctx.fillStyle = '#D4864A';
         ctx.textAlign = 'left';
         ctx.fillText(
           isRankOrComplete ? 'Candidate signal isolated' : 'Anomaly detected',
@@ -246,12 +246,12 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
       }
 
       // Outer Plot Border
-      ctx.strokeStyle = '#1C2630';
+      ctx.strokeStyle = '#262C28';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Clean Scientific Axes
-      ctx.fillStyle = '#7F8B95';
+      ctx.fillStyle = '#9A9C96';
       ctx.font = '10px Inter, sans-serif';
 
       // Frequency axis (Y)
@@ -280,13 +280,13 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
   }, [observation]);
 
   return (
-    <div className="rounded border border-[#1C2630] bg-[#06080B] overflow-hidden select-none">
-      <div className="flex items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] px-3.5 py-2 text-xs">
-        <span className="font-medium text-[#E6EDF2]">Time–frequency spectrogram</span>
-        <span className="text-[11px] text-[#7F8B95] font-mono">{observation.name}</span>
+    <div className="rounded-[2px] border border-[#262C28] bg-[#0F1110] overflow-hidden select-none font-sans">
+      <div className="flex items-center justify-between border-b border-[#262C28] bg-[#141715] px-3.5 py-2 text-xs">
+        <span className="font-medium text-[#E6E4DD]">Time–frequency spectrogram</span>
+        <span className="text-[11px] text-[#9A9C96] font-mono">{observation.name}</span>
       </div>
 
-      <div ref={containerRef} className="relative h-[220px] sm:h-[260px] w-full bg-[#06080B]">
+      <div ref={containerRef} className="relative h-[220px] sm:h-[260px] w-full bg-[#0F1110]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>
     </div>

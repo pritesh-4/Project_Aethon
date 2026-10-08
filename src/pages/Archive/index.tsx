@@ -205,7 +205,7 @@ export default function ArchivePage() {
 
   return (
     <PageTransition>
-      <div className="min-h-[calc(100vh-2.5rem)] bg-[#06080B] text-[#E6EDF2] flex flex-col font-mono selection:bg-[#5BD8F5]/30 selection:text-[#5BD8F5]">
+      <div className="min-h-[calc(100vh-2.5rem)] bg-[#0F1110] text-[#E6E4DD] flex flex-col selection:bg-[#D4864A]/20 selection:text-[#D4864A]">
         {/* 1. Header */}
         <ArchiveHeader stats={ARCHIVE_SUMMARY_STATS} />
 
@@ -273,7 +273,7 @@ export default function ArchivePage() {
               className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
             >
               <div
-                className="w-full h-[85vh] bg-[#0B0F14] rounded-t-lg border-t border-[#1C2630] shadow-2xl flex flex-col overflow-hidden"
+                className="w-full h-[85vh] bg-[#141715] rounded-t-[2px] border-t border-[#242825] shadow-2xl flex flex-col overflow-hidden"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Observation Detail Sheet"

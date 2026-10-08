@@ -41,10 +41,10 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
   };
 
   return (
-    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none space-y-3">
-      <div className="flex items-center justify-between border-b border-[#1C2630] pb-2">
-        <span className="text-xs font-semibold text-[#E6EDF2]">Analysis procedure</span>
-        <span className="text-[11px] text-[#7F8B95]">
+    <div className="rounded-[2px] border border-[#262C28] bg-[#141715] p-4 select-none space-y-3 font-sans">
+      <div className="flex items-center justify-between border-b border-[#262C28] pb-2">
+        <span className="text-xs font-semibold text-[#E6E4DD]">Analysis procedure</span>
+        <span className="text-[11px] text-[#9A9C96]">
           {stage === 'complete'
             ? 'Procedure finished'
             : stage === 'idle'
@@ -62,29 +62,29 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
           return (
             <div
               key={step.id}
-              className={`flex flex-col justify-between p-3 rounded border transition-colors ${
+              className={`flex flex-col justify-between p-3 rounded-[2px] border transition-colors ${
                 isActive
-                  ? 'border-[#5BD8F5] bg-[#5BD8F5]/10'
+                  ? 'border-[#D4864A] bg-[#241A14]'
                   : isComplete
-                    ? 'border-[#1C2630] bg-[#10161D]'
-                    : 'border-[#1C2630]/60 bg-[#06080B]/60'
+                    ? 'border-[#262C28] bg-[#141F18]'
+                    : 'border-[#262C28] bg-[#101311]'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-[#7F8B95] font-mono">0{idx + 1}</span>
+                  <span className="text-[10px] text-[#9A9C96] font-mono">0{idx + 1}</span>
                   {isComplete ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#5BD8F5]">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#529E72]">
                       <Check className="h-3 w-3" />
                       Complete
                     </span>
                   ) : isActive ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#5BD8F5]">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D4864A]">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       In progress
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-[#7F8B95]">
+                    <span className="inline-flex items-center gap-1 text-[11px] text-[#9A9C96]">
                       <Clock className="h-3 w-3" />
                       Pending
                     </span>
@@ -93,14 +93,14 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
 
                 <div
                   className={`mt-1.5 text-xs font-semibold tracking-wider ${
-                    isActive ? 'text-[#5BD8F5]' : isComplete ? 'text-[#E6EDF2]' : 'text-[#7F8B95]'
+                    isActive ? 'text-[#D4864A]' : isComplete ? 'text-[#E6E4DD]' : 'text-[#9A9C96]'
                   }`}
                 >
                   {step.name}
                 </div>
               </div>
 
-              <p className="mt-2 text-[11px] text-[#7F8B95] leading-normal">{step.desc}</p>
+              <p className="mt-2 text-[11px] text-[#9A9C96] leading-normal">{step.desc}</p>
             </div>
           );
         })}

@@ -21,19 +21,19 @@ export function CandidateHeader({
   totalCount,
 }: CandidateHeaderProps) {
   return (
-    <header className="border-b border-[#1C2630] bg-[#0B0F14] px-4 sm:px-6 py-3 select-none">
+    <header className="border-b border-[#242825] bg-[#141715] px-4 sm:px-6 py-3.5 select-none">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-7xl mx-auto">
         {/* Title and Context */}
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
-            <h1 className="text-sm font-semibold tracking-tight text-[#E6EDF2]">
-              Candidate triage
+            <h1 className="text-sm font-medium tracking-tight text-[#E6E4DD]">
+              Candidate review ledger
             </h1>
-            <span className="text-[#7F8B95]">•</span>
-            <span className="text-xs text-[#7F8B95] font-mono">{observationId}</span>
+            <span className="text-[#666963]">•</span>
+            <span className="text-xs text-[#9A9C96] font-mono">{observationId}</span>
           </div>
-          <p className="text-xs text-[#7F8B95]">
-            {totalIdentified} events detected • {highPriorityCount} prioritized for immediate review
+          <p className="text-xs text-[#9A9C96]">
+            {totalIdentified} events isolated • {highPriorityCount} prioritized for review
           </p>
         </div>
 
@@ -41,19 +41,19 @@ export function CandidateHeader({
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Quick Search */}
           <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#7F8B95]" />
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#666963]" />
             <input
               type="text"
               value={filters.searchQuery}
               onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
               placeholder="Search candidate ID..."
-              className="h-8 w-full sm:w-56 rounded border border-[#1C2630] bg-[#06080B] pl-8 pr-2.5 text-xs text-[#E6EDF2] placeholder-[#7F8B95] focus:border-[#5BD8F5] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] transition-colors font-mono"
+              className="h-8 w-full sm:w-52 rounded-[2px] border border-[#242825] bg-[#101211] pl-8 pr-2.5 text-xs text-[#E6E4DD] placeholder-[#666963] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors font-mono"
             />
           </div>
 
           {/* Priority Filter */}
-          <div className="flex items-center gap-1.5 text-xs text-[#7F8B95]">
-            <Filter className="h-3.5 w-3.5 text-[#7F8B95]" />
+          <div className="flex items-center gap-1.5 text-xs text-[#9A9C96]">
+            <Filter className="h-3.5 w-3.5 text-[#666963]" />
             <select
               value={filters.priorityFilter}
               onChange={(e) =>
@@ -63,7 +63,7 @@ export function CandidateHeader({
                 })
               }
               aria-label="Filter candidates by priority"
-              className="h-8 rounded border border-[#1C2630] bg-[#10161D] px-2 text-xs text-[#E6EDF2] focus:border-[#5BD8F5] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] transition-colors cursor-pointer"
+              className="h-8 rounded-[2px] border border-[#242825] bg-[#1A1E1B] px-2 text-xs text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors cursor-pointer"
             >
               <option value="ALL">All priorities ({totalCount})</option>
               <option value="HIGH">High priority ({highPriorityCount})</option>
@@ -72,8 +72,9 @@ export function CandidateHeader({
             </select>
           </div>
 
-          <span className="text-xs text-[#7F8B95] pl-1 hidden sm:inline">
-            Showing <strong className="text-[#E6EDF2] font-mono">{filteredCount}</strong>
+          <span className="text-xs text-[#666963] pl-1 hidden sm:inline">
+            Showing{' '}
+            <strong className="text-[#E6E4DD] font-mono font-normal">{filteredCount}</strong>
           </span>
         </div>
       </div>

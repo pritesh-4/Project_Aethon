@@ -33,14 +33,14 @@ export function ArchiveTimeline({
   }, [observations]);
 
   return (
-    <div className="font-mono select-none space-y-4">
+    <div className="select-none space-y-4">
       {/* Table Column Headers (Desktop) */}
-      <div className="hidden sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 px-3 py-2 text-xs font-medium text-[#7F8B95] border-b border-[#1C2630]">
+      <div className="hidden sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 px-3 py-2 text-xs font-normal text-[#9A9C96] border-b border-[#242825]">
         <div className="col-span-3">Date / time (UTC)</div>
         <div className="col-span-3">Observation ID</div>
         <div className="col-span-2">Candidate count</div>
         <div className="col-span-2">Highest priority</div>
-        <div className="col-span-2 text-right">Status</div>
+        <div className="col-span-2 text-right">Review state</div>
       </div>
 
       {/* Subtle Chronological Groups */}
@@ -49,11 +49,11 @@ export function ArchiveTimeline({
           return (
             <div key={group.date} className="space-y-1.5">
               {/* Subtle Date Header */}
-              <div className="flex items-center justify-between px-1 py-1 text-xs text-[#7F8B95]">
+              <div className="flex items-center justify-between px-1 py-1 text-xs text-[#9A9C96]">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E6EDF2]">{group.date}</span>
-                  <span className="text-slate-600">·</span>
-                  <span className="text-[11px] text-[#7F8B95]">
+                  <span className="font-medium text-[#E6E4DD]">{group.date}</span>
+                  <span className="text-[#666963]">·</span>
+                  <span className="text-[11px] text-[#9A9C96]">
                     {group.items.length} {group.items.length === 1 ? 'observation' : 'observations'}
                   </span>
                 </div>

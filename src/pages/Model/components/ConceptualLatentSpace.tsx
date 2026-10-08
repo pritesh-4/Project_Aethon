@@ -29,7 +29,7 @@ export function ConceptualLatentSpace() {
         x: -0.35 + Math.cos(angle) * radius,
         y: -0.2 + Math.sin(angle) * radius,
         category: 'NOISE',
-        label: 'Astrophysical Thermal Noise',
+        label: 'Astrophysical thermal noise floor',
         id: `NOISE-${1000 + i}`,
       });
     }
@@ -42,7 +42,7 @@ export function ConceptualLatentSpace() {
         x: 0.25 + Math.cos(angle) * radius,
         y: -0.3 + Math.sin(angle) * radius,
         category: 'PULSAR',
-        label: 'Known Pulsar Harmonics (Cataloged)',
+        label: 'Cataloged pulsar harmonics',
         id: `PSR-${2000 + i}`,
       });
     }
@@ -55,7 +55,7 @@ export function ConceptualLatentSpace() {
         x: -0.15 + Math.cos(angle) * radius,
         y: 0.35 + Math.sin(angle) * radius,
         category: 'RFI',
-        label: 'Known Terrestrial / Satellite RFI',
+        label: 'Terrestrial / orbital satellite RFI',
         id: `RFI-${3000 + i}`,
       });
     }
@@ -68,7 +68,7 @@ export function ConceptualLatentSpace() {
         x: 0.35 + Math.cos(angle) * radius,
         y: 0.2 + Math.sin(angle) * radius,
         category: 'MASER',
-        label: 'Hydroxyl / Methanol Maser Profile',
+        label: 'Hydroxyl / methanol maser profile',
         id: `MSR-${4000 + i}`,
       });
     }
@@ -78,14 +78,14 @@ export function ConceptualLatentSpace() {
       x: 0.65,
       y: 0.6,
       category: 'CANDIDATE',
-      label: 'Primary Candidate AET-04721 (Unclassified)',
+      label: 'Primary candidate AET-04721 (Unclassified)',
       id: 'AET-04721',
     });
     pts.push({
       x: 0.58,
       y: 0.72,
       category: 'CANDIDATE',
-      label: 'Secondary Outlier AET-04738',
+      label: 'Secondary outlier AET-04738',
       id: 'AET-04738',
     });
 
@@ -130,11 +130,11 @@ export function ConceptualLatentSpace() {
       const scale = Math.min(width, height) * 0.45;
 
       // 1. Clear background
-      ctx.fillStyle = '#06080B';
+      ctx.fillStyle = '#0F1110';
       ctx.fillRect(0, 0, width, height);
 
       // 2. Reticle Grid
-      ctx.strokeStyle = '#172230';
+      ctx.strokeStyle = 'rgba(154, 156, 150, 0.12)';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -162,34 +162,34 @@ export function ConceptualLatentSpace() {
         if (activeFilter === 'KNOWN' && pt.category === 'CANDIDATE') return;
         if (activeFilter === 'ANOMALOUS' && pt.category !== 'CANDIDATE') return;
 
-        let color = '#7F8B95';
+        let color = '#9A9C96';
         let radius = 2.5;
 
         if (pt.category === 'NOISE') {
-          color = 'rgba(127, 139, 149, 0.4)';
+          color = 'rgba(154, 156, 150, 0.35)';
           radius = 2;
         } else if (pt.category === 'PULSAR') {
-          color = '#5BD8F5';
+          color = '#C9C8C0';
           radius = 3;
         } else if (pt.category === 'RFI') {
-          color = '#E8AE50';
+          color = '#7A8077';
           radius = 3;
         } else if (pt.category === 'MASER') {
-          color = '#94A3B8';
+          color = '#9A9C96';
           radius = 2.5;
         } else if (pt.category === 'CANDIDATE') {
-          color = '#5BD8F5';
+          color = '#D4864A';
           radius = 5.5;
 
-          // Outlier pulse ring
-          ctx.strokeStyle = '#5BD8F5';
+          // Outlier ring
+          ctx.strokeStyle = '#D4864A';
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.arc(px, py, 10, 0, Math.PI * 2);
           ctx.stroke();
 
           // Distance vector from centroid
-          ctx.strokeStyle = 'rgba(91, 216, 245, 0.4)';
+          ctx.strokeStyle = 'rgba(212, 134, 74, 0.35)';
           ctx.setLineDash([2, 3]);
           ctx.beginPath();
           ctx.moveTo(cx, cy);
@@ -244,19 +244,17 @@ export function ConceptualLatentSpace() {
   };
 
   return (
-    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-5 select-none space-y-4">
+    <div className="rounded-[2px] border border-[#242825] bg-[#141715] p-5 select-none space-y-4">
       {/* Title & Explicit Conceptual Disclaimer */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-[#1C2630] pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-[#242825] pb-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-[#E6EDF2]">
-              Conceptual Representation Space
-            </h3>
-            <span className="rounded border border-[#E8AE50]/40 bg-[#E8AE50]/10 px-1.5 py-0.2 text-[10px] font-medium text-[#E8AE50]">
-              Conceptual demonstration
+            <h3 className="text-sm font-medium text-[#E6E4DD]">Latent manifold projection</h3>
+            <span className="rounded-[2px] border border-[#242825] bg-[#1A1E1B] px-1.5 py-0.5 text-[10px] font-medium text-[#9A9C96]">
+              2D projection demonstration
             </span>
           </div>
-          <p className="text-xs text-[#7F8B95] mt-0.5">
+          <p className="text-xs text-[#9A9C96] mt-0.5">
             Illustrative 2D manifold projection demonstrating cluster separation between learned
             backgrounds and candidate outliers
           </p>
@@ -268,15 +266,15 @@ export function ConceptualLatentSpace() {
           role="group"
           aria-label="Filter points"
         >
-          <Filter className="h-3 w-3 text-[#7F8B95]" />
+          <Filter className="h-3 w-3 text-[#666963]" />
           <button
             type="button"
             aria-pressed={activeFilter === 'ALL'}
             onClick={() => setActiveFilter('ALL')}
-            className={`px-2 py-0.5 rounded border transition-colors cursor-pointer text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
+            className={`px-2 py-0.5 rounded-[2px] border transition-colors cursor-pointer text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
               activeFilter === 'ALL'
-                ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5]'
-                : 'border-[#1C2630] bg-[#06080B] text-[#7F8B95]'
+                ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
+                : 'border-[#242825] bg-[#101211] text-[#9A9C96]'
             }`}
           >
             All
@@ -285,42 +283,42 @@ export function ConceptualLatentSpace() {
             type="button"
             aria-pressed={activeFilter === 'KNOWN'}
             onClick={() => setActiveFilter('KNOWN')}
-            className={`px-2 py-0.5 rounded border transition-colors cursor-pointer text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
+            className={`px-2 py-0.5 rounded-[2px] border transition-colors cursor-pointer text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
               activeFilter === 'KNOWN'
-                ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5]'
-                : 'border-[#1C2630] bg-[#06080B] text-[#7F8B95]'
+                ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
+                : 'border-[#242825] bg-[#101211] text-[#9A9C96]'
             }`}
           >
-            Known
+            Known catalog
           </button>
           <button
             type="button"
             aria-pressed={activeFilter === 'ANOMALOUS'}
             onClick={() => setActiveFilter('ANOMALOUS')}
-            className={`px-2 py-0.5 rounded border transition-colors cursor-pointer text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
+            className={`px-2 py-0.5 rounded-[2px] border transition-colors cursor-pointer text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
               activeFilter === 'ANOMALOUS'
-                ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5]'
-                : 'border-[#1C2630] bg-[#06080B] text-[#7F8B95]'
+                ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
+                : 'border-[#242825] bg-[#101211] text-[#9A9C96]'
             }`}
           >
-            Anomalies
+            Deviations
           </button>
         </div>
       </div>
 
-      {/* Explicit Scientific Disclaimer Notice Banner */}
-      <div className="rounded border border-[#1C2630] bg-[#06080B] p-2.5 flex items-start gap-2 text-[11px] text-[#7F8B95] leading-normal">
-        <AlertCircle className="h-3.5 w-3.5 text-[#E8AE50] shrink-0 mt-0.5" />
+      {/* Scientific Disclaimer Notice */}
+      <div className="rounded-[2px] border border-[#242825] bg-[#101211] p-3 flex items-start gap-2.5 text-xs text-[#9A9C96] leading-normal">
+        <AlertCircle className="h-4 w-4 text-[#D4864A] shrink-0 mt-0.5" />
         <span>
-          <strong className="text-[#E6EDF2]">Methodological Note:</strong> This visualization is a
-          conceptual pedagogical projection designed to illustrate high-dimensional cluster
-          geometry. Points represent synthetic embeddings to explain how manifold distance works,
-          not live calibrated telescope measurements.
+          <strong className="text-[#E6E4DD] font-medium">Methodological note:</strong> This
+          visualization is a pedagogical 2D projection designed to explain high-dimensional manifold
+          distance. Points represent feature embeddings demonstrating how outlier distance
+          functions, rather than uncalibrated radio measurements.
         </span>
       </div>
 
       {/* Canvas Viewport */}
-      <div className="relative rounded border border-[#1C2630] bg-[#06080B] overflow-hidden">
+      <div className="relative rounded-[2px] border border-[#242825] bg-[#0F1110] overflow-hidden">
         <div ref={containerRef} className="h-[280px] sm:h-[320px] w-full">
           <canvas
             ref={canvasRef}
@@ -332,29 +330,29 @@ export function ConceptualLatentSpace() {
 
         {/* Hover Readout Tooltip */}
         {hoveredPoint && (
-          <div className="absolute top-3 left-3 rounded border border-[#1C2630] bg-[#0B0F14]/90 backdrop-blur px-3 py-1.5 text-xs font-mono space-y-0.5">
-            <span className="text-[#5BD8F5] font-semibold block">{hoveredPoint.id}</span>
-            <span className="text-[#E6EDF2] text-[11px] block">{hoveredPoint.label}</span>
+          <div className="absolute top-3 left-3 rounded-[2px] border border-[#242825] bg-[#141715]/95 px-3 py-1.5 text-xs font-mono space-y-0.5">
+            <span className="text-[#D4864A] font-medium block">{hoveredPoint.id}</span>
+            <span className="text-[#E6E4DD] text-[11px] block">{hoveredPoint.label}</span>
           </div>
         )}
 
         {/* Legend Overlay */}
-        <div className="absolute bottom-2.5 right-3 flex flex-wrap items-center gap-3 text-[10px] text-[#7F8B95] bg-[#06080B]/80 px-2 py-1 rounded border border-[#1C2630]/60">
-          <div className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-[#7F8B95]/40" />
-            <span>Thermal Noise</span>
+        <div className="absolute bottom-2.5 right-3 flex flex-wrap items-center gap-3 text-[11px] text-[#9A9C96] bg-[#101211]/90 px-2.5 py-1 rounded-[2px] border border-[#242825]">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[#9A9C96]/40" />
+            <span>Thermal noise</span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-[#5BD8F5]" />
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[#C9C8C0]" />
             <span>Pulsars</span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-[#E8AE50]" />
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[#7A8077]" />
             <span>Satellite RFI</span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-[#5BD8F5] ring-2 ring-[#5BD8F5]/40" />
-            <span className="text-[#5BD8F5] font-medium">Candidate</span>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[#D4864A]" />
+            <span className="text-[#D4864A] font-medium">Candidate deviation</span>
           </div>
         </div>
       </div>

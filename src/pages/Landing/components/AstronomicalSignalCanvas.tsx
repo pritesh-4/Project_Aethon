@@ -55,13 +55,13 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Color definitions
-    const COLOR_BG = '#06080B';
-    const COLOR_GRID = 'rgba(23, 34, 48, 0.45)';
-    const COLOR_TICK = 'rgba(127, 139, 149, 0.22)';
-    const COLOR_SIGNAL = '#5BD8F5';
-    const COLOR_NOISE = 'rgba(127, 139, 149, 0.28)';
-    const COLOR_AMBER = '#E8AE50';
+    // Color definitions: Observatory mineral & copper palette
+    const COLOR_BG = '#0F1110';
+    const COLOR_GRID = 'rgba(154, 156, 150, 0.12)';
+    const COLOR_TICK = 'rgba(154, 156, 150, 0.22)';
+    const COLOR_SIGNAL = '#D4864A';
+    const COLOR_NOISE = 'rgba(154, 156, 150, 0.25)';
+    const COLOR_AMBER = '#D4864A';
 
     const render = (now: number) => {
       const t = shouldReduceMotion ? 0 : (now - startTime) * 0.001;
@@ -86,8 +86,8 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
         centerY,
         Math.max(width, height) * 0.65
       );
-      radGrad.addColorStop(0, 'rgba(12, 22, 34, 0.35)');
-      radGrad.addColorStop(1, '#06080B');
+      radGrad.addColorStop(0, 'rgba(26, 30, 27, 0.45)');
+      radGrad.addColorStop(1, '#0F1110');
       ctx.fillStyle = radGrad;
       ctx.fillRect(0, 0, width, height);
 
@@ -124,7 +124,6 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
       mobile: boolean
     ) {
       c.save();
-      // Baseline visibility emerges from faint silence (0.15) to structured (0.4)
       const baseAlpha = 0.15 + smoothstep(0.02, 0.15, prog) * 0.25;
       c.strokeStyle = COLOR_GRID;
       c.lineWidth = 1;
@@ -164,8 +163,8 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
 
       // Quiet technical telemetry label at bottom corner
       if (prog > 0.05) {
-        c.font = '10px "JetBrains Mono", monospace';
-        c.fillStyle = 'rgba(127, 139, 149, 0.35)';
+        c.font = '10px ui-monospace, SFMono-Regular, monospace';
+        c.fillStyle = 'rgba(154, 156, 150, 0.4)';
         c.textAlign = 'left';
         c.fillText('FREQ: 1420.405 MHz // RECEIVER CHANNEL 01', 24, h - 24);
       }
@@ -183,9 +182,7 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
       t: number,
       mobile: boolean
     ) {
-      // Emergence: fades in starting at prog 0.12
       const fieldIn = smoothstep(0.12, 0.2, prog);
-      // Dissolution: ALL ambient clutter smoothly fades away during the deviation (0.45 - 0.60)
       const fieldOut = 1 - smoothstep(0.44, 0.58, prog);
       const fieldAlpha = fieldIn * fieldOut;
 
@@ -244,11 +241,10 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
 
       // Congested spectral FFT bin tick streaks during peak overwhelm (Scene 3)
       if (crowdingFactor > 0.2 && !mobile) {
-        c.strokeStyle = 'rgba(91, 216, 245, 0.15)';
+        c.strokeStyle = 'rgba(212, 134, 74, 0.15)';
         c.globalAlpha = crowdingFactor * fieldAlpha * 0.4;
         c.lineWidth = 1;
 
-        // Faint horizontal energy packets
         const streakOffsets = [-58, -14, 56, 96];
         streakOffsets.forEach((off, idx) => {
           const seed = idx * 137.5;
@@ -276,13 +272,10 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
     ) {
       c.save();
 
-      // 1. Dynamic Carrier Parameters driven by continuous progress
-      // Emergence alpha: 0.03 at silence, climbs to 0.85 in known, 1.0 when isolated
       const emergence = smoothstep(0.01, 0.08, prog);
       const isolationBoost = smoothstep(0.46, 0.6, prog);
       const carrierAlpha = Math.max(0.04, emergence * (0.8 + isolationBoost * 0.2));
 
-      // Amplitude progression: 2px (faint baseline ripple) -> 14px -> 18px -> 24px (investigation zoom) -> 20px (lock)
       let targetAmp: number;
       if (prog < 0.12) {
         targetAmp = 2 + smoothstep(0.02, 0.12, prog) * 12;
@@ -293,31 +286,25 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
       } else if (prog < 0.63) {
         targetAmp = 15 + smoothstep(0.45, 0.63, prog) * 4;
       } else if (prog < 0.81) {
-        targetAmp = 19 + smoothstep(0.63, 0.72, prog) * 5; // Visual zoom in investigation
+        targetAmp = 19 + smoothstep(0.63, 0.72, prog) * 5;
       } else {
-        targetAmp = 22 - smoothstep(0.81, 0.9, prog) * 2; // Resonant settle in candidate
+        targetAmp = 22 - smoothstep(0.81, 0.9, prog) * 2;
       }
 
-      // Modulation interference during overwhelm (Scene 3: 0.30 - 0.45)
       const overwhelmFactor = smoothstep(0.28, 0.38, prog) * (1 - smoothstep(0.44, 0.52, prog));
-
-      // Doppler frequency drift slope (Scene 4 Deviation: starts at 0.45, ramps to -0.055)
       const driftProgress = smoothstep(0.45, 0.62, prog);
       const driftSlope = -0.052 * driftProgress;
-
-      // Spatial aperture width (visual narrowing / focus in investigation: Scene 5)
       const zoomFactor = smoothstep(0.63, 0.78, prog);
       const aperturePower = 2.2 + zoomFactor * 1.5;
 
-      // Carrier frequency and phase
       const baseFreq = 0.042;
       const phaseSpeed = 5.5;
 
-      // 2. Draw Subtle Ambient Echo / Coherence Shadow when drifting (Anomaly highlight)
+      // Subtle ambient coherence shadow when drifting (Anomaly highlight in copper)
       if (isolationBoost > 0.1) {
         c.strokeStyle = COLOR_AMBER;
         c.lineWidth = 1;
-        c.globalAlpha = isolationBoost * 0.35;
+        c.globalAlpha = isolationBoost * 0.4;
 
         c.beginPath();
         for (let x = 0; x <= w; x += 3) {
@@ -332,10 +319,10 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
         c.stroke();
       }
 
-      // 3. Draw Soft Outer Cyan Glow
+      // Soft copper envelope trace
       c.strokeStyle = COLOR_SIGNAL;
-      c.lineWidth = 2.2;
-      c.globalAlpha = carrierAlpha * 0.45;
+      c.lineWidth = 2.0;
+      c.globalAlpha = carrierAlpha * 0.4;
 
       c.beginPath();
       for (let x = 0; x <= w; x += 3) {
@@ -352,8 +339,8 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
       }
       c.stroke();
 
-      // 4. Draw Crisp Core Carrier
-      c.strokeStyle = isolationBoost > 0.5 ? '#E6EDF2' : COLOR_SIGNAL;
+      // Crisp Core Carrier (Soft neutral white)
+      c.strokeStyle = isolationBoost > 0.5 ? '#E6E4DD' : '#C9C8C0';
       c.lineWidth = 1.3;
       c.globalAlpha = carrierAlpha;
 
@@ -434,7 +421,7 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
       c.stroke();
 
       // Center fiducial indicator
-      c.strokeStyle = COLOR_SIGNAL;
+      c.strokeStyle = COLOR_AMBER;
       c.globalAlpha = frameAlpha * 0.5;
       c.beginPath();
       c.moveTo(cx, boxY - 4);
@@ -443,8 +430,8 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
       c.lineTo(cx, boxY + boxH + 4);
       c.stroke();
 
-      // Subtle Telemetry readout
-      c.font = '9px "JetBrains Mono", monospace';
+      // Telemetry readout
+      c.font = '9px ui-monospace, SFMono-Regular, monospace';
       c.fillStyle = COLOR_AMBER;
       c.globalAlpha = frameAlpha * 0.85;
       c.textAlign = 'left';
@@ -475,7 +462,7 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
       const r1 = mobile ? 26 : 34;
       const r2 = r1 + (mobile ? 8 : 10);
 
-      // Inner target circle in luminous cyan
+      // Inner target circle in warm copper
       c.strokeStyle = COLOR_SIGNAL;
       c.lineWidth = 1;
       c.globalAlpha = lockAlpha * 0.7;
@@ -492,9 +479,9 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
       c.lineTo(cx, cy + 7);
       c.stroke();
 
-      // Rotating / breathing outer calibration ring with notched perimeter
+      // Outer calibration ring with notched perimeter
       const rotAngle = shouldReduceMotion ? 0 : t * 0.35;
-      c.strokeStyle = 'rgba(91, 216, 245, 0.3)';
+      c.strokeStyle = 'rgba(212, 134, 74, 0.3)';
       c.setLineDash([3, 5]);
 
       c.beginPath();
@@ -518,10 +505,10 @@ export function AstronomicalSignalCanvas({ scrollYProgress }: AstronomicalSignal
         c.stroke();
       }
 
-      // Subdued Candidate Tag below reticle
-      c.font = '10px "JetBrains Mono", monospace';
-      c.fillStyle = COLOR_SIGNAL;
-      c.globalAlpha = lockAlpha * 0.8;
+      // Candidate Tag below reticle
+      c.font = '10px ui-monospace, SFMono-Regular, monospace';
+      c.fillStyle = '#E6E4DD';
+      c.globalAlpha = lockAlpha * 0.85;
       c.textAlign = 'center';
       c.fillText('CANDIDATE EVENT // RESOLVED', cx, cy + r2 + 22);
 

@@ -60,19 +60,19 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none text-xs">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-[2px] border border-[#242825] bg-[#141715] p-4 select-none text-xs">
       {/* Review Status */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#10161D] border border-[#1C2630]">
+        <div className="flex items-center gap-2 px-2.5 py-1 rounded-[2px] bg-[#1A1E1B] border border-[#242825]">
           {isMarked ? (
             <>
-              <CheckCircle2 className="h-3.5 w-3.5 text-[#5BD8F5]" />
-              <span className="font-medium text-[#5BD8F5]">Marked for review</span>
+              <CheckCircle2 className="h-3.5 w-3.5 text-[#529E72]" />
+              <span className="font-medium text-[#E6E4DD]">Marked for follow-up</span>
             </>
           ) : (
             <>
-              <Clock className="h-3.5 w-3.5 text-[#E8AE50]" />
-              <span className="font-medium text-[#E8AE50]">Pending review</span>
+              <Clock className="h-3.5 w-3.5 text-[#D4864A]" />
+              <span className="font-medium text-[#E6E4DD]">Pending researcher verdict</span>
             </>
           )}
         </div>
@@ -92,7 +92,7 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
             )
           }
         >
-          {isMarked ? 'Marked for review' : 'Mark for review'}
+          {isMarked ? 'Marked for follow-up' : 'Mark for follow-up'}
         </Button>
 
         <Button
@@ -101,12 +101,12 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
           icon={<Download className="h-3.5 w-3.5" />}
           onClick={handleExportAnalysis}
         >
-          Export
+          Export record
         </Button>
 
         <Link to="/candidates">
           <Button variant="ghost" size="sm" icon={<ArrowLeft className="h-3.5 w-3.5" />}>
-            Candidates
+            Candidate ledger
           </Button>
         </Link>
       </div>

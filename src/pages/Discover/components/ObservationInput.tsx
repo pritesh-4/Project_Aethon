@@ -67,20 +67,20 @@ export function ObservationInput({
   });
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4 font-sans">
       {/* Primary Question Header */}
       <div>
-        <h2 className="text-lg sm:text-xl font-medium tracking-tight text-[#E6EDF2]">
-          What observation should AETHON investigate?
+        <h2 className="text-base sm:text-lg font-medium tracking-tight text-[#E6E4DD]">
+          Select an astronomical observation
         </h2>
-        <p className="mt-1 text-xs sm:text-sm text-[#7F8B95]">
-          Choose a reference astronomical observation or upload a data file to configure analysis.
+        <p className="mt-1 text-xs sm:text-sm text-[#9A9C96]">
+          Choose a reference radio survey observation or upload a data file to configure screening.
         </p>
       </div>
 
       {/* Reference Observations Selection */}
       <div className="space-y-2">
-        <span className="block text-xs font-medium text-[#7F8B95]">Reference observations</span>
+        <span className="block text-xs font-medium text-[#9A9C96]">Reference observations</span>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {REFERENCE_OBSERVATIONS.map((obs) => {
             const isSelected = selectedObservation?.id === obs.id;
@@ -92,27 +92,27 @@ export function ObservationInput({
                 aria-pressed={isSelected}
                 disabled={disabled}
                 onClick={() => onSelectObservation(obs)}
-                className={`relative flex flex-col items-start p-3.5 rounded border text-left transition-all cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
+                className={`relative flex flex-col items-start p-3.5 rounded-[2px] border text-left transition-all cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
                   isSelected
-                    ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#E6EDF2] ring-1 ring-[#5BD8F5]/30'
-                    : 'border-[#1C2630] bg-[#0B0F14] text-[#7F8B95] hover:border-[#1C2630]/80 hover:bg-[#10161D] hover:text-[#E6EDF2]'
+                    ? 'border-[#D4864A] bg-[#241A14] text-[#E6E4DD]'
+                    : 'border-[#262C28] bg-[#141715] text-[#9A9C96] hover:border-[#363C38] hover:bg-[#1A1E1B] hover:text-[#E6E4DD]'
                 } ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 <div className="flex w-full items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-[#5BD8F5] font-mono">{obs.id}</span>
+                  <span className="text-xs font-semibold text-[#D4864A] font-mono">{obs.id}</span>
                   {isSelected && (
-                    <span className="inline-flex items-center gap-1 rounded bg-[#5BD8F5]/20 px-1.5 py-0.5 text-[10px] font-medium text-[#5BD8F5]">
+                    <span className="inline-flex items-center gap-1 rounded-[2px] bg-[#D4864A]/20 px-1.5 py-0.5 text-[10px] font-medium text-[#D4864A]">
                       <Check className="h-2.5 w-2.5" />
                       Selected
                     </span>
                   )}
                 </div>
 
-                <span className="mt-1.5 text-xs font-medium text-[#E6EDF2] line-clamp-1">
+                <span className="mt-1.5 text-xs font-medium text-[#E6E4DD] line-clamp-1">
                   {obs.name}
                 </span>
 
-                <div className="mt-2 flex items-center gap-3 text-[11px] text-[#7F8B95] font-mono">
+                <div className="mt-2 flex items-center gap-3 text-[11px] text-[#9A9C96] font-mono">
                   <span>{obs.frequencyMHz.toFixed(2)} MHz</span>
                   <span>•</span>
                   <span>{obs.durationString}</span>
@@ -123,20 +123,20 @@ export function ObservationInput({
         </div>
       </div>
 
-      {/* Generous & Simple Upload Bay */}
+      {/* Upload Bay */}
       <div className="space-y-2">
-        <span className="block text-xs font-medium text-[#7F8B95]">Or upload observation file</span>
+        <span className="block text-xs font-medium text-[#9A9C96]">Or upload observation file</span>
 
         <div
           {...getRootProps()}
-          className={`relative flex min-h-[140px] sm:min-h-[160px] flex-col items-center justify-center rounded border border-dashed transition-all duration-200 cursor-pointer select-none p-6 text-center outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] focus-visible:ring-offset-1 focus-visible:ring-offset-[#06080B] ${
+          className={`relative flex min-h-[120px] sm:min-h-[140px] flex-col items-center justify-center rounded-[2px] border border-dashed transition-all duration-150 cursor-pointer select-none p-5 text-center outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
             disabled ? 'opacity-50 cursor-not-allowed' : ''
           } ${
             isDragActive
-              ? 'border-[#5BD8F5] bg-[#5BD8F5]/10'
+              ? 'border-[#D4864A] bg-[#D4864A]/10'
               : errorMsg
-                ? 'border-[#D95C5C]/60 bg-[#D95C5C]/10'
-                : 'border-[#1C2630] bg-[#0B0F14] hover:border-[#5BD8F5]/40 hover:bg-[#10161D]'
+                ? 'border-[#C84A4A]/60 bg-[#C84A4A]/10'
+                : 'border-[#262C28] bg-[#141715] hover:border-[#363C38] hover:bg-[#1A1E1B]'
           }`}
         >
           <input {...getInputProps()} aria-label="Upload observation file" />
@@ -148,9 +148,9 @@ export function ObservationInput({
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center gap-2 text-[#5BD8F5]"
+                className="flex flex-col items-center gap-2 text-[#D4864A]"
               >
-                <Upload className="h-6 w-6 text-[#5BD8F5]" />
+                <Upload className="h-5 w-5 text-[#D4864A]" />
                 <span className="text-xs font-medium">Release to load observation</span>
               </motion.div>
             ) : errorMsg ? (
@@ -159,11 +159,11 @@ export function ObservationInput({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center gap-2 text-[#D95C5C]"
+                className="flex flex-col items-center gap-2 text-[#C84A4A]"
               >
-                <AlertCircle className="h-5 w-5 text-[#D95C5C]" />
+                <AlertCircle className="h-5 w-5 text-[#C84A4A]" />
                 <span className="text-xs font-medium">{errorMsg}</span>
-                <span className="text-xs text-[#7F8B95]">Drop a valid CSV, JSON, or FITS file</span>
+                <span className="text-xs text-[#9A9C96]">Drop a valid CSV, JSON, or FITS file</span>
               </motion.div>
             ) : (
               <motion.div
@@ -173,14 +173,14 @@ export function ObservationInput({
                 exit={{ opacity: 0 }}
                 className="flex flex-col items-center gap-2 text-center"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded border border-[#1C2630] bg-[#10161D] text-[#5BD8F5]">
-                  <Upload className="h-4 w-4" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-[2px] border border-[#262C28] bg-[#1A1E1B] text-[#D4864A]">
+                  <Upload className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <span className="text-xs font-medium text-[#E6EDF2]">
+                  <span className="text-xs font-medium text-[#E6E4DD]">
                     Drop observation file here, or browse files
                   </span>
-                  <span className="mt-0.5 block text-xs text-[#7F8B95]">
+                  <span className="mt-0.5 block text-xs text-[#9A9C96]">
                     Accepts CSV, JSON, or FITS time-frequency data
                   </span>
                 </div>
@@ -190,20 +190,20 @@ export function ObservationInput({
         </div>
       </div>
 
-      {/* Selected Observation Summary Pill/Strip */}
+      {/* Selected Observation Summary Strip */}
       {selectedObservation && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded border border-[#1C2630] bg-[#0B0F14] px-4 py-3 text-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-[2px] border border-[#262C28] bg-[#141715] px-4 py-3 text-xs">
           <div className="flex items-center gap-2.5">
-            <FileText className="h-4 w-4 text-[#5BD8F5] shrink-0" />
+            <FileText className="h-4 w-4 text-[#D4864A] shrink-0" />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-[#5BD8F5] font-mono">
+                <span className="font-semibold text-[#D4864A] font-mono">
                   {selectedObservation.id}
                 </span>
-                <span className="text-[#7F8B95]">•</span>
-                <span className="font-medium text-[#E6EDF2]">{selectedObservation.name}</span>
+                <span className="text-[#363C38]">•</span>
+                <span className="font-medium text-[#E6E4DD]">{selectedObservation.name}</span>
               </div>
-              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#7F8B95] font-mono">
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#9A9C96] font-mono">
                 <span>{selectedObservation.frequencyMHz.toFixed(2)} MHz</span>
                 <span>•</span>
                 <span>Bandwidth: {selectedObservation.bandwidthMHz.toFixed(1)} MHz</span>
@@ -216,8 +216,8 @@ export function ObservationInput({
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-            <span className="rounded border border-[#5BD8F5]/30 bg-[#5BD8F5]/10 px-2 py-0.5 text-[11px] font-medium text-[#5BD8F5]">
-              Ready for analysis
+            <span className="rounded-[2px] border border-[#529E72]/40 bg-[#141F18] px-2 py-0.5 text-[11px] font-medium text-[#529E72]">
+              Ready for screening
             </span>
           </div>
         </div>

@@ -56,23 +56,23 @@ export default function AnalysisPage() {
   if (!record) {
     return (
       <PageTransition className="space-y-6">
-        <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-8 text-center">
+        <div className="rounded-[2px] border border-[#242825] bg-[#141715] p-8 text-center">
           <div className="flex flex-col items-center gap-3">
-            <AlertTriangle className="h-8 w-8 text-[#E8AE50]" />
-            <h2 className="text-base font-medium text-[#E6EDF2]">Candidate not found</h2>
-            <p className="max-w-md text-xs text-[#7F8B95] leading-relaxed">
-              No candidate record found for identifier{' '}
-              <span className="text-[#5BD8F5] font-mono">{signalId || 'unknown'}</span>.
+            <AlertTriangle className="h-8 w-8 text-[#D4864A]" />
+            <h2 className="text-base font-medium text-[#E6E4DD]">Candidate record not found</h2>
+            <p className="max-w-md text-xs text-[#9A9C96] leading-relaxed">
+              No analysis record resolved for identifier{' '}
+              <span className="text-[#D4864A] font-mono">{signalId || 'unknown'}</span>.
             </p>
             <div className="mt-4 flex items-center gap-3">
               <Link to="/analysis/AET-04721">
                 <Button variant="primary" size="sm" icon={<RefreshCw className="h-3.5 w-3.5" />}>
-                  Load candidate AET-04721
+                  Load reference candidate AET-04721
                 </Button>
               </Link>
               <Link to="/candidates">
                 <Button variant="outline" size="sm" icon={<ArrowLeft className="h-3.5 w-3.5" />}>
-                  Return to candidates
+                  Return to candidate ledger
                 </Button>
               </Link>
             </div>

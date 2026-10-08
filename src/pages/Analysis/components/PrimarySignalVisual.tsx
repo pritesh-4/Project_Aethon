@@ -71,7 +71,7 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
     const ro = new ResizeObserver(handleResize);
     if (containerRef.current) ro.observe(containerRef.current);
 
-    // Pre-calculate synthetic matrix cells
+    // Synthetic matrix cells
     const cols = 84;
     const rows = 38;
     const noiseMatrix = new Float32Array(cols * rows);
@@ -92,16 +92,16 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
       const cy = paddingTop + plotH * 0.5;
 
-      // 1. Clear Background
-      ctx.fillStyle = '#06080B';
+      // 1. Clear Background (Deep graphite)
+      ctx.fillStyle = '#0F1110';
       ctx.fillRect(0, 0, width, height);
 
       // Plot Area Fill
-      ctx.fillStyle = '#0B0F14';
+      ctx.fillStyle = '#141715';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 2. Reticle Grid
-      ctx.strokeStyle = 'rgba(23, 34, 48, 0.7)';
+      ctx.strokeStyle = 'rgba(154, 156, 150, 0.12)';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -152,20 +152,22 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
               let cg: number;
               let cb: number;
 
-              if (cl < 0.4) {
-                cr = Math.floor(10 * cl);
-                cg = Math.floor(45 * cl * 2);
-                cb = Math.floor(110 * cl * 2.5);
-              } else if (cl < 0.8) {
-                const factor = (cl - 0.4) / 0.4;
-                cr = Math.floor(14 + 35 * factor);
-                cg = Math.floor(95 + 110 * factor);
-                cb = Math.floor(155 + 85 * factor);
+              // Mineral & Copper colormap
+              if (cl < 0.35) {
+                const factor = cl / 0.35;
+                cr = Math.floor(26 + 45 * factor);
+                cg = Math.floor(30 + 35 * factor);
+                cb = Math.floor(27 + 25 * factor);
+              } else if (cl < 0.75) {
+                const factor = (cl - 0.35) / 0.4;
+                cr = Math.floor(71 + 141 * factor);
+                cg = Math.floor(65 + 69 * factor);
+                cb = Math.floor(52 + 22 * factor);
               } else {
-                const factor = (cl - 0.8) / 0.2;
-                cr = Math.floor(95 + 130 * factor);
-                cg = Math.floor(215 + 25 * factor);
-                cb = 245;
+                const factor = (cl - 0.75) / 0.25;
+                cr = Math.floor(212 + 33 * factor);
+                cg = Math.floor(134 + 101 * factor);
+                cb = Math.floor(74 + 146 * factor);
               }
 
               ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
@@ -190,12 +192,12 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
         for (let r = 0; r < rows; r += 2) {
           for (let c = 0; c < cols; c += 2) {
             const n = noiseMatrix[r * cols + c] * 0.08;
-            ctx.fillStyle = `rgba(91, 216, 245, ${n})`;
+            ctx.fillStyle = `rgba(212, 134, 74, ${n * 0.6})`;
             ctx.fillRect(paddingLeft + c * cellW, paddingTop + r * cellH, cellW * 2, cellH * 2);
           }
         }
 
-        // Draw Latent Transformer Patch Tokens along the carrier
+        // Draw Latent Patch Tokens along the carrier
         const tokenCount = 12;
         const tokenCoords: { x: number; y: number }[] = [];
 
@@ -207,18 +209,18 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
           tokenCoords.push({ x: tx, y: ty });
 
           // Patch bounding box
-          ctx.strokeStyle = 'rgba(91, 216, 245, 0.4)';
+          ctx.strokeStyle = 'rgba(154, 156, 150, 0.35)';
           ctx.strokeRect(tx - 12, ty - 12, 24, 24);
 
           // Token centroid node
-          ctx.fillStyle = '#5BD8F5';
+          ctx.fillStyle = '#D4864A';
           ctx.beginPath();
           ctx.arc(tx, ty, 3, 0, Math.PI * 2);
           ctx.fill();
         }
 
         // Attention Links between tokens
-        ctx.strokeStyle = 'rgba(91, 216, 245, 0.35)';
+        ctx.strokeStyle = 'rgba(212, 134, 74, 0.35)';
         ctx.lineWidth = 1;
         for (let i = 0; i < tokenCoords.length - 1; i++) {
           ctx.beginPath();
@@ -245,9 +247,9 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       // STAGE 3: PATTERN COMPARISON (Observed vs Nearest Known Catalog)
       // ========================================================
       if (stage === 'comparison') {
-        // Upper half: Observed Candidate Carrier
+        // Upper half: Observed Candidate Carrier (Copper)
         ctx.save();
-        ctx.strokeStyle = '#5BD8F5';
+        ctx.strokeStyle = '#D4864A';
         ctx.lineWidth = 2;
         ctx.beginPath();
 
@@ -262,23 +264,22 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
         ctx.stroke();
 
         // Label Candidate
-        ctx.font = '11px Inter, sans-serif';
-        ctx.fillStyle = '#5BD8F5';
+        ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = '#D4864A';
         ctx.fillText(
           `Observed: ${rec.candidateId} (Continuous monochromatic carrier)`,
           paddingLeft + 12,
           paddingTop + 20
         );
 
-        // Lower: Nearest Known Catalog (e.g. Pulsar harmonic periodic bursts)
-        ctx.strokeStyle = '#E8AE50';
+        // Lower: Nearest Known Catalog (Muted slate reference)
+        ctx.strokeStyle = '#9A9C96';
         ctx.setLineDash([4, 4]);
         ctx.lineWidth = 1.5;
         ctx.beginPath();
 
         for (let x = 0; x <= plotW; x += 3) {
           const nx = x / plotW;
-          // Pulsed harmonic bursts (natural emitter profile)
           const burst = Math.sin(nx * 32) > 0.6 ? 24 : 0;
           const y = cy + 28 + burst + Math.sin(nx * 10) * 4;
           if (x === 0) ctx.moveTo(paddingLeft + x, y);
@@ -288,9 +289,9 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
         ctx.setLineDash([]);
 
         // Label Nearest Known Pattern
-        ctx.fillStyle = '#E8AE50';
+        ctx.fillStyle = '#9A9C96';
         ctx.fillText(
-          `Nearest Catalog: ${rec.comparison.nearestKnownPattern} (Cosine distance: ${rec.comparison.cosineDistance.toFixed(3)})`,
+          `Nearest catalog: ${rec.comparison.nearestKnownPattern} (Cosine distance: ${rec.comparison.cosineDistance.toFixed(3)})`,
           paddingLeft + 12,
           paddingTop + plotH - 16
         );
@@ -322,7 +323,7 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
 
             if (intensity > 0.06) {
               const cl = Math.min(1, intensity);
-              ctx.fillStyle = `rgba(91, 216, 245, ${cl * 0.9})`;
+              ctx.fillStyle = `rgba(212, 134, 74, ${cl * 0.9})`;
               ctx.fillRect(
                 paddingLeft + c * cellW,
                 paddingTop + r * cellH,
@@ -339,7 +340,7 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
         const ay = paddingTop + plotH * 0.28;
         const ah = plotH * 0.42;
 
-        ctx.strokeStyle = '#5BD8F5';
+        ctx.strokeStyle = '#D4864A';
         ctx.lineWidth = 1.3;
         const cLen = 12;
 
@@ -378,8 +379,8 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
         ctx.stroke();
 
         // Anomaly callout text
-        ctx.font = '11px Inter, sans-serif';
-        ctx.fillStyle = '#5BD8F5';
+        ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = '#E6E4DD';
         ctx.textAlign = 'left';
         ctx.fillText(`Anomaly residual: +4.8σ divergence from baseline`, ax + 4, ay - 8);
 
@@ -388,13 +389,13 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       }
 
       // 4. Outer Border
-      ctx.strokeStyle = '#1C2630';
+      ctx.strokeStyle = '#242825';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 5. Scientific Axis Labels
-      ctx.fillStyle = '#7F8B95';
-      ctx.font = '10px Inter, sans-serif';
+      ctx.fillStyle = '#9A9C96';
+      ctx.font = '10px ui-monospace, SFMono-Regular, monospace';
 
       // Left Frequency Axis
       const f0 = rec.frequencyMHz;
@@ -432,33 +433,33 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
   };
 
   return (
-    <div className="rounded border border-[#1C2630] bg-[#06080B] overflow-hidden select-none shadow-sm">
+    <div className="rounded-[2px] border border-[#242825] bg-[#0F1110] overflow-hidden select-none shadow-sm">
       {/* Viewport Top Bar */}
-      <div className="flex items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] px-4 py-2 text-xs">
+      <div className="flex items-center justify-between border-b border-[#242825] bg-[#141715] px-4 py-2 text-xs">
         <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
-          <span className="font-medium text-[#E6EDF2]">{stageTitles[activeStage]}</span>
+          <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
+          <span className="font-medium text-[#E6E4DD]">{stageTitles[activeStage]}</span>
         </div>
 
         <button
           type="button"
           aria-pressed={isAudioActive}
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
+          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
             isAudioActive
-              ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5]'
-              : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2]'
+              ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
+              : 'border-[#242825] bg-[#1A1E1B] text-[#9A9C96] hover:text-[#E6E4DD]'
           }`}
         >
           {isAudioActive ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
-          <span>{isAudioActive ? 'Mute' : 'Audio'}</span>
+          <span>{isAudioActive ? 'Monitoring' : 'Audio feed'}</span>
         </button>
       </div>
 
       {/* Large Dominant Viewport Canvas */}
       <div
         ref={containerRef}
-        className="relative h-[380px] sm:h-[460px] lg:h-[500px] w-full bg-[#06080B]"
+        className="relative h-[380px] sm:h-[460px] lg:h-[500px] w-full bg-[#0F1110]"
       >
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>

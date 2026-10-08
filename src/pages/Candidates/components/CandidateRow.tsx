@@ -1,4 +1,4 @@
-import type { CandidateSignalData, CandidatePriority } from '../types.ts';
+import type { CandidateSignalData } from '../types.ts';
 
 export interface CandidateRowProps {
   candidate: CandidateSignalData;
@@ -9,27 +9,41 @@ export interface CandidateRowProps {
 export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowProps) {
   const isHigh = candidate.priority === 'HIGH';
 
-  const getPriorityBadge = (priority: CandidatePriority) => {
-    switch (priority) {
-      case 'HIGH':
+  const formatReviewState = (status: CandidateSignalData['status']) => {
+    switch (status) {
+      case 'REVIEW':
         return (
-          <span className="inline-flex items-center gap-1 rounded border border-[#E8AE50]/40 bg-[#E8AE50]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#E8AE50]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#E8AE50]" />
-            High
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-[#9A9C96]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#9A9C96]/60" />
+            Pending review
           </span>
         );
-      case 'MEDIUM':
+      case 'INVESTIGATING':
         return (
-          <span className="inline-flex items-center gap-1 rounded border border-[#7F8B95]/30 bg-[#7F8B95]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#7F8B95]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]" />
-            Medium
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-[#D4864A]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D4864A]" />
+            Under review
           </span>
         );
-      case 'LOW':
+      case 'CONFIRMED':
         return (
-          <span className="inline-flex items-center gap-1 rounded border border-[#1C2630] bg-[#10161D] px-1.5 py-0.5 text-[10px] font-medium text-[#7F8B95]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]/60" />
-            Low
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-[#529E72]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#529E72]" />
+            Confirmed
+          </span>
+        );
+      case 'FLAGGED_RFI':
+        return (
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-[#C84A4A]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C84A4A]" />
+            Flagged RFI
+          </span>
+        );
+      case 'REJECTED':
+        return (
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-[#666963]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#666963]" />
+            Cataloged
           </span>
         );
     }
@@ -48,72 +62,73 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
       aria-selected={isSelected}
       onClick={() => onSelect(candidate)}
       onKeyDown={handleKeyDown}
-      className={`group transition-colors cursor-pointer select-none text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] focus-visible:ring-inset ${
-        isSelected ? 'bg-[#5BD8F5]/10 text-[#E6EDF2]' : 'hover:bg-[#10161D] text-[#7F8B95]'
+      className={`group transition-colors cursor-pointer select-none text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] focus-visible:ring-inset ${
+        isSelected ? 'bg-[#1A1E1B] text-[#E6E4DD]' : 'hover:bg-[#181B19] text-[#9A9C96]'
       }`}
     >
       {/* 1. CANDIDATE */}
-      <td className="py-3 px-3 sm:px-4">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
+      <td className="py-2.5 px-3 sm:px-4">
+        <div className="flex items-center gap-2">
+          {isSelected ? (
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A] shrink-0" />
+          ) : isHigh ? (
             <span
-              className={`font-semibold font-mono transition-colors ${
-                isSelected
-                  ? 'text-[#5BD8F5]'
-                  : isHigh
-                    ? 'text-[#E6EDF2] group-hover:text-[#5BD8F5]'
-                    : 'text-[#E6EDF2]'
+              className="h-1.5 w-1.5 rounded-full bg-[#D4864A]/70 shrink-0"
+              title="High priority"
+            />
+          ) : (
+            <span className="h-1.5 w-1.5 rounded-full bg-transparent shrink-0" />
+          )}
+          <div className="flex flex-col">
+            <span
+              className={`font-mono text-xs font-medium transition-colors ${
+                isSelected ? 'text-[#D4864A]' : 'text-[#E6E4DD]'
               }`}
             >
               {candidate.id}
             </span>
-            {isHigh && (
-              <span
-                className="h-1.5 w-1.5 rounded-full bg-[#E8AE50] shrink-0"
-                title="High priority candidate"
-              />
-            )}
+            <span className="text-[10px] text-[#666963]">{candidate.targetName}</span>
           </div>
-          <span className="text-[11px] text-[#7F8B95] font-mono">
-            {candidate.frequencyMHz.toFixed(2)} MHz
-          </span>
         </div>
       </td>
 
-      {/* 2. ANOMALY */}
-      <td className="py-3 px-3 text-right">
+      {/* 2. OBSERVED AT */}
+      <td className="py-2.5 px-3 font-mono text-[#9A9C96] hidden md:table-cell">
+        {candidate.firstDetectedTime.replace('T', ' ').slice(0, 16)}
+      </td>
+
+      {/* 3. FREQUENCY */}
+      <td className="py-2.5 px-3 font-mono text-[#E6E4DD]">
+        {candidate.frequencyMHz.toFixed(3)} MHz
+      </td>
+
+      {/* 4. SNR */}
+      <td className="py-2.5 px-3 font-mono text-right text-[#C9C8C0] hidden sm:table-cell">
+        {candidate.snrDb.toFixed(1)} dB
+      </td>
+
+      {/* 5. DRIFT */}
+      <td className="py-2.5 px-3 font-mono text-right text-[#9A9C96] hidden sm:table-cell">
+        {candidate.driftRateHzPerSec > 0
+          ? `+${candidate.driftRateHzPerSec}`
+          : candidate.driftRateHzPerSec}{' '}
+        Hz/s
+      </td>
+
+      {/* 6. ANOMALY EVIDENCE */}
+      <td className="py-2.5 px-3 text-right">
         <div className="flex flex-col items-end">
-          <span className="font-semibold font-mono text-[#5BD8F5]">
-            {candidate.anomalyIndex.toFixed(3)}
-          </span>
-          <span className="text-[10px] text-[#7F8B95] font-mono">
+          <span className="font-mono text-xs text-[#E6E4DD]">
             +{candidate.evidenceFactors?.anomalousStructure?.sigma.toFixed(1) || '4.0'}σ
           </span>
+          <span className="text-[10px] text-[#666963] font-mono">
+            idx {candidate.anomalyIndex.toFixed(2)}
+          </span>
         </div>
       </td>
 
-      {/* 3. PERSISTENCE (Tablet & Desktop) */}
-      <td className="py-3 px-3 text-right font-mono text-[#E6EDF2] hidden sm:table-cell">
-        {(candidate.persistence * 100).toFixed(1)}%
-      </td>
-
-      {/* 4. RFI (Desktop only) */}
-      <td className="py-3 px-3 text-right font-mono hidden md:table-cell">
-        <span
-          className={
-            candidate.interferenceProbability < 0.1
-              ? 'text-[#5BD8F5]'
-              : candidate.interferenceProbability < 0.25
-                ? 'text-[#7F8B95]'
-                : 'text-[#E8AE50]'
-          }
-        >
-          {(candidate.interferenceProbability * 100).toFixed(1)}%
-        </span>
-      </td>
-
-      {/* 5. PRIORITY */}
-      <td className="py-3 px-3 sm:px-4 text-center">{getPriorityBadge(candidate.priority)}</td>
+      {/* 7. REVIEW STATE */}
+      <td className="py-2.5 px-3 sm:px-4 text-right">{formatReviewState(candidate.status)}</td>
     </tr>
   );
 }

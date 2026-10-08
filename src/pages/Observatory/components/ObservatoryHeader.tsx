@@ -34,33 +34,33 @@ export function ObservatoryHeader({
     switch (s) {
       case 'IDLE':
         return {
-          dot: 'bg-[#7F8B95]',
+          dot: 'bg-[#6B706A]',
           label: 'Standby',
-          style: 'border-[#172230] text-[#7F8B95]',
+          style: 'border-[#262C28] text-[#9A9C96]',
         };
       case 'LOADING':
         return {
-          dot: 'bg-[#5BD8F5]',
+          dot: 'bg-[#D4864A]',
           label: 'Buffering',
-          style: 'border-[#5BD8F5]/30 text-[#5BD8F5]',
+          style: 'border-[#D4864A]/30 text-[#D4864A]',
         };
       case 'ANALYZING':
         return {
-          dot: 'bg-[#5BD8F5]',
+          dot: 'bg-[#D4864A]',
           label: 'Analyzing',
-          style: 'border-[#5BD8F5]/30 text-[#5BD8F5]',
+          style: 'border-[#D4864A]/30 text-[#D4864A]',
         };
       case 'ANOMALY_DETECTED':
         return {
-          dot: 'bg-[#E8AE50]',
+          dot: 'bg-[#D4864A]',
           label: 'Anomaly detected',
-          style: 'border-[#E8AE50]/40 text-[#E8AE50]',
+          style: 'border-[#D4864A]/40 text-[#D4864A]',
         };
       case 'CANDIDATE_READY':
         return {
-          dot: 'bg-[#5BD8F5]',
+          dot: 'bg-[#529E72]',
           label: 'Candidate isolated',
-          style: 'border-[#5BD8F5]/40 text-[#5BD8F5]',
+          style: 'border-[#529E72]/40 text-[#529E72]',
         };
     }
   };
@@ -68,28 +68,28 @@ export function ObservatoryHeader({
   const statusBadge = getStatusBadge(status);
 
   return (
-    <header className="border-b border-[#172230] bg-[#0B0F14] px-4 py-3 select-none font-sans">
+    <header className="border-b border-[#262C28] bg-[#141715] px-4 py-3 select-none font-sans">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Left: Title, Simulated Badge & Observation Context */}
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm tracking-tight text-[#E6EDF2]">Observatory</span>
-            <span className="rounded border border-[#172230] bg-[#10161D] px-2 py-0.5 text-[11px] text-[#7F8B95]">
+            <span className="font-semibold text-sm tracking-tight text-[#E6E4DD]">Observatory</span>
+            <span className="rounded-[2px] border border-[#262C28] bg-[#1A1E1B] px-2 py-0.5 text-[11px] text-[#9A9C96]">
               Simulated observation
             </span>
           </div>
 
           {/* Target & Frequency Context */}
-          <div className="flex items-center gap-2 text-[#7F8B95]">
+          <div className="flex items-center gap-2 text-[#9A9C96]">
             <span>Target:</span>
-            <span className="text-[#E6EDF2] font-medium">{targetName}</span>
+            <span className="text-[#E6E4DD] font-medium">{targetName}</span>
             <span>·</span>
-            <span className="text-[#E6EDF2] font-mono">{frequencyMHz.toFixed(4)} MHz</span>
+            <span className="text-[#E6E4DD] font-mono">{frequencyMHz.toFixed(4)} MHz</span>
           </div>
 
           {/* Status Indicator */}
           <div
-            className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium ${statusBadge.style}`}
+            className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-xs font-medium ${statusBadge.style}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${statusBadge.dot}`} />
             <span>{statusBadge.label}</span>
@@ -98,9 +98,9 @@ export function ObservatoryHeader({
 
         {/* Right: Controls & Primary Action */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Secondary Action: Load Observation */}
+          {/* Load Observation Record */}
           <div className="flex items-center gap-1.5">
-            <label htmlFor="obs-selector" className="text-xs text-[#7F8B95]">
+            <label htmlFor="obs-selector" className="text-xs text-[#9A9C96]">
               Record:
             </label>
             <select
@@ -109,7 +109,7 @@ export function ObservatoryHeader({
               value={observationId}
               onChange={(e) => onSelectObservation(e.target.value)}
               disabled={isAnalyzing}
-              className="h-8 rounded border border-[#172230] bg-[#10161D] px-2 text-xs font-mono text-[#E6EDF2] focus:border-[#5BD8F5] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] transition-colors cursor-pointer"
+              className="h-7.5 rounded-[2px] border border-[#262C28] bg-[#1A1E1B] px-2 text-xs font-mono text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors cursor-pointer"
             >
               {observationList.map((obs) => (
                 <option key={obs.id} value={obs.id}>
@@ -119,7 +119,7 @@ export function ObservatoryHeader({
             </select>
           </div>
 
-          {/* Reset button (visible when active) */}
+          {/* Reset button */}
           {status !== 'IDLE' && (
             <Button
               variant="tertiary"

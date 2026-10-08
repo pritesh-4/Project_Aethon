@@ -1,5 +1,5 @@
 import type { SignalAnalysisRecord, AnalysisStageId } from '../types.ts';
-import { HelpCircle, CheckCircle2 } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 
 export interface StageExplanationPanelProps {
   record: SignalAnalysisRecord;
@@ -16,18 +16,18 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
 
   const content: Record<AnalysisStageId, StageContent> = {
     observation: {
-      question: 'What is the signal?',
-      summary: `A continuous narrowband radio signal detected during targeted pointings of ${record.targetName} at ${record.frequencyMHz.toFixed(2)} MHz. The signal emerges clearly above system thermal noise and persists across the duration of the observation.`,
+      question: 'What was observed?',
+      summary: `A continuous narrowband radio emission isolated during pointings of ${record.targetName} at ${record.frequencyMHz.toFixed(2)} MHz. The signal emerges distinctly above system thermal noise and persists across the duration of the observation.`,
       metrics: [
         {
           label: 'Center frequency',
           value: `${record.frequencyMHz.toFixed(3)} MHz`,
-          hint: 'L-Band radio window',
+          hint: 'Target radio window',
         },
         {
           label: 'Bandwidth',
           value: `${record.bandwidthKHz} kHz`,
-          hint: 'Monochromatic narrowband',
+          hint: 'Narrowband profile',
         },
         {
           label: 'Duration',
@@ -39,41 +39,41 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
       evidence: [
         {
           title: 'Celestial pointing origin',
-          text: `Detected by ${record.telescope} at coordinates RA ${record.coordinates.ra}, Dec ${record.coordinates.dec}.`,
+          text: `Acquired by ${record.telescope} at coordinates RA ${record.coordinates.ra}, Dec ${record.coordinates.dec}.`,
         },
         {
           title: 'Spatial multi-beam confirmation',
-          text: 'Signal is present exclusively during on-target beam pointing and completely absent in adjacent off-target reference beam.',
+          text: 'Signal is present exclusively during on-target beam pointing and absent in adjacent off-target reference beams.',
         },
       ],
     },
     representation: {
-      question: 'How was it represented?',
+      question: 'How is it encoded?',
       summary:
-        'Instead of using handcrafted heuristic rules, AETHON channelizes raw complex voltages into high-cadence time-frequency patches and maps them into a learned 768-dimensional latent embedding space, enabling unbiased anomaly detection.',
+        'Raw complex voltages are channelized into high-cadence time-frequency patches and mapped into a learned 768-dimensional latent manifold, preserving fine spectral continuity and phase structure.',
       metrics: [
-        { label: 'Latent space', value: '768-d vector space', hint: 'Learned representation' },
-        { label: 'Time cadence', value: '0.5s / window', hint: 'High temporal resolution' },
+        { label: 'Latent dimension', value: '768-d vector space', hint: 'Continuous embedding' },
+        { label: 'Time cadence', value: '0.5s window', hint: 'Temporal resolution' },
         { label: 'Channels', value: '4,096 PFB channels', hint: 'Polyphase filterbank' },
         { label: 'Reconstruction loss', value: '0.042 residual', hint: 'Autoencoder loss' },
       ],
       evidence: [
         {
           title: 'Manifold projection',
-          text: 'Continuous frequency drift trajectories form continuous geodesic paths in latent space rather than disjointed noise spikes.',
+          text: 'Frequency drift trajectories map as smooth geodesic paths in latent space rather than discontinuous noise spikes.',
         },
         {
-          title: 'Unsupervised feature extraction',
-          text: 'Learned tokens capture phase coherence, bandwidth dispersion, and temporal continuity without pre-programmed classification templates.',
+          title: 'Feature preservation',
+          text: 'Extracted tokens retain phase coherence, dispersion profile, and duration without heuristic template matching.',
         },
       ],
     },
     comparison: {
-      question: 'How does it compare against known radio sources?',
-      summary: `The signal was cross-matched against cataloged natural astrophysical emitters (pulsars, fast radio bursts, masers) and terrestrial transmitters (orbital satellites, radar). It shows strong divergence from natural sources (${(record.knownPatternSimilarity * 100).toFixed(1)}% similarity).`,
+      question: 'How does it compare against cataloged sources?',
+      summary: `Cross-referenced against cataloged natural astrophysical emitters (pulsars, fast radio bursts, masers) and known terrestrial transmitters. The signal exhibits divergence from natural sources (${(record.knownPatternSimilarity * 100).toFixed(1)}% match).`,
       metrics: [
         {
-          label: 'Nearest known catalog',
+          label: 'Nearest catalog profile',
           value: record.comparison.nearestKnownPattern,
           hint: 'Astrophysical catalog',
         },
@@ -96,17 +96,17 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
       evidence: [
         {
           title: 'Divergence from natural pulsars',
-          text: 'Natural pulsars emit broadband harmonic pulses. This candidate exhibits an un-pulsed, continuous monochromatic carrier.',
+          text: 'Natural pulsars produce broadband harmonic pulses. This candidate displays an un-pulsed continuous monochromatic carrier.',
         },
         {
           title: 'Distinction from orbital satellites',
-          text: 'Low-Earth orbit satellites display non-linear S-curve Doppler shifts; this signal displays a steady linear barycentric drift slope.',
+          text: 'Low-Earth orbit satellites exhibit non-linear S-curve Doppler shifts; this candidate exhibits a steady linear drift rate.',
         },
       ],
     },
     anomaly: {
       question: 'Why is it anomalous?',
-      summary: `The signal was prioritized because it deviates significantly from expected Gaussian thermal background noise (+4.8σ residual) while maintaining continuous non-terrestrial Doppler drift (${record.driftRateHzPerSec.toFixed(2)} Hz/s) across all observation pointings.`,
+      summary: `Prioritized because it deviates significantly from expected Gaussian thermal background noise (+4.8σ residual) while maintaining a persistent Doppler drift (${record.driftRateHzPerSec.toFixed(2)} Hz/s) across all observation pointings.`,
       metrics: [
         {
           label: 'Anomaly index',
@@ -126,12 +126,12 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
         {
           label: 'Temporal persistence',
           value: `${(record.persistence * 100).toFixed(1)}%`,
-          hint: 'Persistent across 4 cycles',
+          hint: 'Maintained across 4 pointings',
         },
       ],
       evidence: [
         {
-          title: 'Low similarity to learned patterns',
+          title: 'Low similarity to learned profiles',
           text: `Shows only ${(record.knownPatternSimilarity * 100).toFixed(1)}% alignment with cataloged natural radio sources.`,
         },
         {
@@ -140,7 +140,7 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
         },
         {
           title: 'Low estimated interference',
-          text: `Doppler drift rate (${record.driftRateHzPerSec.toFixed(2)} Hz/s) eliminates ground transmitters, and cross-match with orbital satellite beacons is minimal (${(record.interferenceProbability * 100).toFixed(1)}%).`,
+          text: `Drift rate (${record.driftRateHzPerSec.toFixed(2)} Hz/s) excludes fixed ground transmitters, with low cross-match to known orbital satellites (${(record.interferenceProbability * 100).toFixed(1)}%).`,
         },
       ],
     },
@@ -149,53 +149,49 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
   const current = content[activeStage];
 
   return (
-    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-5 select-none space-y-4 shadow-sm">
+    <div className="rounded-[2px] border border-[#242825] bg-[#141715] p-5 select-none space-y-4 shadow-sm">
       {/* Guiding Question & Summary */}
-      <div className="space-y-1.5 border-b border-[#1C2630] pb-4">
+      <div className="space-y-1.5 border-b border-[#242825] pb-4">
         <div className="flex items-center gap-2">
-          <HelpCircle className="h-4 w-4 text-[#5BD8F5]" />
-          <h2 className="text-sm font-semibold tracking-tight text-[#E6EDF2]">
-            {current.question}
-          </h2>
+          <HelpCircle className="h-4 w-4 text-[#D4864A]" />
+          <h2 className="text-sm font-medium tracking-tight text-[#E6E4DD]">{current.question}</h2>
         </div>
-        <p className="text-xs sm:text-sm text-[#7F8B95] leading-relaxed">{current.summary}</p>
+        <p className="text-xs sm:text-sm text-[#9A9C96] leading-relaxed">{current.summary}</p>
       </div>
 
-      {/* Relevant Evidence Metrics (Only 4 relevant metrics per stage) */}
+      {/* Relevant Evidence Metrics */}
       <div>
-        <span className="block text-xs font-medium text-[#7F8B95] mb-2.5">
-          Decision-relevant metrics
+        <span className="block text-xs font-medium text-[#9A9C96] mb-2.5">
+          Analytical measurements
         </span>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {current.metrics.map((m) => (
             <div
               key={m.label}
-              className="rounded border border-[#1C2630] bg-[#10161D] p-3 text-xs space-y-0.5"
+              className="rounded-[2px] border border-[#242825] bg-[#1A1E1B] p-3 text-xs space-y-0.5"
             >
-              <span className="block text-[11px] text-[#7F8B95] truncate">{m.label}</span>
-              <span className="block font-semibold font-mono text-sm text-[#5BD8F5]">
-                {m.value}
-              </span>
-              <span className="block text-[10px] text-[#7F8B95] truncate">{m.hint}</span>
+              <span className="block text-[11px] text-[#9A9C96] truncate">{m.label}</span>
+              <span className="block font-medium font-mono text-sm text-[#E6E4DD]">{m.value}</span>
+              <span className="block text-[10px] text-[#666963] truncate">{m.hint}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Human-Readable Evidence ("Why flagged / supported facts") */}
+      {/* Human-Readable Evidence */}
       <div className="pt-1">
-        <span className="block text-xs font-medium text-[#E6EDF2] mb-2.5">Verified evidence</span>
+        <span className="block text-xs font-medium text-[#E6E4DD] mb-2.5">Observed evidence</span>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           {current.evidence.map((ev) => (
             <div
               key={ev.title}
-              className="rounded border border-[#1C2630] bg-[#06080B] p-3 space-y-1"
+              className="rounded-[2px] border border-[#242825] bg-[#101211] p-3 space-y-1"
             >
-              <div className="flex items-center gap-1.5 font-medium text-[#E6EDF2]">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#5BD8F5] shrink-0" />
+              <div className="flex items-center gap-2 font-medium text-[#E6E4DD]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D4864A] shrink-0" />
                 <span>{ev.title}</span>
               </div>
-              <p className="text-[11px] text-[#7F8B95] leading-relaxed pl-5">{ev.text}</p>
+              <p className="text-[11px] text-[#9A9C96] leading-relaxed pl-3.5">{ev.text}</p>
             </div>
           ))}
         </div>

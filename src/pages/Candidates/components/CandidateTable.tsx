@@ -15,34 +15,34 @@ export function CandidateTable({
 }: CandidateTableProps) {
   if (candidates.length === 0) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center rounded border border-[#1C2630] bg-[#0B0F14] p-8 text-center select-none">
-        <Layers className="h-6 w-6 text-[#7F8B95] mb-2" />
-        <span className="text-xs font-semibold text-[#E6EDF2]">
+      <div className="flex h-64 flex-col items-center justify-center rounded-[2px] border border-[#242825] bg-[#141715] p-8 text-center select-none">
+        <Layers className="h-6 w-6 text-[#666963] mb-2" />
+        <span className="text-xs font-medium text-[#E6E4DD]">
           No candidate signals match current filter
         </span>
-        <span className="mt-1 text-xs text-[#7F8B95]">
-          Clear search or adjust priority filter to view other candidates
+        <span className="mt-1 text-xs text-[#9A9C96]">
+          Clear search or adjust priority filter to view other candidate entries
         </span>
       </div>
     );
   }
 
   return (
-    <div className="rounded border border-[#1C2630] bg-[#0B0F14] overflow-hidden select-none">
+    <div className="rounded-[2px] border border-[#242825] bg-[#141715] overflow-hidden select-none">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-[#1C2630] bg-[#06080B] text-xs text-[#7F8B95] font-mono">
+            <tr className="border-b border-[#242825] bg-[#101211] text-xs text-[#9A9C96]">
               <th className="py-2.5 px-3 sm:px-4 font-normal">Candidate</th>
-              <th className="py-2.5 px-3 font-normal text-right">Anomaly score</th>
-              <th className="py-2.5 px-3 font-normal text-right hidden sm:table-cell">
-                Persistence
-              </th>
-              <th className="py-2.5 px-3 font-normal text-right hidden md:table-cell">RFI risk</th>
-              <th className="py-2.5 px-3 sm:px-4 font-normal text-center">Priority</th>
+              <th className="py-2.5 px-3 font-normal hidden md:table-cell">Observed at</th>
+              <th className="py-2.5 px-3 font-normal">Frequency</th>
+              <th className="py-2.5 px-3 font-normal text-right hidden sm:table-cell">SNR</th>
+              <th className="py-2.5 px-3 font-normal text-right hidden sm:table-cell">Drift</th>
+              <th className="py-2.5 px-3 font-normal text-right">Anomaly evidence</th>
+              <th className="py-2.5 px-3 sm:px-4 font-normal text-right">Review state</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1C2630]/60">
+          <tbody className="divide-y divide-[#242825]/60">
             {candidates.map((candidate) => (
               <CandidateRow
                 key={candidate.id}

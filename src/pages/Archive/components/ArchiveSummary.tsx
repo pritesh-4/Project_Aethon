@@ -6,35 +6,33 @@ export interface ArchiveSummaryProps {
 
 export function ArchiveSummary({ stats }: ArchiveSummaryProps) {
   return (
-    <div className="border-b border-[#1C2630] bg-[#06080B] px-4 py-3 sm:px-6 select-none font-mono">
+    <div className="border-b border-[#242825] bg-[#101211] px-4 py-3 sm:px-6 select-none font-sans">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Summary Strip */}
         <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center sm:gap-8 text-xs">
           <div className="flex items-baseline gap-2">
-            <span className="text-[10px] text-[#7F8B95]">Observations:</span>
-            <span className="font-medium text-[#E6EDF2] tabular-nums">
-              {stats.totalObservations}
-            </span>
+            <span className="text-[11px] text-[#9A9C96]">Observations:</span>
+            <span className="font-mono text-[#E6E4DD] tabular-nums">{stats.totalObservations}</span>
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="text-[10px] text-[#7F8B95]">Analyzed:</span>
-            <span className="font-medium text-[#E6EDF2] tabular-nums">{stats.analyzed}</span>
+            <span className="text-[11px] text-[#9A9C96]">Analyzed:</span>
+            <span className="font-mono text-[#E6E4DD] tabular-nums">{stats.analyzed}</span>
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="text-[10px] text-[#7F8B95]">Anomalous:</span>
-            <span className="font-medium text-[#5BD8F5] tabular-nums">{stats.anomalous}</span>
+            <span className="text-[11px] text-[#9A9C96]">Anomalous:</span>
+            <span className="font-mono text-[#D4864A] tabular-nums">{stats.anomalous}</span>
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="text-[10px] text-[#7F8B95]">High priority:</span>
-            <span className="font-medium text-[#E8AE50] tabular-nums">{stats.highPriority}</span>
+            <span className="text-[11px] text-[#9A9C96]">High priority:</span>
+            <span className="font-mono text-[#D4864A] tabular-nums">{stats.highPriority}</span>
           </div>
         </div>
 
         {/* Disclaimer */}
-        <div className="text-[9px] text-[#7F8B95] sm:text-right">
+        <div className="text-[10px] text-[#666963] sm:text-right">
           <span>Demonstration data registry</span>
         </div>
       </div>

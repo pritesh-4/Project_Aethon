@@ -1,73 +1,71 @@
 import { FALSE_POSITIVE_SOURCES } from '../data/modelData.ts';
-import { ShieldAlert, Users, Compass } from 'lucide-react';
+import { AlertCircle, Users, Compass } from 'lucide-react';
 
 export function FalsePositiveReality() {
   return (
-    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-5 select-none space-y-5">
+    <div className="rounded-[2px] border border-[#242825] bg-[#141715] p-5 select-none space-y-5">
       {/* Section Header */}
-      <div className="border-b border-[#1C2630] pb-3 space-y-1">
+      <div className="border-b border-[#242825] pb-3 space-y-1">
         <div className="flex items-center gap-2">
-          <ShieldAlert className="h-4 w-4 text-[#E8AE50]" />
-          <h3 className="text-sm font-semibold text-[#E6EDF2]">
-            The Reality of False Positives in Radio Astronomy
+          <AlertCircle className="h-4 w-4 text-[#D4864A]" />
+          <h3 className="text-sm font-medium text-[#E6E4DD]">
+            False positives in observational radio astronomy
           </h3>
         </div>
-        <p className="text-xs text-[#7F8B95] leading-relaxed">
-          In high-cadence observational astronomy, statistical anomalies are common. True scientific
-          discovery requires understanding where anomalies come from.
+        <p className="text-xs text-[#9A9C96] leading-relaxed">
+          In high-cadence observational astronomy, statistical anomalies are common. Scientific
+          validity requires understanding the physical origins of anomalous detector response.
         </p>
       </div>
 
-      {/* 4 Real-World False Positive Sources Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      {/* Real-World False Positive Sources */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {FALSE_POSITIVE_SOURCES.map((source) => (
           <div
             key={source.id}
-            className="rounded border border-[#1C2630] bg-[#06080B] p-4 flex flex-col justify-between space-y-3"
+            className="rounded-[2px] border border-[#242825] bg-[#101211] p-4 flex flex-col justify-between space-y-3"
           >
             <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-[#E6EDF2] block">{source.title}</span>
+              <span className="text-xs font-medium text-[#E6E4DD] block">{source.title}</span>
 
-              <div className="text-[11px] text-[#7F8B95]">
-                <strong className="text-[#94A3B8]">Origin:</strong> {source.origin}
+              <div className="text-[11px] text-[#9A9C96]">
+                <span className="text-[#666963]">Physical origin:</span> {source.origin}
               </div>
 
-              <p className="text-xs text-[#7F8B95] leading-relaxed">{source.description}</p>
+              <p className="text-xs text-[#9A9C96] leading-relaxed">{source.description}</p>
             </div>
 
-            <div className="border-t border-[#1C2630] pt-2 text-[11px] text-[#7F8B95]">
-              <strong className="text-[#5BD8F5] block mb-0.5">Mitigation Protocol:</strong>
+            <div className="border-t border-[#242825] pt-2 text-[11px] text-[#9A9C96]">
+              <span className="text-[#D4864A] block mb-0.5 font-medium">Rejection protocol:</span>
               <span>{source.mitigation}</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* The Core Scientific Principle Banner: AI SURFACES CANDIDATES. SCIENTISTS INVESTIGATE. */}
-      <div className="rounded border border-[#5BD8F5]/30 bg-[#5BD8F5]/5 p-5 text-center sm:text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* The Core Scientific Principle Banner */}
+      <div className="rounded-[2px] border border-[#242825] bg-[#101211] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center justify-center sm:justify-start gap-2">
-            <Compass className="h-4 w-4 text-[#5BD8F5]" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#5BD8F5]">
-              The Scientific Relationship
-            </span>
+          <div className="flex items-center gap-2">
+            <Compass className="h-4 w-4 text-[#D4864A]" />
+            <span className="text-xs font-medium text-[#D4864A]">Scientific epistemology</span>
           </div>
 
-          <h4 className="text-base sm:text-lg font-bold tracking-tight text-[#E6EDF2]">
-            AI SURFACES CANDIDATES. SCIENTISTS INVESTIGATE.
+          <h4 className="text-sm sm:text-base font-medium tracking-tight text-[#E6E4DD]">
+            Algorithms isolate mathematical deviations. Researchers investigate physical reality.
           </h4>
 
-          <p className="text-xs text-[#7F8B95] max-w-2xl leading-relaxed">
-            Machine learning algorithms excel at identifying subtle statistical outliers across
-            petabyte-scale data streams. But an algorithm cannot declare a scientific discovery.
-            AETHON screens billions of raw points into prioritized candidate queues so astronomers
-            can perform physical validation.
+          <p className="text-xs text-[#9A9C96] max-w-2xl leading-relaxed">
+            Machine learning models excel at identifying subtle statistical outliers across
+            petabyte-scale data streams. However, an algorithm cannot declare an astronomical
+            discovery. AETHON screens billions of raw points into prioritized candidate queues so
+            observers can perform multi-telescope verification.
           </p>
         </div>
 
-        <div className="shrink-0 flex items-center justify-center gap-2 rounded border border-[#1C2630] bg-[#0B0F14] px-4 py-3 text-xs text-[#E6EDF2]">
-          <Users className="h-4 w-4 text-[#5BD8F5]" />
-          <span>Human-in-the-Loop Triage</span>
+        <div className="shrink-0 flex items-center gap-2 rounded-[2px] border border-[#242825] bg-[#141715] px-3.5 py-2.5 text-xs text-[#E6E4DD]">
+          <Users className="h-4 w-4 text-[#D4864A]" />
+          <span>Human researcher review</span>
         </div>
       </div>
     </div>

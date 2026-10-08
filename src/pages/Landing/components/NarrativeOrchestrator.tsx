@@ -63,7 +63,7 @@ const NARRATIVE_SCENES: NarrativeScene[] = [
     peakEnd: 0.76,
     end: 0.81,
     tag: 'SPECTROTEMPORAL ISOLATION',
-    title: 'Anomaly is not an answer.',
+    title: 'An anomaly is not an answer.',
     subtitle: 'It is a reason to look closer.',
     telemetryTag: 'CH-1420.405 MHz · DRIFT: -0.32 Hz/s · ISOLATION: 99.4%',
   },
@@ -75,7 +75,7 @@ const NARRATIVE_SCENES: NarrativeScene[] = [
     end: 1.0,
     tag: 'CANDIDATE EVENT // UNVERIFIED DRIFT',
     title: 'AETHON',
-    subtitle: 'Intelligence for the unclassified sky.',
+    subtitle: 'Observation instrument for the unclassified sky.',
     isTerminal: true,
   },
 ];
@@ -89,7 +89,6 @@ interface SceneItemProps {
 function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemProps) {
   const isTerminal = scene.isTerminal ?? false;
 
-  // Dimensional interpolation: smooth entry, breathing room, clean exit
   const opacity = useTransform(
     progress,
     isTerminal
@@ -127,11 +126,7 @@ function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemPr
   );
 
   const filter = useTransform(blurVal, (b) => (b <= 0.1 ? 'none' : `blur(${b.toFixed(1)}px)`));
-
-  // Pointer interaction active only for final terminal CTA scene
   const pointerEvents = useTransform(progress, (v) => (isTerminal && v >= 0.84 ? 'auto' : 'none'));
-
-  // Eliminate GPU compositor overhead when scene is fully hidden
   const visibility = useTransform(opacity, (o) => (o > 0.005 ? 'visible' : 'hidden'));
 
   return (
@@ -147,17 +142,15 @@ function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemPr
     >
       {/* Restrained tag */}
       {scene.tag && (
-        <p className="text-[11px] sm:text-xs font-mono tracking-widest text-[#7F8B95] uppercase mb-3">
+        <p className="text-[11px] sm:text-xs font-mono tracking-widest text-[#9A9C96] uppercase mb-3">
           {scene.tag}
         </p>
       )}
 
       {/* Primary Narrative Statement */}
       <h2
-        className={`tracking-tight text-[#E6EDF2] leading-tight font-light ${
-          isTerminal
-            ? 'text-3xl sm:text-5xl md:text-6xl font-normal'
-            : 'text-2xl sm:text-4xl md:text-5xl'
+        className={`tracking-tight text-[#E6E4DD] leading-tight font-normal ${
+          isTerminal ? 'text-3xl sm:text-5xl md:text-6xl' : 'text-2xl sm:text-4xl md:text-5xl'
         }`}
       >
         {scene.title}
@@ -165,15 +158,15 @@ function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemPr
 
       {/* Subtitle / Context phrase */}
       {scene.subtitle && (
-        <p className="mt-3 text-sm sm:text-base font-light text-[#7F8B95] max-w-lg leading-relaxed">
+        <p className="mt-3 text-sm sm:text-base font-normal text-[#9A9C96] max-w-lg leading-relaxed">
           {scene.subtitle}
         </p>
       )}
 
       {/* Technical Telemetry Tag (Scene 5) */}
       {scene.telemetryTag && (
-        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded bg-[#10161D]/80 border border-[#172230] text-[11px] font-mono text-[#E8AE50]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#E8AE50] animate-pulse" />
+        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-[2px] bg-[#141715] border border-[#242825] text-[11px] font-mono text-[#D4864A]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
           <span>{scene.telemetryTag}</span>
         </div>
       )}
@@ -183,7 +176,7 @@ function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemPr
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             to="/observatory"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-[4px] bg-[#10161D] text-[#5BD8F5] border border-[#5BD8F5]/70 hover:bg-[#15202B] hover:border-[#5BD8F5] hover:shadow-[0_0_24px_rgba(91,216,245,0.25)] transition-all text-xs font-mono font-medium cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-[2px] bg-[#D4864A] text-[#0F1110] hover:bg-[#E0955B] transition-colors text-xs font-medium cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
           >
             <span>Enter the observatory</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -191,10 +184,10 @@ function NarrativeSceneItem({ scene, progress, shouldReduceMotion }: SceneItemPr
 
           <Link
             to="/candidates"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono text-[#7F8B95] hover:text-[#E6EDF2] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] rounded hover:bg-[#10161D]/60"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono text-[#9A9C96] hover:text-[#E6E4DD] border border-[#242825] bg-[#141715] hover:bg-[#1A1E1B] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] rounded-[2px]"
           >
-            <span>Review candidate events</span>
-            <ArrowRight className="h-3 w-3" />
+            <span>Candidate review ledger</span>
+            <ArrowRight className="h-3 w-3 text-[#D4864A]" />
           </Link>
         </div>
       )}
@@ -208,8 +201,6 @@ interface NarrativeOrchestratorProps {
 
 export function NarrativeOrchestrator({ scrollYProgress }: NarrativeOrchestratorProps) {
   const shouldReduceMotion = useReducedMotion();
-
-  // Gentle initial scroll cue fading out upon first touch (0.00 -> 0.03)
   const scrollHintOpacity = useTransform(scrollYProgress, [0.0, 0.03], [0.65, 0]);
 
   return (
@@ -228,10 +219,10 @@ export function NarrativeOrchestrator({ scrollYProgress }: NarrativeOrchestrator
       {/* Gentle Initial Scroll Indicator */}
       <motion.div
         style={{ opacity: scrollHintOpacity }}
-        className="absolute bottom-10 inset-x-0 mx-auto flex flex-col items-center gap-1.5 text-[11px] text-[#7F8B95] font-mono pointer-events-none"
+        className="absolute bottom-10 inset-x-0 mx-auto flex flex-col items-center gap-1.5 text-[11px] text-[#9A9C96] font-mono pointer-events-none"
       >
         <span>Scroll to explore</span>
-        <ChevronDown className="h-3.5 w-3.5 text-[#5BD8F5]/80 animate-bounce" />
+        <ChevronDown className="h-3.5 w-3.5 text-[#D4864A] animate-bounce" />
       </motion.div>
     </div>
   );

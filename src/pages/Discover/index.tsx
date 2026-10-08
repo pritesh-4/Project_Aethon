@@ -124,14 +124,14 @@ export default function DiscoverPage() {
         {/* STAGE 3: INITIATE DISCOVERY (CLEAR PRIMARY ACTION / IDLE STATE) */}
         {/* ==================================================== */}
         {!isAnalyzing && stage !== 'complete' && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-[2px] border border-[#242825] bg-[#141715] p-4 select-none">
             {observation ? (
               <>
                 <div className="space-y-0.5 text-center sm:text-left">
-                  <span className="text-xs font-semibold text-[#E6EDF2]">
+                  <span className="text-xs font-medium text-[#E6E4DD]">
                     Ready to analyze observation {observation.id}
                   </span>
-                  <p className="text-[11px] text-[#7F8B95]">
+                  <p className="text-[11px] text-[#9A9C96]">
                     Executes the 4-stage candidate screening pipeline on the selected data stream.
                   </p>
                 </div>
@@ -141,18 +141,16 @@ export default function DiscoverPage() {
                   size="lg"
                   icon={<ArrowRight className="h-4 w-4" />}
                   onClick={handleInitiateDiscovery}
-                  className="w-full sm:w-auto text-xs font-semibold uppercase tracking-wider"
+                  className="w-full sm:w-auto text-xs font-medium"
                 >
-                  Initiate Discovery
+                  Initiate discovery
                 </Button>
               </>
             ) : (
               <>
                 <div className="space-y-0.5 text-center sm:text-left">
-                  <span className="text-xs font-semibold text-[#E6EDF2]">
-                    No observation loaded
-                  </span>
-                  <p className="text-[11px] text-[#7F8B95]">
+                  <span className="text-xs font-medium text-[#E6E4DD]">No observation loaded</span>
+                  <p className="text-[11px] text-[#9A9C96]">
                     Select a reference observation or upload a data file above to configure
                     analysis.
                   </p>
@@ -163,9 +161,9 @@ export default function DiscoverPage() {
                   size="lg"
                   disabled
                   icon={<ArrowRight className="h-4 w-4" />}
-                  className="w-full sm:w-auto text-xs font-semibold uppercase tracking-wider opacity-50 cursor-not-allowed"
+                  className="w-full sm:w-auto text-xs font-medium opacity-50 cursor-not-allowed"
                 >
-                  Initiate Discovery
+                  Initiate discovery
                 </Button>
               </>
             )}

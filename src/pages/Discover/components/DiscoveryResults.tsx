@@ -10,22 +10,22 @@ export interface DiscoveryResultsProps {
 
 export function DiscoveryResults({ summary, onReset, onViewCandidates }: DiscoveryResultsProps) {
   return (
-    <section className="rounded border border-[#5BD8F5]/40 bg-[#0B0F14] p-5 sm:p-6 shadow-sm select-none">
+    <section className="rounded-[2px] border border-[#D4864A]/40 bg-[#1A1E1B] p-5 sm:p-6 shadow-sm select-none font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         {/* Left: Clear Scientific Results */}
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[#5BD8F5]" />
-            <span className="text-xs font-medium text-[#5BD8F5]">Observation analyzed</span>
-            <span className="text-[#7F8B95]">•</span>
-            <span className="text-xs text-[#7F8B95] font-mono">{summary.observationId}</span>
+            <CheckCircle2 className="h-4 w-4 text-[#D4864A]" />
+            <span className="text-xs font-medium text-[#D4864A]">Observation analyzed</span>
+            <span className="text-[#363C38]">•</span>
+            <span className="text-xs text-[#9A9C96] font-mono">{summary.observationId}</span>
           </div>
 
-          <h3 className="text-base sm:text-lg font-medium tracking-tight text-[#E6EDF2]">
+          <h3 className="text-base sm:text-lg font-medium tracking-tight text-[#E6E4DD]">
             {summary.candidates.length} candidates identified
           </h3>
 
-          <p className="text-xs text-[#7F8B95]">
+          <p className="text-xs text-[#9A9C96]">
             Narrowband carriers with persistent Doppler drift confirmed across observation baseline.
           </p>
         </div>

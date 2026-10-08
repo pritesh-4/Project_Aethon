@@ -2,7 +2,8 @@ import { Link } from 'react-router';
 import type { CandidateSignalData, CandidatePriority } from '../types.ts';
 import { Button } from '@/components/ui/Button.tsx';
 import { CandidateSignalViewport } from './CandidateSignalViewport.tsx';
-import { X, CheckCircle2 } from 'lucide-react';
+import { X } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge.tsx';
 
 export interface CandidateDetailProps {
   candidate: CandidateSignalData;
@@ -13,86 +14,67 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
   const getPriorityBadge = (priority: CandidatePriority) => {
     switch (priority) {
       case 'HIGH':
-        return (
-          <span className="inline-flex items-center gap-1 rounded border border-[#E8AE50]/40 bg-[#E8AE50]/10 px-2 py-0.5 text-xs font-medium text-[#E8AE50]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#E8AE50]" />
-            High priority
-          </span>
-        );
+        return <Badge variant="copper">High priority review</Badge>;
       case 'MEDIUM':
-        return (
-          <span className="inline-flex items-center gap-1 rounded border border-[#7F8B95]/30 bg-[#7F8B95]/10 px-2 py-0.5 text-xs font-medium text-[#7F8B95]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]" />
-            Medium priority
-          </span>
-        );
+        return <Badge variant="slate">Medium priority</Badge>;
       case 'LOW':
-        return (
-          <span className="inline-flex items-center gap-1 rounded border border-[#1C2630] bg-[#10161D] px-2 py-0.5 text-xs font-medium text-[#7F8B95]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#7F8B95]/60" />
-            Low priority
-          </span>
-        );
+        return <Badge variant="neutral">Low priority</Badge>;
     }
   };
 
-  // Derive plain-language evidence claims strictly supported by the candidate's actual data
+  // Plain-language evidence claims strictly supported by candidate data
   const getEvidenceClaims = () => {
     const claims: { label: string; detail: string }[] = [];
 
-    // 1. Learned pattern similarity
     if (candidate.knownPatternSimilarity < 0.15) {
       claims.push({
-        label: 'Low similarity to learned patterns.',
+        label: 'Low catalog similarity',
         detail: `${(candidate.knownPatternSimilarity * 100).toFixed(1)}% match against cataloged natural radio sources.`,
       });
     } else if (candidate.knownPatternSimilarity < 0.35) {
       claims.push({
-        label: 'Moderate divergence from known patterns.',
+        label: 'Moderate profile divergence',
         detail: `${(candidate.knownPatternSimilarity * 100).toFixed(1)}% match to known profiles.`,
       });
     } else {
       claims.push({
-        label: 'Partial correlation with known emitter.',
+        label: 'Partial catalog correlation',
         detail: `Shows morphological overlap with cataloged signals (${(candidate.knownPatternSimilarity * 100).toFixed(1)}%).`,
       });
     }
 
-    // 2. Temporal persistence
     if (candidate.persistence >= 0.75) {
       claims.push({
-        label: 'Persistent temporal structure.',
-        detail: `Present across ${(candidate.persistence * 100).toFixed(0)}% of the observation sequence without fading.`,
+        label: 'Persistent temporal structure',
+        detail: `Maintained across ${(candidate.persistence * 100).toFixed(0)}% of observation sequence without standard fading.`,
       });
     } else {
       claims.push({
-        label: 'Intermittent signal presence.',
-        detail: `Signal detected across ${(candidate.persistence * 100).toFixed(0)}% of pointings.`,
+        label: 'Intermittent signal presence',
+        detail: `Detected across ${(candidate.persistence * 100).toFixed(0)}% of pointings.`,
       });
     }
 
-    // 3. Interference / RFI
     if (candidate.interferenceProbability < 0.1) {
       claims.push({
-        label: 'Low estimated interference.',
-        detail: `${(candidate.interferenceProbability * 100).toFixed(1)}% RFI risk; spatial screening indicates absence in off-target pointings.`,
+        label: 'Low interference probability',
+        detail: `${(candidate.interferenceProbability * 100).toFixed(1)}% RFI likelihood; spatial screening indicates absence in off-target pointings.`,
       });
     } else if (candidate.interferenceProbability < 0.25) {
       claims.push({
-        label: 'Nominal interference risk.',
+        label: 'Nominal interference risk',
         detail: `${(candidate.interferenceProbability * 100).toFixed(1)}% probability of ground or satellite transmitter cross-match.`,
       });
     } else {
       claims.push({
-        label: 'Elevated interference potential.',
+        label: 'Elevated interference potential',
         detail: `${(candidate.interferenceProbability * 100).toFixed(1)}% probability of terrestrial origin; spatial multi-beam verification required.`,
       });
     }
 
-    // 4. Doppler drift
     if (Math.abs(candidate.driftRateHzPerSec) > 0.05) {
       claims.push({
-        label: 'Consistent Doppler drift rate.',
+        label: 'Doppler frequency drift',
         detail: `Linear frequency shift (${candidate.driftRateHzPerSec > 0 ? '+' : ''}${candidate.driftRateHzPerSec.toFixed(2)} Hz/s) matches non-terrestrial acceleration.`,
       });
     }
@@ -103,15 +85,15 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
   const evidenceClaims = getEvidenceClaims();
 
   return (
-    <div className="rounded border border-[#1C2630] bg-[#0B0F14] select-none flex flex-col justify-between overflow-hidden shadow-lg">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] p-4">
+    <div className="rounded-[2px] border border-[#242825] bg-[#141715] select-none flex flex-col justify-between overflow-hidden shadow-sm">
+      {/* Header: Specimen Record */}
+      <div className="flex items-center justify-between border-b border-[#242825] bg-[#141715] px-4 py-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-base font-semibold text-[#E6EDF2] font-mono">{candidate.id}</span>
+            <span className="text-sm font-medium text-[#E6E4DD] font-mono">{candidate.id}</span>
             {getPriorityBadge(candidate.priority)}
           </div>
-          <span className="text-xs text-[#7F8B95] font-mono">
+          <span className="text-xs text-[#9A9C96] font-mono">
             {candidate.frequencyMHz.toFixed(3)} MHz • {candidate.targetName}
           </span>
         </div>
@@ -119,43 +101,71 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close candidate detail"
-          className="h-8 w-8 flex items-center justify-center rounded border border-[#1C2630] bg-[#10161D] text-[#7F8B95] hover:border-[#5BD8F5]/40 hover:text-[#E6EDF2] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5]"
+          aria-label="Close specimen review"
+          className="h-7 w-7 flex items-center justify-center rounded-[2px] border border-[#242825] bg-[#1A1E1B] text-[#9A9C96] hover:border-[#D4864A]/40 hover:text-[#E6E4DD] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {/* Main Detail Body: Signal, Anomaly, Key Evidence */}
+      {/* Main Specimen Body */}
       <div className="p-4 space-y-4">
-        {/* 1. SIGNAL VIEWPORT */}
+        {/* 1. SPECTROGRAM SPECIMEN VIEWPORT */}
         <CandidateSignalViewport candidate={candidate} />
 
-        {/* 2. ANOMALY READOUT */}
-        <div className="rounded border border-[#1C2630] bg-[#10161D] p-3 text-xs space-y-1">
-          <span className="block text-xs font-medium text-[#7F8B95]">Anomaly assessment</span>
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm font-semibold font-mono text-[#5BD8F5]">
-              Index: {candidate.anomalyIndex.toFixed(3)}
+        {/* 2. SPECIMEN MEASUREMENTS */}
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="rounded-[2px] border border-[#242825] bg-[#1A1E1B] p-2">
+            <span className="block text-[10px] text-[#9A9C96]">Anomaly index</span>
+            <span className="font-mono text-sm text-[#D4864A]">
+              {candidate.anomalyIndex.toFixed(3)}
             </span>
-            <span className="text-xs font-mono text-[#E6EDF2]">
-              +{candidate.evidenceFactors?.anomalousStructure?.sigma.toFixed(1) || '4.0'}σ above
-              baseline
+          </div>
+          <div className="rounded-[2px] border border-[#242825] bg-[#1A1E1B] p-2">
+            <span className="block text-[10px] text-[#9A9C96]">Significance</span>
+            <span className="font-mono text-sm text-[#E6E4DD]">
+              +{candidate.evidenceFactors?.anomalousStructure?.sigma.toFixed(1) || '4.0'}σ
+            </span>
+          </div>
+          <div className="rounded-[2px] border border-[#242825] bg-[#1A1E1B] p-2">
+            <span className="block text-[10px] text-[#9A9C96]">SNR</span>
+            <span className="font-mono text-sm text-[#E6E4DD]">
+              {candidate.snrDb.toFixed(1)} dB
             </span>
           </div>
         </div>
 
-        {/* 3. KEY EVIDENCE (PLAIN LANGUAGE) */}
-        <div className="rounded border border-[#1C2630] bg-[#06080B] p-3.5 space-y-2.5">
-          <span className="block text-xs font-medium text-[#E6EDF2]">Key evidence</span>
+        {/* Coordinates and Drift */}
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-[2px] border border-[#242825] bg-[#101211] p-2.5">
+            <span className="block text-[10px] text-[#666963]">Pointing coordinates</span>
+            <span className="font-mono text-xs text-[#C9C8C0]">
+              {candidate.coordinates.ra}, {candidate.coordinates.dec}
+            </span>
+          </div>
+          <div className="rounded-[2px] border border-[#242825] bg-[#101211] p-2.5">
+            <span className="block text-[10px] text-[#666963]">Doppler drift rate</span>
+            <span className="font-mono text-xs text-[#D4864A]">
+              {candidate.driftRateHzPerSec > 0 ? '+' : ''}
+              {candidate.driftRateHzPerSec} Hz/s
+            </span>
+          </div>
+        </div>
+
+        {/* 3. SCIENTIFIC EVIDENCE NOTES */}
+        <div className="rounded-[2px] border border-[#242825] bg-[#101211] p-3 space-y-2">
+          <span className="block text-xs font-medium text-[#E6E4DD]">Evidence profile</span>
 
           <div className="space-y-2 text-xs">
             {evidenceClaims.map((claim) => (
-              <div key={claim.label} className="flex items-start gap-2">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#5BD8F5] shrink-0 mt-0.5" />
+              <div
+                key={claim.label}
+                className="flex items-start gap-2 border-b border-[#242825]/40 pb-1.5 last:border-0 last:pb-0"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D4864A] shrink-0 mt-1.5" />
                 <div className="leading-snug">
-                  <span className="font-medium text-[#E6EDF2]">{claim.label} </span>
-                  <span className="text-[#7F8B95]">{claim.detail}</span>
+                  <span className="font-medium text-[#E6E4DD]">{claim.label}: </span>
+                  <span className="text-[#9A9C96]">{claim.detail}</span>
                 </div>
               </div>
             ))}
@@ -164,10 +174,10 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
       </div>
 
       {/* 4. INVESTIGATION ACTION */}
-      <div className="border-t border-[#1C2630] bg-[#0B0F14] p-4">
+      <div className="border-t border-[#242825] bg-[#141715] p-4">
         <Link to={`/analysis/${candidate.id}`} className="block w-full">
           <Button variant="primary" size="md" withArrow className="w-full">
-            Investigate candidate in Analysis
+            Examine candidate in analysis
           </Button>
         </Link>
       </div>

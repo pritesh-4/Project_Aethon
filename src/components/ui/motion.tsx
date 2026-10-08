@@ -13,7 +13,7 @@ interface PageTransitionProps {
 export function PageTransition({ children, className }: PageTransitionProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 4 }}
+      initial={{ opacity: 0, y: 3 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       className={className}
@@ -33,16 +33,16 @@ interface PulseIndicatorProps {
 
 export function PulseIndicator({ status = 'active', label }: PulseIndicatorProps) {
   const colorMap = {
-    active: 'bg-[#5BD8F5]',
-    warning: 'bg-[#E8AE50]',
-    critical: 'bg-[#D95C5C]',
-    calibrating: 'bg-[#5BD8F5]',
+    active: 'bg-[#D4864A]',
+    warning: 'bg-[#D4864A]',
+    critical: 'bg-[#C84A4A]',
+    calibrating: 'bg-[#9A9C96]',
   };
 
   return (
-    <span className="inline-flex items-center gap-2 font-sans text-xs text-[#7F8B95]">
+    <span className="inline-flex items-center gap-2 font-sans text-xs text-[#9A9C96]">
       <span className={`inline-block rounded-full h-1.5 w-1.5 shrink-0 ${colorMap[status]}`} />
-      {label && <span className="text-[#E6EDF2] font-medium">{label}</span>}
+      {label && <span className="text-[#E6E4DD] font-medium">{label}</span>}
     </span>
   );
 }
@@ -56,7 +56,7 @@ export function ObservatoryPanel({ children, className = '', ...props }: HTMLMot
       variants={panelVariants}
       initial="hidden"
       animate="visible"
-      className={`rounded-[4px] border border-[#172230] bg-[#0B0F14] p-4 transition-colors hover:border-[#243345] ${className}`}
+      className={`rounded-[2px] border border-[#262C28] bg-[#141715] p-4 transition-colors hover:border-[#313733] ${className}`}
       {...props}
     >
       {children}

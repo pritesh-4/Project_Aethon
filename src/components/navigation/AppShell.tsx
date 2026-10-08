@@ -12,7 +12,7 @@ export function AppShell({ children }: AppShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#06080B] text-[#E6EDF2] flex flex-col font-sans selection:bg-[#5BD8F5]/20 selection:text-[#5BD8F5] overflow-x-hidden">
+    <div className="min-h-screen bg-[#0F1110] text-[#E6E4DD] flex flex-col font-sans selection:bg-[#D4864A]/20 selection:text-[#D4864A] overflow-x-hidden">
       {/* Mobile Drawer Navigation */}
       <MobileNavigation isOpen={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
 
@@ -25,7 +25,7 @@ export function AppShell({ children }: AppShellProps) {
         />
 
         {/* Right Application Viewport */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#06080B]">
+        <div className="flex-1 flex flex-col min-w-0 bg-[#0F1110]">
           {/* Top Bar */}
           <TopSystemBar onOpenMobileNav={() => setIsMobileNavOpen(true)} />
 
@@ -35,11 +35,11 @@ export function AppShell({ children }: AppShellProps) {
           </main>
 
           {/* Quiet Footer */}
-          <footer className="border-t border-[#172230] bg-[#0B0F14] py-2 px-4 text-xs text-[#7F8B95] select-none font-sans">
+          <footer className="border-t border-[#242825] bg-[#141715] py-2 px-4 text-xs text-[#9A9C96] select-none font-sans">
             <div className="mx-auto max-w-7xl flex items-center justify-between">
-              <span className="text-xs text-[#7F8B95]">Aethon</span>
-              <span className="text-[11px] text-[#7F8B95]/80">
-                Radio anomaly discovery instrument
+              <span className="text-xs text-[#9A9C96]">AETHON</span>
+              <span className="text-[11px] text-[#666963]">
+                Astronomical signal discovery instrument
               </span>
             </div>
           </footer>

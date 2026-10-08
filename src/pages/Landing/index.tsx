@@ -28,14 +28,14 @@ export default function LandingPage() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full bg-[#06080B] text-[#E6EDF2]"
+      className="relative w-full bg-[#0F1110] text-[#E6E4DD]"
       style={{ height: '460vh' }}
     >
       {/* Sticky Viewport Shell */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#06080B] flex flex-col justify-between">
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#0F1110] flex flex-col justify-between">
         {/* Subtle deep-space background radial gradient */}
         <div
-          className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(91,216,245,0.04),rgba(6,8,11,0.95))] pointer-events-none z-0"
+          className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(212,134,74,0.03),rgba(15,17,16,0.98))] pointer-events-none z-0"
           aria-hidden="true"
         />
 
@@ -45,7 +45,7 @@ export default function LandingPage() {
         {/* 2. Persistent Signal Canvas (The Protagonist Carrier) */}
         <AstronomicalSignalCanvas scrollYProgress={progress} />
 
-        {/* 3. Single Continuous Narrative Timeline (6 Data-Driven Chapters) */}
+        {/* 3. Single Continuous Narrative Timeline */}
         <NarrativeOrchestrator scrollYProgress={progress} />
       </div>
     </div>

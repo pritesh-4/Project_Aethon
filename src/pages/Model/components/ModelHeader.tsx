@@ -1,65 +1,71 @@
-import { BrainCircuit } from 'lucide-react';
-
 export function ModelHeader() {
   return (
-    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-5 sm:p-6 space-y-4 select-none">
+    <div className="space-y-4 select-none">
       {/* Header Context */}
-      <div className="flex items-center justify-between border-b border-[#1C2630] pb-3 text-xs text-[#7F8B95]">
+      <div className="flex items-center justify-between border-b border-[#242825] pb-3 text-xs text-[#9A9C96]">
         <div className="flex items-center gap-2">
-          <BrainCircuit className="h-4 w-4 text-[#5BD8F5]" />
-          <h1 className="text-xs font-semibold text-[#E6EDF2] tracking-wide font-sans">
-            Intelligence Architecture
+          <span className="w-1.5 h-1.5 rounded-full bg-[#D4864A]" />
+          <h1 className="text-xs font-medium text-[#E6E4DD] tracking-normal font-sans">
+            Observation methodology
           </h1>
         </div>
-        <span className="text-[11px] text-[#7F8B95] hidden sm:inline">
-          Unsupervised representation & anomaly isolation
+        <span className="text-[11px] text-[#666963] hidden sm:inline">
+          Unsupervised representation & deviation isolation
         </span>
       </div>
 
-      {/* The Core Question */}
-      <div className="space-y-2">
-        <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-[#E6EDF2]">
-          “How does AETHON recognize that something does not fit?”
+      {/* The Core Question & Editorial Prose */}
+      <div className="space-y-3">
+        <h2 className="text-2xl sm:text-3xl font-normal tracking-tight text-[#E6E4DD]">
+          How AETHON looks for the unexpected
         </h2>
 
-        <p className="text-xs sm:text-sm text-[#7F8B95] leading-relaxed max-w-3xl">
-          A standard classifier asks <strong className="text-[#E6EDF2]">“What is this?”</strong> and
-          attempts to force unknown astronomical phenomena into predefined categories. AETHON is a
-          discovery instrument that asks{' '}
-          <strong className="text-[#5BD8F5]">“Does this belong?”</strong> — learning the
-          mathematical manifold of natural radio emissions and flagging observations that deviate
-          from nominal cosmic backgrounds.
+        <p className="text-sm text-[#9A9C96] leading-relaxed max-w-3xl">
+          A standard classifier asks{' '}
+          <strong className="text-[#E6E4DD] font-medium">“What is this?”</strong> and attempts to
+          force uncataloged phenomena into predefined taxonomy. AETHON operates under a different
+          assumption:{' '}
+          <strong className="text-[#D4864A] font-medium">
+            “Does this observation fit our baseline understanding?”
+          </strong>
+          — mapping the high-dimensional manifold of natural radio background and isolating
+          observations that deviate significantly from expected distributions.
         </p>
 
-        {/* 3 Core Philosophical Pillars */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-          <div className="rounded border border-[#1C2630] bg-[#06080B] p-3 space-y-1">
-            <span className="text-[10px] text-[#7F8B95] font-mono block">
-              01 · Standard classifier
+        {/* 3 Core Philosophical Pillars: Clean Horizontal Rule Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-[#242825]">
+          <div className="space-y-1.5">
+            <span className="text-[10px] text-[#666963] font-mono block">
+              01 · Standard classification
             </span>
-            <span className="text-xs font-semibold text-[#E6EDF2]">“What is this?”</span>
-            <p className="text-[11px] text-[#7F8B95] leading-normal">
-              Constrained to pre-defined classes, catalogs, and existing training labels.
+            <span className="text-xs font-medium text-[#E6E4DD] block">“What is this?”</span>
+            <p className="text-xs text-[#9A9C96] leading-relaxed">
+              Constrained to pre-defined classes, existing catalogs, and historical training labels.
+              Blind to novel morphology.
             </p>
           </div>
 
-          <div className="rounded border border-[#5BD8F5]/30 bg-[#5BD8F5]/5 p-3 space-y-1">
-            <span className="text-[10px] text-[#5BD8F5] font-mono block">
-              02 · Discovery instrument
+          <div className="space-y-1.5 md:border-l md:border-[#242825] md:pl-6">
+            <span className="text-[10px] text-[#D4864A] font-mono block">
+              02 · Anomaly isolation
             </span>
-            <span className="text-xs font-semibold text-[#5BD8F5]">“Does this belong?”</span>
-            <p className="text-[11px] text-[#7F8B95] leading-normal">
-              Assesses whether an observation belongs to the learned manifold of natural background
-              noise.
+            <span className="text-xs font-medium text-[#D4864A] block">“Does this belong?”</span>
+            <p className="text-xs text-[#9A9C96] leading-relaxed">
+              Measures whether an observation departs from the learned manifold of natural
+              astrophysical emissions.
             </p>
           </div>
 
-          <div className="rounded border border-[#E8AE50]/30 bg-[#E8AE50]/5 p-3 space-y-1">
-            <span className="text-[10px] text-[#E8AE50] font-mono block">03 · Search strategy</span>
-            <span className="text-xs font-semibold text-[#E8AE50]">Searching the unknown</span>
-            <p className="text-[11px] text-[#7F8B95] leading-normal">
-              Surfaces coherent outliers that fall outside cataloged astrophysical signatures and
-              known interference.
+          <div className="space-y-1.5 md:border-l md:border-[#242825] md:pl-6">
+            <span className="text-[10px] text-[#666963] font-mono block">
+              03 · Research hypothesis
+            </span>
+            <span className="text-xs font-medium text-[#E6E4DD] block">
+              Investigating deviation
+            </span>
+            <p className="text-xs text-[#9A9C96] leading-relaxed">
+              Surfaces coherent non-terrestrial signals that deviate from both cataloged emitters
+              and local interference.
             </p>
           </div>
         </div>

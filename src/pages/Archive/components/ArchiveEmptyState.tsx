@@ -8,26 +8,27 @@ export interface ArchiveEmptyStateProps {
 
 export function ArchiveEmptyState({ searchQuery, onClearFilters }: ArchiveEmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded border border-[#1C2630] bg-[#0B0F14] p-10 text-center font-mono select-none my-6">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded border border-[#1C2630] bg-[#06080B] text-[#7F8B95]">
-        <Search className="h-4 w-4 text-[#7F8B95]" />
+    <div className="flex flex-col items-center justify-center rounded-[2px] border border-[#242825] bg-[#141715] p-10 text-center select-none my-6">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[2px] border border-[#242825] bg-[#1A1E1B] text-[#666963]">
+        <Search className="h-4 w-4 text-[#9A9C96]" />
       </div>
 
       <div className="space-y-3 max-w-md">
-        <h3 className="text-sm font-semibold tracking-wide text-[#E6EDF2] uppercase">
-          No observations match your search.
+        <h3 className="text-sm font-medium text-[#E6E4DD]">
+          No matching observation records found
         </h3>
 
-        <p className="text-xs text-[#7F8B95] leading-relaxed">
+        <p className="text-xs text-[#9A9C96] leading-relaxed">
           {searchQuery ? (
             <>
-              No archived records matched <span className="text-[#5BD8F5]">"{searchQuery}"</span>.
-              Try checking the observation ID format or removing date and status filters.
+              No archived records matched{' '}
+              <span className="text-[#D4864A] font-mono">"{searchQuery}"</span>. Try adjusting the
+              observation ID format or resetting date and status filters.
             </>
           ) : (
             <>
-              No archived observations match the selected filters. Adjust status, date, or priority
-              criteria to view historical records.
+              No archived observations match the current filter criteria. Adjust status, date, or
+              priority parameters to view historical records.
             </>
           )}
         </p>

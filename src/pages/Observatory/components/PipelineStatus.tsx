@@ -57,44 +57,44 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
     switch (stageStatus) {
       case 'COMPLETE':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[#5BD8F5] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+          <span className="inline-flex items-center gap-1.5 text-[#529E72] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#529E72]" />
             Complete
           </span>
         );
       case 'ACTIVE':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[#5BD8F5] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#5BD8F5]" />
+          <span className="inline-flex items-center gap-1.5 text-[#D4864A] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
             Active
           </span>
         );
       case 'READY':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[#7F8B95] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full border border-[#7F8B95] bg-transparent" />
+          <span className="inline-flex items-center gap-1.5 text-[#9A9C96] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full border border-[#9A9C96] bg-transparent" />
             Ready
           </span>
         );
       case 'WARNING':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[#E8AE50] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#E8AE50]" />
+          <span className="inline-flex items-center gap-1.5 text-[#D4864A] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
             Warning
           </span>
         );
       case 'ERROR':
         return (
-          <span className="inline-flex items-center gap-1.5 text-[#D95C5C] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#D95C5C]" />
+          <span className="inline-flex items-center gap-1.5 text-[#C84A4A] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#C84A4A]" />
             Error
           </span>
         );
       case 'OFFLINE':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 text-[#7F8B95] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#1C2630]" />
+          <span className="inline-flex items-center gap-1.5 text-[#9A9C96] font-medium text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#262C28]" />
             Idle
           </span>
         );
@@ -129,18 +129,18 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
   ];
 
   return (
-    <div className="rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none flex flex-col justify-between">
+    <div className="rounded-[2px] border border-[#262C28] bg-[#141715] p-4 select-none flex flex-col justify-between">
       <div>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1C2630] pb-2.5">
+        <div className="flex items-center justify-between border-b border-[#262C28] pb-2.5">
           <div className="flex items-center gap-2">
-            <Layers className="h-3.5 w-3.5 text-[#5BD8F5]" />
-            <h3 className="text-xs font-semibold text-[#E6EDF2]">Signal pipeline</h3>
+            <Layers className="h-3.5 w-3.5 text-[#D4864A]" />
+            <h3 className="text-xs font-semibold text-[#E6E4DD]">Signal pipeline</h3>
           </div>
         </div>
 
         {/* Pipeline Stage Items */}
-        <div className="mt-3 divide-y divide-[#1C2630]">
+        <div className="mt-3 divide-y divide-[#262C28]">
           {stageList.map((item, idx) => {
             const currentStageStatus = stages[item.key];
             const isActive = currentStageStatus === 'ACTIVE';
@@ -149,17 +149,17 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
               <div
                 key={item.key}
                 className={`py-2.5 transition-colors ${
-                  isActive ? 'bg-[#5BD8F5]/5 px-2 -mx-2 rounded' : ''
+                  isActive ? 'bg-[#D4864A]/5 px-2 -mx-2 rounded-[2px]' : ''
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-[#7F8B95] font-mono">0{idx + 1}</span>
-                    <span className="text-xs font-medium text-[#E6EDF2]">{item.title}</span>
+                    <span className="text-[10px] text-[#9A9C96] font-mono">0{idx + 1}</span>
+                    <span className="text-xs font-medium text-[#E6E4DD]">{item.title}</span>
                   </div>
                   <div>{renderBadge(currentStageStatus)}</div>
                 </div>
-                <div className="mt-1 text-[11px] text-[#7F8B95] pl-5">{item.subtext}</div>
+                <div className="mt-1 text-[11px] text-[#9A9C96] pl-5">{item.subtext}</div>
               </div>
             );
           })}

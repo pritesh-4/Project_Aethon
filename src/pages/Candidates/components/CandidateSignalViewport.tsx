@@ -75,24 +75,24 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
       const t = (now - startTime) * 0.001;
       const current = candidateRef.current;
 
-      const paddingLeft = 40;
+      const paddingLeft = 44;
       const paddingRight = 16;
       const paddingTop = 14;
-      const paddingBottom = 24;
+      const paddingBottom = 22;
 
       const plotW = Math.max(10, width - paddingLeft - paddingRight);
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
 
       // Background
-      ctx.fillStyle = '#06080B';
+      ctx.fillStyle = '#0F1110';
       ctx.fillRect(0, 0, width, height);
 
       // Plot Area Fill
-      ctx.fillStyle = '#0B0F14';
+      ctx.fillStyle = '#141715';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Reticle Grid
-      ctx.strokeStyle = 'rgba(23, 34, 48, 0.7)';
+      ctx.strokeStyle = 'rgba(154, 156, 150, 0.12)';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -113,7 +113,7 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
       }
       ctx.setLineDash([]);
 
-      // Spectrogram Noise & Carrier
+      // Spectrogram Noise & Carrier (Warm copper & mineral palette)
       const cellW = plotW / cols;
       const cellH = plotH / rows;
       const driftSlope = current.driftRateHzPerSec;
@@ -139,20 +139,22 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
             let cg: number;
             let cb: number;
 
-            if (cl < 0.4) {
-              cr = Math.floor(10 * cl);
-              cg = Math.floor(45 * cl * 2);
-              cb = Math.floor(110 * cl * 2.5);
-            } else if (cl < 0.8) {
-              const factor = (cl - 0.4) / 0.4;
-              cr = Math.floor(14 + 35 * factor);
-              cg = Math.floor(95 + 110 * factor);
-              cb = Math.floor(155 + 85 * factor);
+            // Restrained scientific colormap: Charcoal -> Mineral ochre -> Copper -> Warm white
+            if (cl < 0.35) {
+              const factor = cl / 0.35;
+              cr = Math.floor(26 + 45 * factor);
+              cg = Math.floor(30 + 35 * factor);
+              cb = Math.floor(27 + 25 * factor);
+            } else if (cl < 0.75) {
+              const factor = (cl - 0.35) / 0.4;
+              cr = Math.floor(71 + 141 * factor);
+              cg = Math.floor(65 + 69 * factor);
+              cb = Math.floor(52 + 22 * factor);
             } else {
-              const factor = (cl - 0.8) / 0.2;
-              cr = Math.floor(95 + 130 * factor);
-              cg = Math.floor(215 + 25 * factor);
-              cb = 245;
+              const factor = (cl - 0.75) / 0.25;
+              cr = Math.floor(212 + 33 * factor);
+              cg = Math.floor(134 + 101 * factor);
+              cb = Math.floor(74 + 146 * factor);
             }
 
             ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
@@ -162,19 +164,19 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
       }
 
       // Outer Plot Border
-      ctx.strokeStyle = '#1C2630';
+      ctx.strokeStyle = '#242825';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Clean Axis Ticks
-      ctx.fillStyle = '#7F8B95';
-      ctx.font = '9px Inter, sans-serif';
+      ctx.fillStyle = '#9A9C96';
+      ctx.font = '10px ui-monospace, SFMono-Regular, monospace';
 
       // Left Frequency Axis
       ctx.textAlign = 'right';
-      ctx.fillText('+20 kHz', paddingLeft - 4, paddingTop + 6);
-      ctx.fillText('f₀', paddingLeft - 4, paddingTop + plotH * 0.5 + 3);
-      ctx.fillText('-20 kHz', paddingLeft - 4, paddingTop + plotH - 2);
+      ctx.fillText('+20k', paddingLeft - 5, paddingTop + 8);
+      ctx.fillText('f₀', paddingLeft - 5, paddingTop + plotH * 0.5 + 3);
+      ctx.fillText('-20k', paddingLeft - 5, paddingTop + plotH - 2);
 
       // Bottom Time Axis
       ctx.textAlign = 'center';
@@ -197,26 +199,26 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
   }, [candidate]);
 
   return (
-    <div className="rounded border border-[#1C2630] bg-[#06080B] overflow-hidden select-none">
-      <div className="flex items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] px-3 py-1.5 text-xs text-[#7F8B95]">
-        <span className="font-medium text-[#E6EDF2]">Signal spectrogram</span>
+    <div className="rounded-[2px] border border-[#242825] bg-[#0F1110] overflow-hidden select-none">
+      <div className="flex items-center justify-between border-b border-[#242825] bg-[#141715] px-3 py-1.5 text-xs text-[#9A9C96]">
+        <span className="font-medium text-[#E6E4DD]">Spectrogram slice</span>
 
         <button
           type="button"
           aria-pressed={isAudioActive}
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
+          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
             isAudioActive
-              ? 'border-[#5BD8F5] bg-[#5BD8F5]/10 text-[#5BD8F5]'
-              : 'border-[#1C2630] bg-[#10161D] text-[#7F8B95] hover:text-[#E6EDF2]'
+              ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
+              : 'border-[#242825] bg-[#1A1E1B] text-[#9A9C96] hover:text-[#E6E4DD]'
           }`}
         >
           {isAudioActive ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
-          <span>{isAudioActive ? 'Mute' : 'Audio'}</span>
+          <span>{isAudioActive ? 'Monitoring' : 'Audio feed'}</span>
         </button>
       </div>
 
-      <div ref={containerRef} className="relative h-[160px] sm:h-[180px] w-full bg-[#06080B]">
+      <div ref={containerRef} className="relative h-[160px] sm:h-[180px] w-full bg-[#0F1110]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>
     </div>

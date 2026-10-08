@@ -20,23 +20,23 @@ export function SystemStatus({
     { dot: string; text: string; defaultLabel: string }
   > = {
     online: {
-      dot: 'bg-[#7F8B95]',
-      text: 'text-[#E6EDF2]',
+      dot: 'bg-[#9A9C96]',
+      text: 'text-[#E6E4DD]',
       defaultLabel: 'Online',
     },
     ready: {
-      dot: 'bg-[#5BD8F5]',
-      text: 'text-[#5BD8F5]',
+      dot: 'bg-[#529E72]',
+      text: 'text-[#529E72]',
       defaultLabel: 'Ready',
     },
     analyzing: {
-      dot: 'bg-[#E8AE50]',
-      text: 'text-[#E8AE50]',
+      dot: 'bg-[#D4864A]',
+      text: 'text-[#D4864A]',
       defaultLabel: 'Analyzing',
     },
     offline: {
-      dot: 'bg-[#7F8B95]/50',
-      text: 'text-[#7F8B95]',
+      dot: 'bg-[#666963]',
+      text: 'text-[#9A9C96]',
       defaultLabel: 'Offline',
     },
   };
@@ -47,7 +47,7 @@ export function SystemStatus({
   return (
     <div className={cn('select-none font-sans', className)}>
       {showCategory && (
-        <span className="block text-[10px] text-[#7F8B95] font-sans mb-0.5">System status</span>
+        <span className="block text-[10px] text-[#9A9C96] font-sans mb-0.5">System status</span>
       )}
       <div className="flex items-center gap-2 text-xs font-medium">
         <span className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', current.dot)} />

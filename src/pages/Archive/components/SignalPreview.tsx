@@ -93,15 +93,15 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
 
       // Background
-      ctx.fillStyle = '#06080B';
+      ctx.fillStyle = '#0F1110';
       ctx.fillRect(0, 0, width, height);
 
       // Plot Box
-      ctx.fillStyle = '#0B0F14';
+      ctx.fillStyle = '#141715';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Grid
-      ctx.strokeStyle = 'rgba(28, 38, 48, 0.6)';
+      ctx.strokeStyle = 'rgba(154, 156, 150, 0.12)';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
@@ -150,20 +150,22 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
             let cg: number;
             let cb: number;
 
-            if (cl < 0.4) {
-              cr = Math.floor(10 * cl);
-              cg = Math.floor(45 * cl * 2.2);
-              cb = Math.floor(115 * cl * 2.8);
-            } else if (cl < 0.8) {
-              const factor = (cl - 0.4) / 0.4;
-              cr = Math.floor(14 + 40 * factor);
-              cg = Math.floor(105 + 122 * factor);
-              cb = Math.floor(165 + 90 * factor);
+            // Restrained colormap: Charcoal -> Mineral ochre -> Copper -> Pale warm white
+            if (cl < 0.35) {
+              const factor = cl / 0.35;
+              cr = Math.floor(26 + 45 * factor);
+              cg = Math.floor(30 + 35 * factor);
+              cb = Math.floor(27 + 25 * factor);
+            } else if (cl < 0.75) {
+              const factor = (cl - 0.35) / 0.4;
+              cr = Math.floor(71 + 141 * factor);
+              cg = Math.floor(65 + 69 * factor);
+              cb = Math.floor(52 + 22 * factor);
             } else {
-              const factor = (cl - 0.8) / 0.2;
-              cr = Math.floor(102 + 153 * factor);
-              cg = Math.floor(227 + 28 * factor);
-              cb = 255;
+              const factor = (cl - 0.75) / 0.25;
+              cr = Math.floor(212 + 33 * factor);
+              cg = Math.floor(134 + 101 * factor);
+              cb = Math.floor(74 + 146 * factor);
             }
 
             ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
@@ -180,11 +182,11 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
         const ah = plotH * 0.42;
 
         ctx.save();
-        ctx.fillStyle = 'rgba(91, 216, 245, 0.05)';
+        ctx.fillStyle = 'rgba(212, 134, 74, 0.06)';
         ctx.fillRect(ax, ay, aw, ah);
 
         const cornerSize = 6;
-        ctx.strokeStyle = current.status === 'review' ? '#E8AE50' : '#5BD8F5';
+        ctx.strokeStyle = '#D4864A';
         ctx.lineWidth = 1.2;
 
         // Top-left
@@ -216,8 +218,8 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
         ctx.stroke();
 
         // Anomaly Label
-        ctx.font = '8px "JetBrains Mono", monospace';
-        ctx.fillStyle = current.status === 'review' ? '#E8AE50' : '#5BD8F5';
+        ctx.font = '9px ui-monospace, SFMono-Regular, monospace';
+        ctx.fillStyle = '#D4864A';
         ctx.textAlign = 'left';
         ctx.fillText(`Anomalous region`, ax + 4, ay - 3);
 
@@ -227,13 +229,13 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
       }
 
       // Outer Border
-      ctx.strokeStyle = '#1C2630';
+      ctx.strokeStyle = '#242825';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
       // Axis Ticks
-      ctx.fillStyle = '#7F8B95';
-      ctx.font = '8px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#9A9C96';
+      ctx.font = '9px ui-monospace, SFMono-Regular, monospace';
 
       // Left Frequency Axis
       ctx.textAlign = 'right';
@@ -249,7 +251,7 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
       // Docked Signal Trace Line
       const traceY = paddingTop + plotH + 17;
       ctx.save();
-      ctx.strokeStyle = hasAnomaly ? '#5BD8F5' : '#475569';
+      ctx.strokeStyle = hasAnomaly ? '#D4864A' : '#666963';
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let x = 0; x <= plotW; x += 2) {
@@ -275,11 +277,11 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
   }, [observation]);
 
   return (
-    <div className="rounded-[2px] border border-[#1C2630] bg-[#06080B] overflow-hidden select-none font-mono">
+    <div className="rounded-[2px] border border-[#242825] bg-[#0F1110] overflow-hidden select-none">
       {/* Viewport Header */}
-      <div className="flex items-center justify-between border-b border-[#1C2630] bg-[#0B0F14] px-3 py-1.5 text-[10px] text-[#7F8B95]">
-        <span className="flex items-center gap-1.5 font-medium text-slate-200">
-          <Activity className="h-3 w-3 text-[#5BD8F5]" />
+      <div className="flex items-center justify-between border-b border-[#242825] bg-[#141715] px-3 py-1.5 text-xs text-[#9A9C96]">
+        <span className="flex items-center gap-1.5 font-medium text-[#E6E4DD]">
+          <Activity className="h-3 w-3 text-[#D4864A]" />
           Spectral morphology
         </span>
 
@@ -287,22 +289,18 @@ export function SignalPreview({ observation }: SignalPreviewProps) {
           type="button"
           aria-pressed={isAudioActive}
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1 rounded-[1px] border px-1.5 py-0.5 text-[9px] font-mono transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#5BD8F5] ${
+          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
             isAudioActive
-              ? 'border-[#5BD8F5] bg-[#5BD8F5]/15 text-[#5BD8F5]'
-              : 'border-[#1C2630] bg-[#10161D] text-slate-400 hover:text-slate-200'
+              ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
+              : 'border-[#242825] bg-[#1A1E1B] text-[#9A9C96] hover:text-[#E6E4DD]'
           }`}
         >
-          {isAudioActive ? (
-            <Volume2 className="h-2.5 w-2.5" />
-          ) : (
-            <VolumeX className="h-2.5 w-2.5" />
-          )}
-          <span>{isAudioActive ? 'Audio active' : 'Sonify'}</span>
+          {isAudioActive ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
+          <span>{isAudioActive ? 'Monitoring' : 'Audio feed'}</span>
         </button>
       </div>
 
-      <div ref={containerRef} className="relative h-[150px] w-full bg-[#06080B]">
+      <div ref={containerRef} className="relative h-[150px] w-full bg-[#0F1110]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
       </div>
     </div>

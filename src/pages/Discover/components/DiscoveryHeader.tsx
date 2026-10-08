@@ -13,13 +13,13 @@ export function DiscoveryHeader({ stage }: DiscoveryHeaderProps) {
   const statusLabel = isAnalyzing ? 'Analyzing' : stage === 'complete' ? 'Complete' : 'Ready';
 
   return (
-    <header className="border-b border-[#1C2630] bg-[#0B0F14] px-4 sm:px-6 py-3 select-none">
+    <header className="border-b border-[#262C28] bg-[#141715] px-4 sm:px-6 py-3 select-none">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 max-w-5xl mx-auto">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-sm font-semibold tracking-tight text-[#E6EDF2]">Discovery</h1>
-          <span className="text-[#7F8B95]">•</span>
-          <span className="text-xs text-[#7F8B95]">
-            Autonomous anomaly search across astronomical observations
+          <h1 className="text-sm font-semibold tracking-tight text-[#E6E4DD]">Discovery</h1>
+          <span className="text-[#6B706A]">•</span>
+          <span className="text-xs text-[#9A9C96]">
+            Unsupervised anomaly screening across astronomical observations
           </span>
         </div>
 
