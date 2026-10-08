@@ -31,8 +31,10 @@ export function AppLayout() {
 
   // Workstation Shell: TopSystemBar + Sidebar Rail + Application Content
   return (
-    <AppShell>
-      <Outlet />
+    <>
+      <AppShell>
+        <Outlet />
+      </AppShell>
       <Toaster
         theme="dark"
         position="bottom-right"
@@ -47,6 +49,6 @@ export function AppLayout() {
           },
         }}
       />
-    </AppShell>
+    </>
   );
 }

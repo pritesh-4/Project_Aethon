@@ -1,10 +1,11 @@
 import { Link } from 'react-router';
 import { Radio, ArrowLeft, Database, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/Button.tsx';
+import { PageTransition } from '@/components/ui/motion.tsx';
 
 export default function NotFoundPage() {
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center p-6 text-center select-none font-sans">
+    <PageTransition className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center p-6 text-center select-none font-sans">
       <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-[4px] border border-[#1C2630] bg-[#0B0F14]">
         <Radio className="h-7 w-7 text-[#5BD8F5]" />
       </div>
@@ -45,6 +46,6 @@ export default function NotFoundPage() {
           </Button>
         </Link>
       </div>
-    </div>
+    </PageTransition>
   );
 }

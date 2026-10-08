@@ -221,7 +221,8 @@ export default function ArchivePage() {
         {/* 4. Main Body: Timeline + Right-Side Drawer */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           {/* Left Column: Timeline List */}
-          <main
+          <div
+            role="region"
             tabIndex={0}
             aria-label="Chronological Observation Records List"
             className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 outline-none"
@@ -247,7 +248,7 @@ export default function ArchivePage() {
                 }
               />
             )}
-          </main>
+          </div>
 
           {/* Right Column: Desktop Docked Detail Drawer */}
           <aside

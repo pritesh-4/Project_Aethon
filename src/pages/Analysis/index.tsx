@@ -92,7 +92,7 @@ export default function AnalysisPage() {
       />
 
       {/* 2. Main Scientific Investigation Workspace */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Step Selector: OBSERVATION -> REPRESENTATION -> PATTERN COMPARISON -> ANOMALY */}
         <StageSelector activeStage={activeStage} onSelectStage={setActiveStage} />
 
@@ -111,7 +111,7 @@ export default function AnalysisPage() {
 
         {/* INVESTIGATION ACTIONS & VERDICT */}
         <AnalysisVerdictBar record={record} />
-      </main>
+      </div>
     </PageTransition>
   );
 }

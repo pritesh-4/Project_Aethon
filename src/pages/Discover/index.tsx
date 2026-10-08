@@ -3,11 +3,7 @@ import { PageTransition } from '@/components/ui/motion.tsx';
 import { toast } from 'sonner';
 
 import type { DiscoveryStage, DiscoveryObservationMeta, SearchConfig } from './types.ts';
-import {
-  REFERENCE_OBSERVATIONS,
-  MOCK_DISCOVERY_CANDIDATES,
-  MOCK_DISCOVERY_RESULT,
-} from './data/mockDiscovery.ts';
+import { MOCK_DISCOVERY_CANDIDATES, MOCK_DISCOVERY_RESULT } from './data/mockDiscovery.ts';
 
 import { DiscoveryHeader } from './components/DiscoveryHeader.tsx';
 import { ObservationInput } from './components/ObservationInput.tsx';
@@ -22,9 +18,7 @@ import { ArrowRight, RotateCcw } from 'lucide-react';
 export default function DiscoverPage() {
   // Primary State
   const [stage, setStage] = useState<DiscoveryStage>('idle');
-  const [observation, setObservation] = useState<DiscoveryObservationMeta>(
-    REFERENCE_OBSERVATIONS[0]
-  );
+  const [observation, setObservation] = useState<DiscoveryObservationMeta | null>(null);
   const [searchConfig, setSearchConfig] = useState<SearchConfig>({
     sensitivity: 'standard',
     rejectTerrestrialRfi: true,
@@ -40,9 +34,9 @@ export default function DiscoverPage() {
     };
   }, []);
 
-  // Handle Observation Selection
+  // Handle Observation Selection (clicking selected item again toggles off to idle state)
   const handleSelectObservation = (obs: DiscoveryObservationMeta) => {
-    setObservation(obs);
+    setObservation((prev) => (prev?.id === obs.id ? null : obs));
     if (stage === 'complete') {
       setStage('idle');
     }
@@ -109,7 +103,7 @@ export default function DiscoverPage() {
       <DiscoveryHeader stage={stage} />
 
       {/* Main Scientific Procedure Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* ==================================================== */}
         {/* STAGE 1: OBSERVATION INPUT & SEARCH SETTINGS */}
         {/* ==================================================== */}
@@ -127,35 +121,61 @@ export default function DiscoverPage() {
         )}
 
         {/* ==================================================== */}
-        {/* STAGE 3: INITIATE DISCOVERY (CLEAR PRIMARY ACTION) */}
+        {/* STAGE 3: INITIATE DISCOVERY (CLEAR PRIMARY ACTION / IDLE STATE) */}
         {/* ==================================================== */}
         {!isAnalyzing && stage !== 'complete' && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded border border-[#1C2630] bg-[#0B0F14] p-4 select-none">
-            <div className="space-y-0.5 text-center sm:text-left">
-              <span className="text-xs font-semibold text-[#E6EDF2]">
-                Ready to analyze observation {observation.id}
-              </span>
-              <p className="text-[11px] text-[#7F8B95]">
-                Executes the 4-stage candidate screening pipeline on the selected data stream.
-              </p>
-            </div>
+            {observation ? (
+              <>
+                <div className="space-y-0.5 text-center sm:text-left">
+                  <span className="text-xs font-semibold text-[#E6EDF2]">
+                    Ready to analyze observation {observation.id}
+                  </span>
+                  <p className="text-[11px] text-[#7F8B95]">
+                    Executes the 4-stage candidate screening pipeline on the selected data stream.
+                  </p>
+                </div>
 
-            <Button
-              variant="primary"
-              size="lg"
-              icon={<ArrowRight className="h-4 w-4" />}
-              onClick={handleInitiateDiscovery}
-              className="w-full sm:w-auto text-xs font-semibold uppercase tracking-wider"
-            >
-              Initiate Discovery
-            </Button>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  icon={<ArrowRight className="h-4 w-4" />}
+                  onClick={handleInitiateDiscovery}
+                  className="w-full sm:w-auto text-xs font-semibold uppercase tracking-wider"
+                >
+                  Initiate Discovery
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="space-y-0.5 text-center sm:text-left">
+                  <span className="text-xs font-semibold text-[#E6EDF2]">
+                    No observation loaded
+                  </span>
+                  <p className="text-[11px] text-[#7F8B95]">
+                    Select a reference observation or upload a data file above to configure
+                    analysis.
+                  </p>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="lg"
+                  disabled
+                  icon={<ArrowRight className="h-4 w-4" />}
+                  className="w-full sm:w-auto text-xs font-semibold uppercase tracking-wider opacity-50 cursor-not-allowed"
+                >
+                  Initiate Discovery
+                </Button>
+              </>
+            )}
           </div>
         )}
 
         {/* ==================================================== */}
         {/* STAGE 4: ANALYSIS PROGRESS (PREPARE, REPRESENT, SEARCH, RANK) */}
         {/* ==================================================== */}
-        {(isAnalyzing || stage === 'complete') && (
+        {(isAnalyzing || stage === 'complete') && observation && (
           <div className="space-y-4">
             {/* 4-Stage Procedure Status */}
             <DiscoveryPipeline stage={stage} />
@@ -179,7 +199,7 @@ export default function DiscoverPage() {
         {/* ==================================================== */}
         {/* STAGE 6: CANDIDATE SUMMARY */}
         {/* ==================================================== */}
-        {stage === 'complete' && (
+        {stage === 'complete' && observation && (
           <div ref={candidatesRef} className="pt-2">
             <CandidateSummary
               candidates={MOCK_DISCOVERY_CANDIDATES.slice(0, 4)}
@@ -201,7 +221,7 @@ export default function DiscoverPage() {
             </Button>
           </div>
         )}
-      </main>
+      </div>
     </PageTransition>
   );
 }

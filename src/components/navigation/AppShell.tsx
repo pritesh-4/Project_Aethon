@@ -1,6 +1,4 @@
 import { useState, type ReactNode } from 'react';
-import { useLocation } from 'react-router';
-import { motion, AnimatePresence } from 'motion/react';
 import { Sidebar } from './Sidebar.tsx';
 import { TopSystemBar } from './TopSystemBar.tsx';
 import { MobileNavigation } from './MobileNavigation.tsx';
@@ -12,7 +10,6 @@ export interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const location = useLocation();
 
   return (
     <div className="min-h-screen bg-[#06080B] text-[#E6EDF2] flex flex-col font-sans selection:bg-[#5BD8F5]/20 selection:text-[#5BD8F5] overflow-x-hidden">
@@ -34,19 +31,7 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* Application Content */}
           <main className="flex-1 relative p-4 sm:p-6 lg:p-8">
-            <div className="mx-auto max-w-7xl">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={location.pathname}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15, ease: 'easeOut' }}
-                >
-                  {children}
-                </motion.div>
-              </AnimatePresence>
-            </div>
+            <div className="mx-auto max-w-7xl">{children}</div>
           </main>
 
           {/* Quiet Footer */}
