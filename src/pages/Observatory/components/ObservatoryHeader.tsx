@@ -30,123 +30,92 @@ export function ObservatoryHeader({
   const isAnalyzing = status === 'ANALYZING' || status === 'LOADING';
   const hasResult = status === 'ANOMALY_DETECTED' || status === 'CANDIDATE_READY';
 
-  const getStatusBadge = (s: ObservationStatus) => {
+  const getStatusIndicator = (s: ObservationStatus) => {
     switch (s) {
       case 'IDLE':
-        return {
-          dot: 'bg-[#6B706A]',
-          label: 'Standby',
-          style: 'border-[#262C28] text-[#9A9C96]',
-        };
+        return { dot: 'bg-[#6B706A]', label: 'Standby', color: 'text-[#9A9C96]' };
       case 'LOADING':
-        return {
-          dot: 'bg-[#D4864A]',
-          label: 'Buffering',
-          style: 'border-[#D4864A]/30 text-[#D4864A]',
-        };
+        return { dot: 'bg-[#D4864A]', label: 'Buffering', color: 'text-[#D4864A]' };
       case 'ANALYZING':
-        return {
-          dot: 'bg-[#D4864A]',
-          label: 'Analyzing',
-          style: 'border-[#D4864A]/30 text-[#D4864A]',
-        };
+        return { dot: 'bg-[#D4864A]', label: 'Analyzing', color: 'text-[#D4864A]' };
       case 'ANOMALY_DETECTED':
-        return {
-          dot: 'bg-[#D4864A]',
-          label: 'Anomaly detected',
-          style: 'border-[#D4864A]/40 text-[#D4864A]',
-        };
+        return { dot: 'bg-[#D4864A]', label: 'Anomaly detected', color: 'text-[#D4864A]' };
       case 'CANDIDATE_READY':
-        return {
-          dot: 'bg-[#529E72]',
-          label: 'Candidate isolated',
-          style: 'border-[#529E72]/40 text-[#529E72]',
-        };
+        return { dot: 'bg-[#529E72]', label: 'Candidate isolated', color: 'text-[#529E72]' };
     }
   };
 
-  const statusBadge = getStatusBadge(status);
+  const statusInfo = getStatusIndicator(status);
 
   return (
-    <header className="border-b border-[#262C28] bg-[#141715] px-4 py-3 select-none font-sans">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* Left: Title, Simulated Badge & Observation Context */}
-        <div className="flex flex-wrap items-center gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm tracking-tight text-[#E6E4DD]">Observatory</span>
-            <span className="rounded-[2px] border border-[#262C28] bg-[#1A1E1B] px-2 py-0.5 text-[11px] text-[#9A9C96]">
-              Simulated observation
-            </span>
-          </div>
+    <header className="border-b border-[#242825] bg-[#0F1110] px-4 sm:px-6 py-2.5 select-none font-sans">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+        {/* Left: Identity + Status */}
+        <div className="flex flex-wrap items-center gap-2.5 text-xs min-w-0">
+          <h1 className="text-sm font-medium tracking-tight text-[#E6E4DD] shrink-0">
+            Observatory
+          </h1>
+          <span className="text-[10px] text-[#666963] uppercase tracking-wider shrink-0">
+            Simulated
+          </span>
+          <span className="text-[#242825] hidden sm:inline">·</span>
+          <span className="text-[#9A9C96] hidden sm:inline">{targetName}</span>
+          <span className="text-[#242825] hidden sm:inline">·</span>
+          <span className="text-[#E6E4DD] font-mono hidden sm:inline">
+            {frequencyMHz.toFixed(4)} MHz
+          </span>
+          <span className="text-[#242825] hidden sm:inline">·</span>
 
-          {/* Target & Frequency Context */}
-          <div className="flex items-center gap-2 text-[#9A9C96]">
-            <span>Target:</span>
-            <span className="text-[#E6E4DD] font-medium">{targetName}</span>
-            <span>·</span>
-            <span className="text-[#E6E4DD] font-mono">{frequencyMHz.toFixed(4)} MHz</span>
-          </div>
-
-          {/* Status Indicator */}
-          <div
-            className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-xs font-medium ${statusBadge.style}`}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${statusBadge.dot}`} />
-            <span>{statusBadge.label}</span>
-          </div>
+          {/* Status — inline dot + label, not a bordered badge */}
+          <span className={`inline-flex items-center gap-1.5 ${statusInfo.color}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
+            <span className="text-xs font-medium">{statusInfo.label}</span>
+          </span>
         </div>
 
-        {/* Right: Controls & Primary Action */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Load Observation Record */}
-          <div className="flex items-center gap-1.5">
-            <label htmlFor="obs-selector" className="text-xs text-[#9A9C96]">
-              Record:
-            </label>
-            <select
-              id="obs-selector"
-              aria-label="Load Observation Record"
-              value={observationId}
-              onChange={(e) => onSelectObservation(e.target.value)}
-              disabled={isAnalyzing}
-              className="h-7.5 rounded-[2px] border border-[#262C28] bg-[#1A1E1B] px-2 text-xs font-mono text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors cursor-pointer"
-            >
-              {observationList.map((obs) => (
-                <option key={obs.id} value={obs.id}>
-                  {obs.id} — {obs.name}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Right: Controls */}
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {/* Record selector */}
+          <select
+            aria-label="Load Observation Record"
+            value={observationId}
+            onChange={(e) => onSelectObservation(e.target.value)}
+            disabled={isAnalyzing}
+            className="h-7 rounded-sm border border-[#242825] bg-[#141715] px-2 text-xs font-mono text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors cursor-pointer"
+          >
+            {observationList.map((obs) => (
+              <option key={obs.id} value={obs.id}>
+                {obs.id} — {obs.name}
+              </option>
+            ))}
+          </select>
 
-          {/* Reset button */}
+          {/* Reset */}
           {status !== 'IDLE' && (
-            <Button
-              variant="tertiary"
-              size="sm"
-              icon={<RotateCcw className="h-3 w-3" />}
+            <button
+              type="button"
               onClick={onReset}
               disabled={isAnalyzing}
               title="Reset observation"
+              className="h-7 w-7 flex items-center justify-center rounded-sm text-[#666963] hover:text-[#E6E4DD] hover:bg-[#141715] transition-colors cursor-pointer disabled:opacity-40"
             >
-              Reset
-            </Button>
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
           )}
 
-          {/* Pause / Resume button */}
+          {/* Pause / Resume */}
           {status !== 'IDLE' && (
-            <Button
-              variant="tertiary"
-              size="sm"
-              icon={isPaused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+            <button
+              type="button"
               onClick={onTogglePause}
               title={isPaused ? 'Resume playback' : 'Pause playback'}
+              className="h-7 w-7 flex items-center justify-center rounded-sm text-[#666963] hover:text-[#E6E4DD] hover:bg-[#141715] transition-colors cursor-pointer"
             >
-              {isPaused ? 'Resume' : 'Pause'}
-            </Button>
+              {isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+            </button>
           )}
 
-          {/* PRIMARY ACTION: ANALYZE */}
+          {/* PRIMARY ACTION */}
           <Button
             variant="primary"
             size="sm"
@@ -155,7 +124,7 @@ export function ObservatoryHeader({
             loadingText="Analyzing..."
             disabled={isAnalyzing}
           >
-            {hasResult ? 'Re-analyze' : 'Analyze observation'}
+            {hasResult ? 'Re-analyze' : 'Analyze'}
           </Button>
         </div>
       </div>

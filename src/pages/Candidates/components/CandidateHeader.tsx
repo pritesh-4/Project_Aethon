@@ -21,38 +21,37 @@ export function CandidateHeader({
   totalCount,
 }: CandidateHeaderProps) {
   return (
-    <header className="border-b border-[#242825] bg-[#141715] px-4 sm:px-6 py-3.5 select-none">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-7xl mx-auto">
-        {/* Title and Context */}
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm font-medium tracking-tight text-[#E6E4DD]">
-              Candidate review ledger
-            </h1>
-            <span className="text-[#666963]">•</span>
-            <span className="text-xs text-[#9A9C96] font-mono">{observationId}</span>
-          </div>
-          <p className="text-xs text-[#9A9C96]">
-            {totalIdentified} events isolated • {highPriorityCount} prioritized for review
-          </p>
+    <header className="border-b border-[#242825] bg-[#0F1110] px-4 sm:px-6 py-2.5 select-none">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 max-w-7xl mx-auto">
+        {/* Left: Title + Context inline */}
+        <div className="flex flex-wrap items-center gap-2 text-xs min-w-0">
+          <h1 className="text-sm font-medium tracking-tight text-[#E6E4DD] shrink-0">
+            Candidate review
+          </h1>
+          <span className="text-[#242825] hidden sm:inline">·</span>
+          <span className="text-[#9A9C96] font-mono hidden sm:inline">{observationId}</span>
+          <span className="text-[#242825] hidden sm:inline">·</span>
+          <span className="text-[#9A9C96] hidden sm:inline">{totalIdentified} isolated</span>
+          <span className="text-[#242825] hidden sm:inline">·</span>
+          <span className="text-[#D4864A] hidden sm:inline">{highPriorityCount} prioritized</span>
         </div>
 
-        {/* Search & Priority Filter Controls */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Right: Search & Filter */}
+        <div className="flex flex-wrap items-center gap-2">
           {/* Quick Search */}
           <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#666963]" />
+            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-[#666963]" />
             <input
               type="text"
               value={filters.searchQuery}
               onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
-              placeholder="Search candidate ID..."
-              className="h-8 w-full sm:w-52 rounded-[2px] border border-[#242825] bg-[#101211] pl-8 pr-2.5 text-xs text-[#E6E4DD] placeholder-[#666963] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors font-mono"
+              placeholder="Search ID..."
+              className="h-7 w-full sm:w-44 rounded-sm border border-[#242825] bg-[#141715] pl-8 pr-2.5 text-xs text-[#E6E4DD] placeholder-[#666963] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors font-mono"
             />
           </div>
 
           {/* Priority Filter */}
-          <div className="flex items-center gap-1.5 text-xs text-[#9A9C96]">
+          <div className="flex items-center gap-1.5">
             <Filter className="h-3.5 w-3.5 text-[#666963]" />
             <select
               value={filters.priorityFilter}
@@ -63,18 +62,17 @@ export function CandidateHeader({
                 })
               }
               aria-label="Filter candidates by priority"
-              className="h-8 rounded-[2px] border border-[#242825] bg-[#1A1E1B] px-2 text-xs text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors cursor-pointer"
+              className="h-7 rounded-sm border border-[#242825] bg-[#141715] px-2 text-xs text-[#E6E4DD] focus:border-[#D4864A] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] transition-colors cursor-pointer"
             >
-              <option value="ALL">All priorities ({totalCount})</option>
-              <option value="HIGH">High priority ({highPriorityCount})</option>
-              <option value="MEDIUM">Medium priority</option>
-              <option value="LOW">Low priority</option>
+              <option value="ALL">All ({totalCount})</option>
+              <option value="HIGH">High ({highPriorityCount})</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
             </select>
           </div>
 
-          <span className="text-xs text-[#666963] pl-1 hidden sm:inline">
-            Showing{' '}
-            <strong className="text-[#E6E4DD] font-mono font-normal">{filteredCount}</strong>
+          <span className="text-[11px] text-[#666963] hidden sm:inline">
+            <strong className="text-[#E6E4DD] font-mono font-normal">{filteredCount}</strong> shown
           </span>
         </div>
       </div>

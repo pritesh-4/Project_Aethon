@@ -3,69 +3,74 @@ import { AlertCircle, Users, Compass } from 'lucide-react';
 
 export function FalsePositiveReality() {
   return (
-    <div className="rounded-[2px] border border-[#242825] bg-[#141715] p-5 select-none space-y-5">
+    <div className="border-t border-[#242825] pt-6 select-none space-y-5 font-sans">
       {/* Section Header */}
-      <div className="border-b border-[#242825] pb-3 space-y-1">
+      <div className="border-b border-[#242825] pb-2.5 space-y-0.5">
         <div className="flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 text-[#D4864A]" />
+          <AlertCircle className="h-3.5 w-3.5 text-[#D4864A]" />
           <h3 className="text-sm font-medium text-[#E6E4DD]">
-            False positives in observational radio astronomy
+            False Positives & Empirical Reality
           </h3>
         </div>
-        <p className="text-xs text-[#9A9C96] leading-relaxed">
-          In high-cadence observational astronomy, statistical anomalies are common. Scientific
-          validity requires understanding the physical origins of anomalous detector response.
+        <p className="text-xs text-[#848780] leading-relaxed">
+          In high-cadence radio astronomy, statistical deviations are frequent. Scientific rigor
+          demands isolating true physical emission from systematic instrumentation artifacts.
         </p>
       </div>
 
-      {/* Real-World False Positive Sources */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Real-World False Positive Sources: 2x2 Ruled Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x border border-[#242825] bg-[#101211] rounded-[2px] overflow-hidden">
         {FALSE_POSITIVE_SOURCES.map((source) => (
-          <div
-            key={source.id}
-            className="rounded-[2px] border border-[#242825] bg-[#101211] p-4 flex flex-col justify-between space-y-3"
-          >
-            <div className="space-y-1.5">
-              <span className="text-xs font-medium text-[#E6E4DD] block">{source.title}</span>
-
-              <div className="text-[11px] text-[#9A9C96]">
-                <span className="text-[#666963]">Physical origin:</span> {source.origin}
+          <div key={source.id} className="p-4 flex flex-col justify-between space-y-3">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-[#E6E4DD]">{source.title}</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#767973]">
+                  {source.id}
+                </span>
               </div>
 
-              <p className="text-xs text-[#9A9C96] leading-relaxed">{source.description}</p>
+              <div className="text-[11px] font-mono text-[#848780]">
+                <span className="text-[#666963]">Origin:</span> {source.origin}
+              </div>
+
+              <p className="text-xs text-[#9A9C96] leading-relaxed pt-1">{source.description}</p>
             </div>
 
-            <div className="border-t border-[#242825] pt-2 text-[11px] text-[#9A9C96]">
-              <span className="text-[#D4864A] block mb-0.5 font-medium">Rejection protocol:</span>
-              <span>{source.mitigation}</span>
+            <div className="border-t border-[#1F2321] pt-2 text-[11px]">
+              <span className="text-[#D4864A] font-mono text-[10px] uppercase tracking-wider block mb-0.5">
+                Rejection Protocol
+              </span>
+              <span className="text-[#848780]">{source.mitigation}</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* The Core Scientific Principle Banner */}
-      <div className="rounded-[2px] border border-[#242825] bg-[#101211] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Core Scientific Principle Banner */}
+      <div className="border-t border-[#242825] pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Compass className="h-4 w-4 text-[#D4864A]" />
-            <span className="text-xs font-medium text-[#D4864A]">Scientific epistemology</span>
+            <Compass className="h-3.5 w-3.5 text-[#D4864A]" />
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#D4864A]">
+              Scientific Epistemology
+            </span>
           </div>
 
           <h4 className="text-sm sm:text-base font-medium tracking-tight text-[#E6E4DD]">
-            Algorithms isolate mathematical deviations. Researchers investigate physical reality.
+            Algorithms isolate mathematical deviations. Observers confirm physical reality.
           </h4>
 
-          <p className="text-xs text-[#9A9C96] max-w-2xl leading-relaxed">
-            Machine learning models excel at identifying subtle statistical outliers across
-            petabyte-scale data streams. However, an algorithm cannot declare an astronomical
-            discovery. AETHON screens billions of raw points into prioritized candidate queues so
-            observers can perform multi-telescope verification.
+          <p className="text-xs text-[#848780] max-w-2xl leading-relaxed">
+            Machine learning models excel at identifying subtle statistical outliers across terabyte
+            data streams, but an algorithm cannot declare a discovery. AETHON screens raw inputs
+            into prioritized queues so human researchers can conduct verification campaigns.
           </p>
         </div>
 
-        <div className="shrink-0 flex items-center gap-2 rounded-[2px] border border-[#242825] bg-[#141715] px-3.5 py-2.5 text-xs text-[#E6E4DD]">
-          <Users className="h-4 w-4 text-[#D4864A]" />
-          <span>Human researcher review</span>
+        <div className="shrink-0 flex items-center gap-2 text-xs font-mono text-[#C9C8C0] border border-[#242825] bg-[#0E100F] px-3 py-2 rounded-[2px]">
+          <Users className="h-3.5 w-3.5 text-[#D4864A]" />
+          <span>HUMAN VERIFICATION</span>
         </div>
       </div>
     </div>

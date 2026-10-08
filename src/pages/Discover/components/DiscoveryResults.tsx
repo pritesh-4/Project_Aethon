@@ -10,44 +10,47 @@ export interface DiscoveryResultsProps {
 
 export function DiscoveryResults({ summary, onReset, onViewCandidates }: DiscoveryResultsProps) {
   return (
-    <section className="rounded-[2px] border border-[#D4864A]/40 bg-[#1A1E1B] p-5 sm:p-6 shadow-sm select-none font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+    <section className="border-y border-[#242825] bg-[#121513] px-4 sm:px-5 py-3.5 select-none font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Left: Clear Scientific Results */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[#D4864A]" />
-            <span className="text-xs font-medium text-[#D4864A]">Observation analyzed</span>
+            <CheckCircle2 className="h-3.5 w-3.5 text-[#529E72]" />
+            <span className="font-mono text-[11px] uppercase tracking-wider text-[#529E72]">
+              Analysis Complete
+            </span>
             <span className="text-[#363C38]">•</span>
             <span className="text-xs text-[#9A9C96] font-mono">{summary.observationId}</span>
           </div>
 
-          <h3 className="text-base sm:text-lg font-medium tracking-tight text-[#E6E4DD]">
-            {summary.candidates.length} candidates identified
-          </h3>
-
-          <p className="text-xs text-[#9A9C96]">
-            Narrowband carriers with persistent Doppler drift confirmed across observation baseline.
-          </p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-sm font-medium tracking-tight text-[#E6E4DD]">
+              {summary.candidates.length} candidates isolated
+            </span>
+            <span className="text-xs text-[#848780] hidden md:inline">
+              Narrowband carriers with persistent Doppler drift confirmed across baseline
+            </span>
+          </div>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            icon={<RotateCcw className="h-3.5 w-3.5" />}
+            icon={<RotateCcw className="h-3 w-3" />}
             onClick={onReset}
           >
-            New analysis
+            Reset
           </Button>
 
           <Button
             variant="primary"
-            size="md"
+            size="sm"
             icon={<ArrowDown className="h-3.5 w-3.5" />}
             onClick={onViewCandidates}
           >
-            View candidates
+            Review candidates
           </Button>
         </div>
       </div>

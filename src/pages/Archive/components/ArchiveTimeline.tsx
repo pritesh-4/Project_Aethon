@@ -33,34 +33,34 @@ export function ArchiveTimeline({
   }, [observations]);
 
   return (
-    <div className="select-none space-y-4">
+    <div className="select-none space-y-4 font-sans">
       {/* Table Column Headers (Desktop) */}
-      <div className="hidden sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 px-3 py-2 text-xs font-normal text-[#9A9C96] border-b border-[#242825]">
-        <div className="col-span-3">Date / time (UTC)</div>
+      <div className="hidden sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 px-3.5 py-2 text-[10px] font-mono uppercase tracking-wider text-[#767973] border-b border-[#242825]">
+        <div className="col-span-3">Timestamp (UTC)</div>
         <div className="col-span-3">Observation ID</div>
-        <div className="col-span-2">Candidate count</div>
-        <div className="col-span-2">Highest priority</div>
-        <div className="col-span-2 text-right">Review state</div>
+        <div className="col-span-2">Detections</div>
+        <div className="col-span-2">Priority</div>
+        <div className="col-span-2 text-right">Status</div>
       </div>
 
-      {/* Subtle Chronological Groups */}
-      <div className="space-y-5">
+      {/* Chronological Groups */}
+      <div className="space-y-4">
         {groupedByDate.map((group) => {
           return (
             <div key={group.date} className="space-y-1.5">
               {/* Subtle Date Header */}
-              <div className="flex items-center justify-between px-1 py-1 text-xs text-[#9A9C96]">
+              <div className="flex items-center justify-between px-1 text-xs text-[#848780]">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-[#E6E4DD]">{group.date}</span>
-                  <span className="text-[#666963]">·</span>
-                  <span className="text-[11px] text-[#9A9C96]">
-                    {group.items.length} {group.items.length === 1 ? 'observation' : 'observations'}
+                  <span className="font-mono text-[11px] text-[#C9C8C0]">{group.date}</span>
+                  <span className="text-[#4D504A]">/</span>
+                  <span className="text-[11px] font-mono text-[#767973]">
+                    {group.items.length} {group.items.length === 1 ? 'pointing' : 'pointings'}
                   </span>
                 </div>
               </div>
 
-              {/* Observation Records under this date */}
-              <div className="space-y-1">
+              {/* Observation Records Ledger under this date */}
+              <div className="border border-[#242825] bg-[#101211] rounded-[2px] divide-y divide-[#1D211F] overflow-hidden">
                 {group.items.map((obs) => {
                   const isSelected = obs.id === selectedObservationId;
                   return (

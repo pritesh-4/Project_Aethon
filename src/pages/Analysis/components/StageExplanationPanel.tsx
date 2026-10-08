@@ -1,20 +1,19 @@
 import type { SignalAnalysisRecord, AnalysisStageId } from '../types.ts';
-import { HelpCircle } from 'lucide-react';
 
 export interface StageExplanationPanelProps {
   record: SignalAnalysisRecord;
   activeStage: AnalysisStageId;
 }
 
-export function StageExplanationPanel({ record, activeStage }: StageExplanationPanelProps) {
-  interface StageContent {
-    question: string;
-    summary: string;
-    metrics: { label: string; value: string; hint: string }[];
-    evidence: { title: string; text: string }[];
-  }
+interface StageContent {
+  question: string;
+  summary: string;
+  metrics: { label: string; value: string; hint: string }[];
+  evidence: { title: string; text: string }[];
+}
 
-  const content: Record<AnalysisStageId, StageContent> = {
+function buildContent(record: SignalAnalysisRecord): Record<AnalysisStageId, StageContent> {
+  return {
     observation: {
       question: 'What was observed?',
       summary: `A continuous narrowband radio emission isolated during pointings of ${record.targetName} at ${record.frequencyMHz.toFixed(2)} MHz. The signal emerges distinctly above system thermal noise and persists across the duration of the observation.`,
@@ -145,53 +144,49 @@ export function StageExplanationPanel({ record, activeStage }: StageExplanationP
       ],
     },
   };
+}
 
-  const current = content[activeStage];
+export function StageExplanationPanel({ record, activeStage }: StageExplanationPanelProps) {
+  const current = buildContent(record)[activeStage];
 
   return (
-    <div className="rounded-[2px] border border-[#242825] bg-[#141715] p-5 select-none space-y-4 shadow-sm">
-      {/* Guiding Question & Summary */}
-      <div className="space-y-1.5 border-b border-[#242825] pb-4">
-        <div className="flex items-center gap-2">
-          <HelpCircle className="h-4 w-4 text-[#D4864A]" />
-          <h2 className="text-sm font-medium tracking-tight text-[#E6E4DD]">{current.question}</h2>
-        </div>
-        <p className="text-xs sm:text-sm text-[#9A9C96] leading-relaxed">{current.summary}</p>
+    <div className="select-none space-y-0">
+      {/* Guiding question as editorial heading */}
+      <div className="space-y-2 pb-4">
+        <h2 className="text-sm font-medium tracking-tight text-[#E6E4DD]">{current.question}</h2>
+        <p className="text-xs text-[#9A9C96] leading-relaxed max-w-2xl">{current.summary}</p>
       </div>
 
-      {/* Relevant Evidence Metrics */}
-      <div>
-        <span className="block text-xs font-medium text-[#9A9C96] mb-2.5">
-          Analytical measurements
+      {/* Measurement values — horizontal rule-separated list, not cards */}
+      <div className="border-t border-[#242825] pt-4 pb-4">
+        <span className="block text-[10px] uppercase tracking-widest text-[#666963] mb-3 font-medium">
+          Measurements
         </span>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
           {current.metrics.map((m) => (
-            <div
-              key={m.label}
-              className="rounded-[2px] border border-[#242825] bg-[#1A1E1B] p-3 text-xs space-y-0.5"
-            >
-              <span className="block text-[11px] text-[#9A9C96] truncate">{m.label}</span>
-              <span className="block font-medium font-mono text-sm text-[#E6E4DD]">{m.value}</span>
-              <span className="block text-[10px] text-[#666963] truncate">{m.hint}</span>
+            <div key={m.label} className="flex items-baseline justify-between gap-2 min-w-0">
+              <span className="text-[11px] text-[#9A9C96] truncate shrink-0">{m.label}</span>
+              <span className="text-xs font-mono text-[#E6E4DD] text-right whitespace-nowrap">
+                {m.value}
+              </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Human-Readable Evidence */}
-      <div className="pt-1">
-        <span className="block text-xs font-medium text-[#E6E4DD] mb-2.5">Observed evidence</span>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+      {/* Evidence as editorial bullet points, not bordered cards */}
+      <div className="border-t border-[#242825] pt-4">
+        <span className="block text-[10px] uppercase tracking-widest text-[#666963] mb-3 font-medium">
+          Evidence
+        </span>
+        <div className="space-y-3">
           {current.evidence.map((ev) => (
-            <div
-              key={ev.title}
-              className="rounded-[2px] border border-[#242825] bg-[#101211] p-3 space-y-1"
-            >
-              <div className="flex items-center gap-2 font-medium text-[#E6E4DD]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#D4864A] shrink-0" />
-                <span>{ev.title}</span>
+            <div key={ev.title} className="flex gap-2.5">
+              <span className="w-1 h-1 rounded-full bg-[#D4864A] mt-1.5 shrink-0" />
+              <div className="min-w-0">
+                <span className="text-xs font-medium text-[#E6E4DD] block">{ev.title}</span>
+                <p className="text-[11px] text-[#9A9C96] leading-relaxed mt-0.5">{ev.text}</p>
               </div>
-              <p className="text-[11px] text-[#9A9C96] leading-relaxed pl-3.5">{ev.text}</p>
             </div>
           ))}
         </div>

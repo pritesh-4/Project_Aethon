@@ -111,8 +111,8 @@ export default function ObservatoryPage() {
   };
 
   return (
-    <PageTransition className="space-y-4">
-      {/* 1. Unified Observatory Header & Action Bar */}
+    <PageTransition className="flex flex-col min-h-0 space-y-0">
+      {/* 1. Instrument Identity Strip */}
       <ObservatoryHeader
         observationId={currentObservation.id}
         status={status}
@@ -126,22 +126,26 @@ export default function ObservatoryPage() {
         onReset={handleReset}
       />
 
-      {/* 2. Primary Signal Viewport (The Dominant Scientific Hero) */}
-      <SignalViewport
-        observation={currentObservation}
-        status={status}
-        isPaused={isPaused}
-        scanProgress={scanProgress}
-      />
+      {/* 2. Primary Signal Viewport — the dominant focal object */}
+      <div className="px-4 sm:px-6 py-4">
+        <SignalViewport
+          observation={currentObservation}
+          status={status}
+          isPaused={isPaused}
+          scanProgress={scanProgress}
+        />
+      </div>
 
-      {/* 3. Candidate Event Alert Banner (Conditional on Detection) */}
+      {/* 3. Candidate Alert (conditional) */}
       <AnimatePresence>
         {(status === 'ANOMALY_DETECTED' || status === 'CANDIDATE_READY') && (
-          <CandidateAlert observation={currentObservation} />
+          <div className="px-4 sm:px-6 pb-2">
+            <CandidateAlert observation={currentObservation} />
+          </div>
         )}
       </AnimatePresence>
 
-      {/* 4. Supporting Information Group: 3 Key Metrics + Progressive Diagnostics */}
+      {/* 4. Anomaly Assessment & Diagnostics */}
       <ObservatoryDetails observation={currentObservation} status={status} />
     </PageTransition>
   );

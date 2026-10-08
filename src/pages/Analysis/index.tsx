@@ -83,33 +83,56 @@ export default function AnalysisPage() {
   }
 
   return (
-    <PageTransition className="space-y-0">
-      {/* 1. Header with breadcrumbs and candidate switcher */}
+    <PageTransition className="flex flex-col h-full min-h-0">
+      {/* ─────────────────────────────────────────────────────────────
+          1. INSTRUMENT IDENTITY STRIP
+          Lean single-line header with candidate ID, priority, target
+          ───────────────────────────────────────────────────────────── */}
       <AnalysisHeader
         record={record}
         prevCandidateId={prevCandidateId}
         nextCandidateId={nextCandidateId}
       />
 
-      {/* 2. Main Scientific Investigation Workspace */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Step Selector: OBSERVATION -> REPRESENTATION -> PATTERN COMPARISON -> ANOMALY */}
-        <StageSelector activeStage={activeStage} onSelectStage={setActiveStage} />
+      {/* ─────────────────────────────────────────────────────────────
+          2. LABORATORY WORKSPACE
+          Signal viewport (dominant) + Inspector panel (context)
+          ───────────────────────────────────────────────────────────── */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 flex-1 min-h-0 flex flex-col">
+          {/* Stage Pipeline Ribbon — directly attached to viewport */}
+          <div className="border-b border-[#242825] bg-[#0F1110]">
+            <StageSelector activeStage={activeStage} onSelectStage={setActiveStage} />
+          </div>
 
-        {/* PRIMARY VIEW: The signal visual gets the largest area */}
-        <section aria-label="Primary Signal Viewport">
-          <PrimarySignalVisual record={record} activeStage={activeStage} />
-        </section>
+          {/* Main Workspace: Signal Viewport + Inspector */}
+          <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-0 py-4 lg:py-5">
+            {/* PRIMARY OBJECT: The Signal Viewport — 65%+ of visual space */}
+            <section
+              aria-label="Primary Signal Viewport"
+              className="flex-1 min-w-0 lg:min-h-[460px]"
+            >
+              <PrimarySignalVisual record={record} activeStage={activeStage} />
+            </section>
 
-        {/* ONE EXPLANATION PANEL: Answering the guiding question with relevant metrics */}
-        <section aria-label="Analytical Stage Explanation">
-          <StageExplanationPanel record={record} activeStage={activeStage} />
-        </section>
+            {/* INSPECTOR COLUMN: Evidence & Metrics for the active stage */}
+            <aside
+              aria-label="Analytical Stage Evidence"
+              className="lg:w-[340px] xl:w-[380px] shrink-0 lg:border-l lg:border-[#242825] lg:pl-5 xl:pl-6 pt-4 lg:pt-0 lg:ml-5 xl:ml-6 overflow-y-auto"
+            >
+              <StageExplanationPanel record={record} activeStage={activeStage} />
 
-        {/* SCIENTIFIC CAUTION: Distinguishing ANOMALY from DISCOVERY and MODEL SCORE from CERTAINTY */}
-        <ScientificCaution />
+              {/* Scientific caution — progressive disclosure */}
+              <div className="mt-4 border-t border-[#242825] pt-2">
+                <ScientificCaution />
+              </div>
+            </aside>
+          </div>
+        </div>
 
-        {/* INVESTIGATION ACTIONS & VERDICT */}
+        {/* ─────────────────────────────────────────────────────────────
+            3. ACTION STRIP — Fixed at bottom, not a floating card
+            ───────────────────────────────────────────────────────────── */}
         <AnalysisVerdictBar record={record} />
       </div>
     </PageTransition>

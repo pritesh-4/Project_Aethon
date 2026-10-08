@@ -78,15 +78,24 @@ export function ConceptualLatentSpace() {
       x: 0.65,
       y: 0.6,
       category: 'CANDIDATE',
-      label: 'Primary candidate AET-04721 (Unclassified)',
-      id: 'AET-04721',
+      label: 'Narrowband persistent carrier (AET-4892)',
+      id: 'AET-4892',
     });
+
     pts.push({
-      x: 0.58,
-      y: 0.72,
+      x: -0.6,
+      y: 0.55,
       category: 'CANDIDATE',
-      label: 'Secondary outlier AET-04738',
-      id: 'AET-04738',
+      label: 'Accelerating Doppler chirp (AET-4901)',
+      id: 'AET-4901',
+    });
+
+    pts.push({
+      x: 0.7,
+      y: -0.5,
+      category: 'CANDIDATE',
+      label: 'Ultra-narrow drift carrier (AET-5120)',
+      id: 'AET-5120',
     });
 
     pointsRef.current = pts;
@@ -125,77 +134,74 @@ export function ConceptualLatentSpace() {
     if (containerRef.current) ro.observe(containerRef.current);
 
     const render = () => {
+      ctx.fillStyle = '#0B0D0C';
+      ctx.fillRect(0, 0, width, height);
+
       const cx = width * 0.5;
       const cy = height * 0.5;
       const scale = Math.min(width, height) * 0.45;
 
-      // 1. Clear background
-      ctx.fillStyle = '#0F1110';
-      ctx.fillRect(0, 0, width, height);
-
-      // 2. Reticle Grid
-      ctx.strokeStyle = 'rgba(154, 156, 150, 0.12)';
+      // Coordinate Grid Lines
+      ctx.strokeStyle = '#181C1A';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
 
-      // Crosshairs
       ctx.beginPath();
-      ctx.moveTo(cx, 20);
-      ctx.lineTo(cx, height - 20);
-      ctx.moveTo(20, cy);
-      ctx.lineTo(width - 20, cy);
+      ctx.moveTo(0, cy);
+      ctx.lineTo(width, cy);
+      ctx.moveTo(cx, 0);
+      ctx.lineTo(cx, height);
       ctx.stroke();
 
-      // Outer rings
       ctx.beginPath();
       ctx.arc(cx, cy, scale * 0.5, 0, Math.PI * 2);
-      ctx.arc(cx, cy, scale * 0.9, 0, Math.PI * 2);
+      ctx.arc(cx, cy, scale * 0.85, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 3. Render Points
+      // Cluster Points
       pointsRef.current.forEach((pt) => {
+        let isVisible = true;
+        if (activeFilter === 'KNOWN' && pt.category === 'CANDIDATE') isVisible = false;
+        if (activeFilter === 'ANOMALOUS' && pt.category !== 'CANDIDATE') isVisible = false;
+
+        if (!isVisible) return;
+
         const px = cx + pt.x * scale;
         const py = cy - pt.y * scale;
 
-        // Filtering
-        if (activeFilter === 'KNOWN' && pt.category === 'CANDIDATE') return;
-        if (activeFilter === 'ANOMALOUS' && pt.category !== 'CANDIDATE') return;
-
-        let color = '#9A9C96';
+        let color = '#555852';
         let radius = 2.5;
 
-        if (pt.category === 'NOISE') {
-          color = 'rgba(154, 156, 150, 0.35)';
-          radius = 2;
-        } else if (pt.category === 'PULSAR') {
-          color = '#C9C8C0';
-          radius = 3;
-        } else if (pt.category === 'RFI') {
-          color = '#7A8077';
-          radius = 3;
-        } else if (pt.category === 'MASER') {
-          color = '#9A9C96';
-          radius = 2.5;
-        } else if (pt.category === 'CANDIDATE') {
-          color = '#D4864A';
-          radius = 5.5;
+        switch (pt.category) {
+          case 'NOISE':
+            color = '#383E3A';
+            radius = 2;
+            break;
+          case 'PULSAR':
+            color = '#8A8D86';
+            radius = 2.5;
+            break;
+          case 'RFI':
+            color = '#5C625D';
+            radius = 2.5;
+            break;
+          case 'MASER':
+            color = '#A0A49C';
+            radius = 3;
+            break;
+          case 'CANDIDATE':
+            color = '#D4864A';
+            radius = 4.5;
+            break;
+        }
 
-          // Outlier ring
-          ctx.strokeStyle = '#D4864A';
+        if (pt.category === 'CANDIDATE') {
+          ctx.strokeStyle = 'rgba(212, 134, 74, 0.4)';
           ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.arc(px, py, 10, 0, Math.PI * 2);
+          ctx.arc(px, py, radius + 4, 0, Math.PI * 2);
           ctx.stroke();
-
-          // Distance vector from centroid
-          ctx.strokeStyle = 'rgba(212, 134, 74, 0.35)';
-          ctx.setLineDash([2, 3]);
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(px, py);
-          ctx.stroke();
-          ctx.setLineDash([]);
         }
 
         ctx.fillStyle = color;
@@ -244,81 +250,83 @@ export function ConceptualLatentSpace() {
   };
 
   return (
-    <div className="rounded-[2px] border border-[#242825] bg-[#141715] p-5 select-none space-y-4">
-      {/* Title & Explicit Conceptual Disclaimer */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-[#242825] pb-3">
+    <div className="border-t border-[#242825] pt-6 select-none space-y-4 font-sans">
+      {/* Title & Filter Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#242825] pb-2.5">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-medium text-[#E6E4DD]">Latent manifold projection</h3>
-            <span className="rounded-[2px] border border-[#242825] bg-[#1A1E1B] px-1.5 py-0.5 text-[10px] font-medium text-[#9A9C96]">
-              2D projection demonstration
+            <h3 className="text-sm font-medium text-[#E6E4DD]">Latent Manifold Projection</h3>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#767973]">
+              2D Pedagogical Map
             </span>
           </div>
-          <p className="text-xs text-[#9A9C96] mt-0.5">
-            Illustrative 2D manifold projection demonstrating cluster separation between learned
-            backgrounds and candidate outliers
+          <p className="text-xs text-[#848780] mt-0.5">
+            Illustrative manifold space demonstrating cluster separation between learned background
+            distributions and candidate outliers.
           </p>
         </div>
 
         {/* Filter Buttons */}
         <div
-          className="flex items-center gap-1.5 self-start sm:self-auto text-xs"
+          className="flex items-center gap-1 self-start sm:self-auto text-xs font-mono"
           role="group"
           aria-label="Filter points"
         >
-          <Filter className="h-3 w-3 text-[#666963]" />
+          <Filter className="h-3 w-3 text-[#555852] mr-1" />
           <button
             type="button"
             aria-pressed={activeFilter === 'ALL'}
             onClick={() => setActiveFilter('ALL')}
-            className={`px-2 py-0.5 rounded-[2px] border transition-colors cursor-pointer text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
+            className={`px-2 py-0.5 rounded-[2px] transition-colors cursor-pointer text-[11px] ${
               activeFilter === 'ALL'
-                ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
-                : 'border-[#242825] bg-[#101211] text-[#9A9C96]'
+                ? 'bg-[#221B16] text-[#D4864A] border border-[#D4864A]/40'
+                : 'text-[#848780] hover:text-[#C9C8C0] border border-[#242825]'
             }`}
           >
-            All
+            ALL
           </button>
           <button
             type="button"
             aria-pressed={activeFilter === 'KNOWN'}
             onClick={() => setActiveFilter('KNOWN')}
-            className={`px-2 py-0.5 rounded-[2px] border transition-colors cursor-pointer text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
+            className={`px-2 py-0.5 rounded-[2px] transition-colors cursor-pointer text-[11px] ${
               activeFilter === 'KNOWN'
-                ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
-                : 'border-[#242825] bg-[#101211] text-[#9A9C96]'
+                ? 'bg-[#221B16] text-[#D4864A] border border-[#D4864A]/40'
+                : 'text-[#848780] hover:text-[#C9C8C0] border border-[#242825]'
             }`}
           >
-            Known catalog
+            CATALOG
           </button>
           <button
             type="button"
             aria-pressed={activeFilter === 'ANOMALOUS'}
             onClick={() => setActiveFilter('ANOMALOUS')}
-            className={`px-2 py-0.5 rounded-[2px] border transition-colors cursor-pointer text-xs outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A] ${
+            className={`px-2 py-0.5 rounded-[2px] transition-colors cursor-pointer text-[11px] ${
               activeFilter === 'ANOMALOUS'
-                ? 'border-[#D4864A] bg-[#D4864A]/10 text-[#D4864A]'
-                : 'border-[#242825] bg-[#101211] text-[#9A9C96]'
+                ? 'bg-[#221B16] text-[#D4864A] border border-[#D4864A]/40'
+                : 'text-[#848780] hover:text-[#C9C8C0] border border-[#242825]'
             }`}
           >
-            Deviations
+            DEVIATIONS
           </button>
         </div>
       </div>
 
-      {/* Scientific Disclaimer Notice */}
-      <div className="rounded-[2px] border border-[#242825] bg-[#101211] p-3 flex items-start gap-2.5 text-xs text-[#9A9C96] leading-normal">
-        <AlertCircle className="h-4 w-4 text-[#D4864A] shrink-0 mt-0.5" />
+      {/* Scientific Footnote */}
+      <div className="border-l-2 border-[#D4864A] pl-3 py-1 text-xs text-[#848780] leading-normal flex items-start gap-2">
+        <AlertCircle className="h-3.5 w-3.5 text-[#D4864A] shrink-0 mt-0.5" />
         <span>
-          <strong className="text-[#E6E4DD] font-medium">Methodological note:</strong> This
-          visualization is a pedagogical 2D projection designed to explain high-dimensional manifold
-          distance. Points represent feature embeddings demonstrating how outlier distance
-          functions, rather than uncalibrated radio measurements.
+          <strong className="text-[#C9C8C0] font-medium font-mono text-[11px] uppercase">
+            Methodological note:
+          </strong>{' '}
+          This projection is a 2D pedagogical visualization illustrating multi-dimensional latent
+          distance. Points represent feature embeddings showing how outlier detection isolates
+          signals distant from the learned astrophysical manifold.
         </span>
       </div>
 
       {/* Canvas Viewport */}
-      <div className="relative rounded-[2px] border border-[#242825] bg-[#0F1110] overflow-hidden">
+      <div className="relative rounded-[2px] border border-[#242825] bg-[#0B0D0C] overflow-hidden">
         <div ref={containerRef} className="h-[280px] sm:h-[320px] w-full">
           <canvas
             ref={canvasRef}
@@ -330,29 +338,29 @@ export function ConceptualLatentSpace() {
 
         {/* Hover Readout Tooltip */}
         {hoveredPoint && (
-          <div className="absolute top-3 left-3 rounded-[2px] border border-[#242825] bg-[#141715]/95 px-3 py-1.5 text-xs font-mono space-y-0.5">
+          <div className="absolute top-3 left-3 rounded-[2px] border border-[#242825] bg-[#121513]/95 px-3 py-1.5 text-xs font-mono space-y-0.5">
             <span className="text-[#D4864A] font-medium block">{hoveredPoint.id}</span>
             <span className="text-[#E6E4DD] text-[11px] block">{hoveredPoint.label}</span>
           </div>
         )}
 
         {/* Legend Overlay */}
-        <div className="absolute bottom-2.5 right-3 flex flex-wrap items-center gap-3 text-[11px] text-[#9A9C96] bg-[#101211]/90 px-2.5 py-1 rounded-[2px] border border-[#242825]">
+        <div className="absolute bottom-2.5 right-3 flex flex-wrap items-center gap-3 text-[10px] font-mono uppercase tracking-wider text-[#848780] bg-[#0E100F]/90 px-2.5 py-1 rounded-[2px] border border-[#242825]">
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#9A9C96]/40" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#383E3A]" />
             <span>Thermal noise</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#C9C8C0]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#8A8D86]" />
             <span>Pulsars</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#7A8077]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5C625D]" />
             <span>Satellite RFI</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#D4864A]" />
-            <span className="text-[#D4864A] font-medium">Candidate deviation</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
+            <span className="text-[#D4864A] font-medium">Candidate outlier</span>
           </div>
         </div>
       </div>

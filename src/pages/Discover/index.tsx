@@ -124,21 +124,21 @@ export default function DiscoverPage() {
         {/* STAGE 3: INITIATE DISCOVERY (CLEAR PRIMARY ACTION / IDLE STATE) */}
         {/* ==================================================== */}
         {!isAnalyzing && stage !== 'complete' && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-[2px] border border-[#242825] bg-[#141715] p-4 select-none">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-b border-[#242825] py-3.5 select-none">
             {observation ? (
               <>
                 <div className="space-y-0.5 text-center sm:text-left">
                   <span className="text-xs font-medium text-[#E6E4DD]">
-                    Ready to analyze observation {observation.id}
+                    Target Data Stream: {observation.id}
                   </span>
-                  <p className="text-[11px] text-[#9A9C96]">
+                  <p className="text-[11px] text-[#848780]">
                     Executes the 4-stage candidate screening pipeline on the selected data stream.
                   </p>
                 </div>
 
                 <Button
                   variant="primary"
-                  size="lg"
+                  size="md"
                   icon={<ArrowRight className="h-4 w-4" />}
                   onClick={handleInitiateDiscovery}
                   className="w-full sm:w-auto text-xs font-medium"
@@ -149,19 +149,18 @@ export default function DiscoverPage() {
             ) : (
               <>
                 <div className="space-y-0.5 text-center sm:text-left">
-                  <span className="text-xs font-medium text-[#E6E4DD]">No observation loaded</span>
-                  <p className="text-[11px] text-[#9A9C96]">
-                    Select a reference observation or upload a data file above to configure
-                    analysis.
+                  <span className="text-xs font-medium text-[#767973]">No observation loaded</span>
+                  <p className="text-[11px] text-[#666963]">
+                    Select a reference observation or mount a data stream above to begin screening.
                   </p>
                 </div>
 
                 <Button
                   variant="primary"
-                  size="lg"
+                  size="md"
                   disabled
                   icon={<ArrowRight className="h-4 w-4" />}
-                  className="w-full sm:w-auto text-xs font-medium opacity-50 cursor-not-allowed"
+                  className="w-full sm:w-auto text-xs font-medium opacity-40 cursor-not-allowed"
                 >
                   Initiate discovery
                 </Button>

@@ -1,6 +1,5 @@
 import type { ArchivedObservation } from '../types.ts';
 import { cn } from '@/lib/utils.ts';
-import { Badge } from '@/components/ui/Badge.tsx';
 
 export interface ObservationRecordProps {
   observation: ArchivedObservation;
@@ -25,38 +24,38 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
     switch (observation.status) {
       case 'review':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#D4864A]">
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#D4864A] font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
-            <span>Under review</span>
+            <span>REVIEW</span>
           </span>
         );
       case 'candidate':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#E6E4DD]">
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#E6E4DD] font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
-            <span>Candidate event</span>
+            <span>CANDIDATE</span>
           </span>
         );
       case 'error':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#C84A4A]">
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#C84A4A] font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-[#C84A4A]" />
-            <span>Failed</span>
+            <span>FAIL</span>
           </span>
         );
       case 'archived':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#9A9C96]">
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#767973] font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-[#666963]" />
-            <span>Archived</span>
+            <span>ARCHIVED</span>
           </span>
         );
       case 'analyzed':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#9A9C96]">
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#848780] font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-[#529E72]" />
-            <span>Analyzed</span>
+            <span>ANALYZED</span>
           </span>
         );
     }
@@ -70,20 +69,18 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
       aria-selected={isSelected}
       onClick={() => onSelect(observation)}
       className={cn(
-        'group relative w-full text-left transition-colors duration-150 cursor-pointer select-none rounded-[2px] border px-3 py-2.5 outline-none',
-        'focus-visible:ring-1 focus-visible:ring-[#D4864A] focus-visible:border-[#D4864A]',
-        isSelected
-          ? 'border-[#D4864A]/60 bg-[#1A1E1B]'
-          : 'border-[#242825] bg-[#141715] hover:border-[#2E332F] hover:bg-[#181B19]'
+        'group relative w-full text-left transition-colors duration-150 cursor-pointer select-none px-3.5 py-2.5 outline-none font-sans',
+        'focus-visible:ring-1 focus-visible:ring-[#D4864A] focus-visible:ring-inset',
+        isSelected ? 'bg-[#181B19] text-[#E6E4DD]' : 'hover:bg-[#141615] text-[#9A9C96]'
       )}
     >
       {/* Active Left Indicator */}
-      {isSelected && <div className="absolute -left-[1px] top-0 bottom-0 w-[2px] bg-[#D4864A]" />}
+      {isSelected && <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#D4864A]" />}
 
       {/* Desktop 5-Column Ledger Row */}
       <div className="hidden sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 text-xs">
         {/* 1. Date */}
-        <div className="col-span-3 text-[#9A9C96] font-mono tabular-nums truncate">
+        <div className="col-span-3 text-[#767973] font-mono tabular-nums truncate">
           {dateDisplay}
         </div>
 
@@ -98,18 +95,30 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
         </div>
 
         {/* 3. Candidate Count */}
-        <div className="col-span-2 text-[#9A9C96]">
+        <div className="col-span-2 text-[#848780] font-mono text-[11px]">
           {observation.candidates.length === 1
-            ? '1 candidate'
-            : `${observation.candidates.length} candidates`}
+            ? '1 event'
+            : `${observation.candidates.length} events`}
         </div>
 
         {/* 4. Highest Priority */}
         <div className="col-span-2">
-          {highestPriority === 'HIGH' && <Badge variant="copper">High</Badge>}
-          {highestPriority === 'MEDIUM' && <Badge variant="slate">Medium</Badge>}
-          {highestPriority === 'LOW' && <Badge variant="neutral">Low</Badge>}
-          {!highestPriority && <span className="text-[#666963] text-xs">—</span>}
+          {highestPriority === 'HIGH' && (
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[#D4864A] bg-[#221B16] px-1.5 py-0.5 rounded-[2px] border border-[#D4864A]/30">
+              HIGH
+            </span>
+          )}
+          {highestPriority === 'MEDIUM' && (
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[#9A9C96] bg-[#181B19] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+              MED
+            </span>
+          )}
+          {highestPriority === 'LOW' && (
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[#666963] bg-[#121413] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+              LOW
+            </span>
+          )}
+          {!highestPriority && <span className="text-[#555852] text-xs font-mono">—</span>}
         </div>
 
         {/* 5. Status */}
@@ -130,19 +139,19 @@ export function ObservationRecord({ observation, isSelected, onSelect }: Observa
           {renderStatus()}
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-[#9A9C96]">
+        <div className="flex items-center justify-between text-[11px] text-[#848780]">
           <span className="font-mono tabular-nums">{dateDisplay}</span>
           <div className="flex items-center gap-2">
-            <span>
+            <span className="font-mono">
               {observation.candidates.length === 1
-                ? '1 candidate'
-                : `${observation.candidates.length} cand.`}
+                ? '1 event'
+                : `${observation.candidates.length} events`}
             </span>
             {highestPriority && (
               <span
                 className={cn(
-                  'text-[10px] font-medium',
-                  highestPriority === 'HIGH' ? 'text-[#D4864A]' : 'text-[#9A9C96]'
+                  'text-[10px] font-mono',
+                  highestPriority === 'HIGH' ? 'text-[#D4864A]' : 'text-[#848780]'
                 )}
               >
                 [{highestPriority}]

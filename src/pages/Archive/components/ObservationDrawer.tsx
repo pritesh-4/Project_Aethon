@@ -15,7 +15,6 @@ import { SignalPreview } from './SignalPreview.tsx';
 import { CandidateBranchList } from './CandidateBranchList.tsx';
 import { ObservationMetadata } from './ObservationMetadata.tsx';
 import { ObservationProvenance } from './ObservationProvenance.tsx';
-import { Badge } from '@/components/ui/Badge.tsx';
 import { cn } from '@/lib/utils.ts';
 
 export interface ObservationDrawerProps {
@@ -40,9 +39,9 @@ export function ObservationDrawer({
 
   if (!observation) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8 text-center text-[#9A9C96]">
-        <Radio className="mb-3 h-6 w-6 text-[#666963]" />
-        <span className="text-xs">
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center text-[#767973] font-sans">
+        <Radio className="mb-3 h-5 w-5 text-[#555852]" />
+        <span className="text-xs font-mono">
           Select an observation from the ledger to inspect specimen record
         </span>
       </div>
@@ -58,73 +57,91 @@ export function ObservationDrawer({
     navigate('/candidates');
   };
 
-  const renderStatusBadge = () => {
+  const renderStatusTag = () => {
     switch (observation.status) {
       case 'review':
-        return <Badge variant="copper">Under review</Badge>;
+        return (
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[#D4864A] bg-[#221B16] px-1.5 py-0.5 rounded-[2px] border border-[#D4864A]/30">
+            REVIEW
+          </span>
+        );
       case 'candidate':
-        return <Badge variant="copper">Candidate event</Badge>;
+        return (
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[#E6E4DD] bg-[#1C1F1D] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+            CANDIDATE
+          </span>
+        );
       case 'error':
-        return <Badge variant="rose">Failed</Badge>;
+        return (
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[#C84A4A] bg-[#241414] px-1.5 py-0.5 rounded-[2px] border border-[#C84A4A]/30">
+            FAIL
+          </span>
+        );
       case 'archived':
-        return <Badge variant="neutral">Archived</Badge>;
+        return (
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[#767973] bg-[#121413] px-1.5 py-0.5 rounded-[2px] border border-[#242825]">
+            ARCHIVED
+          </span>
+        );
       case 'analyzed':
       default:
-        return <Badge variant="slate">Analyzed</Badge>;
+        return (
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[#848780] bg-[#141F18] px-1.5 py-0.5 rounded-[2px] border border-[#529E72]/30">
+            ANALYZED
+          </span>
+        );
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#141715] border-l border-[#242825] select-none overflow-hidden">
+    <div className="flex flex-col h-full bg-[#101211] border-l border-[#242825] select-none overflow-hidden font-sans">
       {/* 1. Header: Navigation between adjacent observations */}
-      <div className="border-b border-[#242825] bg-[#101211] p-3 sm:p-4 space-y-2">
+      <div className="border-b border-[#242825] bg-[#0C0E0D] p-3 space-y-2">
         {/* Navigation Step Bar */}
-        <div className="flex items-center justify-between text-[11px] text-[#9A9C96] pb-2 border-b border-[#242825]">
+        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-[#767973] pb-2 border-b border-[#242825]">
           <button
             type="button"
             onClick={onSelectPrevious}
             disabled={!hasPrevious}
             className={cn(
-              'flex items-center gap-1 transition-colors cursor-pointer py-1 px-1.5 rounded-[2px] outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]',
+              'flex items-center gap-1 transition-colors cursor-pointer py-0.5 px-1 rounded-[2px] outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]',
               hasPrevious
                 ? 'text-[#9A9C96] hover:text-[#E6E4DD]'
-                : 'text-[#666963]/50 cursor-not-allowed'
+                : 'text-[#444741] cursor-not-allowed'
             )}
             title="Previous observation"
             aria-label="Previous observation"
           >
             <ChevronLeft className="h-3 w-3" />
-            <span>Previous</span>
+            <span>PREV</span>
           </button>
 
-          <span className="text-xs text-[#9A9C96]">Observation specimen record</span>
+          <span className="text-[#848780]">Specimen Record</span>
 
           <button
             type="button"
             onClick={onSelectNext}
             disabled={!hasNext}
             className={cn(
-              'flex items-center gap-1 transition-colors cursor-pointer py-1 px-1.5 rounded-[2px] outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]',
-              hasNext
-                ? 'text-[#9A9C96] hover:text-[#E6E4DD]'
-                : 'text-[#666963]/50 cursor-not-allowed'
+              'flex items-center gap-1 transition-colors cursor-pointer py-0.5 px-1 rounded-[2px] outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]',
+              hasNext ? 'text-[#9A9C96] hover:text-[#E6E4DD]' : 'text-[#444741] cursor-not-allowed'
             )}
             title="Next observation"
             aria-label="Next observation"
           >
-            <span>Next</span>
+            <span>NEXT</span>
             <ChevronRight className="h-3 w-3" />
           </button>
         </div>
 
         {/* Observation ID & Target Header */}
-        <div className="flex items-start justify-between gap-3 pt-1">
+        <div className="flex items-start justify-between gap-3 pt-0.5">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-medium font-mono text-[#E6E4DD]">{observation.id}</h2>
-              {renderStatusBadge()}
+              <h2 className="text-sm font-semibold font-mono text-[#E6E4DD]">{observation.id}</h2>
+              {renderStatusTag()}
             </div>
-            <p className="text-xs text-[#9A9C96] mt-0.5 truncate max-w-[280px]">
+            <p className="text-xs text-[#848780] mt-0.5 truncate max-w-[280px]">
               {observation.targetName}
             </p>
           </div>
@@ -133,18 +150,18 @@ export function ObservationDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="lg:hidden h-8 w-8 flex items-center justify-center rounded-[2px] border border-[#242825] bg-[#1A1E1B] text-[#9A9C96] hover:text-[#E6E4DD] hover:border-[#D4864A]/50 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+              className="lg:hidden h-7 w-7 flex items-center justify-center rounded-[2px] border border-[#242825] bg-[#141715] text-[#9A9C96] hover:text-[#E6E4DD] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
               title="Close drawer"
               aria-label="Close drawer"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
       </div>
 
       {/* 2. Scrollable Detail Body */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3.5 space-y-4">
         {/* Action Buttons: Directly to Analysis & Candidates */}
         <div className="grid grid-cols-2 gap-2">
           <Button
@@ -152,9 +169,9 @@ export function ObservationDrawer({
             size="sm"
             onClick={handleOpenAnalysis}
             icon={<ExternalLink className="h-3 w-3" />}
-            className="w-full text-center justify-center"
+            className="w-full text-center justify-center text-xs"
           >
-            Investigate in analysis
+            Inspect in analysis
           </Button>
 
           <Button
@@ -162,59 +179,62 @@ export function ObservationDrawer({
             size="sm"
             onClick={handleViewCandidates}
             icon={<ListFilter className="h-3 w-3" />}
-            className="w-full text-center justify-center"
+            className="w-full text-center justify-center text-xs"
           >
             Triage in candidates
           </Button>
         </div>
 
-        {/* Observation Parameters */}
-        <div className="rounded-[2px] border border-[#242825] bg-[#101211] p-3 space-y-2">
-          <div className="text-xs text-[#9A9C96] font-medium border-b border-[#242825] pb-1.5 flex items-center justify-between">
-            <span>Observational context</span>
-            <span className="text-[#E6E4DD] font-normal">{observation.telescope}</span>
+        {/* Observation Parameters — Ruled Telemetry */}
+        <div className="border-t border-b border-[#242825] py-2.5 space-y-2">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-[#767973] flex items-center justify-between">
+            <span>Context</span>
+            <span className="text-[#C9C8C0] font-normal">{observation.telescope}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 text-xs">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <span className="block text-[10px] text-[#666963]">Acquisition timestamp</span>
-              <span className="text-[#E6E4DD] font-mono tabular-nums">{observation.timestamp}</span>
+              <span className="block text-[10px] text-[#666963] font-mono">Timestamp</span>
+              <span className="text-[#E6E4DD] font-mono tabular-nums text-[11px]">
+                {observation.timestamp}
+              </span>
             </div>
 
             <div>
-              <span className="block text-[10px] text-[#666963]">Coordinates (RA / Dec)</span>
+              <span className="block text-[10px] text-[#666963] font-mono">Coordinates</span>
               <span className="text-[#C9C8C0] font-mono text-[11px]">
                 {observation.coordinates.ra} · {observation.coordinates.dec}
               </span>
             </div>
 
             <div>
-              <span className="block text-[10px] text-[#666963]">Center frequency</span>
-              <span className="text-[#D4864A] font-mono tabular-nums font-medium">
+              <span className="block text-[10px] text-[#666963] font-mono">Center freq</span>
+              <span className="text-[#D4864A] font-mono tabular-nums text-[11px] font-medium">
                 {observation.frequency.toFixed(4)} MHz
               </span>
             </div>
 
             <div>
-              <span className="block text-[10px] text-[#666963]">Duration & samples</span>
-              <span className="text-[#E6E4DD] font-mono tabular-nums">
-                {observation.durationString} ({observation.sampleCount.toLocaleString()} pts)
+              <span className="block text-[10px] text-[#666963] font-mono">Duration / pts</span>
+              <span className="text-[#E6E4DD] font-mono tabular-nums text-[11px]">
+                {observation.durationString} ({observation.sampleCount.toLocaleString()})
               </span>
             </div>
           </div>
 
           {observation.notes && (
-            <div className="border-t border-[#242825] pt-2 text-xs text-[#9A9C96] leading-relaxed">
-              <span className="text-[#E6E4DD] font-medium">Log note:</span> {observation.notes}
+            <div className="border-t border-[#1F2321] pt-1.5 text-xs text-[#848780] leading-relaxed">
+              <span className="text-[#A0A29C] font-mono text-[11px]">NOTE:</span>{' '}
+              {observation.notes}
             </div>
           )}
         </div>
 
         {/* Surfaced Candidates Section */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-[#9A9C96]">
-            <span className="font-medium text-[#E6E4DD]">
-              Surfaced candidates ({observation.candidates.length})
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#767973]">
+              Surfaced Candidates ({observation.candidates.length})
             </span>
           </div>
           <CandidateBranchList observationId={observation.id} candidates={observation.candidates} />
@@ -222,7 +242,9 @@ export function ObservationDrawer({
 
         {/* Signal Morphology */}
         <div className="space-y-1.5">
-          <div className="text-xs font-medium text-[#E6E4DD]">Spectrogram slice</div>
+          <div className="text-[10px] font-mono uppercase tracking-wider text-[#767973]">
+            Spectrogram Slice
+          </div>
           <SignalPreview observation={observation} />
         </div>
 
@@ -233,9 +255,11 @@ export function ObservationDrawer({
             onClick={() => setShowProvenance((prev) => !prev)}
             aria-expanded={showProvenance}
             aria-controls="provenance-section"
-            className="flex items-center justify-between w-full text-xs text-[#9A9C96] hover:text-[#E6E4DD] py-1.5 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
+            className="flex items-center justify-between w-full text-xs text-[#848780] hover:text-[#E6E4DD] py-1 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#D4864A]"
           >
-            <span>Ingestion & analysis provenance</span>
+            <span className="text-[11px] font-mono uppercase tracking-wider">
+              Provenance & Specifications
+            </span>
             <ChevronDown
               className={cn('h-3.5 w-3.5 transition-transform', showProvenance && 'rotate-180')}
             />

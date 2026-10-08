@@ -1,5 +1,4 @@
 import type { ObservationStatus, PipelineStageStatus } from '../types.ts';
-import { Layers } from 'lucide-react';
 
 export interface PipelineStatusProps {
   status: ObservationStatus;
@@ -53,51 +52,25 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
 
   const stages = getStageStatuses();
 
-  const renderBadge = (stageStatus: PipelineStageStatus) => {
+  const getStatusIndicator = (stageStatus: PipelineStageStatus) => {
     switch (stageStatus) {
       case 'COMPLETE':
-        return (
-          <span className="inline-flex items-center gap-1.5 text-[#529E72] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#529E72]" />
-            Complete
-          </span>
-        );
+        return { dot: 'bg-[#529E72]', label: 'Complete', labelColor: 'text-[#529E72]' };
       case 'ACTIVE':
-        return (
-          <span className="inline-flex items-center gap-1.5 text-[#D4864A] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
-            Active
-          </span>
-        );
+        return { dot: 'bg-[#D4864A]', label: 'Active', labelColor: 'text-[#D4864A]' };
       case 'READY':
-        return (
-          <span className="inline-flex items-center gap-1.5 text-[#9A9C96] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full border border-[#9A9C96] bg-transparent" />
-            Ready
-          </span>
-        );
+        return {
+          dot: 'border border-[#666963] bg-transparent',
+          label: 'Ready',
+          labelColor: 'text-[#9A9C96]',
+        };
       case 'WARNING':
-        return (
-          <span className="inline-flex items-center gap-1.5 text-[#D4864A] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#D4864A]" />
-            Warning
-          </span>
-        );
+        return { dot: 'bg-[#D4864A]', label: 'Warning', labelColor: 'text-[#D4864A]' };
       case 'ERROR':
-        return (
-          <span className="inline-flex items-center gap-1.5 text-[#C84A4A] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#C84A4A]" />
-            Error
-          </span>
-        );
+        return { dot: 'bg-[#C84A4A]', label: 'Error', labelColor: 'text-[#C84A4A]' };
       case 'OFFLINE':
       default:
-        return (
-          <span className="inline-flex items-center gap-1.5 text-[#9A9C96] font-medium text-[11px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#262C28]" />
-            Idle
-          </span>
-        );
+        return { dot: 'bg-[#242825]', label: 'Idle', labelColor: 'text-[#9A9C96]' };
     }
   };
 
@@ -129,41 +102,49 @@ export function PipelineStatus({ status }: PipelineStatusProps) {
   ];
 
   return (
-    <div className="rounded-[2px] border border-[#262C28] bg-[#141715] p-4 select-none flex flex-col justify-between">
-      <div>
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#262C28] pb-2.5">
-          <div className="flex items-center gap-2">
-            <Layers className="h-3.5 w-3.5 text-[#D4864A]" />
-            <h3 className="text-xs font-semibold text-[#E6E4DD]">Signal pipeline</h3>
-          </div>
-        </div>
+    <div className="select-none">
+      <span className="text-[10px] uppercase tracking-widest text-[#666963] font-medium block mb-3">
+        Signal pipeline
+      </span>
 
-        {/* Pipeline Stage Items */}
-        <div className="mt-3 divide-y divide-[#262C28]">
-          {stageList.map((item, idx) => {
-            const currentStageStatus = stages[item.key];
-            const isActive = currentStageStatus === 'ACTIVE';
+      {/* Pipeline steps as connected vertical list */}
+      <div className="space-y-0">
+        {stageList.map((item, idx) => {
+          const currentStageStatus = stages[item.key];
+          const isActive = currentStageStatus === 'ACTIVE';
+          const indicator = getStatusIndicator(currentStageStatus);
 
-            return (
-              <div
-                key={item.key}
-                className={`py-2.5 transition-colors ${
-                  isActive ? 'bg-[#D4864A]/5 px-2 -mx-2 rounded-[2px]' : ''
-                }`}
-              >
-                <div className="flex items-center justify-between">
+          return (
+            <div
+              key={item.key}
+              className={`relative flex items-start gap-3 py-2.5 ${
+                isActive ? 'bg-[#D4864A]/5 px-2.5 -mx-2.5 rounded-sm' : ''
+              }`}
+            >
+              {/* Vertical connector line */}
+              <div className="flex flex-col items-center shrink-0 pt-0.5">
+                <span className={`h-2 w-2 rounded-full ${indicator.dot} shrink-0`} />
+                {idx < stageList.length - 1 && (
+                  <span className="w-px flex-1 min-h-[24px] bg-[#242825] mt-1" />
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-[#9A9C96] font-mono">0{idx + 1}</span>
+                    <span className="text-[10px] text-[#666963] font-mono">0{idx + 1}</span>
                     <span className="text-xs font-medium text-[#E6E4DD]">{item.title}</span>
                   </div>
-                  <div>{renderBadge(currentStageStatus)}</div>
+                  <span className="text-[11px] text-[#9A9C96] mt-0.5 block">{item.subtext}</span>
                 </div>
-                <div className="mt-1 text-[11px] text-[#9A9C96] pl-5">{item.subtext}</div>
+                <span className={`text-[11px] font-medium ${indicator.labelColor} shrink-0`}>
+                  {indicator.label}
+                </span>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
