@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 
 /**
- * Time-Frequency Spectrogram Surface & Precision Scientific Annotations
- * - Dynamic high-resolution waterfall spectrogram plane
+ * Time-Frequency Spectrogram Surface & Soft Atmospheric Quiet Zone
+ * - Dynamic high-resolution waterfall spectrogram plane with feathered edges
+ * - Volumetric soft atmospheric halo mesh behind the observation plane
+ * - Dual undulating quiet-zone boundary waves (~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~)
  * - Frequency (X) and Time (Y) axes with calibration markings
  * - Distinct diagonal drift track with warm gold thermal intensity
  * - Scientific figure annotations with fine leader lines
@@ -15,6 +17,13 @@ export class SpectrogramPlane {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private texture: THREE.CanvasTexture;
+
+  // Soft atmospheric halo & quiet zone boundary waves
+  private haloMesh: THREE.Mesh;
+  private haloMaterial: THREE.MeshBasicMaterial;
+  private waveLineTop: THREE.Line;
+  private waveLineBottom: THREE.Line;
+  private waveMaterial: THREE.LineBasicMaterial;
 
   // Scientific Figure Annotation groups
   private annotationsGroup: THREE.Group;
@@ -29,7 +38,36 @@ export class SpectrogramPlane {
     // Positioned at the destination of the flight corridor
     this.group.position.set(0, 20, -342);
 
-    // 1. High-Resolution Waterfall Spectrogram Texture (1024 x 640)
+    // 1. Soft Atmospheric Quiet Zone Halo Mesh (Placed behind the spectrogram)
+    const haloCanvas = document.createElement('canvas');
+    haloCanvas.width = 512;
+    haloCanvas.height = 512;
+    const hctx = haloCanvas.getContext('2d');
+    if (hctx) {
+      const hGrad = hctx.createRadialGradient(256, 256, 20, 256, 256, 250);
+      hGrad.addColorStop(0.0, 'rgba(55, 106, 155, 0.45)');
+      hGrad.addColorStop(0.35, 'rgba(30, 60, 90, 0.28)');
+      hGrad.addColorStop(0.65, 'rgba(212, 163, 89, 0.12)'); // subtle warm aura
+      hGrad.addColorStop(1.0, 'rgba(7, 11, 16, 0.0)');
+      hctx.fillStyle = hGrad;
+      hctx.fillRect(0, 0, 512, 512);
+    }
+    const haloTexture = new THREE.CanvasTexture(haloCanvas);
+
+    const haloGeo = new THREE.PlaneGeometry(54, 36);
+    this.haloMaterial = new THREE.MeshBasicMaterial({
+      map: haloTexture,
+      transparent: true,
+      opacity: 0.0,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    this.haloMesh = new THREE.Mesh(haloGeo, this.haloMaterial);
+    this.haloMesh.position.set(0, 0, -0.6);
+    this.group.add(this.haloMesh);
+
+    // 2. High-Resolution Waterfall Spectrogram Texture (1024 x 640)
     this.canvas = document.createElement('canvas');
     this.canvas.width = 1024;
     this.canvas.height = 640;
@@ -55,7 +93,38 @@ export class SpectrogramPlane {
     this.planeMesh = new THREE.Mesh(planeGeo, this.planeMaterial);
     this.group.add(this.planeMesh);
 
-    // 2. Scientific Figure Annotations & Leader Lines (Pure 3D geometry)
+    // 3. Undulating Quiet Zone Boundary Waveforms (~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~)
+    const waveSegments = 64;
+    const waveWidth = 42;
+    const topWaveVerts: number[] = [];
+    const botWaveVerts: number[] = [];
+
+    for (let s = 0; s <= waveSegments; s++) {
+      const u = s / waveSegments;
+      const x = (u - 0.5) * waveWidth;
+      const yWave = Math.sin(u * Math.PI * 12) * 0.45;
+      topWaveVerts.push(x, 12.8 + yWave, 0.1);
+      botWaveVerts.push(x, -12.8 + yWave, 0.1);
+    }
+
+    const topWaveGeo = new THREE.BufferGeometry();
+    topWaveGeo.setAttribute('position', new THREE.Float32BufferAttribute(topWaveVerts, 3));
+    const botWaveGeo = new THREE.BufferGeometry();
+    botWaveGeo.setAttribute('position', new THREE.Float32BufferAttribute(botWaveVerts, 3));
+
+    this.waveMaterial = new THREE.LineBasicMaterial({
+      color: 0x5c89b7,
+      transparent: true,
+      opacity: 0.0,
+      blending: THREE.AdditiveBlending,
+    });
+
+    this.waveLineTop = new THREE.Line(topWaveGeo, this.waveMaterial);
+    this.waveLineBottom = new THREE.Line(botWaveGeo, this.waveMaterial);
+    this.group.add(this.waveLineTop);
+    this.group.add(this.waveLineBottom);
+
+    // 4. Scientific Figure Annotations & Leader Lines (Pure 3D geometry)
     this.annotationsGroup = new THREE.Group();
 
     // Leader lines connecting anomalous track to annotations
@@ -85,7 +154,7 @@ export class SpectrogramPlane {
 
     this.group.add(this.annotationsGroup);
 
-    // 3. Precision Candidate Lock Reticle
+    // 5. Precision Candidate Lock Reticle
     this.reticleGroup = new THREE.Group();
     const reticleGeo = new THREE.BufferGeometry();
     const rVerts: number[] = [];
@@ -129,6 +198,7 @@ export class SpectrogramPlane {
 
   /**
    * Draw dynamic high-fidelity radio spectrogram texture onto internal canvas
+   * with soft feathered atmospheric edges for seamless blending into the cosmic void.
    */
   private renderSpectrogramTexture(time: number, candidateLockProgress: number) {
     const c = this.ctx;
@@ -177,7 +247,6 @@ export class SpectrogramPlane {
     c.putImageData(imgData, 70, 40);
 
     // 4. The Anomalous Drift Track (The protagonist signal in time-frequency space)
-    // Slanted line cutting across frequency as time advances
     c.save();
     c.shadowColor = '#d4a359';
     c.shadowBlur = 12;
@@ -261,33 +330,62 @@ export class SpectrogramPlane {
     c.textAlign = 'right';
     c.fillStyle = '#c19348';
     c.fillText('Δf/Δt: -0.32 Hz/s (DRIFT CONFIRMED)', w - 50, 26);
+
+    // 6. Feathered Soft Atmospheric Perimeter Vignette (Softening outer rectangle edges)
+    c.save();
+    const gradV = c.createLinearGradient(0, 0, 0, h);
+    gradV.addColorStop(0.0, 'rgba(10, 16, 23, 1.0)');
+    gradV.addColorStop(0.06, 'rgba(10, 16, 23, 0.0)');
+    gradV.addColorStop(0.94, 'rgba(10, 16, 23, 0.0)');
+    gradV.addColorStop(1.0, 'rgba(10, 16, 23, 1.0)');
+    c.fillStyle = gradV;
+    c.fillRect(0, 0, w, h);
+
+    const gradH = c.createLinearGradient(0, 0, w, 0);
+    gradH.addColorStop(0.0, 'rgba(10, 16, 23, 1.0)');
+    gradH.addColorStop(0.05, 'rgba(10, 16, 23, 0.0)');
+    gradH.addColorStop(0.95, 'rgba(10, 16, 23, 0.0)');
+    gradH.addColorStop(1.0, 'rgba(10, 16, 23, 1.0)');
+    c.fillStyle = gradH;
+    c.fillRect(0, 0, w, h);
+    c.restore();
   }
 
   /**
    * Update Spectrogram and Annotations based on scroll progress and time
    */
   public update(progress: number, time: number) {
-    // Spectrogram plane emerges as camera enters deep signal (0.76 -> 0.88)
-    const specIn = THREE.MathUtils.smoothstep(progress, 0.75, 0.87);
-    const specOut = 1 - THREE.MathUtils.smoothstep(progress, 0.99, 1.0);
+    // Spectrogram plane emerges as camera enters deep signal (0.78 -> 0.85)
+    // and stays persistent throughout investigation quiet zone (0.85 -> 0.96)
+    const specIn = THREE.MathUtils.smoothstep(progress, 0.76, 0.84);
+    const specOut = 1 - THREE.MathUtils.smoothstep(progress, 0.98, 1.0);
     const planeOpacity = specIn * specOut;
     this.planeMaterial.opacity = planeOpacity;
 
+    // Atmospheric halo glows behind spectrogram with gentle breathing pulse
+    const haloPulse = 1.0 + Math.sin(time * 0.8) * 0.04;
+    this.haloMesh.scale.set(haloPulse, haloPulse, 1.0);
+    this.haloMaterial.opacity = planeOpacity * 0.85;
+
+    // Undulating quiet zone boundary waves (~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~)
+    const waveAlpha = specIn * specOut * 0.65;
+    this.waveMaterial.opacity = waveAlpha;
+
     // Refresh dynamic texture occasionally
     if (planeOpacity > 0.05 && Math.floor(time * 6) % 3 === 0) {
-      const lockProg = THREE.MathUtils.smoothstep(progress, 0.9, 0.98);
+      const lockProg = THREE.MathUtils.smoothstep(progress, 0.92, 0.98);
       this.renderSpectrogramTexture(time, lockProg);
       this.texture.needsUpdate = true;
     }
 
-    // Scientific Figure Annotations appear during camera dive (0.86 -> 0.96)
-    const annotIn = THREE.MathUtils.smoothstep(progress, 0.85, 0.9);
-    const annotOut = 1 - THREE.MathUtils.smoothstep(progress, 0.97, 1.0);
+    // Scientific Figure Annotations appear during camera dive (0.84 -> 0.95)
+    const annotIn = THREE.MathUtils.smoothstep(progress, 0.83, 0.88);
+    const annotOut = 1 - THREE.MathUtils.smoothstep(progress, 0.96, 1.0);
     const annotOpacity = annotIn * annotOut;
     (this.annotationLines.material as THREE.LineBasicMaterial).opacity = annotOpacity * 0.85;
 
-    // Candidate Lock Reticle activates at climax (0.92 -> 1.00)
-    const lockIn = THREE.MathUtils.smoothstep(progress, 0.92, 0.97);
+    // Candidate Lock Reticle activates at climax (0.93 -> 1.00)
+    const lockIn = THREE.MathUtils.smoothstep(progress, 0.93, 0.97);
     this.reticleMaterial.opacity = lockIn * 0.9;
 
     // Subtle breathing pulse on the reticle

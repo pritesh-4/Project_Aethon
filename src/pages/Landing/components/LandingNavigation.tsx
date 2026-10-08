@@ -20,8 +20,8 @@ export function LandingNavigation({ progress }: LandingNavigationProps) {
   let chapter = '01 / OBSERVATORY';
   if (progress > 0.94) {
     chapter = '06 / CANDIDATE LOCK';
-  } else if (progress > 0.82) {
-    chapter = '05 / INVESTIGATION';
+  } else if (progress > 0.81) {
+    chapter = '05 / SPECTROGRAM QUIET ZONE';
   } else if (progress > 0.62) {
     chapter = '04 / DEVIATION';
   } else if (progress > 0.35) {

@@ -17,6 +17,7 @@ interface NarrativeScene {
   body?: string;
   annotations?: Array<{ label: string; value: string }>;
   isTerminal?: boolean;
+  isQuietZone?: boolean;
 }
 
 const SCENES: NarrativeScene[] = [
@@ -51,31 +52,30 @@ const SCENES: NarrativeScene[] = [
   },
   {
     id: 'deviation',
-    start: 0.65,
-    peakStart: 0.68,
-    peakEnd: 0.74,
-    end: 0.77,
+    start: 0.62,
+    peakStart: 0.65,
+    peakEnd: 0.72,
+    end: 0.75,
     kicker: 'SPECTRAL DEVIATION',
     headline: "What doesn't fit?",
     body: 'A single trace departs from the learned distribution. While known carriers fade, one anomalous drift persists.',
   },
   {
     id: 'method',
-    start: 0.78,
-    peakStart: 0.81,
-    peakEnd: 0.86,
-    end: 0.89,
+    start: 0.75,
+    peakStart: 0.77,
+    peakEnd: 0.81,
+    end: 0.83,
     kicker: 'UNSUPERVISED SCREENING',
     headline: 'AETHON looks for the difference.',
     body: 'It learns the structure of what is normally observed, then surfaces observations that fall outside it.',
   },
   {
     id: 'investigation',
-    start: 0.88,
-    peakStart: 0.9,
-    peakEnd: 0.94,
-    end: 0.96,
-    kicker: 'SPECTROTEMPORAL WATERFALL',
+    start: 0.82,
+    peakStart: 0.85,
+    peakEnd: 0.93,
+    end: 0.95,
     headline: 'Look closer.',
     body: 'An anomaly is not an answer. It is a reason to look closer.',
     annotations: [
@@ -84,11 +84,12 @@ const SCENES: NarrativeScene[] = [
       { label: 'CATALOG SIMILARITY', value: 'LOW (<0.04)' },
       { label: 'RFI PROBABILITY', value: 'UNVERIFIED' },
     ],
+    isQuietZone: true,
   },
   {
     id: 'terminal',
-    start: 0.94,
-    peakStart: 0.96,
+    start: 0.95,
+    peakStart: 0.97,
     peakEnd: 1.0,
     end: 1.0,
     kicker: 'CANDIDATE // REQUIRES SCIENTIFIC REVIEW',
@@ -98,6 +99,38 @@ const SCENES: NarrativeScene[] = [
   },
 ];
 
+/**
+ * Atmospheric Waveform Boundary Line (~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~)
+ * Elegant undulating frequency baseline rendered with soft atmospheric gradient
+ */
+function AtmosphericWaveformBoundary({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 600 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className || 'w-full max-w-md h-4 opacity-75'}
+      aria-hidden="true"
+    >
+      <path
+        d="M0 10 Q 25 3, 50 10 T 100 10 T 150 10 T 200 10 T 250 10 T 300 10 T 350 10 T 400 10 T 450 10 T 500 10 T 550 10 T 600 10"
+        stroke="url(#quietWaveGrad)"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+      <defs>
+        <linearGradient id="quietWaveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#376A9B" stopOpacity="0" />
+          <stop offset="15%" stopColor="#5C89B7" stopOpacity="0.6" />
+          <stop offset="50%" stopColor="#D4A359" stopOpacity="0.85" />
+          <stop offset="85%" stopColor="#5C89B7" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#376A9B" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 export function NarrativeLayer({ progress, reducedMotion }: NarrativeLayerProps) {
   return (
     <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-6 sm:p-12 select-none">
@@ -105,6 +138,7 @@ export function NarrativeLayer({ progress, reducedMotion }: NarrativeLayerProps)
       <div className="relative flex-1 flex items-center justify-center">
         {SCENES.map((scene) => {
           const isTerminal = scene.isTerminal ?? false;
+          const isQuietZone = scene.isQuietZone ?? false;
           let opacity = 0;
           let translateY = 0;
 
@@ -135,6 +169,83 @@ export function NarrativeLayer({ progress, reducedMotion }: NarrativeLayerProps)
 
           const isClickable = isTerminal && progress >= 0.95;
 
+          // Special Custom Layout for the "Soft Atmospheric Quiet Zone" Scene
+          if (isQuietZone) {
+            return (
+              <section
+                key={scene.id}
+                aria-label="Spectrogram Soft Atmospheric Quiet Zone"
+                style={{
+                  opacity,
+                  transform: `translateY(${translateY}px)`,
+                }}
+                className="absolute inset-x-0 mx-auto max-w-2xl px-4 flex flex-col items-center justify-center text-center transition-opacity duration-200"
+              >
+                {/* 1. Header: spectrogram */}
+                <div className="text-[11px] font-mono tracking-[0.28em] text-[#6A7E8F] uppercase mb-2">
+                  spectrogram
+                </div>
+
+                {/* 2. Top Wavy Atmospheric Boundary (~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~) */}
+                <AtmosphericWaveformBoundary className="w-full max-w-md h-3.5 mb-3" />
+
+                {/* 3. Soft Atmospheric Quiet Zone Badge Capsule */}
+                <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-[#376A9B]/40 bg-[#0B141C]/80 shadow-[0_0_24px_rgba(55,106,155,0.22)] mb-3">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#D4A359] animate-pulse" />
+                  <span className="text-[10px] font-mono tracking-widest text-[#9BB9D6] uppercase">
+                    soft atmospheric quiet zone
+                  </span>
+                </div>
+
+                {/* 4. The Quiet Zone Content Capsule (╭──────────────╮ Look closer. ╰──────────────╯) */}
+                <div className="relative w-full max-w-lg px-8 py-7 sm:px-10 sm:py-8 rounded-2xl border border-[#233547]/80 bg-[#070B10]/75 backdrop-blur-md shadow-[0_0_60px_rgba(7,11,16,0.9),inset_0_0_40px_rgba(55,106,155,0.06)] flex flex-col items-center">
+                  {/* Subtle corner fiducial marks */}
+                  <div className="absolute top-2.5 left-3 text-[9px] font-mono text-[#3E566E]">
+                    ┌ CH-1420
+                  </div>
+                  <div className="absolute top-2.5 right-3 text-[9px] font-mono text-[#D4A359]">
+                    Δf/Δt: -0.32 Hz/s ┐
+                  </div>
+
+                  {/* Primary Statement in Newsreader Serif */}
+                  <h2 className="text-3xl sm:text-5xl font-serif italic font-normal text-[#E3EBF2] tracking-tight mt-1">
+                    {scene.headline}
+                  </h2>
+
+                  {/* Profound Narrator Observation */}
+                  {scene.body && (
+                    <p className="mt-3.5 text-sm sm:text-base font-normal text-[#A6B7C6] max-w-md leading-relaxed font-sans">
+                      {scene.body}
+                    </p>
+                  )}
+
+                  {/* Scientific Figure Annotations attached inside the quiet frame */}
+                  {scene.annotations && (
+                    <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full pt-4 border-t border-[#1C2C3C]/80">
+                      {scene.annotations.map((ann) => (
+                        <div
+                          key={ann.label}
+                          className="px-2 py-1.5 rounded-[2px] bg-[#0E1722]/80 border border-[#213345] text-left"
+                        >
+                          <div className="text-[8.5px] font-mono text-[#6A7E8F] uppercase tracking-wider">
+                            {ann.label}
+                          </div>
+                          <div className="text-[10.5px] font-mono text-[#D4A359] mt-0.5 truncate">
+                            {ann.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 5. Bottom Wavy Atmospheric Boundary (~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~) */}
+                <AtmosphericWaveformBoundary className="w-full max-w-md h-3.5 mt-3" />
+              </section>
+            );
+          }
+
+          // Standard Scene Layout
           return (
             <section
               key={scene.id}
@@ -169,25 +280,6 @@ export function NarrativeLayer({ progress, reducedMotion }: NarrativeLayerProps)
                 <p className="mt-4 text-sm sm:text-base font-normal text-[#A6B7C6] max-w-lg leading-relaxed font-sans">
                   {scene.body}
                 </p>
-              )}
-
-              {/* Scientific Figure Annotations attached to the visualization */}
-              {scene.annotations && (
-                <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-lg">
-                  {scene.annotations.map((ann) => (
-                    <div
-                      key={ann.label}
-                      className="px-2.5 py-1.5 rounded-[2px] bg-[#0E1620]/80 border border-[#213240] text-left"
-                    >
-                      <div className="text-[9px] font-mono text-[#6A7E8F] uppercase tracking-wider">
-                        {ann.label}
-                      </div>
-                      <div className="text-[11px] font-mono text-[#D4A359] mt-0.5 truncate">
-                        {ann.value}
-                      </div>
-                    </div>
-                  ))}
-                </div>
               )}
 
               {/* Terminal Action: Earned Entrance into the Observatory */}
