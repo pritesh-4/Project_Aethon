@@ -94,6 +94,12 @@ class Settings(BaseSettings):
         default=100 * 1024 * 1024,
         description="Maximum permissible upload size in bytes (default: 100MB)",
     )
+    max_slice_cells: int = Field(
+        default=250_000,
+        description=(
+            "Maximum permissible matrix cells in a single spectral slice query (default: 250,000)"
+        ),
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -120,3 +126,8 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    """Retrieve application settings instance."""
+    return settings

@@ -8,8 +8,8 @@
 
 ## Must-Haves
 
-- [ ] Offline ingestion and header extraction of Breakthrough Listen `.fil` and `.fits` observations
-- [ ] Format-agnostic normalized spectral slice model with complete provenance
+- [x] Offline ingestion and header extraction of Breakthrough Listen `.fil` and `.fits` observations
+- [x] Format-agnostic normalized spectral slice model with complete provenance
 - [ ] Interactive Doppler drift rate estimation and real-time de-Doppler correction bench
 - [ ] Explainable RFI mitigation with multi-cadence (on/off target) rejection logic
 - [ ] Canonical BLC1 (Proxima Centauri) case study with explainable terrestrial RFI disposition
@@ -85,6 +85,36 @@
   - Automated test suite passes with 42/42 tests passing offline.
 - **Verification Method:** `pytest` (42 passing tests) + `ruff check .` (0 errors) + `mypy app` (0 issues).
 - **Demo Value:** Enables researchers and evaluators to upload and index genuine telescope observations directly from the Breakthrough Listen archive.
+
+---
+
+### Phase 2: Canonical Scientific Data Representation & Spectral Slice Engine (Backend Phase 2)
+
+- **Status:** ✅ Complete
+- **Objective:** Establish an authoritative, validated, memory-conscious internal representation of radio-observation data with reliable time-frequency coordinate mapping and bounded spectral slice retrieval via REST API.
+- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 / Phase 5 (Observation Ingestion Engine).
+- **Implementation Scope:**
+  - Canonical 2D matrix contract: `values[time_index][frequency_index]` with Axis 0 = Time (chronologically increasing) and Axis 1 = Frequency (strictly ascending in Hz).
+  - Explicit scientific coordinate models: `FrequencyAxisModel` (channel centers in Hz, spacing, reference channel) and `TimeAxisModel` (sampling interval in seconds, relative timestamps, MJD/UTC reference).
+  - Reader abstraction (`BaseSliceReader`) with format-specific bounded array slicing:
+    - `FilterbankSliceReader`: Memory-mapped access via `np.memmap` using binary header offset (`idx_data`), signed frequency channel mapping, and column flipping for descending source channels (`[:, ::-1]`). Explicit memory-unmapping and garbage collection preventing Windows file locks.
+    - `FitsSliceReader`: Slices radio spectral images via `astropy.fits.HDU.section` without loading full arrays into RAM, and reads selected rows from radio binary tables (PSRFITS/SDFITS `SUBINT`).
+  - Representation service (`SliceService`): validates half-open index ranges `[start, stop)`, enforces `MAX_SLICE_CELLS` safety bound (default: 250,000 cells), generates aligned physical coordinate arrays, detects IEEE non-finite samples (NaN/Inf) and serializes them as JSON `null`, and compiles audit provenance.
+  - REST endpoint: `GET /api/observations/{observation_id}/slice` with full OpenAPI models and documentation.
+  - Comprehensive automated test suite: 62 tests across axis models, slice readers, boundary validations, limit enforcement, and API integration.
+- **Non-Goals:** Signal detection, RFI classification, Doppler drift estimation, anomaly scoring, candidate ranking, or ML model training.
+- **Artifacts:** `backend/app/representation/`, `backend/app/schemas/slice.py`, `backend/app/api/routes/observations.py` (`GET /{id}/slice`), `backend/tests/test_representation_axes.py`, `backend/tests/test_slice_readers.py`, `backend/tests/test_api_slice.py`.
+- **Measurable Acceptance Criteria:**
+  - Bounded data retrieval directly from disk without loading full raw observations into memory.
+  - Consistent array convention `values[time_index][frequency_index]` with strictly ascending frequency columns.
+  - Exact frequency coordinates in Hz and relative timestamps in seconds aligned with returned matrix dimensions.
+  - Memory-safe operation on Windows with zero file-lock errors (`PermissionError [WinError 32]`).
+  - Requests exceeding `MAX_SLICE_CELLS` rejected with HTTP 422 `SLICE_CELL_LIMIT_EXCEEDED`.
+  - Non-finite samples safely encoded as `null` in JSON responses.
+  - Source raw files remain completely immutable on disk.
+  - Automated test suite passes 100% offline (62/62 passing).
+- **Verification Method:** `pytest` (62 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues).
+- **Demo Value:** Provides the dependable scientific data contract that future preprocessing, Doppler correction, and candidate screening engines consume.
 
 ---
 

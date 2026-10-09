@@ -207,6 +207,23 @@ $$\text{Bandwidth} = |\Delta\nu| \cdot N_{\text{chans}}$$
 - Canonical Pydantic schemas: `ObservationRecordResponse`, `ScientificMetadata`, `Provenance`, `ObservationListResponse`.
 - Endpoints: `POST /api/observations`, `GET /api/observations`, `GET /api/observations/{id}`.
 
+### 5. Canonical Scientific Data Representation & Spectral Slices (Phase 2)
+
+- **Authoritative Array Convention:** `values[time_index][frequency_index]` where Axis 0 is Time (increasing chronologically) and Axis 1 is Frequency (strictly ascending from lowest to highest in Hz).
+- **Bounded Reader Abstractions:**
+  - `BaseSliceReader`: Abstract interface defining uniform bounded extraction signature.
+  - `FilterbankSliceReader`: Direct disk memory mapping (`np.memmap`) using binary header offset (`idx_data`). Maps descending channel spacing to canonical ascending orientation with column reversal (`[:, ::-1]`). Explicit mmap closing and garbage collection preventing Windows handle leaks.
+  - `FitsSliceReader`: Slices radio spectral image HDUs via `astropy.fits.HDU.section` without creating full-array memory mappings, and reads selected rows from PSRFITS/SDFITS `SUBINT` binary tables.
+- **Physical Coordinate Modeling:**
+  - `FrequencyAxisModel`: Computes channel center frequencies in Hz ($\nu_k = \nu_0 + k \cdot |\Delta\nu|$) with positive channel spacing.
+  - `TimeAxisModel`: Computes relative elapsed time in seconds ($t_k = k \cdot \Delta t$) with UTC and MJD epoch tracking.
+  - Missing or incomplete coordinates remain `null` with explicit diagnostic warnings, preventing fabrication.
+- **Service & Protection Boundary:**
+  - `SliceService`: Orchestrates validation of zero-based half-open intervals `[start, stop)`.
+  - `MAX_SLICE_CELLS`: Enforces maximum matrix cell volume (default 250,000 cells), returning HTTP 422 `SLICE_CELL_LIMIT_EXCEEDED` on oversized requests.
+  - JSON-Safe Quality Handling: Serializes non-finite IEEE samples (NaN/Inf) to `null` and populates `DataQualityInfo` flags.
+- **API Endpoint:** `GET /api/observations/{observation_id}/slice` returning validated `SpectralSliceResponse`.
+
 ---
 
 ## Integration Points

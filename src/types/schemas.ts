@@ -131,3 +131,52 @@ export const AnalysisResultSchema = z.object({
   scientificNotes: z.string().optional(),
 });
 export type AnalysisResult = z.infer<typeof AnalysisResultSchema>;
+
+/**
+ * Canonical Spectral Slice Schema (Phase 2 contract)
+ */
+export const SliceIndexRangeSchema = z.object({
+  time_start: z.number().int().nonnegative(),
+  time_stop: z.number().int().nonnegative(),
+  frequency_start: z.number().int().nonnegative(),
+  frequency_stop: z.number().int().nonnegative(),
+});
+export type SliceIndexRange = z.infer<typeof SliceIndexRangeSchema>;
+
+export const DataQualityInfoSchema = z.object({
+  total_samples: z.number().int().nonnegative(),
+  non_finite_sample_count: z.number().int().nonnegative(),
+  has_non_finite_samples: z.boolean(),
+  null_representation: z.string(),
+});
+export type DataQualityInfo = z.infer<typeof DataQualityInfoSchema>;
+
+export const SliceProvenanceSchema = z.object({
+  source_channel_order: z.string(),
+  frequency_axis_reversed: z.boolean(),
+  reader_backend: z.string(),
+  source_sha256: z.string(),
+});
+export type SliceProvenance = z.infer<typeof SliceProvenanceSchema>;
+
+export const SpectralSliceResponseSchema = z.object({
+  observation_id: z.string(),
+  source_format: z.string(),
+  matrix_shape: z.array(z.number().int()),
+  canonical_axis_convention: z.string(),
+  requested_range: SliceIndexRangeSchema,
+  actual_range: SliceIndexRangeSchema,
+  values: z.array(z.array(z.number().nullable())),
+  frequency_coordinates_hz: z.array(z.number()).nullable().optional(),
+  time_coordinates_seconds: z.array(z.number()).nullable().optional(),
+  start_time_utc: z.string().nullable().optional(),
+  start_mjd: z.number().nullable().optional(),
+  frequency_unit: z.string(),
+  time_unit: z.string(),
+  sample_value_semantics: z.string(),
+  sample_value_unit: z.string().nullable().optional(),
+  data_quality: DataQualityInfoSchema,
+  provenance: SliceProvenanceSchema,
+  warnings: z.array(z.string()),
+});
+export type SpectralSliceResponse = z.infer<typeof SpectralSliceResponseSchema>;

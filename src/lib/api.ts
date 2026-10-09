@@ -108,3 +108,19 @@ export async function uploadSignalFile<T>(
   });
   return response.data;
 }
+
+/**
+ * Request a bounded canonical spectral slice from an ingested observation
+ */
+export async function getObservationSlice<T = unknown>(
+  observationId: string,
+  params?: {
+    time_start?: number;
+    time_stop?: number;
+    frequency_start?: number;
+    frequency_stop?: number;
+  }
+): Promise<T> {
+  const response = await apiClient.get<T>(`/observations/${observationId}/slice`, { params });
+  return response.data;
+}

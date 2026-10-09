@@ -8,12 +8,22 @@ from app.schemas.observations import (
     Provenance,
     ScientificMetadata,
 )
+from app.schemas.slice import (
+    DataQualityInfo,
+    SliceIndexRange,
+    SliceProvenance,
+    SpectralSliceResponse,
+)
 
 __all__ = [
     "ApiErrorResponse",
+    "DataQualityInfo",
     "HealthStatus",
     "ObservationListResponse",
     "ObservationRecordResponse",
     "Provenance",
     "ScientificMetadata",
+    "SliceIndexRange",
+    "SliceProvenance",
+    "SpectralSliceResponse",
 ]

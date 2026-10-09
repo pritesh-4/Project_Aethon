@@ -17,11 +17,13 @@ from fastapi import (
 from app.core.config import settings as default_settings
 from app.ingestion.exceptions import ObservationNotFoundError
 from app.ingestion.service import IngestionService
+from app.representation.service import SliceService
 from app.schemas.error import ApiErrorResponse
 from app.schemas.observations import (
     ObservationListResponse,
     ObservationRecordResponse,
 )
+from app.schemas.slice import SpectralSliceResponse
 from app.storage.repository import ObservationRepository
 
 router = APIRouter(prefix="/observations", tags=["Observations"])
@@ -155,3 +157,79 @@ def get_observation(
     if record is None:
         raise ObservationNotFoundError(observation_id=observation_id)
     return record
+
+
+def _get_slice_service(request: Request) -> SliceService:
+    """Retrieve slice service initialized from current application settings."""
+    app_settings = getattr(request.app.state, "settings", default_settings)
+    repo = _get_repository(request)
+    return SliceService(repository=repo, settings=app_settings)
+
+
+@router.get(
+    "/{observation_id}/slice",
+    status_code=status.HTTP_200_OK,
+    response_model=SpectralSliceResponse,
+    summary="Get bounded canonical spectral slice",
+    description=(
+        "Retrieve a bounded 2D numerical spectral data matrix from an ingested observation "
+        "conforming to AETHON's canonical scientific representation: "
+        "values[time_index][frequency_index] with ascending frequency columns. "
+        "Queries are indexed using half-open ranges [start, stop). Bounded reads are "
+        "streamed directly from disk without loading full raw observations into memory. "
+        "Maximum matrix cell volume is bounded by MAX_SLICE_CELLS configuration."
+    ),
+    responses={
+        200: {
+            "description": "Canonical spectral slice matrix and physical coordinate arrays",
+            "model": SpectralSliceResponse,
+        },
+        404: {
+            "description": "Observation or source file not found",
+            "model": ApiErrorResponse,
+        },
+        422: {
+            "description": "Invalid slice bounds, limit exceeded, or unsupported layout",
+            "model": ApiErrorResponse,
+        },
+    },
+)
+def get_observation_slice(
+    request: Request,
+    observation_id: str = PathParam(
+        ...,
+        description="Unique observation identifier UUID",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
+    ),
+    time_start: int | None = Query(
+        default=None,
+        ge=0,
+        description="Inclusive 0-based time index start. Defaults to 0.",
+    ),
+    time_stop: int | None = Query(
+        default=None,
+        ge=0,
+        description="Exclusive 0-based time index stop. Defaults to min(total_time, 64).",
+    ),
+    frequency_start: int | None = Query(
+        default=None,
+        ge=0,
+        description="Inclusive 0-based canonical frequency index start. Defaults to 0.",
+    ),
+    frequency_stop: int | None = Query(
+        default=None,
+        ge=0,
+        description=(
+            "Exclusive 0-based canonical frequency index stop. Defaults to min(channel_count, 256)."
+        ),
+    ),
+) -> SpectralSliceResponse:
+    """Extract bounded spectral slice adhering to AETHON canonical data contract."""
+    service = _get_slice_service(request)
+    return service.get_slice(
+        observation_id=observation_id,
+        time_start=time_start,
+        time_stop=time_stop,
+        frequency_start=frequency_start,
+        frequency_stop=frequency_stop,
+    )
