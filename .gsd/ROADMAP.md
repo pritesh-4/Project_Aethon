@@ -216,22 +216,38 @@
 
 ---
 
-### Phase 6: Signal Detection & Candidate Extraction Engine
+### Phase 6: Doppler Drift and Temporal Analysis Engine (Backend Phase 6)
 
-- **Status:** ⬜ Not Started
-- **Objective:** Detect anomalous narrowband signals within normalized spectrograms and extract structured candidate objects with physical measurements.
-- **Dependencies:** Phase 5 (Normalized Ingestion).
+- **Status:** ✅ Complete
+- **Objective:** Implement a reproducible, distribution-free analysis engine for estimating apparent frequency drift trajectories, measuring linear frequency drift rates ($\dot{f}$ in Hz/s) with explicit analytical uncertainty, evaluating bounded drift hypotheses via coherent integration, providing non-destructive linear de-drift array transformations, characterizing temporal persistence/gaps/duration, and conservatively comparing multi-observation events for recurrence without data leakage.
+- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 (Ingestion Engine), Phase 2 (Canonical Data Representation), Phase 3 (Synthetic Signal Laboratory), Phase 4 (Signal Processing and RFI Assessment), Phase 5 (Scientific Anomaly Detection Engine).
 - **Implementation Scope:**
-  - Baseline peak detection and continuous thresholding across spectral channels (SciPy `find_peaks`, STFT power analysis).
-  - Narrowband signal isolation algorithm calculating signal bandwidth, SNR, peak intensity, and persistence across time bins.
-  - Candidate extraction pipeline outputting structured candidates with unique IDs and observation references.
-- **Non-Goals:** Complex neural network inference (handled in Phase 9); live telescope control.
-- **Expected Artifacts:** `backend/analysis/detection.py`, `backend/models/candidate.py`, unit test suite.
+  - Dedicated scientific analysis module (`backend/app/analysis/`) decoupled from FastAPI:
+    - `exceptions.py`: Domain exceptions (`AnalysisError`, `InvalidAnalysisConfigError`, `InsufficientTrajectoryPointsError`, `DegenerateTrajectoryError`, `CoordinateMetadataUnavailableError`, `HypothesisLimitExceededError`, `IncompatibleObservationError`).
+    - `config.py`: Validated Pydantic models (`TrajectoryExtractionConfig`, `DriftEstimationConfig`, `DriftSearchConfig`, `DeDriftConfig`, `TemporalConfig`, `RecurrenceConfig`, `AnalysisPipelineConfig`).
+    - `schemas.py`: Data models (`TrajectoryPoint`, `FrequencyTrajectory`, `DriftFitResult`, `DriftHypothesis`, `DriftSearchResult`, `DeDriftResult`, `TemporalCharacterization`, `RecurrenceComparisonRecord`, `AnalysisResult`, `SCIENTIFIC_DOPPLER_DISCLAIMER`).
+    - `trajectory.py`: Trajectory extraction via per-time peak power ridge with quadratic centroid refinement, SNR thresholding, and Phase 4 `QualityMask` integration.
+    - `drift_estimation.py`: Linear drift regression via OLS on time-centered coordinates ($\dot{f} = \Delta f / \Delta t$ in Hz/s), analytical standard error $\text{SE}(\dot{f}) = \sqrt{SS_{\text{res}} / ((N-2)\sum(t_i - \bar{t})^2)}$, $R^2$, residual standard deviation, and index-space slope fallback (channels/step).
+    - `drift_search.py`: Coherent linear drift hypothesis testing over a bounded grid, summing sheared rows into integrated profiles, scoring peak SNR, with safety ceilings and boundary-winner detection.
+    - `dedrift.py`: Pure-functional de-drift array transformation shearing rows by $-\dot{f}\Delta t$ into vertical columns with edge padding and zero circular wraparound.
+    - `temporal.py`: Temporal characterization measuring active duration, sample coverage fraction, consecutive gap duration, persistence fraction, and power variability.
+    - `recurrence.py`: Multi-observation event comparison with verified frequency separation tolerances, epoch tracking (MJD/UTC), and astronomical source matching.
+    - `service.py`: `AnalysisService` orchestrator supporting raw arrays or Phase 2 `CanonicalSlice` objects directly from Python.
+    - `evaluation.py`: `DriftAnalysisEvaluator` measuring signed and absolute drift rate errors and recovery rates against Phase 3 `ObservationGroundTruth` with zero data leakage.
+  - REST API endpoint: `POST /api/observations/{id}/analyze-drift` with bounded slicing coordinates and custom configuration.
+  - Comprehensive automated test suite: 173 passing tests (28 new tests across trajectory extraction, drift estimation, hypothesis search, de-drift transformation, temporal analysis, recurrence, benchmark evaluation, and REST API).
+- **Non-Goals:** Final candidate-ranking engine, candidate dossier generation, CNN training, automatic extraterrestrial classification, or claiming an observed topocentric drift is a complete physical Doppler velocity solution.
+- **Artifacts:** `backend/app/analysis/`, `backend/app/schemas/analysis.py`, `backend/tests/test_analysis_*.py`, `backend/tests/test_api_analysis.py`.
 - **Measurable Acceptance Criteria:**
-  - Automatic detection of signals with $\text{SNR} \ge 10\text{ dB}$ across real and simulated noise backgrounds.
-  - Correctly outputs physical properties: center frequency ($MHz$), bandwidth ($Hz$), SNR ($dB$), duration ($s$).
-- **Verification Method:** Unit test asserting detection of simulated carrier tones inserted into telescope noise.
-- **Demo Value:** Demonstrates the automated discovery workflow from raw observation to isolated candidate.
+  - Apparent drift convention: $\dot{f} = \frac{\Delta f}{\Delta t}$ in Hz/s under canonical ascending frequency orientation.
+  - Analytical uncertainty: $\text{SE}(\dot{f})$ computed rigorously without invented heuristics; index slope fallback provided when physical axes are unavailable.
+  - Bounded search: grid size constrained by safety ceilings (`max_hypotheses`); boundary winners flagged honestly (`is_on_boundary`).
+  - Source immutability: de-drift transformation produces new derived views; raw observations remain 100% bit-for-bit immutable.
+  - Temporal metrics: duration, coverage, persistence, and gaps quantified honestly without inferring continuity across data gaps.
+  - Ground truth isolation: benchmark evaluation code assesses estimates against held-out synthetic targets with zero leakage into analysis routines.
+  - Automated test suite passes 100% offline (173/173 passing).
+- **Verification Method:** `pytest` (173 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues) + `npm run check` (0 errors).
+- **Demo Value:** Provides rigorous mathematical characterization of candidate signals through drift velocity, coherence optimization, restacked vertical profiles, and multi-epoch recurrence tracking.
 
 ---
 

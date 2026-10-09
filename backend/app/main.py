@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.analysis.exceptions import AnalysisError
 from app.api.routes import api_router, health
 from app.core.config import Settings
 from app.core.config import settings as default_settings
@@ -150,6 +151,20 @@ def create_app(custom_settings: Settings | None = None) -> FastAPI:
 
     @application.exception_handler(DetectionError)
     async def detection_exception_handler(request: Request, exc: DetectionError) -> JSONResponse:
+        error_payload = ApiErrorResponse(
+            message=exc.message,
+            code=exc.code,
+            status=exc.status_code,
+            timestamp=datetime.now(UTC),
+            details=exc.details if exc.details else None,
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=error_payload.model_dump(mode="json"),
+        )
+
+    @application.exception_handler(AnalysisError)
+    async def analysis_exception_handler(request: Request, exc: AnalysisError) -> JSONResponse:
         error_payload = ApiErrorResponse(
             message=exc.message,
             code=exc.code,

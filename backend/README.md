@@ -53,6 +53,21 @@ A specialized Python + FastAPI backend service for the AETHON radio-astronomy di
   - Strict evaluation framework (`DetectionBenchmarkEvaluator`) measuring precision, recall, F1, observation detection rate, and noise false alarms against Phase 3 synthetic ground truth with strict train/test split isolation.
   - Public REST API endpoint: `POST /api/observations/{id}/detect`.
   - Strict scope boundary: no production Doppler drift estimation, de-Doppler correction, candidate ranking, CNNs, or claims of extraterrestrial intelligence.
+- **Phase 6 (Doppler Drift and Temporal Analysis Engine):**
+  - Reproducible scientific frequency trajectory extraction (per-time maximum ridge and centroid refinement) respecting Phase 4 quality masks.
+  - Linear apparent drift estimation via OLS regression over time-centered coordinates:
+    $$\dot{f} = \frac{\Delta f}{\Delta t} \quad [\text{Hz/s}]$$
+  - Explicit analytical uncertainty estimation:
+    $$\text{SE}(\dot{f}) = \sqrt{\frac{SS_{\text{res}}}{(N - 2)\sum_{i=1}^N (t_i - \bar{t})^2}}$$
+  - Deterministic index-space slope fallback (channels/step) when physical Hz/s coordinates are unavailable.
+  - Bounded coherent linear drift hypothesis grid search measuring integrated carrier SNR with safety limits and boundary-winner detection.
+  - Pure-functional, non-destructive linear de-drift transformation shearing spectral rows by $-\dot{f}\Delta t$ into vertical columns with edge padding and zero circular wraparound.
+  - Temporal characterization quantifying active duration, valid sample coverage, max consecutive gaps, persistence, and power variability.
+  - Conservative multi-observation recurrence comparison requiring verified frequency tolerances, epoch tracking (MJD/UTC), and astronomical target matching.
+  - Scientific evaluation framework (`DriftAnalysisEvaluator`) measuring absolute/signed drift rate errors and target recovery rates against Phase 3 ground truth with zero data leakage.
+  - Public REST API endpoint: `POST /api/observations/{id}/analyze-drift`.
+  - Mandatory scientific disclaimer: apparent drift rate is topocentric and does not imply an extraterrestrial source or complete physical barycentric Doppler velocity.
+  - Strict scope boundary: no candidate ranking, no candidate dossier generation, no CNNs, no automatic ET classification.
 - **Frontend Boundary:** The backend runs independently on port `8000` and communicates with the React + Vite frontend (`http://localhost:5173`) through the `/api` route prefix.
 
 ---
@@ -544,7 +559,7 @@ Interactive documentation:
 
 ## Running Automated Tests
 
-Run the full automated test suite (122 tests):
+Run the full automated test suite (173 tests):
 
 ```powershell
 # Windows (PowerShell)
@@ -558,23 +573,36 @@ pytest -v
 
 Tests run offline without requiring external network access or telemetry downloads:
 
+- `test_analysis_trajectory.py`: Stationary carriers, drifting carriers, quality mask respect, low-SNR point rejection.
+- `test_analysis_drift_estimation.py`: Exact positive/negative slopes in Hz/s, analytical SE uncertainty, degrees of freedom, index-space slope fallback.
+- `test_analysis_drift_search.py`: Linear drift grid search, boundary-winner detection, safety hypothesis limits, stationary signal search.
+- `test_analysis_dedrift.py`: Pure-functional de-drift array transformation, source immutability, zero-drift identity, boundary edge padding without circular wraparound.
+- `test_analysis_temporal_and_recurrence.py`: Observed duration, sample coverage, max consecutive gaps, persistence, cross-observation recurrence matching/rejection.
+- `test_analysis_evaluation.py`: DriftAnalysisEvaluator accuracy and recovery rate against Phase 3 synthetic ground truth.
+- `test_api_analysis.py`: End-to-end `POST /api/observations/{id}/analyze-drift`, custom search/dedrift configs, 404 validation.
+- `test_detection_features.py`: 11-feature window extraction, mathematical moments, NaN sanitization.
+- `test_detection_baseline.py`: Modified z-score thresholding, in-situ and reference window scoring.
+- `test_detection_isolation_forest.py`: Isolation Forest training, serialization, score inversion, deterministic random seed.
+- `test_detection_service_and_regions.py`: Spatial grouping, bounding box merging, service pipeline.
+- `test_detection_evaluation.py`: Precision, recall, F1, false alarm rate against synthetic targets.
+- `test_api_detection.py`: API endpoint `POST /api/observations/{id}/detect`, custom thresholds, 404 validation.
 - `test_processing_statistics.py`: Known median/MAD values, robust moments, channel/time distributions, zero dispersion.
 - `test_processing_quality_and_rfi.py`: Quality mask initialization, channel flagger, time flagger, local flagger, clean control false alarms, multiple flag reasons coexistence.
 - `test_processing_preservation_and_transformations.py`: Raw array immutability, baseline estimation, transformation history ledger, disabled transformations.
-- `test_processing_evaluation.py`: Simulated contamination injection (burst, persistent channel, impulse spike), evaluator metrics, synthetic target preservation, overlapping regions, clean negative control.
-- `test_api_processing.py`: End-to-end API processing endpoint, default options, custom transformations, disk immutability verification, 404/422 validations.
-- `test_synthetic_generators.py`: Determinism, random seeds, noise statistics, signal placement, boundary clipping, registry.
-- `test_synthetic_injection.py`: Support preservation, untouched background, peak SNR convention, multi-target separation.
-- `test_synthetic_ground_truth.py`: Ground-truth schema serialization, negative control representation, isolation.
-- `test_synthetic_evaluation.py`: IoU calculation, 1-to-1 matching, precision/recall, drift error, toy baseline.
-- `test_synthetic_setigen.py`: Setigen frame generation, canonical slice conversion, negative controls.
+- `test_processing_evaluation.py`: Simulated contamination injection, evaluator metrics, synthetic target preservation.
+- `test_api_processing.py`: End-to-end API processing endpoint, default options, custom transformations, disk immutability.
+- `test_synthetic_generators.py`: Determinism, random seeds, noise statistics, signal placement, boundary clipping.
+- `test_synthetic_injection.py`: Support preservation, untouched background, peak SNR convention.
+- `test_synthetic_ground_truth.py`: Ground-truth schema serialization, negative control representation.
+- `test_synthetic_evaluation.py`: IoU calculation, 1-to-1 matching, precision/recall, drift error.
+- `test_synthetic_setigen.py`: Setigen frame generation, canonical slice conversion.
 - `test_synthetic_benchmark.py`: Suite generation, manifest validity, SHA-256 integrity, tamper detection.
 - `test_synthetic_pipeline.py`: End-to-end integration (generate -> serialize -> reload -> detect -> evaluate).
-- `test_representation_axes.py`: Coordinate axis modeling, ascending Hz calculations, relative seconds, incomplete metadata handling.
-- `test_slice_readers.py`: Filterbank memory-mapped bounded reads, FITS section/bintable readers, negative spacing inversion, optical rejection.
-- `test_api_slice.py`: Spectral slice API endpoint, matrix dimensions, coordinate alignment, `MAX_SLICE_CELLS` limits, non-finite NaN/Inf serialization to `null`, source immutability.
-- `test_adapters.py`: Format adapters, signed channel bounds, missing metadata handling, format rejection.
-- `test_storage.py`: SQLite transactions, atomic staging move, collision immunity, persistence across restarts.
+- `test_representation_axes.py`: Coordinate axis modeling, ascending Hz calculations, relative seconds.
+- `test_slice_readers.py`: Filterbank memory-mapped bounded reads, FITS section/bintable readers.
+- `test_api_slice.py`: Spectral slice API endpoint, matrix dimensions, coordinate alignment, `MAX_SLICE_CELLS` limits.
+- `test_adapters.py`: Format adapters, signed channel bounds, missing metadata handling.
+- `test_storage.py`: SQLite transactions, atomic staging move, collision immunity.
 - `test_api_observations.py`: Multipart uploads, size bounds, traversal sanitization, pagination, 404s.
 - `test_config.py`, `test_cors.py`, `test_errors.py`, `test_health.py`: Phase 0 foundation tests.
 

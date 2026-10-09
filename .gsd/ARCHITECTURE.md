@@ -319,6 +319,84 @@ $$\text{Bandwidth} = |\Delta\nu| \cdot N_{\text{chans}}$$
 
 ---
 
+## 9. Doppler Drift & Temporal Analysis Architecture (Backend Phase 6)
+
+```
+                       CANONICAL SLICE / BOUNDED ARRAY
+                        [time_index, frequency_index]
+                                      │
+               ┌──────────────────────┴──────────────────────┐
+               ▼                                             ▼
+     QUALITY MASK FILTERING                       TIME-POWER PROFILE
+   (Exclude RFI / Bad Channels)                (1D Power Moments & MAD)
+               │                                             │
+               ▼                                             │
+     TRAJECTORY EXTRACTION                                   │
+  (Per-time Peak Ridge / Centroid)                           │
+               │                                             │
+        ┌──────┴──────┐                                      │
+        ▼             ▼                                      │
+  PHYSICAL Hz/s  INDEX-SPACE                                 │
+   REGRESSION      FALLBACK                                  │
+  (OLS + SE)    (chan/step)                                  │
+        │             │                                      │
+        └──────┬──────┘                                      │
+               ▼                                             ▼
+     DRIFT FIT RESULT                             TEMPORAL METRICS
+(Rate, SE, R², Residuals)                   (Duration, Coverage, Gaps)
+               │                                             │
+               ├─────────────────────────────────────────────┤
+               │                                             │
+               ▼ (Optional)                                  ▼ (Optional)
+      COHERENT DRIFT SEARCH                        LINEAR DE-DRIFT VIEW
+  (Grid Testing & Peak SNR)                     (Pure-functional Shearing)
+               │                                             │
+               └──────────────────────┬──────────────────────┘
+                                      │
+                                      ▼
+                        CROSS-OBSERVATION RECURRENCE
+                    (Frequency, Epoch, Target Matching)
+                                      │
+                                      ▼
+                               ANALYSIS RESULT
+                        (With Provenance & Disclaimer)
+```
+
+- **Apparent Drift Rate Convention:**
+  - Apparent drift rate is the change in observed frequency per unit elapsed time:
+    $$\dot{f} = \frac{\Delta f}{\Delta t} \quad [\text{Hz/s}]$$
+  - Positive rate indicates increasing observed frequency with increasing elapsed time in the canonical ascending frame.
+  - Disclaimer: apparent drift is topocentric and does not imply a physical extraterrestrial source or complete barycentric Doppler correction.
+- **Trajectory Extraction (`trajectory.py`):**
+  - Identifies per-time frequency coordinates via peak power ridge or local 3-channel centroid refinement.
+  - Filters samples against Phase 4 `QualityMask` and configurable robust SNR threshold ($\text{SNR} \ge 2.5$).
+  - Maps sample indices to physical coordinates ($f_{\text{Hz}}$, $t_{\text{s}}$) using validated axis models.
+- **Linear Drift Estimation (`drift_estimation.py`):**
+  - OLS regression over time-centered coordinates:
+    $$\dot{f} = \frac{\sum_{i=1}^N (t_i - \bar{t})(f_i - \bar{f})}{\sum_{i=1}^N (t_i - \bar{t})^2}$$
+  - Explicit analytical standard error:
+    $$\text{SE}(\dot{f}) = \sqrt{\frac{SS_{\text{res}}}{(N - 2)\sum_{i=1}^N (t_i - \bar{t})^2}}$$
+  - Degenerate/insufficient handling: requires $\ge 3$ valid points for uncertainty; falls back to index-space slope (channels/step) when physical coordinates are unavailable.
+- **Coherent Drift Search (`drift_search.py`):**
+  - Evaluates candidate drift rate hypotheses over a bounded grid $[-10, +10\text{ Hz/s}]$.
+  - Sums sheared rows into 1D profiles and measures peak integrated SNR.
+  - Enforces safety ceilings (`max_hypotheses`) and flags boundary winners honestly (`is_on_boundary`).
+- **Linear De-Drift Operation (`dedrift.py`):**
+  - Non-destructive pure-functional transformation shearing spectral rows by $-\dot{f}\Delta t$ into vertical columns.
+  - Zero circular wraparound: dropped edge energy recorded in `clipped_energy_fraction` and revealed bins padded with `fill_value`.
+  - Raw source observation arrays remain 100% bit-for-bit immutable.
+- **Temporal Characterization (`temporal.py`):**
+  - Quantifies observed active duration, valid sample coverage fraction, persistence fraction above background ($>2.0\sigma$), and max consecutive gap intervals without inferring continuous motion across data gaps.
+- **Cross-Observation Recurrence Analysis (`recurrence.py`):**
+  - Conservative cross-observation event matching requiring explicit frequency tolerances ($\le 500\text{ Hz}$), epoch tracking (MJD/UTC), and astronomical source validation.
+- **Scientific Benchmark Evaluation (`evaluation.py`):**
+  - `DriftAnalysisEvaluator` verifying drift estimation accuracy and recovery rates against Phase 3 synthetic ground truth with zero data leakage.
+- **REST API Integration:**
+  - `POST /api/observations/{observation_id}/analyze-drift` accepting `AnalysisRequestPayload` and returning `AnalysisResponse`.
+- **Scope Boundary:** No candidate ranking, no candidate dossier generation, no CNNs, no automatic ET classification.
+
+---
+
 ## Integration Points
 
 | Integration                | Type           | Purpose                                                             | Configuration                                                 |

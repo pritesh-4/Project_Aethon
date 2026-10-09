@@ -15,12 +15,14 @@ from fastapi import (
     Path as PathParam,
 )
 
+from app.analysis.service import AnalysisService
 from app.core.config import settings as default_settings
 from app.detection.service import DetectionService
 from app.ingestion.exceptions import ObservationNotFoundError
 from app.ingestion.service import IngestionService
 from app.processing.pipeline import ProcessingService
 from app.representation.service import SliceService
+from app.schemas.analysis import AnalysisRequestPayload, AnalysisResponse
 from app.schemas.detection import DetectionRequestPayload, DetectionResponse
 from app.schemas.error import ApiErrorResponse
 from app.schemas.observations import (
@@ -357,3 +359,51 @@ def detect_observation_anomalies(
     )
 
     return DetectionResponse(**result.model_dump())
+
+
+@router.post(
+    "/{observation_id}/analyze-drift",
+    status_code=status.HTTP_200_OK,
+    response_model=AnalysisResponse,
+    summary="Estimate Doppler frequency drift and temporal profile in observation slice",
+    description=(
+        "Executes Phase 6 Doppler drift trajectory extraction, linear regression fitting, "
+        "uncertainty estimation, temporal characterization, and optional hypothesis search / "
+        "de-drift transformation on a bounded canonical observation slice. "
+        "Raw source observations remain strictly immutable."
+    ),
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ApiErrorResponse},
+        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"model": ApiErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ApiErrorResponse},
+    },
+)
+def analyze_observation_drift(
+    request: Request,
+    observation_id: str = PathParam(
+        ...,
+        description="Unique observation identifier UUID",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
+    ),
+    payload: AnalysisRequestPayload | None = None,
+) -> AnalysisResponse:
+    """Run Doppler drift and temporal analysis on a bounded observation slice."""
+    req_payload = payload or AnalysisRequestPayload()
+    slice_service = _get_slice_service(request)
+
+    canonical_slice = slice_service.get_canonical_slice(
+        observation_id=observation_id,
+        time_start=req_payload.time_start,
+        time_stop=req_payload.time_stop,
+        frequency_start=req_payload.frequency_start,
+        frequency_stop=req_payload.frequency_stop,
+    )
+
+    analysis_service = AnalysisService()
+    result = analysis_service.analyze_canonical_slice(
+        slice_obj=canonical_slice,
+        config=req_payload.config,
+        historical_events=req_payload.historical_events,
+    )
+
+    return AnalysisResponse(**result.model_dump())
