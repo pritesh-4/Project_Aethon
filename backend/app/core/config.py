@@ -73,6 +73,28 @@ class Settings(BaseSettings):
         description="Minimum log level for application loggers",
     )
 
+    # Storage and Ingestion
+    data_dir: str = Field(
+        default="data",
+        description="Base directory for application data and storage",
+    )
+    observations_dir: str = Field(
+        default="data/observations",
+        description="Directory for preserved raw astronomical observation files",
+    )
+    temp_upload_dir: str = Field(
+        default="data/tmp",
+        description="Directory for staging in-flight uploads and atomic validation",
+    )
+    db_path: str = Field(
+        default="data/aethon.db",
+        description="Path to SQLite observation metadata database file",
+    )
+    max_upload_size_bytes: int = Field(
+        default=100 * 1024 * 1024,
+        description="Maximum permissible upload size in bytes (default: 100MB)",
+    )
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:

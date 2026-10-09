@@ -51,6 +51,13 @@ junit.xml
 *.swp
 *.swo
 .DS_Store
-Thumbs.db
-
 .ruff_cache
+
+# Local data, storage, and databases
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.tmp
+*.fil
+*.fits

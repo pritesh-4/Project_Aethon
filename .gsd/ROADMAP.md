@@ -57,24 +57,34 @@
 
 ---
 
-### Phase 5: Scientific Ingestion Foundation & Normalized Data Model
+### Phase 5: Scientific Ingestion Foundation & Normalized Data Model (Backend Phase 1)
 
-- **Status:** ⬜ Not Started
-- **Objective:** Establish the Python/FastAPI scientific backend and ingestion layer to parse Breakthrough Listen `.fil` (filterbank) and `.fits` files into a unified spectral format without frontend format dependencies.
-- **Dependencies:** None (foundation of v2.0.0).
+- **Status:** ✅ Complete
+- **Objective:** Establish the Python/FastAPI scientific backend and ingestion layer to parse Breakthrough Listen `.fil` (filterbank) and `.fits` files into a unified scientific observation format with persistent metadata and provenance.
+- **Dependencies:** Phase 0 (Python Backend Foundation).
 - **Implementation Scope:**
-  - Fast-loading Python backend service (`backend/`) using FastAPI, `blimpy`, and `astropy.io.fits`.
-  - Binary header parser extracting RA, Dec, center frequency, bandwidth, time stamps, and channel resolution.
-  - Normalized spectral slice generator producing JSON telemetry + 2D float arrays for spectrogram/waterfall visualization.
-  - Local dataset index with cached sample slices (including Green Bank Telescope recordings).
-- **Non-Goals:** Live telescope streaming; ingesting multi-gigabyte files at runtime without slicing.
-- **Expected Artifacts:** `backend/ingestion/filterbank.py`, `backend/ingestion/fits.py`, `backend/models/observation.py`, test suite with reference `.fil`.
+  - Standalone scientific file ingestion engine (`backend/app/ingestion/`) with modular adapters.
+  - SIGPROC filterbank parsing via `blimpy.Waterfall(..., load_data=False)` extracting channel counts, signed channel spacing (`foff`), reference frequency (`fch1`), sampling interval (`tsamp`), start MJD (`tstart`), source name, telescope ID, and sky coordinates (`src_raj`, `src_dej`).
+  - Radio FITS parsing via `astropy.io.fits.open(..., memmap=True)` with dedicated sub-parsers:
+    - `FitsSpectralImageParser` for 2D/3D/4D spectral image HDUs with WCS frequency/time axes.
+    - `FitsBinTableParser` for PSRFITS/SDFITS `SUBINT` binary tables with `DAT_FREQ`, `TSUBINT`, `DATA`.
+    - Explicit rejection of unsupported non-radio FITS layouts (e.g. optical images) via `UnsupportedFitsLayoutError`.
+  - Canonical Pydantic observation schemas (`ScientificMetadata`, `Provenance`, `ObservationRecordResponse`, `ObservationListResponse`).
+  - Exact frequency coverage edge calculation distinguishing channel centers from channel boundaries.
+  - Safe persistent storage: streaming chunk validation, byte limit enforcement (HTTP 413), SHA-256 calculation, atomic staging move, and persistent SQLite metadata index.
+  - REST endpoints: `POST /api/observations` (multipart upload), `GET /api/observations` (paginated listing), `GET /api/observations/{id}` (record details and provenance).
+  - Automated offline test suite: 42 tests across unit adapters, storage transactions, error branches, and API integration.
+- **Non-Goals:** Anomaly detection, RFI classification, Doppler drift analysis, signal ranking, model training, or candidate generation.
+- **Artifacts:** `backend/app/ingestion/`, `backend/app/storage/`, `backend/app/schemas/observations.py`, `backend/app/api/routes/observations.py`, `backend/tests/test_adapters.py`, `backend/tests/test_storage.py`, `backend/tests/test_api_observations.py`.
 - **Measurable Acceptance Criteria:**
-  - Python tests parse reference `.fil` file in $<150\text{ ms}$.
-  - Extracted header matches Astropy/blimpy reference values with zero loss of coordinate or timestamp precision.
-  - API endpoint `GET /api/observations/{id}/slice` serves normalized float array and metadata.
-- **Verification Method:** `pytest tests/test_ingestion.py` + HTTP curl validation.
-- **Demo Value:** Proves to judges that AETHON operates on real telescope data directly from the Breakthrough Listen archive.
+  - Fast-loading header inspection without loading full multi-gigabyte data matrices into RAM.
+  - Extracted header matches Astropy/blimpy values with zero loss of coordinate or timestamp precision.
+  - Negative channel spacing preserved for descending frequency allocations.
+  - Corrupted, empty, or unsupported files rejected with safe HTTP error codes (400, 413, 422).
+  - Persisted observation records survive application restarts with zero orphan files.
+  - Automated test suite passes with 42/42 tests passing offline.
+- **Verification Method:** `pytest` (42 passing tests) + `ruff check .` (0 errors) + `mypy app` (0 issues).
+- **Demo Value:** Enables researchers and evaluators to upload and index genuine telescope observations directly from the Breakthrough Listen archive.
 
 ---
 
@@ -222,21 +232,22 @@
 
 ## Progress Summary
 
-| Phase        | Title                                                            |   Status    | Target Completion |
-| :----------- | :--------------------------------------------------------------- | :---------: | :---------------- |
-| **Phase 1**  | Foundation & Visual Identity Refoundation                        | ✅ Complete | Milestone 1       |
-| **Phase 2**  | Observation & Discovery Pipelines                                | ✅ Complete | Milestone 1       |
-| **Phase 3**  | Candidate Triage & Digital Research Bench                        | ✅ Complete | Milestone 1       |
-| **Phase 4**  | Chronological Repository & Methodology Publication               | ✅ Complete | Milestone 1       |
-| **Phase 0**  | Python Backend Foundation                                        | ✅ Complete | Milestone 2       |
-| **Phase 5**  | Scientific Ingestion Foundation & Normalized Data Model          | ⬜ Planned  | Milestone 2       |
-| **Phase 6**  | Signal Detection & Candidate Extraction Engine                   | ⬜ Planned  | Milestone 2       |
-| **Phase 7**  | Interactive Doppler Drift & De-Doppler Correction Bench          | ⬜ Planned  | Milestone 2       |
-| **Phase 8**  | Explainable RFI Mitigation & Multi-Cadence Logic                 | ⬜ Planned  | Milestone 2       |
-| **Phase 9**  | Layered ML Anomaly Scoring & Ground-Truth Benchmarks (`setigen`) | ⬜ Planned  | Milestone 2       |
-| **Phase 10** | Cross-Observation Verification & Canonical BLC1 Case Study       | ⬜ Planned  | Milestone 2       |
-| **Phase 11** | Scientific Candidate Dossier & Research PDF Generator            | ⬜ Planned  | Milestone 2       |
-| **Phase 12** | Performance Profiling, Offline Demo Cache & Rehearsed Flow       | ⬜ Planned  | Milestone 2       |
+| Phase       | Title                                                   |   Status    | Target Completion |
+| :---------- | :------------------------------------------------------ | :---------: | :---------------- |
+| **Phase 1** | Foundation & Visual Identity Refoundation               | ✅ Complete | Milestone 1       |
+| **Phase 2** | Observation & Discovery Pipelines                       | ✅ Complete | Milestone 1       |
+| **Phase 3** | Candidate Triage & Digital Research Bench               | ✅ Complete | Milestone 1       |
+| **Phase 4** | Chronological Repository & Methodology Publication      | ✅ Complete | Milestone 1       |
+| **Phase 0** | Python Backend Foundation                               | ✅ Complete | Milestone 2       |
+| **Phase 5** | Scientific Ingestion Foundation & Normalized Data Model | ✅ Complete | Milestone 2       |
+| **Phase 6** | Signal Detection & Candidate Extraction Engine          | ⬜ Planned  | Milestone 2       |
+
+| **Phase 7** | Interactive Doppler Drift & De-Doppler Correction Bench | ⬜ Planned | Milestone 2 |
+| **Phase 8** | Explainable RFI Mitigation & Multi-Cadence Logic | ⬜ Planned | Milestone 2 |
+| **Phase 9** | Layered ML Anomaly Scoring & Ground-Truth Benchmarks (`setigen`) | ⬜ Planned | Milestone 2 |
+| **Phase 10** | Cross-Observation Verification & Canonical BLC1 Case Study | ⬜ Planned | Milestone 2 |
+| **Phase 11** | Scientific Candidate Dossier & Research PDF Generator | ⬜ Planned | Milestone 2 |
+| **Phase 12** | Performance Profiling, Offline Demo Cache & Rehearsed Flow | ⬜ Planned | Milestone 2 |
 
 ---
 

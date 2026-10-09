@@ -3,6 +3,7 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -14,7 +15,9 @@ from app.api.routes import api_router, health
 from app.core.config import Settings
 from app.core.config import settings as default_settings
 from app.core.logging import get_logger, setup_logging
+from app.ingestion.exceptions import IngestionError
 from app.schemas.error import ApiErrorResponse
+from app.storage.repository import ObservationRepository
 
 logger = get_logger("main")
 
@@ -40,6 +43,16 @@ def create_app(custom_settings: Settings | None = None) -> FastAPI:
             app_settings.app_version,
             app_settings.environment,
         )
+        # Ensure observation storage directories and SQLite database are initialized
+        Path(app_settings.observations_dir).mkdir(parents=True, exist_ok=True)
+        Path(app_settings.temp_upload_dir).mkdir(parents=True, exist_ok=True)
+        Path(app_settings.db_path).parent.mkdir(parents=True, exist_ok=True)
+        repo = ObservationRepository(
+            db_path=Path(app_settings.db_path),
+            observations_dir=Path(app_settings.observations_dir),
+        )
+        repo.init_db()
+
         yield
         # Shutdown phase
         logger.info("Shutting down %s", app_settings.app_name)
@@ -100,6 +113,20 @@ def create_app(custom_settings: Settings | None = None) -> FastAPI:
         )
         return JSONResponse(
             status_code=422,
+            content=error_payload.model_dump(mode="json"),
+        )
+
+    @application.exception_handler(IngestionError)
+    async def ingestion_exception_handler(request: Request, exc: IngestionError) -> JSONResponse:
+        error_payload = ApiErrorResponse(
+            message=exc.message,
+            code=exc.code,
+            status=exc.status_code,
+            timestamp=datetime.now(UTC),
+            details=exc.details if exc.details else None,
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
             content=error_payload.model_dump(mode="json"),
         )
 

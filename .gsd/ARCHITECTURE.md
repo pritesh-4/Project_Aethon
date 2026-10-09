@@ -173,6 +173,42 @@ Unlike conventional classifiers constrained by supervised training classes, AETH
 
 ---
 
+## Backend Ingestion & Observation Storage Architecture (Phase 1)
+
+### 1. Ingestion Workflow & Safety Guarantees
+
+- **Streaming Staging:** Multipart uploads stream in 64 KB buffers into a staging directory (`data/tmp/`).
+- **Hard Limit Enforcement:** Bounded byte-counting enforces `max_upload_size_bytes` while streaming; exceeding files are rejected immediately with HTTP 413 `FILE_SIZE_EXCEEDED` and temporary files are purged.
+- **Cryptographic Provenance:** Computes incremental SHA-256 digest over exact source bytes during upload.
+- **Header-Only Ingestion:** Validates binary container headers and metadata dimensions without loading multi-gigabyte time-frequency arrays into memory.
+- **Atomic Move:** Validated files are moved atomically from `data/tmp/` to `data/observations/<uuid>.<ext>`.
+- **Zero Orphan Guarantee:** Failed parsing or database write errors trigger immediate cleanup of staged files; no unindexed orphan files or ghost records remain.
+- **Filesystem Privacy:** Internal paths are never returned in public API payloads.
+
+### 2. Format Adapters
+
+- **FilterbankAdapter (`.fil`):** Uses `blimpy.Waterfall(..., load_data=False)` to extract header keywords (`nchans`, `fch1`, `foff`, `tsamp`, `tstart`, `nbits`, `nifs`, `src_raj`, `src_dej`, `telescope_id`). Handles both increasing (`foff > 0`) and descending (`foff < 0`) frequency channels.
+- **FitsAdapter (`.fits`, `.fit`):** Uses `astropy.io.fits.open(..., memmap=True)` to inspect HDUs:
+  - `FitsSpectralImageParser`: Radio image HDUs (`NAXIS >= 2`) with WCS spectral axes (`FREQ`, `OBSFREQ`, `RESTFREQ`, `TIME`, `UTC`) or radio header parameters (`FCH1`, `FOFF`, `TSAMP`).
+  - `FitsBinTableParser`: Radio binary tables matching PSRFITS/SDFITS (`SUBINT`, `SINGLE DISH`) with `DAT_FREQ`, `TSUBINT`, `DATA`.
+  - Rejection of non-radio layouts (optical images, stellar catalogs) with HTTP 422 `UNSUPPORTED_FITS_LAYOUT`.
+
+### 3. Scientific Frequency Coverage Calculation
+
+Frequency coverage boundaries are derived from physical channel edges:
+$$\nu_{\text{last}} = \nu_{\text{ref}} + (N_{\text{chans}} - 1) \cdot \Delta\nu$$
+$$\nu_{\text{min}} = \min(\nu_{\text{ref}}, \nu_{\text{last}}) - \frac{|\Delta\nu|}{2}$$
+$$\nu_{\text{max}} = \max(\nu_{\text{ref}}, \nu_{\text{last}}) + \frac{|\Delta\nu|}{2}$$
+$$\text{Bandwidth} = |\Delta\nu| \cdot N_{\text{chans}}$$
+
+### 4. Persistence Layer
+
+- SQLite database (`data/aethon.db`) with `WAL` journal mode and indexed `sha256` and `ingested_at`.
+- Canonical Pydantic schemas: `ObservationRecordResponse`, `ScientificMetadata`, `Provenance`, `ObservationListResponse`.
+- Endpoints: `POST /api/observations`, `GET /api/observations`, `GET /api/observations/{id}`.
+
+---
+
 ## Integration Points
 
 | Integration                | Type           | Purpose                                                             | Configuration                                                 |
