@@ -224,6 +224,64 @@ $$\text{Bandwidth} = |\Delta\nu| \cdot N_{\text{chans}}$$
   - JSON-Safe Quality Handling: Serializes non-finite IEEE samples (NaN/Inf) to `null` and populates `DataQualityInfo` flags.
 - **API Endpoint:** `GET /api/observations/{observation_id}/slice` returning validated `SpectralSliceResponse`.
 
+### 6. Synthetic Signal Laboratory & Benchmark Framework (Phase 3)
+
+- **Dedicated Scientific Module (`backend/app/synthetic/`):** Completely decoupled from web routes to enable direct testing, benchmarking, and offline experiment execution.
+- **Reproducible Background Models:**
+  - Independent `numpy.random.default_rng(seed)` (PCG64) ensuring determinism without touching global random state.
+  - Three statistical configurations: Gaussian $\mathcal{N}(\mu, \sigma^2)$, flat DC baseline with linear spectral tilt, and time-varying variance $\sigma(t)$.
+  - Negative controls: uncontaminated background realizations for measuring false alarms.
+- **Extensible Target Signal Generators (`BaseSignalGenerator`):**
+  - Stationary tone: localized channel carrier across active duration $[t_{\text{start}}, t_{\text{stop}})$.
+  - Drifting tone: linear Doppler trajectory $f(t) = f_0 + \dot{f} \cdot \Delta t$ with exact boundary clipping tracking and zero edge-wrapping.
+  - Burst: localized temporal emission with bounded bandwidth.
+  - Broadband emission: contiguous multi-channel emission with boxcar or normalized Gaussian profiles.
+- **Scientifically Explicit Signal Injection:**
+  - Additive model: $V_{\text{combined}} = V_{\text{background}} + \sum S_i$ altering only support cells.
+  - Peak SNR: $\text{SNR}_{\text{peak}} = A_{\text{peak}} / \sigma_{\text{noise}}$.
+  - Ground truth isolation: detector-facing arrays contain zero target labels; ground-truth metadata is strictly recorded in separate manifests.
+- **Setigen Scientific Adapter (`SetigenAdapter`):**
+  - Maps `setigen.Frame` to canonical `values[time_index][frequency_index]` with `TimeAxisModel` and `FrequencyAxisModel`.
+- **Benchmark Packaging & Manifest Integrity:**
+  - Standard 9-observation benchmark suite generated deterministically via CLI (`scripts/generate_synthetic_benchmark.py`).
+  - Cryptographic SHA-256 array hashing and `manifest.json` generation with tamper detection.
+- **Benchmark Evaluator (`BenchmarkEvaluator`):**
+  - 1-to-1 greedy IoU bounding box matching preventing duplicate prediction credit.
+  - Computes precision, recall, F1, mean IoU, per-family metrics, and Doppler drift estimation error ($|\dot{f}_{\text{pred}} - \dot{f}_{\text{gt}}|$).
+  - Validation baseline (`ToyThresholdBaselineDetector`) verifying benchmark machinery.
+
+### 7. Signal Processing and RFI Assessment Engine (Phase 4)
+
+- **Dedicated Scientific Module (`backend/app/processing/`):** Implements a reproducible preprocessing, quality assessment, and RFI indicator pipeline without web framework dependencies.
+- **Distribution-Free Robust Statistics (`statistics.py`):**
+  - Avoids assuming Gaussian noise distributions or fixed backgrounds.
+  - Robust dispersion estimator: Median Absolute Deviation ($\text{MAD} = \text{median}(|x - \text{median}(x)|)$).
+  - Robust scale estimate: $\sigma_{\text{robust}} = 1.4826 \times \text{MAD}$ (normal consistency factor stated as convention).
+  - Modified robust z-scores: $Z_i = \frac{x_i - \text{median}(x)}{\sigma_{\text{robust}}}$, handling zero-dispersion arrays safely.
+  - Channel and time integrations: robust per-channel and per-time-sample medians, MAD, and dispersion profiles over finite unmasked samples.
+- **Multi-Condition Quality Flagging (`quality.py`, `models.py`):**
+  - Container (`QualityMask`) maintaining a primary boolean exclusion mask (`True` = excluded from statistical estimations) alongside independent reason layers (`FlagReason.NON_FINITE`, `FlagReason.SUSPICIOUS_CHANNEL`, `FlagReason.SUSPICIOUS_TIME_SAMPLE`, `FlagReason.LOCAL_OUTLIER`).
+  - Independent conditions coexist without collapsing multiple reasons into a single irreversible decision.
+  - Non-finite IEEE samples (NaN, Inf) automatically tagged with `FlagReason.NON_FINITE`.
+- **Transparent, Evidence-Based RFI Indicators (`backend/app/processing/rfi/`):**
+  - Frequency channel flagger (`channel_flags.py`): Flags channels with modified median z-score $> 4.5$ or sample outlier fraction $> 0.40$ relative to observation robust dispersion.
+  - Time sample flagger (`time_flags.py`): Flags time samples exhibiting broadband integration spikes $> 4.5$ sigma or elevated channel fractions $> 0.40$.
+  - Local outlier flagger (`local_flags.py`): Uses fast 2D moving median filtering (`scipy.ndimage.median_filter`) to identify isolated impulsive spikes $> 5.0$ local MAD sigmas.
+  - Combined assessment (`rfi/__init__.py`): Assembles individual indicator evidence into `RfiAssessmentReport` with scientific disclaimers separating statistical threshold crossings from physical source classifications.
+- **Strict Immutable Observation Guarantee:**
+  - Raw source files and input NumPy matrices are 100% bit-for-bit immutable.
+  - Processing functions make mutation behavior explicit and generate non-destructive derived arrays only when requested.
+- **Controlled, Reproducible Transformations (`transformations.py`, `baseline.py`):**
+  - Baseline estimation methods: `per_channel_median`, `moving_median_2d`, or `none`.
+  - Deterministic transformations: `subtract_channel_background`, `robust_standardization`, and optional `apply_mask_in_output` (which sets flagged cells to `NaN` only in the optional derived matrix).
+  - Transformation ledger: Each step records `step_index`, `operation`, `parameters`, `input_shape`, `output_shape`, and timestamps in `TransformationRecord`.
+- **Synthetic Preprocessing Evaluation Framework (`evaluation.py`):**
+  - `SyntheticContaminationInjector`: Injects clearly labelled simulated interference patterns (broadband bursts, persistent channels, impulse spikes) into test arrays.
+  - `PreprocessingEvaluator`: Quantifies contamination flag rate ($>98\%$), clean background false-flag rate ($<2\%$), raw matrix bitwise preservation ($100\%$), and target signal retention ($100\%$ unmasked) with strict ground-truth separation (flaggers never receive ground-truth masks).
+- **REST Integration:**
+  - `POST /api/observations/{observation_id}/process` accepting `ProcessingRequestPayload` and returning `ProcessedObservationResponse`.
+- **Scope Boundary:** No production anomaly detection, Isolation Forest, CNN training, Doppler drift estimation, or candidate ranking.
+
 ---
 
 ## Integration Points

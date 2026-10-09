@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import numpy as np
 from fastapi import (
     APIRouter,
     File,
@@ -17,11 +18,16 @@ from fastapi import (
 from app.core.config import settings as default_settings
 from app.ingestion.exceptions import ObservationNotFoundError
 from app.ingestion.service import IngestionService
+from app.processing.pipeline import ProcessingService
 from app.representation.service import SliceService
 from app.schemas.error import ApiErrorResponse
 from app.schemas.observations import (
     ObservationListResponse,
     ObservationRecordResponse,
+)
+from app.schemas.processing import (
+    ProcessedObservationResponse,
+    ProcessingRequestPayload,
 )
 from app.schemas.slice import SpectralSliceResponse
 from app.storage.repository import ObservationRepository
@@ -232,4 +238,73 @@ def get_observation_slice(
         time_stop=time_stop,
         frequency_start=frequency_start,
         frequency_stop=frequency_stop,
+    )
+
+
+@router.post(
+    "/{observation_id}/process",
+    status_code=status.HTTP_200_OK,
+    response_model=ProcessedObservationResponse,
+    summary="Process observation slice with quality assessment and RFI indicators",
+    description=(
+        "Executes robust statistical characterization, frequency-channel and time-sample "
+        "RFI indicators, background estimation, and optional reproducible transformations on "
+        "a bounded canonical observation slice. The raw source observation remains immutable."
+    ),
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ApiErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ApiErrorResponse},
+    },
+)
+def process_observation(
+    request: Request,
+    observation_id: str = PathParam(
+        ...,
+        description="Unique observation identifier UUID",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
+    ),
+    payload: ProcessingRequestPayload | None = None,
+) -> ProcessedObservationResponse:
+    """Run processing pipeline on a bounded observation slice."""
+    req_payload = payload or ProcessingRequestPayload()
+    slice_service = _get_slice_service(request)
+
+    canonical_slice = slice_service.get_canonical_slice(
+        observation_id=observation_id,
+        time_start=req_payload.time_start,
+        time_stop=req_payload.time_stop,
+        frequency_start=req_payload.frequency_start,
+        frequency_stop=req_payload.frequency_stop,
+    )
+
+    proc_service = ProcessingService()
+    result = proc_service.process_slice(canonical_slice, config=req_payload.config)
+
+    # Format transformed values if present
+    transformed_list = None
+    if result.transformed_values is not None:
+        transformed_list = [
+            [float(v) if np.isfinite(v) else None for v in row] for row in result.transformed_values
+        ]
+
+    reason_counts = {
+        reason: int(np.count_nonzero(mask))
+        for reason, mask in result.quality_mask.reason_masks.items()
+    }
+
+    return ProcessedObservationResponse(
+        observation_id=observation_id,
+        matrix_shape=list(result.raw_values.shape),
+        statistics=result.statistics,
+        rfi_report=result.rfi_report,
+        primary_mask_flagged_count=result.quality_mask.flagged_count,
+        primary_mask_flagged_fraction=round(result.quality_mask.flagged_fraction, 6),
+        reason_flag_counts=reason_counts,
+        sample_value_semantics=result.sample_value_semantics,
+        sample_value_unit=result.sample_value_unit,
+        has_transformed_values=result.transformed_values is not None,
+        transformed_values=transformed_list,
+        transformation_history=result.transformation_history,
+        pipeline_version=result.pipeline_version,
+        warnings=result.warnings,
     )

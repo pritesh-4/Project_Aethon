@@ -19,6 +19,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "astropy>=6.0.0",
     "blimpy>=2.1.4",
+    "setigen>=2.7.0",
     "setuptools>=68.0,<80",
 ]
 

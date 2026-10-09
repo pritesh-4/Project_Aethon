@@ -11,6 +11,7 @@ from app.representation.exceptions import (
     SliceCellLimitExceededError,
     UnsupportedSliceLayoutError,
 )
+from app.representation.models import CanonicalSlice
 from app.representation.readers.base import BaseSliceReader
 from app.representation.readers.filterbank import FilterbankSliceReader
 from app.representation.readers.fits import FitsSliceReader
@@ -261,4 +262,118 @@ class SliceService:
             data_quality=data_quality,
             provenance=provenance,
             warnings=warnings,
+        )
+
+    def get_canonical_slice(
+        self,
+        observation_id: str,
+        time_start: int | None = None,
+        time_stop: int | None = None,
+        frequency_start: int | None = None,
+        frequency_stop: int | None = None,
+    ) -> CanonicalSlice:
+        """Retrieve bounded canonical spectral slice containing raw 2D numpy matrix."""
+        internal_record = self.repository.get_internal_record(observation_id)
+        if internal_record is None:
+            raise ObservationNotFoundError(observation_id=observation_id)
+
+        metadata = internal_record.metadata
+        n_time = metadata.time_sample_count or 0
+        n_freq = metadata.channel_count or 0
+
+        if n_time <= 0 or n_freq <= 0:
+            raise UnsupportedSliceLayoutError(
+                f"Observation '{observation_id}' invalid dimensions (t={n_time}, f={n_freq})."
+            )
+
+        t_start = 0 if time_start is None else time_start
+        t_stop = min(n_time, 64) if time_stop is None else time_stop
+        f_start = 0 if frequency_start is None else frequency_start
+        f_stop = min(n_freq, 256) if frequency_stop is None else frequency_stop
+
+        if t_start < 0 or t_stop < t_start or t_stop > n_time:
+            raise InvalidSliceBoundsError(
+                f"Invalid time bounds [{t_start}, {t_stop}) for total time {n_time}."
+            )
+        if f_start < 0 or f_stop < f_start or f_stop > n_freq:
+            raise InvalidSliceBoundsError(
+                f"Invalid frequency bounds [{f_start}, {f_stop}) for channels {n_freq}."
+            )
+
+        req_cells = (t_stop - t_start) * (f_stop - f_start)
+        if req_cells > self.settings.max_slice_cells:
+            raise SliceCellLimitExceededError(
+                requested_cells=req_cells,
+                max_cells=self.settings.max_slice_cells,
+            )
+
+        file_path = self.repository.get_source_file_path(observation_id)
+        if file_path is None or not file_path.exists():
+            raise ObservationFileNotFoundError(observation_id=observation_id)
+
+        fmt = internal_record.format.lower()
+        if fmt == "fil":
+            reader: BaseSliceReader = self._filterbank_reader
+        elif fmt in ("fits", "fit"):
+            reader = self._fits_reader
+        else:
+            raise UnsupportedSliceLayoutError(f"Unsupported format '{fmt}' for slice extraction.")
+
+        matrix, freq_reversed, reader_backend, reader_warnings = reader.read_slice(
+            file_path=file_path,
+            metadata=metadata,
+            time_start=t_start,
+            time_stop=t_stop,
+            frequency_start=f_start,
+            frequency_stop=f_stop,
+        )
+
+        f_ref_mhz = metadata.frequency_reference_mhz
+        df_mhz = metadata.channel_spacing_mhz
+        if f_ref_mhz is not None and df_mhz is not None:
+            f_ref_hz = f_ref_mhz * 1e6
+            df_hz = df_mhz * 1e6
+            canonical_f0_hz = min(f_ref_hz, f_ref_hz + (n_freq - 1) * df_hz)
+            freq_axis = FrequencyAxisModel(
+                channel_count=n_freq,
+                reference_frequency_hz=canonical_f0_hz,
+                channel_spacing_hz=abs(df_hz),
+                reference_channel_index=0,
+                unit="Hz",
+                source_ordering="descending" if df_hz < 0 else "ascending",
+                is_valid=True,
+            )
+        else:
+            freq_axis = FrequencyAxisModel(channel_count=n_freq, is_valid=False)
+
+        dt_sec = metadata.time_step_seconds
+        if dt_sec is not None and dt_sec > 0:
+            time_axis = TimeAxisModel(
+                sample_count=n_time,
+                sampling_interval_seconds=dt_sec,
+                reference_time_seconds=0.0,
+                start_mjd=metadata.start_mjd,
+                start_time_utc=metadata.start_time_utc,
+                unit="s",
+                is_valid=True,
+            )
+        else:
+            time_axis = TimeAxisModel(sample_count=n_time, is_valid=False)
+
+        return CanonicalSlice(
+            observation_id=observation_id,
+            source_format=internal_record.format,
+            values=matrix,
+            time_axis=time_axis,
+            frequency_axis=freq_axis,
+            time_start=t_start,
+            time_stop=t_stop,
+            frequency_start=f_start,
+            frequency_stop=f_stop,
+            sample_value_semantics="uncalibrated_detector_power",
+            sample_value_unit=None,
+            frequency_axis_reversed=freq_reversed,
+            reader_backend=reader_backend,
+            source_sha256=internal_record.sha256,
+            warnings=list(reader_warnings),
         )

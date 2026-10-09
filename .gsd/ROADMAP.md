@@ -10,10 +10,11 @@
 
 - [x] Offline ingestion and header extraction of Breakthrough Listen `.fil` and `.fits` observations
 - [x] Format-agnostic normalized spectral slice model with complete provenance
+- [x] Controlled `setigen` synthetic signal injection & parameter recovery benchmark mode
+- [x] Signal preprocessing, robust distribution-free statistics & RFI quality assessment layer (Phase 4)
 - [ ] Interactive Doppler drift rate estimation and real-time de-Doppler correction bench
 - [ ] Explainable RFI mitigation with multi-cadence (on/off target) rejection logic
 - [ ] Canonical BLC1 (Proxima Centauri) case study with explainable terrestrial RFI disposition
-- [ ] Controlled `setigen` synthetic signal injection & parameter recovery benchmark mode
 - [ ] Layered candidate scoring (Physics metrics + Isolation Forest + lightweight CNN)
 - [ ] Publication-grade scientific PDF dossier export with embedded spectral snapshots and metadata
 - [ ] Deterministic, offline-reliable 3-minute technical walkthrough
@@ -115,6 +116,69 @@
   - Automated test suite passes 100% offline (62/62 passing).
 - **Verification Method:** `pytest` (62 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues).
 - **Demo Value:** Provides the dependable scientific data contract that future preprocessing, Doppler correction, and candidate screening engines consume.
+
+---
+
+### Phase 3: Synthetic Signal Laboratory and Benchmark Framework (Backend Phase 3)
+
+- **Status:** ✅ Complete
+- **Objective:** Build a reproducible synthetic radio-signal laboratory capable of generating controlled time-frequency observations, injecting signals with known properties into configurable noise backgrounds, preserving exact ground truth, packaging benchmark datasets, and providing quantitative evaluation metrics without implementing production detectors prematurely.
+- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 / Phase 5 (Ingestion Engine), Phase 2 (Canonical Data Representation).
+- **Implementation Scope:**
+  - Dedicated scientific module (`backend/app/synthetic/`) decoupled from FastAPI routes:
+    - `backgrounds.py`: Configurable statistical noise generators (Gaussian $\mathcal{N}(\mu, \sigma^2)$, flat baseline with spectral slope, time-varying noise $\sigma(t)$) using isolated `numpy.random.default_rng(seed)` (PCG64). True negative controls preserved.
+    - `signals.py`: Extensible signal generators (`BaseSignalGenerator`) for 4 core families: narrowband stationary tone (`stationary_tone`), drifting tone with boundary clipping tracking (`drifting_tone`), finite burst (`burst`), and broadband contiguous emission (`broadband_emission`).
+    - `injection.py`: Non-destructive additive injection ($V_{\text{combined}} = V_{\text{background}} + \sum S_i$) adhering to Peak SNR convention ($\text{SNR}_{\text{peak}} = A_{\text{peak}} / \sigma_{\text{noise}}$) and outputting canonical `CanonicalSlice`.
+    - `ground_truth.py`: Strongly typed ground-truth models (`InjectedSignalGroundTruth`, `ObservationGroundTruth`) preserving trajectories, bounding boxes, parameters, and clipping flags. Strictly separated from observation array `values`.
+    - `setigen_adapter.py`: Isolated adapter mapping `setigen.Frame` to canonical `values[time_index][frequency_index]` with physical axes models.
+    - `dataset.py`: Benchmark packaging suite (`BenchmarkDatasetGenerator`) creating 9-observation standard suites, computing SHA-256 hashes, generating `manifest.json`, and providing `load_benchmark_dataset` with tamper detection.
+    - `evaluation.py`: Quantitative benchmark evaluator (`BenchmarkEvaluator`) with 1-to-1 greedy IoU matching, precision, recall, F1, per-family breakdown, negative-control false alarms, Doppler drift error calculation, and `ToyThresholdBaselineDetector` validation baseline.
+  - CLI generation script: `backend/scripts/generate_synthetic_benchmark.py` (`--output-dir`, `--seed`, `--dataset-id`, `--verify`).
+  - Comprehensive automated test suite: 94 passing tests (32 new synthetic unit, property, and integration tests).
+- **Non-Goals:** Production anomaly detection, RFI classification, Doppler drift estimator, candidate ranking, CNNs, Isolation Forest, or ML training.
+- **Artifacts:** `backend/app/synthetic/`, `backend/scripts/generate_synthetic_benchmark.py`, `backend/tests/test_synthetic_*.py`.
+- **Measurable Acceptance Criteria:**
+  - Deterministic generation: identical seeds yield bit-for-bit identical background and signal arrays.
+  - Support preservation: injection modifies only mathematical support cells; background untouched elsewhere.
+  - Zero ground truth leakage: observation matrices contain no labels or markers.
+  - Standard benchmark suite generated and loaded from disk with 100% SHA-256 verification.
+  - Evaluator correctly assesses true positives, false positives, missed detections, and drift error from supplied estimates.
+  - Automated test suite passes 100% offline (94/94 passing).
+- **Verification Method:** `pytest` (94 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues).
+- **Demo Value:** Enables rigorous scientific calibration and quantitative benchmark reporting for all subsequent anomaly detection, Doppler analysis, and candidate screening modules.
+
+---
+
+### Phase 4: Signal Processing and RFI Assessment (Backend Phase 4)
+
+- **Status:** ✅ Complete
+- **Objective:** Establish a distribution-free, reproducible signal-processing and RFI-assessment pipeline capable of assessing observation quality, estimating background behavior without assuming Gaussian distributions, generating transparent statistical indicators for suspicious channels, time samples, and local outliers, preserving interesting signals, and outputting traceable quality flags and transformation history.
+- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 / Phase 5 (Ingestion Engine), Phase 2 (Canonical Data Representation), Phase 3 (Synthetic Signal Laboratory).
+- **Implementation Scope:**
+  - Dedicated scientific module (`backend/app/processing/`) decoupled from HTTP transport:
+    - `statistics.py`: Distribution-free robust statistical estimators (sample count, finite/non-finite count, median, mean, sample standard deviation, MAD ($\text{median}(|x - \text{median}(x)|)$), robust sigma ($1.4826 \times \text{MAD}$), quantiles (P25, P75), per-channel medians/MAD, per-time integration medians/MAD, and modified z-scores).
+    - `quality.py`: Input validation (2D dimensions, positive sizes, finite checks, resource limit `MAX_PROCESSING_CELLS = 1_048_576`), and `initialize_quality_mask` tagging non-finite samples with `FlagReason.NON_FINITE`.
+    - `rfi/channel_flags.py`: Robust frequency-channel flagger based on channel medians modified z-score (>4.5) and outlier sample fraction (>0.40) relative to observation robust dispersion.
+    - `rfi/time_flags.py`: Robust time-sample flagger detecting broadband power bursts (>4.5 sigma) and elevated channel fractions (>0.40).
+    - `rfi/local_flags.py`: Fast 2D moving median/MAD outlier detector using `scipy.ndimage.median_filter` (>5.0 sigma).
+    - `rfi/__init__.py`: Orchestrates channel, time, and local indicators into an explainable `RfiAssessmentReport` with scientific disclaimers separating evidence from source classifications.
+    - `baseline.py`: Configurable baseline estimation (`per_channel_median`, `moving_median_2d`, or `none`).
+    - `transformations.py`: Optional, reproducible transformations (`subtract_channel_background`, `robust_standardization`, `apply_mask_in_output`) with complete audit ledger (`TransformationRecord`).
+    - `pipeline.py`: Pipeline coordinator (`run_processing_pipeline`) and `ProcessingService`.
+    - `evaluation.py`: Quantitative evaluation framework (`PreprocessingEvaluator` and `SyntheticContaminationInjector`) measuring contamination flag rate, clean false-flag rate, raw matrix preservation, and target signal retention without ground-truth leakage.
+  - REST endpoint: `POST /api/observations/{id}/process` with request/response Pydantic schemas.
+  - Comprehensive automated test suite: 122 passing tests (28 new tests across statistics, quality, RFI flaggers, transformations, evaluation, and REST API).
+- **Non-Goals:** Production anomaly detection, Isolation Forest, CNN training, Doppler drift estimation, candidate ranking, or automatic source classification.
+- **Artifacts:** `backend/app/processing/`, `backend/app/schemas/processing.py`, `backend/tests/test_processing_*.py`, `backend/tests/test_api_processing.py`.
+- **Measurable Acceptance Criteria:**
+  - Raw source file and canonical NumPy array immutability: bit-for-bit identical before and after processing.
+  - Quality mask convention: `QualityMask` maintains primary boolean exclusion mask (`True` = flagged/excluded) alongside independent reason layers (`FlagReason`).
+  - Transparent evidence: all flags document thresholds, parameters, and rationale; no fabricated RFI probabilities.
+  - Signal retention: clean synthetic target signals retain 100% support unmasked in default pipeline; synthetic contamination flagged at >98%; clean noise false-alarm rate <2%.
+  - Memory bounds: strict cell ceiling enforced (`MAX_PROCESSING_CELLS`); chunked/moving-window operations.
+  - Automated test suite passes 100% offline (122/122 passing).
+- **Verification Method:** `pytest` (122 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues) + `npm run check` (0 errors).
+- **Demo Value:** Guarantees clean, traceable, analysis-ready spectral data for all subsequent anomaly detection, Doppler searching, and candidate scoring algorithms while preserving scientific integrity.
 
 ---
 
@@ -270,6 +334,9 @@
 | **Phase 4** | Chronological Repository & Methodology Publication      | ✅ Complete | Milestone 1       |
 | **Phase 0** | Python Backend Foundation                               | ✅ Complete | Milestone 2       |
 | **Phase 5** | Scientific Ingestion Foundation & Normalized Data Model | ✅ Complete | Milestone 2       |
+| **Phase 2** | Canonical Data Representation & Spectral Slices (BE)    | ✅ Complete | Milestone 2       |
+| **Phase 3** | Synthetic Signal Laboratory & Benchmark Framework (BE)  | ✅ Complete | Milestone 2       |
+| **Phase 4** | Signal Processing & RFI Assessment (BE)                 | ✅ Complete | Milestone 2       |
 | **Phase 6** | Signal Detection & Candidate Extraction Engine          | ⬜ Planned  | Milestone 2       |
 
 | **Phase 7** | Interactive Doppler Drift & De-Doppler Correction Bench | ⬜ Planned | Milestone 2 |
