@@ -31,6 +31,32 @@
 
 ## Active Milestone Phases (v2.0.0)
 
+### Phase 0: Python Backend Foundation
+
+- **Status:** ✅ Complete
+- **Objective:** Establish the foundational Python and FastAPI backend service package layout, configuration management, structured logging, local Vite CORS support, unified error reporting, and automated health test suite.
+- **Dependencies:** None (foundational infrastructure preceding Phase 5).
+- **Implementation Scope:**
+  - Dedicated `backend/` directory with standard package layout (`backend/app/{core,api,schemas}`).
+  - Pydantic Settings configuration (`app/core/config.py`) and documented `.env.example`.
+  - Structured application logging without credential leakage (`app/core/logging.py`).
+  - Unified error handling conforming to frontend `ApiErrorPayload` (`app/schemas/error.py`).
+  - CORS middleware supporting local Vite development (`http://localhost:5173`).
+  - Stable, lightweight health check endpoints at `GET /health` and `GET /api/health`.
+  - Automated test suite in `backend/tests/` with 14 passing tests.
+- **Non-Goals:** Raw telescope data parsing (Phase 5); ML model training (Phase 9); database layers; live telescope streaming.
+- **Expected Artifacts:** `backend/pyproject.toml`, `backend/app/main.py`, `backend/app/core/config.py`, `backend/app/api/routes/health.py`, `backend/tests/`.
+- **Measurable Acceptance Criteria:**
+  - FastAPI application initializes successfully with title, version, and OpenAPI docs (`/docs`, `/openapi.json`).
+  - `GET /health` returns HTTP 200 with valid `HealthStatus` JSON.
+  - CORS preflight OPTIONS requests return valid `Access-Control-Allow-Origin` for local Vite dev.
+  - Invalid configuration options are rejected with predictable `ValidationError`.
+  - Automated test suite passes with zero failures via `pytest`.
+- **Verification Method:** `pytest` (14 passing tests) + empirical HTTP curl/REST requests to live Uvicorn instance.
+- **Demo Value:** Unlocks backend API capabilities for subsequent scientific pipeline and telemetry integration without impacting frontend stability.
+
+---
+
 ### Phase 5: Scientific Ingestion Foundation & Normalized Data Model
 
 - **Status:** ⬜ Not Started
@@ -202,6 +228,7 @@
 | **Phase 2**  | Observation & Discovery Pipelines                                | ✅ Complete | Milestone 1       |
 | **Phase 3**  | Candidate Triage & Digital Research Bench                        | ✅ Complete | Milestone 1       |
 | **Phase 4**  | Chronological Repository & Methodology Publication               | ✅ Complete | Milestone 1       |
+| **Phase 0**  | Python Backend Foundation                                        | ✅ Complete | Milestone 2       |
 | **Phase 5**  | Scientific Ingestion Foundation & Normalized Data Model          | ⬜ Planned  | Milestone 2       |
 | **Phase 6**  | Signal Detection & Candidate Extraction Engine                   | ⬜ Planned  | Milestone 2       |
 | **Phase 7**  | Interactive Doppler Drift & De-Doppler Correction Bench          | ⬜ Planned  | Milestone 2       |

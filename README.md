@@ -316,12 +316,38 @@ To validate strict TypeScript types and compile the optimized production bundle:
 npm run build
 ```
 
+### 6. Start the Python Backend Service
+
+To run the local Python + FastAPI backend service (Phase 0):
+
+```bash
+cd backend
+python -m venv .venv
+
+# Windows (PowerShell)
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Linux / macOS
+source .venv/bin/activate
+pip install -e ".[dev]"
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+The API health check is accessible at `http://127.0.0.1:8000/health`, and interactive API docs are available at `http://127.0.0.1:8000/docs`.
+
 ---
 
 ## 12. Project Directory Structure
 
 ```
 Aethon/
+├── backend/                    # Python FastAPI backend service (HTTP API, config, tests)
+│   ├── app/                    # Application package (main, core, api, schemas)
+│   ├── tests/                  # Automated test suite (health, config, CORS, error handling)
+│   ├── pyproject.toml          # Python package specification and test configuration
+│   └── README.md               # Backend architectural boundary & usage guide
 ├── public/                     # Static observatory assets and favicons
 ├── src/
 │   ├── app/
@@ -423,17 +449,26 @@ Commit Allowed / Blocked               npm run lint (ESLint code correctness)
 - **ESLint:** Code correctness, React 19 hooks verification, and dead-code detection.
 - **TypeScript (`tsc -b`):** Full static type checking in strict mode across project references.
 - **Husky + lint-staged:** Fast local pre-commit gate that formats staged files and blocks commits with lint errors.
-- **GitHub Actions:** Authoritative cloud CI runner enforcing all quality checks before code can be merged into `main`.
+- **GitHub Actions:** Cloud CI runner enforcing all quality checks before code can be merged into `main`:
+  - **Frontend CI (`.github/workflows/ci.yml`):** ESLint, Prettier, TypeScript, and Vite build compilation.
+  - **Backend CI (`.github/workflows/backend-ci.yml`):** Ruff lint/format, Mypy type checking, Pytest suite, and FastAPI smoke test.
 
 ### Quality Gate Commands
 
 ```bash
+# Frontend Quality Gate
 npm run format          # Automatically format all files with Prettier
 npm run format:check    # Verify compliance with Prettier formatting rules
 npm run lint            # Run ESLint across codebase
 npm run typecheck       # Perform strict TypeScript typecheck
 npm run build           # Verify production build compilation
 npm run check           # Run complete multi-step quality gate locally
+
+# Backend Quality Gate (from backend/ directory with .venv active)
+ruff check .            # Check Python code style and errors
+ruff format --check .   # Verify Python code formatting
+mypy app                # Strict static type check
+pytest -v               # Run complete automated test suite
 ```
 
 ---

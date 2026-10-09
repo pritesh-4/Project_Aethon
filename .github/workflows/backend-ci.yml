@@ -1,0 +1,66 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-ci:
+    name: Backend CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e .
+
+      - name: Check code formatting (Ruff)
+        run: ruff format --check .
+
+      - name: Lint codebase (Ruff)
+        run: ruff check .
+
+      - name: Static type checking (Mypy)
+        run: mypy app
+
+      - name: Run automated tests (Pytest)
+        run: python -m pytest -v --junitxml=junit.xml
+
+      - name: Import and application smoke test
+        run: |
+          python -c "from app.main import create_app; from fastapi.testclient import TestClient; client = TestClient(create_app()); res = client.get('/health'); assert res.status_code == 200 and res.json()['status'] == 'healthy'; print('Smoke test passed:', res.json())"
