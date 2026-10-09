@@ -16,10 +16,12 @@ from fastapi import (
 )
 
 from app.core.config import settings as default_settings
+from app.detection.service import DetectionService
 from app.ingestion.exceptions import ObservationNotFoundError
 from app.ingestion.service import IngestionService
 from app.processing.pipeline import ProcessingService
 from app.representation.service import SliceService
+from app.schemas.detection import DetectionRequestPayload, DetectionResponse
 from app.schemas.error import ApiErrorResponse
 from app.schemas.observations import (
     ObservationListResponse,
@@ -308,3 +310,50 @@ def process_observation(
         pipeline_version=result.pipeline_version,
         warnings=result.warnings,
     )
+
+
+@router.post(
+    "/{observation_id}/detect",
+    status_code=status.HTTP_200_OK,
+    response_model=DetectionResponse,
+    summary="Detect anomalous time-frequency regions in observation slice",
+    description=(
+        "Executes Phase 5 scientific anomaly detection (robust statistical baseline "
+        "and unsupervised Isolation Forest) on a bounded canonical observation slice. "
+        "Returns traceable evidence, anomaly scores, and bounding boxes. "
+        "Raw source observations remain strictly immutable."
+    ),
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ApiErrorResponse},
+        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"model": ApiErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ApiErrorResponse},
+    },
+)
+def detect_observation_anomalies(
+    request: Request,
+    observation_id: str = PathParam(
+        ...,
+        description="Unique observation identifier UUID",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
+    ),
+    payload: DetectionRequestPayload | None = None,
+) -> DetectionResponse:
+    """Run anomaly detection pipeline on a bounded observation slice."""
+    req_payload = payload or DetectionRequestPayload()
+    slice_service = _get_slice_service(request)
+
+    canonical_slice = slice_service.get_canonical_slice(
+        observation_id=observation_id,
+        time_start=req_payload.time_start,
+        time_stop=req_payload.time_stop,
+        frequency_start=req_payload.frequency_start,
+        frequency_stop=req_payload.frequency_stop,
+    )
+
+    det_service = DetectionService()
+    result = det_service.analyze_canonical_slice(
+        slice_obj=canonical_slice,
+        config=req_payload.config,
+    )
+
+    return DetectionResponse(**result.model_dump())

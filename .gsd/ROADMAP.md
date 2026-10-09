@@ -2,7 +2,7 @@
 
 > **Current Milestone:** v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine  
 > **Goal:** Ingest real Breakthrough Listen observations, perform interactive Doppler drift & de-Doppler correction, mitigate RFI via explainable cadence logic, score candidates with layered models, and export research-grade scientific PDF dossiers for a flawless 3-minute technical demonstration.  
-> **Status:** Active · Ready for Phase 5 Planning
+> **Status:** Active · Phase 5 Complete · Ready for Phase 6 Planning
 
 ---
 
@@ -12,6 +12,7 @@
 - [x] Format-agnostic normalized spectral slice model with complete provenance
 - [x] Controlled `setigen` synthetic signal injection & parameter recovery benchmark mode
 - [x] Signal preprocessing, robust distribution-free statistics & RFI quality assessment layer (Phase 4)
+- [x] Scientific anomaly detection engine (statistical baseline & unsupervised Isolation Forest) (Phase 5)
 - [ ] Interactive Doppler drift rate estimation and real-time de-Doppler correction bench
 - [ ] Explainable RFI mitigation with multi-cadence (on/off target) rejection logic
 - [ ] Canonical BLC1 (Proxima Centauri) case study with explainable terrestrial RFI disposition
@@ -179,6 +180,39 @@
   - Automated test suite passes 100% offline (122/122 passing).
 - **Verification Method:** `pytest` (122 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues) + `npm run check` (0 errors).
 - **Demo Value:** Guarantees clean, traceable, analysis-ready spectral data for all subsequent anomaly detection, Doppler searching, and candidate scoring algorithms while preserving scientific integrity.
+
+---
+
+### Phase 5: Scientific Anomaly Detection Engine (Backend Phase 5)
+
+- **Status:** ✅ Complete
+- **Objective:** Implement a reproducible, distribution-free anomaly-detection engine that partitions time-frequency observations into bounded analysis regions, extracts documented numerical features, establishes a transparent statistical baseline, fits an unsupervised Isolation Forest detector with strict data-leakage prevention, outputs traceable evidence, and evaluates both detectors against controlled Phase 3 synthetic benchmarks.
+- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 / Phase 5 (Ingestion Engine), Phase 2 (Canonical Data Representation), Phase 3 (Synthetic Signal Laboratory), Phase 4 (Signal Processing and RFI Assessment).
+- **Implementation Scope:**
+  - Dedicated scientific detection module (`backend/app/detection/`) decoupled from HTTP controllers:
+    - `exceptions.py`: Domain exceptions (`DetectionError`, `InvalidDetectionConfigError`, `EmptyAnalysisRegionError`, `ModelNotFittedError`, `DetectionDimensionLimitExceededError`, `InvalidModelArtifactError`).
+    - `config.py`: Validated Pydantic models (`WindowConfig`, `StatisticalBaselineConfig`, `IsolationForestConfig`, `DetectionPipelineConfig`).
+    - `schemas.py`: Data models (`AnalysisWindow`, `DetectionEvidence`, `AnomalousRegion`, `MergedRegion`, `DetectionResult`) and `SCIENTIFIC_DETECTION_DISCLAIMER`.
+    - `features.py`: Schema v1.0.0 with 11 distribution-free numerical features (intensity, frequency-distribution, and temporal moments) protected against zero dispersion.
+    - `windows.py`: Zero-copy window partitioning with physical coordinates (`time_center_s`, `freq_center_hz`, `bandwidth_hz`), sample validity thresholds, and safety ceilings (`max_windows`).
+    - `baseline.py`: Transparent statistical baseline detector computing modified z-scores ($Z_{i, j}$) against reference window ensembles with deterministic top-feature rationale.
+    - `isolation_forest.py`: Unsupervised Isolation Forest detector (`scikit-learn>=1.4.0`) with robust scaling fitted strictly on reference data, inverted score direction ($\text{anomaly\_score} = -\text{decision\_function}(X)$), deterministic `random_state`, and verified `.joblib` model persistence.
+    - `regions.py`: Connected-component spatial merging consolidating overlapping/contiguous anomalous windows into unified bounding boxes (`MergedRegion`).
+    - `service.py`: Pipeline coordinator (`DetectionService`) executable directly from Python.
+    - `evaluation.py`: Quantitative benchmark evaluator (`DetectionBenchmarkEvaluator`) with observation-level split isolation, precision, recall, F1, and signal family breakdown.
+  - REST API endpoint: `POST /api/observations/{id}/detect` supporting bounded coordinates and pipeline configuration.
+  - Comprehensive automated test suite: 145 passing tests (23 new tests across features, baseline, Isolation Forest, service, regions, evaluation, and REST API).
+- **Non-Goals:** Production Doppler drift estimation, de-Doppler correction, candidate ranking, CNN training, or claims of extraterrestrial intelligence.
+- **Artifacts:** `backend/app/detection/`, `backend/app/schemas/detection.py`, `backend/tests/test_detection_*.py`, `backend/tests/test_api_detection.py`.
+- **Measurable Acceptance Criteria:**
+  - Zero-copy window slicing: large matrices processed without full-array duplications.
+  - Transparent scores: higher displayed scores strictly indicate greater anomaly.
+  - Leakage prevention: models fitted exclusively on reference observations; zero ground truth exposed to detectors.
+  - High recall on strong synthetic targets (>95% recall for SNR $\ge 15$), low false-positive rate on noise controls (<5%).
+  - Safe model persistence: artifacts verified against magic headers and schema versions.
+  - Automated test suite passes 100% offline (145/145 passing).
+- **Verification Method:** `pytest` (145 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues) + `npm run check` (0 errors).
+- **Demo Value:** Unlocks automated discovery of unusual candidate signals across radio observations with interpretable evidence and verified false-positive bounds.
 
 ---
 

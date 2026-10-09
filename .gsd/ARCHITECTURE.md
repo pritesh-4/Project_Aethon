@@ -282,6 +282,41 @@ $$\text{Bandwidth} = |\Delta\nu| \cdot N_{\text{chans}}$$
   - `POST /api/observations/{observation_id}/process` accepting `ProcessingRequestPayload` and returning `ProcessedObservationResponse`.
 - **Scope Boundary:** No production anomaly detection, Isolation Forest, CNN training, Doppler drift estimation, or candidate ranking.
 
+### 8. Scientific Anomaly Detection Engine (Phase 5)
+
+- **Dedicated Scientific Detection Module (`backend/app/detection/`):** Implements an interpretable anomaly detection engine without web framework dependencies.
+- **Analysis Window Partitioning (`windows.py`):**
+  - Configurable 2D window geometry (`time_size`, `freq_size`, `time_stride`, `freq_stride`).
+  - Zero-copy view slicing over canonical `values[time_index, freq_index]` arrays.
+  - Aligned physical coordinates: `time_center_s`, `time_span_s`, `freq_center_hz`, `bandwidth_hz`.
+  - Sample validity safeguards: windows below `min_valid_sample_fraction` receive quality warnings.
+  - Dimension limit safety enforcement via `MAX_TOTAL_WINDOWS` (50,000) ceiling.
+- **Numerical Feature Extraction (`features.py`):**
+  - Stable Feature Schema v1.0.0 with 11 distribution-free numerical descriptors.
+  - Intensity features: `median_level`, `mad_dispersion`, `robust_sigma`, `iqr_range`, `upper_quantile_contrast`, `peak_snr`, `elevated_sample_fraction`.
+  - Spectral features: `channel_peak_contrast`, `narrowband_concentration`.
+  - Temporal features: `temporal_persistence`, `temporal_variability`.
+  - Zero-dispersion and non-finite sample safety protection.
+- **Statistical Baseline Detector (`baseline.py`):**
+  - Computes modified robust z-scores ($Z_{i, j} = |X_{i, j} - M_j| / \sigma_j$) against reference window ensembles.
+  - Aggregation methods: `robust_mean` or `max`.
+  - Explainable evidence records documenting top contributing feature and decision rationale.
+- **Unsupervised Isolation Forest Detector (`isolation_forest.py`):**
+  - Wraps `sklearn.ensemble.IsolationForest` with deterministic `random_state`.
+  - Inverted public score convention: $\text{anomaly\_score} = - \text{decision\_function}(X)$ where higher score strictly indicates greater anomaly.
+  - Data leakage prevention: robust scaling parameters fitted strictly on reference data and frozen.
+  - Safe persistence: verifies `.joblib` artifacts against magic headers and schema versions.
+- **Spatial Bounding Box Merging (`regions.py`):**
+  - Consolidates contiguous or overlapping anomalous windows via connected-component analysis into `MergedRegion`.
+  - Preserves complete contributing window ID lineages.
+- **Benchmark Evaluation Framework (`evaluation.py`):**
+  - `DetectionBenchmarkEvaluator` evaluating detectors on held-out Phase 3 synthetic benchmarks.
+  - Observation-level split isolation: reference controls for fitting, held-out observations for evaluation.
+  - Metrics: target recall, window precision, window recall, window F1, observation detection rate, noise-only false positive rate, and signal family breakdown.
+- **REST Integration:**
+  - `POST /api/observations/{observation_id}/detect` accepting `DetectionRequestPayload` and returning `DetectionResponse`.
+- **Scope Boundary:** No production Doppler drift estimation, de-Doppler correction, candidate ranking, CNN training, or claims of extraterrestrial intelligence.
+
 ---
 
 ## Integration Points

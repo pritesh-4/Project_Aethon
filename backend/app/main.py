@@ -15,6 +15,7 @@ from app.api.routes import api_router, health
 from app.core.config import Settings
 from app.core.config import settings as default_settings
 from app.core.logging import get_logger, setup_logging
+from app.detection.exceptions import DetectionError
 from app.ingestion.exceptions import IngestionError
 from app.representation.exceptions import RepresentationError
 from app.schemas.error import ApiErrorResponse
@@ -90,7 +91,7 @@ def create_app(custom_settings: Settings | None = None) -> FastAPI:
     @application.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         error_payload = ApiErrorResponse(
-            message=str(exc.detail),
+            message=exc.detail,
             code=f"HTTP_{exc.status_code}",
             status=exc.status_code,
             timestamp=datetime.now(UTC),
@@ -135,6 +136,20 @@ def create_app(custom_settings: Settings | None = None) -> FastAPI:
     async def representation_exception_handler(
         request: Request, exc: RepresentationError
     ) -> JSONResponse:
+        error_payload = ApiErrorResponse(
+            message=exc.message,
+            code=exc.code,
+            status=exc.status_code,
+            timestamp=datetime.now(UTC),
+            details=exc.details if exc.details else None,
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=error_payload.model_dump(mode="json"),
+        )
+
+    @application.exception_handler(DetectionError)
+    async def detection_exception_handler(request: Request, exc: DetectionError) -> JSONResponse:
         error_payload = ApiErrorResponse(
             message=exc.message,
             code=exc.code,

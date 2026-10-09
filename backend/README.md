@@ -44,6 +44,15 @@ A specialized Python + FastAPI backend service for the AETHON radio-astronomy di
   - Synthetic evaluation framework (`PreprocessingEvaluator`, `SyntheticContaminationInjector`): quantifies contamination flag rate, clean background false alarms, and target signal retention without ground-truth leakage.
   - Public REST API endpoint: `POST /api/observations/{id}/process`.
   - Strict scope boundary: no production anomaly detection, Isolation Forest, CNN training, Doppler drift estimation, or candidate ranking.
+- **Phase 5 (Scientific Anomaly Detection Engine):**
+  - Partitioning observations into bounded time-frequency analysis windows without massive full-array memory copying.
+  - 11 interpretable, distribution-free numerical features (intensity, frequency-distribution, temporal moments) under schema v1.0.0.
+  - Transparent statistical baseline detector scoring modified z-scores ($Z_{i, j} = |X_{i, j} - M_j| / \sigma_j$) against in-situ or external reference window ensembles.
+  - Unsupervised Isolation Forest detector (`scikit-learn>=1.4.0`) with robust scaling fitted strictly on reference data, inverted score direction ($\text{anomaly\_score} = -\text{decision\_function}(X)$), deterministic `random_state`, and verified `.joblib` model artifact serialization.
+  - Deterministic spatial grouping and connected-component bounding box merging (`merge_anomalous_windows`).
+  - Strict evaluation framework (`DetectionBenchmarkEvaluator`) measuring precision, recall, F1, observation detection rate, and noise false alarms against Phase 3 synthetic ground truth with strict train/test split isolation.
+  - Public REST API endpoint: `POST /api/observations/{id}/detect`.
+  - Strict scope boundary: no production Doppler drift estimation, de-Doppler correction, candidate ranking, CNNs, or claims of extraterrestrial intelligence.
 - **Frontend Boundary:** The backend runs independently on port `8000` and communicates with the React + Vite frontend (`http://localhost:5173`) through the `/api` route prefix.
 
 ---
@@ -398,6 +407,118 @@ Evaluates algorithm predictions (`CandidatePrediction`) against exact ground tru
 - **Per-Family Breakdown:** Granular recall and mean IoU reported per signal family.
 - **Doppler Drift Error Metric:** Evaluates $|\dot{f}_{\text{pred}} - \dot{f}_{\text{gt}}|$ for matched drifting tones.
 - **Validation Baseline (`ToyThresholdBaselineDetector`):** Simple threshold-crossing detector used strictly to verify benchmark and evaluator functionality (not a production detector).
+
+---
+
+## Phase 5: Scientific Anomaly Detection Engine
+
+The anomaly detection engine (`app.detection`) discovers unusual time-frequency regions without assuming prior templates or labelled signal classes.
+
+### 1. Analysis Window Geometry & Coordinates
+
+Observations are partitioned into bounded 2D analysis windows (`AnalysisWindow`):
+
+- Canonical shape: `values[time_index, freq_index]`.
+- Configurable window dimensions: `time_size` (default 16), `freq_size` (default 16).
+- Strides: `time_stride` (default 8), `freq_stride` (default 8) ensuring $50\%$ overlap.
+- Zero-copy views: sub-matrices are sliced directly without full-array allocations.
+- Physical coordinates computed using `TimeAxisModel` and `FrequencyAxisModel`:
+  - `time_center_s`: physical midpoint timestamp in seconds from observation start.
+  - `freq_center_hz`: physical channel center frequency in Hz.
+  - `bandwidth_hz`: window physical bandwidth span in Hz.
+- Quality filtering: windows falling below `min_valid_sample_fraction` (default 0.5) receive explicit warnings.
+
+### 2. Numerical Feature Extraction (Schema v1.0.0)
+
+For each analysis window, 11 distribution-free numerical features are extracted:
+
+| Feature Name               | Category  | Mathematical Definition / Meaning                                                           |
+| :------------------------- | :-------- | :------------------------------------------------------------------------------------------ |
+| `median_level`             | Intensity | $\text{median}(V_{\text{valid}})$                                                           |
+| `mad_dispersion`           | Intensity | $\text{median}(\|V_{\text{valid}} - \text{median}(V_{\text{valid}})\|)$                     |
+| `robust_sigma`             | Intensity | $1.4826 \times \text{MAD}$ (normal-consistent dispersion)                                   |
+| `iqr_range`                | Intensity | $P_{75} - P_{25}$ (interquartile range)                                                     |
+| `upper_quantile_contrast`  | Intensity | $(P_{95} - \text{median}) / \max(10^{-12}, \sigma_{\text{robust}})$                         |
+| `peak_snr`                 | Intensity | $(V_{\max} - \text{median}) / \max(10^{-12}, \sigma_{\text{robust}})$                       |
+| `elevated_sample_fraction` | Intensity | Fraction of samples exceeding $\text{median} + 3\sigma_{\text{robust}}$                     |
+| `channel_peak_contrast`    | Spectral  | $(\max_f \text{median}_t(V_{t, f}) - \text{median}) / \sigma_{\text{robust}}$               |
+| `narrowband_concentration` | Spectral  | Power in peak channel divided by total positive energy in window                            |
+| `temporal_persistence`     | Temporal  | In peak channel, fraction of time steps exceeding $\text{median} + 2\sigma_{\text{robust}}$ |
+| `temporal_variability`     | Temporal  | MAD of channel-integrated time series divided by median level                               |
+
+### 3. Statistical Baseline Detector
+
+Identifies windows exhibiting significant deviation from reference feature distributions:
+
+- Modified robust z-scores per feature $j$:
+  $$Z_{i, j} = \frac{|X_{i, j} - M_j|}{\max(10^{-12}, 1.4826 \cdot \text{MAD}_j)}$$
+- Aggregation methods:
+  - `robust_mean`: Composite score $S_i = \frac{1}{D} \sum_{j=1}^D Z_{i, j}$.
+  - `max`: Composite score $S_i = \max_j Z_{i, j}$.
+- Decision rule: $\text{is\_anomalous} = (S_i \ge \text{mad\_threshold})$ (default 4.0).
+- Evidence returned: `DetectionEvidence` documenting top contributing feature, rationale, and parameters.
+
+### 4. Unsupervised Isolation Forest Detector
+
+Tree-based outlier detector wrapping `sklearn.ensemble.IsolationForest`:
+
+- **Score Inversion:** scikit-learn outputs negative values for outliers. To enforce our public convention where **higher score strictly indicates greater anomaly**, scores are transformed:
+  $$\text{anomaly\_score} = - \text{decision\_function}(X)$$
+- **Safe Thresholding:** Under default contamination calibration, decision boundary is $\text{threshold} = 0.0$.
+- **Leakage Prevention:** Robust median/IQR scaling parameters are fitted strictly on the reference/training set and frozen. Evaluation features are scaled using reference parameters.
+- **Persistence:** Models serialize to `.joblib` with verification envelope (`magic`, `feature_schema_version`, scikit-learn version). Unverified or corrupted files are rejected via `InvalidModelArtifactError`.
+
+### 5. Deterministic Region Merging
+
+When `merge_overlapping_regions=True`, contiguous or intersecting anomalous windows are consolidated via connected-component analysis into bounding boxes (`MergedRegion`):
+
+- All contributing `window_id`s preserved.
+- Max and mean anomaly scores computed.
+- Physical coordinates and bandwidth calculated for merged bounding box.
+
+### 6. Synthetic Benchmark Evaluation
+
+`DetectionBenchmarkEvaluator` compares detector outputs against Phase 3 `ObservationGroundTruth`:
+
+- Strict observation-level splits: Reference set (negative controls) for fitting; separate held-out set (positives + negative controls) for evaluation.
+- No ground-truth leakage: models never see injection coordinates or labels during fitting.
+- Metrics reported:
+  - Target recall, window precision, window recall, window F1.
+  - Observation-level detection rate on positive observations.
+  - Noise false-alarm rate on negative control observations.
+  - Granular breakdown by signal family (`stationary_tone`, `drifting_tone`, `burst`, `broadband`) and SNR range.
+
+### 7. REST API Endpoint
+
+`POST /api/observations/{id}/detect` accepts bounded coordinate ranges and configuration:
+
+```json
+{
+  "time_start": 0,
+  "time_stop": 64,
+  "frequency_start": 100,
+  "frequency_stop": 228,
+  "config": {
+    "window": {
+      "time_size": 16,
+      "freq_size": 16,
+      "time_stride": 8,
+      "freq_stride": 8
+    },
+    "baseline": {
+      "enabled": true,
+      "mad_threshold": 4.0,
+      "aggregation": "robust_mean"
+    },
+    "isolation_forest": {
+      "enabled": true,
+      "contamination": 0.05,
+      "random_state": 42
+    },
+    "merge_overlapping_regions": true
+  }
+}
+```
 
 ---
 
