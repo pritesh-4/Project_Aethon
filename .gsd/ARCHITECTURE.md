@@ -397,6 +397,44 @@ $$\text{Bandwidth} = |\Delta\nu| \cdot N_{\text{chans}}$$
 
 ---
 
+## 10. Candidate Engine, Evidence Aggregation & Scientific Case Files (`backend/app/candidates/`)
+
+Implemented in **Phase 7** as the transparent triage and review bridge connecting detection, processing, and drift modules into verifiable candidate entities:
+
+- **Domain Separation:**
+  - `Observation`: Original scientific radio dataset and metadata.
+  - `Processing Run`: Quality assessment and statistical RFI mask generation.
+  - `Detection`: Window-level statistical/unsupervised anomaly detection.
+  - `Analysis Result`: Frequency trajectory, drift rate, and temporal characterization.
+  - `Candidate`: Persistent aggregate entity grouping related detections for scientific investigation.
+  - `Candidate Assessment`: Versioned application of a documented triage scoring policy.
+  - `Review Record`: Immutable audit log of a human or authorized workflow status transition.
+  - `Candidate Dossier`: Exportable snapshot case file compiling evidence, calculations, limitations, and reproducibility metadata.
+- **Candidate Data Model (`schemas.py`):**
+  - Stable IDs (`cand_<uuid>`), bounding region (`time_start`, `time_stop`, `freq_start`, `freq_stop`), physical coordinates, status lifecycle, contributing detections, and immutable evidence items.
+- **Eligibility Engine (`eligibility.py`):**
+  - Verifies observation identity, non-negative bounds, chronological order, non-zero valid samples, and flagged cell fractions ($\le 95\%$). Permits partially contaminated regions without automatic veto.
+- **De-duplication & 2D Bounding-Box Grouping (`grouping.py`):**
+  - Prevents candidate fragmentation across overlapping detector windows using 2D IoU ($\ge 0.20$) or spatial index proximity ($\le 4$ time steps, $\le 4$ channels). Expands bounding box and updates timestamps deterministically.
+- **Evidence Ledger (`evidence.py`):**
+  - Normalizes detection outputs, RFI assessment reports, and Doppler analysis results into immutable `EvidenceItem` records with provenance, parameters, and diagnostic notes.
+- **Transparent Scoring Heuristics (`scoring.py`):**
+  - Documented operational priority score $[0.0, 100.0]$:
+    $$\text{Priority Score} = S_{\text{anomaly}} (35\%) + S_{\text{drift}} (25\%) + S_{\text{temporal}} (20\%) + S_{\text{quality}} (20\%) + \text{Bonus}_{\text{recurrence}} (+10\%)$$
+  - Evaluates detector disagreement ($|\Delta \text{score}| > 0.40$), handles missing evidence without assuming arbitrary defaults, and assigns priority bands (`low`, `moderate`, `high`, `exceptional`).
+- **Human-in-the-Loop Review Lifecycle (`review.py`):**
+  - State machine enforcing valid transitions: `unreviewed` $\rightarrow$ `under_review` $\rightarrow$ `needs_more_data` $\rightarrow$ `interesting` $\rightarrow$ `likely_interference` $\rightarrow$ `dismissed`.
+  - Appends immutable audit records (`ReviewRecord`) recording timestamps, reviewer ID, rationale, and transition history.
+- **Structured JSON Dossiers (`dossier.py`):**
+  - Assembles reproducible case file snapshots with software version frozen manifests (`numpy`, schema version) and scientific disclaimers.
+- **Publication-Grade Vector PDF Generation (`pdf.py`):**
+  - Server-side vector PDF compilation via `matplotlib.backends.backend_pdf.PdfPages` rendering clean 2-page editorial research dossiers with selectable text, diagnostic tables, and zero external binary dependencies.
+- **REST Endpoints (`app/api/routes/candidates.py`):**
+  - `GET /api/candidates`, `POST /api/candidates`, `GET /api/candidates/{id}`, `POST /api/candidates/{id}/assess`, `GET /api/candidates/{id}/dossier`, `GET /api/candidates/{id}/dossier.pdf`, `POST /api/candidates/{id}/review`.
+- **Scope Boundary:** Does not declare astronomical discoveries, retrain models, or claim extraterrestrial origin. Scores are operational triage heuristics.
+
+---
+
 ## Integration Points
 
 | Integration                | Type           | Purpose                                                             | Configuration                                                 |

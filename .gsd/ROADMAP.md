@@ -2,7 +2,7 @@
 
 > **Current Milestone:** v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine  
 > **Goal:** Ingest real Breakthrough Listen observations, perform interactive Doppler drift & de-Doppler correction, mitigate RFI via explainable cadence logic, score candidates with layered models, and export research-grade scientific PDF dossiers for a flawless 3-minute technical demonstration.  
-> **Status:** Active · Phase 5 Complete · Ready for Phase 6 Planning
+> **Status:** Active · Phase 7 Complete · Ready for Phase 8 Planning
 
 ---
 
@@ -13,12 +13,12 @@
 - [x] Controlled `setigen` synthetic signal injection & parameter recovery benchmark mode
 - [x] Signal preprocessing, robust distribution-free statistics & RFI quality assessment layer (Phase 4)
 - [x] Scientific anomaly detection engine (statistical baseline & unsupervised Isolation Forest) (Phase 5)
-- [ ] Interactive Doppler drift rate estimation and real-time de-Doppler correction bench
-- [ ] Explainable RFI mitigation with multi-cadence (on/off target) rejection logic
-- [ ] Canonical BLC1 (Proxima Centauri) case study with explainable terrestrial RFI disposition
-- [ ] Layered candidate scoring (Physics metrics + Isolation Forest + lightweight CNN)
-- [ ] Publication-grade scientific PDF dossier export with embedded spectral snapshots and metadata
-- [ ] Deterministic, offline-reliable 3-minute technical walkthrough
+- [x] Apparent Doppler frequency drift estimation and non-destructive de-Doppler correction (Phase 6)
+- [x] Transparent candidate management, evidence aggregation, and explainable scoring heuristics (Phase 7)
+- [x] Publication-grade scientific PDF dossier export with embedded spectral snapshots and metadata (Phase 7)
+- [ ] Explainable RFI mitigation with multi-cadence (on/off target) rejection logic (Phase 8)
+- [ ] Canonical BLC1 (Proxima Centauri) case study with explainable terrestrial RFI disposition (Phase 8)
+- [ ] Deterministic, offline-reliable 3-minute technical walkthrough (Phase 8)
 
 ---
 
@@ -251,23 +251,35 @@
 
 ---
 
-### Phase 7: Interactive Doppler Drift & De-Doppler Correction Bench
+### Phase 7: Candidate Engine, Evidence Aggregation, and Scientific Case Files
 
-- **Status:** ⬜ Not Started
-- **Objective:** Estimate carrier Doppler drift rates ($Hz/s$) and provide an interactive de-Doppler transformation bench allowing continuous slope adjustment and restacked profile comparison.
-- **Dependencies:** Phase 6 (Candidate Extraction).
+- **Status:** ✅ Complete
+- **Objective:** Establish a transparent, reproducible candidate-management system that combines outputs from detection (Phase 5), data quality/RFI (Phase 4), and Doppler drift/temporal analysis (Phase 6) into traceable, reviewable candidate records; rank them using versioned, explainable heuristics; prevent duplicate fragmentation via 2D IoU/proximity grouping; support an explicit human-review lifecycle; and generate reproducible case files (JSON dossiers) and exportable scientific PDF dossiers.
+- **Dependencies:** Phase 0 (Foundation), Phase 1 (Ingestion), Phase 2 (Representation), Phase 3 (Synthetic Lab), Phase 4 (Processing/RFI), Phase 5 (Anomaly Detection), Phase 6 (Doppler & Temporal Analysis).
 - **Implementation Scope:**
-  - Linear drift rate estimation across time-frequency bins (Hough transform / line fitting / turboSETI drift searching).
-  - De-Doppler shift algorithm that shears/restacks the 2D waterfall matrix by $\Delta f = \dot{f} \cdot \Delta t$.
-  - Interactive UI controls on the Analysis bench (`/analysis/:signalId`): continuous drift slider, uncorrected vs. corrected waterfall side-by-side, and restacked integrated power spectrum.
-- **Non-Goals:** Non-linear relativistic orbital acceleration models.
-- **Expected Artifacts:** `backend/analysis/doppler.py`, `src/pages/Analysis/components/DopplerCorrectionBench.tsx`, `src/lib/doppler-transform.ts`.
+  - Candidate domain boundaries: strict separation of Observation, Processing Run, Detection, Analysis Result, Candidate, Candidate Assessment, Review Record, and Candidate Dossier.
+  - Candidate data model (`app/candidates/schemas.py`) with stable IDs (`cand_<uuid>`), target bounding regions, physical coordinates, immutable evidence ledger, and status machine.
+  - Eligibility engine (`app/candidates/eligibility.py`) enforcing bound sanity, non-zero sample presence, and flagged fraction ceilings without rejecting partially contaminated signals.
+  - Deterministic 2D bounding-box grouping (`app/candidates/grouping.py`) merging duplicate windows via IoU ($\ge 0.20$) or coordinate proximity ($\le 4$ steps, $\le 4$ channels).
+  - Evidence normalization (`app/candidates/evidence.py`) creating uniform `EvidenceItem` records from detection, RFI assessment, and Doppler drift runs.
+  - Explainable scoring heuristic (`app/candidates/scoring.py`): composite operational priority score $[0.0, 100.0]$ with bounded component contributions (35% anomaly, 25% drift coherence, 20% temporal continuity, 20% data quality, +10% recurrence bonus) and explicit missing-evidence reporting.
+  - Human review lifecycle state machine (`app/candidates/review.py`) validating transitions (`unreviewed`, `under_review`, `needs_more_data`, `likely_interference`, `interesting`, `dismissed`) with persistent audit trails.
+  - SQLite WAL repository (`app/candidates/repository.py`) storing candidates, assessments, and review history.
+  - Structured JSON dossier snapshots (`app/candidates/dossier.py`) compiling frozen state with reproducibility appendix (software versions, hashes).
+  - Publication-grade vector PDF export (`app/candidates/pdf.py`) via `matplotlib.backends.backend_pdf.PdfPages` rendering clean 2-page research reports with selectable text, diagnostic tables, and mandatory scientific disclaimers.
+  - REST API endpoints (`app/api/routes/candidates.py`): `GET /api/candidates`, `POST /api/candidates`, `GET /api/candidates/{id}`, `POST /api/candidates/{id}/assess`, `GET /api/candidates/{id}/dossier`, `GET /api/candidates/{id}/dossier.pdf`, `POST /api/candidates/{id}/review`.
+- **Non-Goals:** Automatic declaration of extraterrestrial discovery, new ML classifiers, model retraining, or unauthorized arbitrary file writes.
+- **Artifacts:** `backend/app/candidates/`, `backend/app/schemas/candidates.py`, `backend/app/api/routes/candidates.py`, `backend/tests/test_candidates_*.py`, `backend/tests/test_api_candidates.py`.
 - **Measurable Acceptance Criteria:**
-  - Drift rate estimate matches ground truth within $\pm 0.02\text{ Hz/s}$.
-  - Correcting drift visibly straightens the signal into a vertical column on the Canvas waterfall and increases peak integrated SNR by $\ge 3\text{ dB}$.
-  - Client-side slider updates waterfall in $<16\text{ ms}$ (60 FPS).
-- **Verification Method:** Benchmark script asserting SNR gain after de-Doppler; manual inspection of restacked Canvas visual.
-- **Demo Value:** **Major "Wow" Moment** in the 3-minute demo—judges witness the tilted carrier straighten in real time as the drift is mathematically neutralized.
+  - Candidate records reference verified upstream observations and detections.
+  - 2D bounding-box IoU grouping prevents duplicate candidate fragmentation idempotently.
+  - Missing evidence handled explicitly without assigning arbitrary defaults or zero values.
+  - Candidate assessments preserved historically with versioning.
+  - Review status changes maintain complete audit records (timestamp, reviewer, rationale).
+  - Structured case files and 2-page vector PDFs generated deterministically from frozen snapshots.
+  - Full automated test suite passes 100% offline (193/193 tests passing).
+- **Verification Method:** `pytest` (193 passing tests) + `ruff check .` (0 errors) + `mypy app` (0 issues) + `npm run check` (0 errors).
+- **Demo Value:** Transforms raw algorithmic detections into professional, verifiable scientific case files that researchers and hackathon evaluators can inspect, review, triage, and export as PDF dossiers.
 
 ---
 
@@ -376,25 +388,23 @@
 
 ## Progress Summary
 
-| Phase       | Title                                                   |   Status    | Target Completion |
-| :---------- | :------------------------------------------------------ | :---------: | :---------------- |
-| **Phase 1** | Foundation & Visual Identity Refoundation               | ✅ Complete | Milestone 1       |
-| **Phase 2** | Observation & Discovery Pipelines                       | ✅ Complete | Milestone 1       |
-| **Phase 3** | Candidate Triage & Digital Research Bench               | ✅ Complete | Milestone 1       |
-| **Phase 4** | Chronological Repository & Methodology Publication      | ✅ Complete | Milestone 1       |
-| **Phase 0** | Python Backend Foundation                               | ✅ Complete | Milestone 2       |
-| **Phase 5** | Scientific Ingestion Foundation & Normalized Data Model | ✅ Complete | Milestone 2       |
-| **Phase 2** | Canonical Data Representation & Spectral Slices (BE)    | ✅ Complete | Milestone 2       |
-| **Phase 3** | Synthetic Signal Laboratory & Benchmark Framework (BE)  | ✅ Complete | Milestone 2       |
-| **Phase 4** | Signal Processing & RFI Assessment (BE)                 | ✅ Complete | Milestone 2       |
-| **Phase 6** | Signal Detection & Candidate Extraction Engine          | ⬜ Planned  | Milestone 2       |
-
-| **Phase 7** | Interactive Doppler Drift & De-Doppler Correction Bench | ⬜ Planned | Milestone 2 |
-| **Phase 8** | Explainable RFI Mitigation & Multi-Cadence Logic | ⬜ Planned | Milestone 2 |
-| **Phase 9** | Layered ML Anomaly Scoring & Ground-Truth Benchmarks (`setigen`) | ⬜ Planned | Milestone 2 |
-| **Phase 10** | Cross-Observation Verification & Canonical BLC1 Case Study | ⬜ Planned | Milestone 2 |
-| **Phase 11** | Scientific Candidate Dossier & Research PDF Generator | ⬜ Planned | Milestone 2 |
-| **Phase 12** | Performance Profiling, Offline Demo Cache & Rehearsed Flow | ⬜ Planned | Milestone 2 |
+| Phase        | Title                                                   |   Status    | Target Completion |
+| :----------- | :------------------------------------------------------ | :---------: | :---------------- |
+| **Phase 1**  | Foundation & Visual Identity Refoundation               | ✅ Complete | Milestone 1       |
+| **Phase 2**  | Observation & Discovery Pipelines                       | ✅ Complete | Milestone 1       |
+| **Phase 3**  | Candidate Triage & Digital Research Bench               | ✅ Complete | Milestone 1       |
+| **Phase 4**  | Chronological Repository & Methodology Publication      | ✅ Complete | Milestone 1       |
+| **Phase 0**  | Python Backend Foundation                               | ✅ Complete | Milestone 2       |
+| **Phase 5**  | Scientific Ingestion Foundation & Normalized Data Model | ✅ Complete | Milestone 2       |
+| **Phase 2**  | Canonical Data Representation & Spectral Slices (BE)    | ✅ Complete | Milestone 2       |
+| **Phase 3**  | Synthetic Signal Laboratory & Benchmark Framework (BE)  | ✅ Complete | Milestone 2       |
+| **Phase 4**  | Signal Processing & RFI Assessment (BE)                 | ✅ Complete | Milestone 2       |
+| **Phase 5**  | Scientific Anomaly Detection Engine (BE)                | ✅ Complete | Milestone 2       |
+| **Phase 6**  | Doppler Drift & Temporal Analysis Engine (BE)           | ✅ Complete | Milestone 2       |
+| **Phase 7**  | Candidate Engine & Scientific Case Files (BE)           | ✅ Complete | Milestone 2       |
+| **Phase 8**  | Frontend Integration & Cadence Workflow                 | ⬜ Planned  | Milestone 2       |
+| **Phase 9**  | Canonical BLC1 Case Study & Cross-Verification          | ⬜ Planned  | Milestone 2       |
+| **Phase 10** | Performance Profiling & 3-Minute Demo Cache             | ⬜ Planned  | Milestone 2       |
 
 ---
 

@@ -68,6 +68,16 @@ A specialized Python + FastAPI backend service for the AETHON radio-astronomy di
   - Public REST API endpoint: `POST /api/observations/{id}/analyze-drift`.
   - Mandatory scientific disclaimer: apparent drift rate is topocentric and does not imply an extraterrestrial source or complete physical barycentric Doppler velocity.
   - Strict scope boundary: no candidate ranking, no candidate dossier generation, no CNNs, no automatic ET classification.
+- **Phase 7 (Candidate Engine, Evidence Aggregation, and Scientific Case Files):**
+  - Unified candidate management system converting detections into traceable, reviewable records.
+  - Strict separation of Observation, Processing Run, Detection, Analysis Result, Candidate, Candidate Assessment, Review Record, and Candidate Dossier.
+  - Conservative 2D bounding-box grouping via IoU ($\ge 0.20$) or spatial proximity ($\le 4$ steps, $\le 4$ channels) preventing duplicate fragmentation.
+  - Configurable, transparent, versioned scoring heuristic ($[0.0, 100.0]$) with bounded contributions: 35% anomaly, 25% drift coherence, 20% temporal continuity, 20% data quality, +10% recurrence bonus.
+  - Explicit missing-evidence and detector-disagreement tracking; never invents arbitrary default values.
+  - Human review lifecycle state machine (`unreviewed`, `under_review`, `needs_more_data`, `interesting`, `likely_interference`, `dismissed`) with persistent audit trails.
+  - Structured JSON dossier snapshots and publication-grade 2-page vector PDF reports via `matplotlib.backends.backend_pdf.PdfPages` with selectable text and disclaimers.
+  - Public REST API endpoints: `GET /api/candidates`, `POST /api/candidates`, `GET /api/candidates/{id}`, `POST /api/candidates/{id}/assess`, `GET /api/candidates/{id}/dossier`, `GET /api/candidates/{id}/dossier.pdf`, `POST /api/candidates/{id}/review`.
+  - Strict scope boundary: scores are operational triage heuristics; no claims of extraterrestrial origin or automatic discovery.
 - **Frontend Boundary:** The backend runs independently on port `8000` and communicates with the React + Vite frontend (`http://localhost:5173`) through the `/api` route prefix.
 
 ---
@@ -537,6 +547,103 @@ When `merge_overlapping_regions=True`, contiguous or intersecting anomalous wind
 
 ---
 
+## Phase 6: Doppler Drift & Temporal Analysis Engine
+
+The Doppler analysis engine (`app.analysis`) isolates frequency trajectories, estimates linear drift rates with analytical standard errors, evaluates coherent drift search grids, performs pure-functional de-drift array transformations, characterizes temporal continuity, and assesses cross-observation recurrence.
+
+- Apparent drift convention: $\dot{f} = \frac{\Delta f}{\Delta t}$ in $\text{Hz/s}$.
+- Analytical regression standard error: $\text{SE}(\dot{f}) = \sqrt{\frac{SS_{\text{res}}}{(N - 2)\sum_i (t_i - \bar{t})^2}}$.
+- Pure-functional de-drift: non-destructive row shearing by $-\dot{f}\Delta t$ with edge padding and zero circular wraparound.
+- Cross-observation recurrence: verified frequency, temporal, and target matching.
+- Public endpoint: `POST /api/observations/{id}/analyze-drift`.
+
+---
+
+## Phase 7: Candidate Engine, Evidence Aggregation & Scientific Case Files
+
+The candidate engine (`app.candidates`) converts anomalous detections into verifiable, persistent candidate records, aggregates multi-stage scientific evidence, ranks candidates via transparent scoring heuristics, prevents duplicate fragmentation, manages human triage reviews, and exports publication-grade scientific PDF dossiers.
+
+### 1. Domain Separation
+
+| Concept                  | Meaning                                                                     |
+| :----------------------- | :-------------------------------------------------------------------------- |
+| **Observation**          | Raw scientific radio dataset and metadata.                                  |
+| **Processing Run**       | Applied mathematical transformation and statistical RFI assessment.         |
+| **Detection**            | Anomalous time-frequency window flagged by a detector.                      |
+| **Analysis Result**      | Frequency trajectory, drift rate estimate, and temporal profile.            |
+| **Candidate**            | Aggregated entity grouping related detections for scientific investigation. |
+| **Candidate Assessment** | Versioned application of a documented scoring policy.                       |
+| **Review Record**        | Immutable audit entry documenting human/system triage actions.              |
+| **Candidate Dossier**    | Frozen snapshot case file with reproducibility appendix.                    |
+
+### 2. Candidate Eligibility Policy
+
+Detections are evaluated before candidate instantiation:
+
+- Requires non-empty `source_observation_id`.
+- Valid non-negative coordinate boundaries ($t_{\text{stop}} > t_{\text{start}}$, $f_{\text{stop}} > f_{\text{start}}$).
+- Non-zero valid samples.
+- Flagged cell fraction cannot exceed $95\%$ (partially contaminated regions are allowed with advisory warnings).
+
+### 3. Duplicate Prevention & 2D Bounding-Box Grouping
+
+Repeated detections within the same observation are merged to prevent candidate fragmentation:
+
+- 2D Bounding-box $\text{IoU} \ge 0.20$.
+- Spatial index proximity: $\Delta t \le 4$ time steps and $\Delta f \le 4$ frequency channels.
+- Merging updates the bounding box to the spatial union, appends contributing detection IDs, ingests new evidence items, and increments assessment version.
+
+### 4. Transparent Scoring Policy & Priority Bands
+
+The candidate priority score is an operational engineering heuristic $[0.0, 100.0]$:
+
+$$\text{Priority Score} = S_{\text{anomaly}} (35\%) + S_{\text{drift}} (25\%) + S_{\text{temporal}} (20\%) + S_{\text{quality}} (20\%) + \text{Bonus}_{\text{recurrence}} (+10\%)$$
+
+- **Anomaly Evidence (35 pts):** Combines normalized baseline and Isolation Forest scores. Divergence ($|\Delta| > 0.40$) flags `detector_disagreement=True`.
+- **Doppler Drift Coherence (25 pts):** $R^2$ goodness-of-fit weighted by analytical uncertainty ratio $\max(0, 1 - \text{SE} / |\dot{f}|)$. Missing drift awards $0.0$ pts and records missing evidence.
+- **Temporal Continuity (20 pts):** Evaluates signal persistence fraction and active duration.
+- **Data Quality (20 pts):** Clean background ($1.0 - \text{flagged\_fraction}$) awards full points; elevated RFI incurs documented penalties.
+- **Recurrence Bonus (+10 pts):** Awarded for verified cross-observation recurrence compatibility.
+
+Operational Priority Bands:
+
+- `low`: Score $< 35.0$
+- `moderate`: $35.0 \le \text{Score} < 60.0$
+- `high`: $60.0 \le \text{Score} < 80.0$
+- `exceptional`: $\text{Score} \ge 80.0$
+
+### 5. Human Review Lifecycle
+
+Explicit lifecycle state machine:
+`unreviewed` $\rightarrow$ `under_review` $\rightarrow$ `needs_more_data` $\rightarrow$ `interesting` $\rightarrow$ `likely_interference` $\rightarrow$ `dismissed`.
+
+Every transition records an immutable `ReviewRecord` preserving:
+
+- Reviewer identifier (`reviewer_id`).
+- Timestamps (`created_at_utc`).
+- Previous and new statuses.
+- Scientific rationale and cited evidence references.
+
+### 6. Scientific Case Files & Vector PDF Dossiers
+
+- **JSON Dossier (`CandidateDossier`):** Machine-readable snapshot capturing candidate summary, observation provenance, detection ledger, coordinates, measurements, scoring breakdown, review history, and a software reproducibility appendix (`numpy` version, schema version).
+- **Vector PDF Dossier (`matplotlib.backends.backend_pdf.PdfPages`):** Clean, 2-page publication-grade PDF report:
+  - Page 1: Header, Executive Summary, Score Breakdown Table, Observation Parameters, Mandatory Scientific Disclaimers.
+  - Page 2: Aggregated Evidence Ledger, Human Review Audit Log, Missing Evidence, Reproducibility Appendix.
+  - Fully selectable text, strict page boundaries, and 100% offline generation with zero external binary dependencies.
+
+### 7. Candidate REST API Endpoints
+
+- `GET /api/candidates`: List candidates with pagination and filtering (`observation_id`, `status`, `min_score`, `max_score`).
+- `POST /api/candidates`: Create candidate or merge into existing candidate via spatial IoU/proximity grouping.
+- `GET /api/candidates/{id}`: Retrieve single candidate record, evidence ledger, and current assessment.
+- `POST /api/candidates/{id}/assess`: Re-evaluate candidate under a scoring policy and record new version.
+- `GET /api/candidates/{id}/dossier`: Generate machine-readable JSON case file snapshot.
+- `GET /api/candidates/{id}/dossier.pdf`: Download publication-grade 2-page vector PDF dossier.
+- `POST /api/candidates/{id}/review`: Record a validated lifecycle review transition and persist audit log.
+
+---
+
 ## Running the Development Server
 
 ```powershell
@@ -559,7 +666,7 @@ Interactive documentation:
 
 ## Running Automated Tests
 
-Run the full automated test suite (173 tests):
+Run the full automated test suite (193 tests):
 
 ```powershell
 # Windows (PowerShell)
@@ -573,6 +680,11 @@ pytest -v
 
 Tests run offline without requiring external network access or telemetry downloads:
 
+- `test_candidates_eligibility_and_grouping.py`: Region bounds validation, sample count limits, flagged fraction thresholds, 2D IoU calculation, candidate merge.
+- `test_candidates_scoring_and_evidence.py`: Evidence extraction normalization, deterministic component weights, missing drift handling, detector disagreement flag.
+- `test_candidates_review_lifecycle.py`: State machine valid transitions, illegal transition rejection, audit history serialization, repository persistence.
+- `test_candidates_dossier_and_pdf.py`: Structured JSON dossier snapshots, 2-page publication-grade vector PDF compilation, sparse evidence safety.
+- `test_api_candidates.py`: End-to-end REST candidate creation, grouping idempotency, listing filters, priority re-assessment, JSON dossier, vector PDF streaming, and review actions.
 - `test_analysis_trajectory.py`: Stationary carriers, drifting carriers, quality mask respect, low-SNR point rejection.
 - `test_analysis_drift_estimation.py`: Exact positive/negative slopes in Hz/s, analytical SE uncertainty, degrees of freedom, index-space slope fallback.
 - `test_analysis_drift_search.py`: Linear drift grid search, boundary-winner detection, safety hypothesis limits, stationary signal search.
