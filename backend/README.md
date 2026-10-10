@@ -146,39 +146,70 @@ pip install -r requirements.txt
 
 ---
 
-## Environment Configuration
+## Environment Configuration & Security
 
-Copy `.env.example` to create your local `.env`:
+The backend configuration is managed by Pydantic Settings in `app/core/config.py`. It reads private server-side variables from `backend/.env` (or environment variables) without sharing secrets with the frontend.
+
+### 1. Create Local Backend Environment File
+
+Copy `backend/.env.example` to create your local `backend/.env`:
 
 ```powershell
-# Windows (PowerShell)
+# Windows (PowerShell - from backend/ directory)
 Copy-Item .env.example .env
+
+# Or from repository root:
+Copy-Item backend\.env.example backend\.env
 ```
 
 ```bash
-# macOS / Linux
+# macOS / Linux (from backend/ directory)
 cp .env.example .env
+
+# Or from repository root:
+cp backend/.env.example backend/.env
 ```
 
-### Configuration Variables
+### 2. Trust Boundary & Secret Protection
 
-| Variable                | Type          | Default                                              | Description                                       |
-| :---------------------- | :------------ | :--------------------------------------------------- | :------------------------------------------------ |
-| `APP_NAME`              | string        | `"AETHON Radio Signal Discovery API"`                | Application title for documentation               |
-| `APP_VERSION`           | string        | `"0.1.0"`                                            | Semantic service version                          |
-| `ENVIRONMENT`           | string        | `"development"`                                      | Environment (`development`, `test`, `production`) |
-| `DEBUG`                 | boolean       | `true`                                               | Enables detailed debug traces                     |
-| `HOST`                  | string        | `"127.0.0.1"`                                        | Bind host interface                               |
-| `PORT`                  | integer       | `8000`                                               | Bind port number                                  |
-| `API_PREFIX`            | string        | `"/api"`                                             | Base path for all application routes              |
-| `CORS_ORIGINS`          | list / string | `["http://localhost:5173", "http://127.0.0.1:5173"]` | Allowed web frontend origins                      |
-| `LOG_LEVEL`             | string        | `"INFO"`                                             | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`)   |
-| `DATA_DIR`              | string        | `"data"`                                             | Root storage directory                            |
-| `OBSERVATIONS_DIR`      | string        | `"data/observations"`                                | Preserved raw astronomical files directory        |
-| `TEMP_UPLOAD_DIR`       | string        | `"data/tmp"`                                         | Staging directory for in-flight uploads           |
-| `DB_PATH`               | string        | `"data/aethon.db"`                                   | SQLite persistent metadata database               |
-| `MAX_UPLOAD_SIZE_BYTES` | integer       | `104857600` (100MB)                                  | Maximum permissible upload size limit             |
-| `MAX_SLICE_CELLS`       | integer       | `250000`                                             | Maximum permissible matrix cells per slice query  |
+- **Private Boundary:** `backend/.env` is excluded from Git via `backend/.gitignore` and root `.gitignore`. It must never be committed.
+- **Secret Masking:** Confidential fields (`secret_key`, `breakthrough_listen_api_key`) specify `repr=False` and are automatically masked by `SafeFormatter` (`[REDACTED]`) to prevent credential leakage into logs or error envelopes.
+- **Verify Git Exclusion:** Confirm that your local `.env` is ignored by running:
+  ```bash
+  git check-ignore -v backend/.env
+  ```
+- **Credential Rotation:** If any sensitive token is ever accidentally committed to version control, it must be considered compromised and immediately rotated or revoked at the issuing provider. Removing it from subsequent commits does not purge historical Git objects.
+
+### 3. Active Configuration Variables
+
+| Variable                | Type          | Default                                              | Sensitivity | Description                                         |
+| :---------------------- | :------------ | :--------------------------------------------------- | :---------- | :-------------------------------------------------- |
+| `APP_NAME`              | string        | `"AETHON Radio Signal Discovery API"`                | Public      | Application title for documentation                 |
+| `APP_VERSION`           | string        | `"0.1.0"`                                            | Public      | Semantic service version                            |
+| `ENVIRONMENT`           | string        | `"development"`                                      | Public      | Environment (`development`, `test`, `production`)   |
+| `DEBUG`                 | boolean       | `true`                                               | Internal    | Enables detailed debug traces                       |
+| `HOST`                  | string        | `"127.0.0.1"`                                        | Internal    | Server interface binding                            |
+| `PORT`                  | integer       | `8000`                                               | Internal    | Server listening port                               |
+| `API_PREFIX`            | string        | `"/api"`                                             | Public      | Base route prefix for all endpoints                 |
+| `CORS_ORIGINS`          | list / string | `["http://localhost:5173", "http://127.0.0.1:5173"]` | Internal    | Allowed web frontend client origins                 |
+| `LOG_LEVEL`             | string        | `"INFO"`                                             | Internal    | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `DATA_DIR`              | string        | `"data"`                                             | Internal    | Root directory for application storage              |
+| `OBSERVATIONS_DIR`      | string        | `"data/observations"`                                | Internal    | Preserved raw astronomical files directory          |
+| `TEMP_UPLOAD_DIR`       | string        | `"data/tmp"`                                         | Internal    | Staging directory for in-flight uploads             |
+| `DB_PATH`               | string        | `"data/aethon.db"`                                   | Internal    | SQLite metadata database path                       |
+| `MAX_UPLOAD_SIZE_BYTES` | integer       | `104857600` (100MB)                                  | Internal    | Upload size limit enforced on stream chunks         |
+| `MAX_SLICE_CELLS`       | integer       | `250000`                                             | Internal    | Max matrix cells per slice query                    |
+
+### 4. Roadmap Integration Placeholders (Optional / Unused)
+
+These variables represent future architectural integrations documented in `.gsd/ROADMAP.md`. They default to `None` and do not prevent application startup:
+
+| Placeholder Variable              | Type   | Default | Sensitivity      | Roadmap Purpose                                                            |
+| :-------------------------------- | :----- | :------ | :--------------- | :------------------------------------------------------------------------- |
+| `SECRET_KEY`                      | string | `None`  | **Confidential** | Future cryptographic key for signed PDF verification and session security. |
+| `ASTROPY_CACHE_DIR`               | string | `None`  | Internal         | Future directory for caching Astropy catalog data (SIMBAD/Gaia).           |
+| `BREAKTHROUGH_LISTEN_ARCHIVE_URL` | string | `None`  | Public           | Future URL for remote Breakthrough Listen public data archive.             |
+| `BREAKTHROUGH_LISTEN_API_KEY`     | string | `None`  | **Confidential** | Future API key for remote astronomical service access.                     |
 
 ---
 

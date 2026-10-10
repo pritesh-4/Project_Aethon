@@ -59,5 +59,3 @@ data/
 *.sqlite
 *.sqlite3
 *.tmp
-*.fil
-*.fits

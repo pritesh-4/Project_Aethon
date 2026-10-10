@@ -34,10 +34,11 @@ export default function DiscoverPage() {
   const [observation, setObservation] = useState<DiscoveryObservationMeta | null>(null);
   const [catalogObservations, setCatalogObservations] = useState<DiscoveryObservationMeta[]>([]);
   const [discoveredCandidates, setDiscoveredCandidates] = useState<DiscoveredCandidate[]>(
-    MOCK_DISCOVERY_CANDIDATES.slice(0, 4)
+    api.isDemoMode() ? MOCK_DISCOVERY_CANDIDATES.slice(0, 4) : []
   );
-  const [discoverySummary, setDiscoverySummary] =
-    useState<DiscoveryResultSummary>(MOCK_DISCOVERY_RESULT);
+  const [discoverySummary, setDiscoverySummary] = useState<DiscoveryResultSummary | null>(
+    api.isDemoMode() ? MOCK_DISCOVERY_RESULT : null
+  );
 
   const [searchConfig, setSearchConfig] = useState<SearchConfig>({
     sensitivity: 'standard',
@@ -204,7 +205,9 @@ export default function DiscoverPage() {
         anomalousRegionsCount: regions.length || finalCandidates.length,
         highPriorityCandidatesCount: finalCandidates.filter((c) => c.priority === 'HIGH').length,
         totalTimeElapsedSec: 3.8,
-        topCandidate: finalCandidates[0] || MOCK_DISCOVERY_RESULT.topCandidate,
+        topCandidate:
+          finalCandidates[0] ||
+          (api.isDemoMode() ? MOCK_DISCOVERY_RESULT.topCandidate : ({} as DiscoveredCandidate)),
         candidates: finalCandidates,
       };
 
@@ -334,7 +337,7 @@ export default function DiscoverPage() {
         {/* ==================================================== */}
         {/* STAGE 5: RESULT BANNER (OBSERVATION ANALYZED) */}
         {/* ==================================================== */}
-        {stage === 'complete' && (
+        {stage === 'complete' && discoverySummary && (
           <DiscoveryResults
             summary={discoverySummary}
             onReset={handleReset}

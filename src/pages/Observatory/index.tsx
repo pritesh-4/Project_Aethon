@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { PageTransition } from '@/components/ui/motion.tsx';
 import { AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Radio, Upload } from 'lucide-react';
 
 import type { ObservationData, ObservationStatus } from './types.ts';
 import { MOCK_OBSERVATIONS } from './data/mockObservations.ts';
@@ -91,7 +91,9 @@ function recordToObservationData(
 }
 
 export default function ObservatoryPage() {
-  const [selectedObsId, setSelectedObsId] = useState<string>(MOCK_OBSERVATIONS[0].id);
+  const [selectedObsId, setSelectedObsId] = useState<string>(
+    api.isDemoMode() ? MOCK_OBSERVATIONS[0].id : ''
+  );
   const [status, setStatus] = useState<ObservationStatus>('IDLE');
   const [isPaused, setIsPaused] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -99,7 +101,7 @@ export default function ObservatoryPage() {
   // Backend state
   const [recordMap, setRecordMap] = useState<Record<string, ObservationRecordResponse>>({});
   const [observationList, setObservationList] = useState<{ id: string; name: string }[]>(
-    MOCK_OBSERVATIONS.map((o) => ({ id: o.id, name: o.name }))
+    api.isDemoMode() ? MOCK_OBSERVATIONS.map((o) => ({ id: o.id, name: o.name })) : []
   );
   const [sliceData, setSliceData] = useState<SpectralSliceResponse | null>(null);
   const [isLoadingSlice, setIsLoadingSlice] = useState(false);
@@ -132,10 +134,15 @@ export default function ObservatoryPage() {
         setSelectedObsId(items[0].id);
       } else if (api.isDemoMode()) {
         setObservationList(MOCK_OBSERVATIONS.map((o) => ({ id: o.id, name: o.name })));
+        setSelectedObsId(MOCK_OBSERVATIONS[0].id);
+      } else {
+        setObservationList([]);
+        setSelectedObsId('');
       }
     } catch (err: unknown) {
       if (api.isDemoMode()) {
         setObservationList(MOCK_OBSERVATIONS.map((o) => ({ id: o.id, name: o.name })));
+        setSelectedObsId(MOCK_OBSERVATIONS[0].id);
       } else {
         const msg =
           (err as { message?: string })?.message ||
@@ -200,11 +207,14 @@ export default function ObservatoryPage() {
   }, []);
 
   // Compute active observation object
-  const currentObservation: ObservationData = useMemo(() => {
+  const currentObservation: ObservationData | null = useMemo(() => {
     if (recordMap[selectedObsId]) {
       return recordToObservationData(recordMap[selectedObsId], detectionData, analysisData);
     }
-    return MOCK_OBSERVATIONS.find((o) => o.id === selectedObsId) || MOCK_OBSERVATIONS[0];
+    if (api.isDemoMode()) {
+      return MOCK_OBSERVATIONS.find((o) => o.id === selectedObsId) || MOCK_OBSERVATIONS[0];
+    }
+    return null;
   }, [recordMap, selectedObsId, detectionData, analysisData]);
 
   // Handle Observation selection
@@ -267,7 +277,7 @@ export default function ObservatoryPage() {
           'Analysis failed. Please verify backend service.';
         toast.error('Analysis error', { description: msg });
       }
-    } else {
+    } else if (api.isDemoMode() && currentObservation) {
       // Synthetic demonstration sweep fallback
       setStatus('ANALYZING');
       const startTime = performance.now();
@@ -290,8 +300,11 @@ export default function ObservatoryPage() {
       };
 
       scanTimerRef.current = requestAnimationFrame(animateScan);
+    } else {
+      setStatus('IDLE');
+      toast.error('Observation not found in backend repository.');
     }
-  }, [status, selectedObsId, recordMap, currentObservation.id]);
+  }, [status, selectedObsId, recordMap, currentObservation]);
 
   // Handle Pause / Resume toggle
   const handleTogglePause = () => {
@@ -352,6 +365,41 @@ export default function ObservatoryPage() {
             </div>
           </div>
         </div>
+      </PageTransition>
+    );
+  }
+
+  // Honest empty state when no observations exist
+  if (!currentObservation) {
+    return (
+      <PageTransition className="space-y-6 max-w-4xl mx-auto py-12 px-4">
+        <div className="rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] p-10 text-center shadow-xs">
+          <div className="flex flex-col items-center gap-3">
+            <Radio className="h-8 w-8 text-[#76828D]" />
+            <h2 className="text-xl font-normal text-[#17202A] font-serif">
+              No Observations Available
+            </h2>
+            <p className="max-w-md text-xs text-[#56616A] leading-relaxed">
+              The observation repository is currently empty. Ingest or upload an observation file
+              (FITS, Filterbank, H5) to begin analysis.
+            </p>
+            <div className="mt-4 flex items-center gap-3">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setIsUploadModalOpen(true)}
+                icon={<Upload className="h-3.5 w-3.5" />}
+              >
+                Upload observation
+              </Button>
+            </div>
+          </div>
+        </div>
+        <ObservationUploadModal
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+          onUploaded={handleObservationUploaded}
+        />
       </PageTransition>
     );
   }

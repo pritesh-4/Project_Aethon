@@ -72,10 +72,11 @@ function backendCandidateToSignalData(cand: Candidate): CandidateSignalData {
 }
 
 export default function CandidatesPage() {
-  const [candidatesList, setCandidatesList] =
-    useState<CandidateSignalData[]>(MOCK_CANDIDATE_SIGNALS);
+  const [candidatesList, setCandidatesList] = useState<CandidateSignalData[]>(
+    api.isDemoMode() ? MOCK_CANDIDATE_SIGNALS : []
+  );
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateSignalData | null>(
-    MOCK_CANDIDATE_SIGNALS[0]
+    api.isDemoMode() ? MOCK_CANDIDATE_SIGNALS[0] : null
   );
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -98,12 +99,17 @@ export default function CandidatesPage() {
       } else if (api.isDemoMode()) {
         setCandidatesList(MOCK_CANDIDATE_SIGNALS);
         setSelectedCandidate(MOCK_CANDIDATE_SIGNALS[0]);
+      } else {
+        setCandidatesList([]);
+        setSelectedCandidate(null);
       }
     } catch (err: unknown) {
       if (api.isDemoMode()) {
         setCandidatesList(MOCK_CANDIDATE_SIGNALS);
         setSelectedCandidate(MOCK_CANDIDATE_SIGNALS[0]);
       } else {
+        setCandidatesList([]);
+        setSelectedCandidate(null);
         const msg =
           (err as { message?: string })?.message || 'Failed to load candidate ledger from backend.';
         setLoadError(msg);
@@ -205,7 +211,8 @@ export default function CandidatesPage() {
       {/* 1. Header with triage context & search/filter controls */}
       <CandidateHeader
         observationId={
-          selectedCandidate?.observationId || CANDIDATE_OBSERVATION_SUMMARY.observationId
+          selectedCandidate?.observationId ||
+          (api.isDemoMode() ? CANDIDATE_OBSERVATION_SUMMARY.observationId : '—')
         }
         totalIdentified={candidatesList.length}
         highPriorityCount={candidatesList.filter((c) => c.priority === 'HIGH').length}

@@ -115,7 +115,7 @@ export default function ArchivePage() {
 
   // Observations dataset
   const [observations, setObservations] = useState<ArchivedObservation[]>(
-    MOCK_ARCHIVED_OBSERVATIONS
+    isDemoMode() ? MOCK_ARCHIVED_OBSERVATIONS : []
   );
 
   // Filter state
@@ -129,7 +129,7 @@ export default function ArchivePage() {
   });
 
   // Selected observation ID state
-  const [selectedIdState, setSelectedIdState] = useState<string>('AET-04721');
+  const [selectedIdState, setSelectedIdState] = useState<string>(isDemoMode() ? 'AET-04721' : '');
 
   // Query real observations and linked candidates from backend
   useEffect(() => {
@@ -164,8 +164,12 @@ export default function ArchivePage() {
           });
         }
       } else {
-        // Fallback to mock records if backend is offline or empty
-        setObservations(MOCK_ARCHIVED_OBSERVATIONS);
+        // Fallback to mock records only if demo mode is enabled
+        if (isDemoMode()) {
+          setObservations(MOCK_ARCHIVED_OBSERVATIONS);
+        } else {
+          setObservations([]);
+        }
       }
     });
 

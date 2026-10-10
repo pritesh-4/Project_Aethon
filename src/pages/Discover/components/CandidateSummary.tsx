@@ -12,7 +12,34 @@ export interface CandidateSummaryProps {
 }
 
 export function CandidateSummary({ candidates, observationId }: CandidateSummaryProps) {
-  const [selectedCandidate, setSelectedCandidate] = useState<DiscoveredCandidate>(candidates[0]);
+  const [selectedId, setSelectedId] = useState<string>(candidates[0]?.id || '');
+
+  if (candidates.length === 0) {
+    return (
+      <section className="space-y-3 select-none font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#D6D2C9] pb-2.5">
+          <div>
+            <h3 className="text-sm font-semibold text-[#17202A]">Detected Signals</h3>
+            <p className="text-xs text-[#56616A]">
+              Candidate carriers screened in observation {observationId || ''}
+            </p>
+          </div>
+
+          <Link to="/candidates">
+            <Button variant="ghost" size="sm" icon={<ArrowRight className="h-3.5 w-3.5" />}>
+              Candidate Review Ledger
+            </Button>
+          </Link>
+        </div>
+
+        <div className="border border-[#D6D2C9] bg-[#FAF8F5] rounded-[3px] p-8 text-center text-xs text-[#56616A]">
+          No anomalous signals exceeded candidate threshold in this observation.
+        </div>
+      </section>
+    );
+  }
+
+  const selectedCandidate = candidates.find((c) => c.id === selectedId) || candidates[0];
 
   const getPriorityTag = (priority: CandidatePriority) => {
     switch (priority) {
@@ -79,11 +106,11 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
                     key={cand.id}
                     tabIndex={0}
                     aria-selected={isSelected}
-                    onClick={() => setSelectedCandidate(cand)}
+                    onClick={() => setSelectedId(cand.id)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        setSelectedCandidate(cand);
+                        setSelectedId(cand.id);
                       }
                     }}
                     className={`transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] focus-visible:ring-inset ${

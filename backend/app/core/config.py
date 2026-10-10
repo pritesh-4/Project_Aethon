@@ -1,17 +1,18 @@
-"""Application configuration management via Pydantic Settings."""
-
 import json
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
     """Core application settings with environment variable resolution."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(str(_BACKEND_DIR / ".env"), ".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -101,6 +102,31 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Security & Cryptographic Integrity (Future Authentication / Dossier Signing)
+    secret_key: str | None = Field(
+        default=None,
+        repr=False,
+        description=(
+            "Optional cryptographic secret key for future session security or signed "
+            "dossier validation"
+        ),
+    )
+
+    # External Astronomical Archives & Integrations (Roadmap Features - Currently Optional)
+    astropy_cache_dir: str | None = Field(
+        default=None,
+        description="Optional directory path for Astropy astronomical cache data",
+    )
+    breakthrough_listen_archive_url: str | None = Field(
+        default=None,
+        description="Optional remote URL for Breakthrough Listen public open-data repository",
+    )
+    breakthrough_listen_api_key: str | None = Field(
+        default=None,
+        repr=False,
+        description="Optional API access key for external astronomical archives",
+    )
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
@@ -116,7 +142,7 @@ class Settings(BaseSettings):
                     pass
             return [origin.strip() for origin in v_stripped.split(",") if origin.strip()]
         if isinstance(v, list):
-            return [str(origin).strip() for origin in v if str(origin).strip()]
+            return [origin.strip() for origin in v if origin.strip()]
         return v
 
     @property

@@ -44,3 +44,11 @@ venv/
 
 # Generated offline demonstration output
 demo_output/
+
+# Local databases and temporary files
+*.db-journal
+*.db-wal
+*.db-shm
+*.tmp
+data/tmp/
+backend/data/tmp/

@@ -187,10 +187,35 @@ export default function AnalysisPage() {
   // Load target candidate / observation record
   useEffect(() => {
     let isMounted = true;
-    const targetId = signalId || 'AET-04721';
 
     async function loadData() {
       setIsLoading(true);
+
+      let targetId = signalId;
+      if (!targetId) {
+        if (isDemoMode()) {
+          targetId = 'AET-04721';
+        } else {
+          try {
+            const listRes = await api.getCandidates({ limit: 1 });
+            if (listRes.items && listRes.items.length > 0) {
+              targetId = listRes.items[0].candidate_id;
+            }
+          } catch {
+            // Backend offline or empty
+          }
+        }
+      }
+
+      if (!targetId) {
+        if (isMounted) {
+          setRecord(null);
+          setSliceData(null);
+          setIsLoading(false);
+        }
+        return;
+      }
+
       // 1. Try real backend candidate lookup
       try {
         const candidate = await api.getCandidate(targetId);
@@ -235,70 +260,103 @@ export default function AnalysisPage() {
           const obs = await api.getObservation(targetId);
           if (!isMounted) return;
 
-          const totalSamples = obs.metadata?.time_sample_count ?? 1024;
-          const totalChannels = obs.metadata?.channel_count ?? 512;
+          // Check if real candidate exists for this observation
+          const candRes = await api.getCandidates({ limit: 100 });
+          const existingCand = candRes.items?.find((c) =>
+            c.source_observation_ids.includes(obs.id)
+          );
 
-          const syntheticCandidate: CandidateResponse = {
-            candidate_id: `cand_${obs.id.slice(4, 12)}`,
-            created_at_utc: obs.ingested_at,
-            updated_at_utc: obs.ingested_at,
-            status: 'unreviewed',
-            source_observation_ids: [obs.id],
-            target_region: {
-              time_start: 0,
-              time_stop: Math.min(60, totalSamples),
-              freq_start: 0,
-              freq_stop: Math.min(128, totalChannels),
-            },
-            current_assessment: {
-              assessment_id: `ass_${obs.id.slice(4, 10)}`,
-              candidate_id: `cand_${obs.id.slice(4, 12)}`,
-              version: 1,
-              created_at_utc: obs.ingested_at,
-              policy_name: 'default_scientific',
-              policy_version: '1.0.0',
-              overall_score: 82.5,
-              priority_band: 'high',
-              component_contributions: {
-                anomaly_significance: 0.85,
-                rfi_risk: 0.08,
-                temporal_persistence: 0.91,
-              },
-              contributing_evidence_ids: [],
-              missing_evidence: [],
-              detector_disagreement: false,
-              explanation: 'Automated survey detection with linear drift carrier',
-              warnings: [],
-            },
-            associated_detection_ids: [],
-            processing_run_ids: [],
-            analysis_run_ids: [],
-            physical_coordinates: {},
-            evidence_items: [],
-            review_history: [],
-            schema_version: '1.0.0',
-            is_synthetic: false,
-            provenance: {},
-            warnings: [],
-            scientific_disclaimer: 'Synthesized view of survey observation',
-          };
-
-          try {
-            const slice = await api.getObservationSlice(obs.id, {
-              time_start: 0,
-              time_stop: Math.min(60, totalSamples),
-              frequency_start: 0,
-              frequency_stop: Math.min(128, totalChannels),
-            });
-            if (isMounted) {
-              setSliceData(slice);
+          if (existingCand) {
+            try {
+              const fullCand = await api.getCandidate(existingCand.candidate_id);
+              if (isMounted) {
+                setRecord(candidateToAnalysisRecord(fullCand, obs));
+                setIsLoading(false);
+              }
+              return;
+            } catch {
+              if (isMounted) {
+                setRecord(candidateToAnalysisRecord(existingCand, obs));
+                setIsLoading(false);
+              }
+              return;
             }
-          } catch {
-            // Non-fatal
           }
 
+          // If in demo mode, synthesize explicit demo candidate
+          if (isDemoMode()) {
+            const totalSamples = obs.metadata?.time_sample_count ?? 1024;
+            const totalChannels = obs.metadata?.channel_count ?? 512;
+
+            const demoCandidate: CandidateResponse = {
+              candidate_id: `cand_${obs.id.slice(4, 12)}`,
+              created_at_utc: obs.ingested_at,
+              updated_at_utc: obs.ingested_at,
+              status: 'unreviewed',
+              source_observation_ids: [obs.id],
+              target_region: {
+                time_start: 0,
+                time_stop: Math.min(60, totalSamples),
+                freq_start: 0,
+                freq_stop: Math.min(128, totalChannels),
+              },
+              current_assessment: {
+                assessment_id: `ass_${obs.id.slice(4, 10)}`,
+                candidate_id: `cand_${obs.id.slice(4, 12)}`,
+                version: 1,
+                created_at_utc: obs.ingested_at,
+                policy_name: 'demo_synthetic',
+                policy_version: '1.0.0',
+                overall_score: 82.5,
+                priority_band: 'high',
+                component_contributions: {
+                  anomaly_significance: 0.85,
+                  rfi_risk: 0.08,
+                  temporal_persistence: 0.91,
+                },
+                contributing_evidence_ids: [],
+                missing_evidence: [],
+                detector_disagreement: false,
+                explanation: '[DEMO MODE] Synthetic benchmark signal with linear drift carrier',
+                warnings: [],
+              },
+              associated_detection_ids: [],
+              processing_run_ids: [],
+              analysis_run_ids: [],
+              physical_coordinates: {},
+              evidence_items: [],
+              review_history: [],
+              schema_version: '1.0.0',
+              is_synthetic: true,
+              provenance: {},
+              warnings: [],
+              scientific_disclaimer: '[DEMO MODE] Synthetic demonstration representation',
+            };
+
+            try {
+              const slice = await api.getObservationSlice(obs.id, {
+                time_start: 0,
+                time_stop: Math.min(60, totalSamples),
+                frequency_start: 0,
+                frequency_stop: Math.min(128, totalChannels),
+              });
+              if (isMounted) {
+                setSliceData(slice);
+              }
+            } catch {
+              // Non-fatal
+            }
+
+            if (isMounted) {
+              setRecord(candidateToAnalysisRecord(demoCandidate, obs));
+              setIsLoading(false);
+            }
+            return;
+          }
+
+          // Operational mode: observation exists but has no candidate yet
           if (isMounted) {
-            setRecord(candidateToAnalysisRecord(syntheticCandidate, obs));
+            setRecord(null);
             setIsLoading(false);
           }
           return;
@@ -307,7 +365,7 @@ export default function AnalysisPage() {
         }
       }
 
-      // 3. Check mock analysis records (for demo mode or reference IDs)
+      // 3. Check mock analysis records (for demo mode only)
       const normalized = targetId.toUpperCase();
       const mock =
         MOCK_ANALYSIS_RECORDS[normalized] ||
@@ -315,7 +373,7 @@ export default function AnalysisPage() {
           ([k]) => k.toLowerCase() === targetId.toLowerCase()
         )?.[1];
 
-      if (mock && (isDemoMode() || !signalId || targetId === 'AET-04721')) {
+      if (mock && isDemoMode()) {
         if (isMounted) {
           setRecord(mock);
           setSliceData(null);

@@ -524,7 +524,49 @@ _Outputs: `reports/overall_verification_report.json`_
 
 ---
 
-## 15. Running the Integrated System
+## 15. Environment Configuration & Security Architecture
+
+AETHON separates frontend browser configuration from private backend server configuration by strict trust boundaries:
+
+### Separation of Environment Files
+
+| Scope        | Local Overrides (Ignored) | Tracked Template       | Sensitivity                  | Consumption Mechanism                                |
+| :----------- | :------------------------ | :--------------------- | :--------------------------- | :--------------------------------------------------- |
+| **Frontend** | `.env.local`              | `.env.example`         | **Public** (Browser-visible) | `import.meta.env` via `src/lib/api.ts`               |
+| **Backend**  | `backend/.env`            | `backend/.env.example` | **Private / Internal**       | `pydantic-settings` via `backend/app/core/config.py` |
+
+### Security Boundaries
+
+- **Browser Exposure:** All variables prefixed with `VITE_` are compiled directly into the client-side JavaScript bundle. **Never** store private keys, database passwords, session tokens, or confidential API keys in frontend environment files.
+- **Git Protection:** Both `.env.local` and `backend/.env` are excluded by `.gitignore`. Check exclusion via:
+  ```bash
+  git check-ignore -v .env.local backend/.env
+  ```
+- **Secret Redaction:** The backend logging formatter automatically redacts dictionary keys containing `password`, `secret`, `token`, `key`, `authorization`, or `api_key`. Sensitive fields in `Settings` use `repr=False` to prevent exposure in diagnostic string representations.
+
+### Setting Up Local Environment Files
+
+```powershell
+# Windows (PowerShell)
+# 1. Setup frontend local environment
+Copy-Item .env.example .env.local
+
+# 2. Setup backend local environment
+Copy-Item backend\.env.example backend\.env
+```
+
+```bash
+# macOS / Linux
+# 1. Setup frontend local environment
+cp .env.example .env.local
+
+# 2. Setup backend local environment
+cp backend/.env.example backend/.env
+```
+
+---
+
+## 16. Running the Integrated System
 
 To run the complete full-stack AETHON discovery workspace:
 
@@ -546,7 +588,7 @@ npm run dev
 
 ---
 
-## 16. Scientific Rigor & Operational Disclaimers
+## 17. Scientific Rigor & Operational Disclaimers
 
 1. **Anomaly Scores vs. ET Claims:** Anomaly scores are operational prioritization heuristics identifying statistical outliers within noise regimes. They do not constitute proof of extraterrestrial intelligence.
 2. **Apparent Drift Rates:** Frequency drift measurements ($\dot{f}$ in Hz/s) reflect apparent topocentric changes in observed carrier frequency. They do not imply complete barycentric or orbital velocity without ephemeris corrections.
@@ -555,7 +597,7 @@ npm run dev
 
 ---
 
-## 17. Future Roadmap
+## 18. Future Roadmap
 
 1. **Canonical BLC1 Cadence Case Study:** Deep multi-pointing ON/OFF target spatial cross-match with BLC1 Proxima Centauri data.
 2. **Astropy Integration:** Direct ingestion and celestial coordinate transformation (`astropy.coordinates.SkyCoord`) for automated catalog cross-matching (SIMBAD, Gaia, ATNF Pulsar Database).
@@ -564,7 +606,7 @@ npm run dev
 
 ---
 
-## 16. Acknowledgments & Scientific Attribution
+## 19. Acknowledgments & Scientific Attribution
 
 Project AETHON is an independent research prototype for astronomical signal discovery.
 
@@ -578,6 +620,6 @@ Scientific inspiration and methodology acknowledge open-source research and data
 
 ---
 
-## 17. License
+## 20. License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
