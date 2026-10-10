@@ -1,12 +1,19 @@
 # REQUIREMENTS.md — Project Requirements: AETHON
 
-> **Milestone:** v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine  
+> **Active Milestone:** Authoritative Master Development Roadmap (Phases 0–13)  
+> **Historical Baseline Milestone:** v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine  
 > **Status:** Active  
-> **Last Updated:** 2026-10-09
+> **Last Updated:** 2026-10-10
 
 ---
 
 ## Traceability Matrix
+
+> **Traceability Note:** Requirements in this matrix originate from the initial v2.0.0 specification and earlier planning structures.
+>
+> - **Historical Goal References:** References such as `Foundation` or `Goal 1`–`Goal 9` in the Source Goal column record earlier milestone and architectural origins. They describe historical implementation structures and must not be interpreted as current phase assignments.
+> - **Canonical Roadmap Phases:** The authoritative Phase 0–13 execution sequence is defined in [`.gsd/ROADMAP.md`](ROADMAP.md). Future and pending work directly references canonical roadmap phases (`Phase 7`, `Phase 8`, `Phase 9`, `Phase 12`).
+> - **Integrity & Status:** Clarifying planning traceability does not alter any requirement's completion status, definition, or verification criteria. Completed requirements retain their verified status, while pending items remain tracked for delivery under their assigned roadmap phases.
 
 | ID               | Requirement Statement                                                                                                       | Source Goal |  Status  | Verification Method                                                                                                                                                             |
 | :--------------- | :-------------------------------------------------------------------------------------------------------------------------- | :---------- | :------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -14,8 +21,8 @@
 | **REQ-ING-01**   | Support offline ingestion and header extraction of Breakthrough Listen `.fil` (filterbank) and `.fits` files.               | Goal 1      | Complete | Automated test suite (42 passing tests in `backend/tests/`) verifying adapters, storage, errors, and REST API.                                                                  |
 | **REQ-ING-02**   | Normalize raw telescope data into a format-agnostic spectral slice model with provenance metadata.                          | Goal 1      | Complete | Automated test suite (62 passing tests in `backend/tests/`) verifying canonical representation, memory-mapped bounded readers, coordinate alignment, cell limits, and REST API. |
 
-| **REQ-ING-03** | Provide a pre-packaged offline sample bundle (including GBT Proxima Centauri slices) requiring zero external network downloads. | Goal 1, 8 | Pending | Integration test verifying all demo routes function with network disabled. |
-| **REQ-CASE-01** | Implement the canonical BLC1 case study demonstrating detection, drift isolation, cadence comparison, and terrestrial RFI downgrade. | Goal 2, 5 | Pending | End-to-end flow test verifying BLC1 is triaged from anomalous candidate to confirmed RFI. |
+| **REQ-ING-03** | Provide a pre-packaged offline sample bundle (including GBT Proxima Centauri slices) requiring zero external network downloads. | Phase 7 | Pending | Integration test verifying all demo routes function with network disabled. |
+| **REQ-CASE-01** | Implement the canonical BLC1 case study demonstrating detection, drift isolation, cadence comparison, and terrestrial RFI downgrade. | Phase 9 | Pending | End-to-end flow test verifying BLC1 is triaged from anomalous candidate to confirmed RFI. |
 | **REQ-BENCH-01** | Integrate `setigen` and native NumPy generators for controlled synthetic signal injection (frequency, drift rate, SNR, burst, broadband). | Goal 3 | Complete | Automated test suite (`test_synthetic_generators.py`, `test_synthetic_injection.py`, `test_synthetic_setigen.py`) validating signal generation, non-destructive injection, and canonical conversion. |
 | **REQ-BENCH-02** | Provide automated parameter recovery benchmarking reporting detection rate, precision, recall, IoU matching, and drift error. | Goal 3 | Complete | Automated test suite (`test_synthetic_evaluation.py`, `test_synthetic_benchmark.py`, `test_synthetic_pipeline.py`) validating manifest packaging, SHA-256 verification, and 1-to-1 IoU matching. |
 | **REQ-PROC-01** | Implement distribution-free robust statistical characterization (median, MAD, robust sigma, modified z-scores, channel and time integrations) without assuming Gaussian noise. | Goal 1, 3 | Complete | Automated test suite (`test_processing_statistics.py`) verifying known values, robust dispersion, channel/time moments, and zero-dispersion handling. |
@@ -24,12 +31,12 @@
 | **REQ-PROC-04** | Quantitative preprocessing evaluation framework measuring contamination flag rate, clean background false-alarm rate, and target signal retention without ground-truth leakage. | Goal 3 | Complete | Automated test suite (`test_processing_evaluation.py`) verifying simulated contamination detection (>98%), target retention (100%), and overlapping regions. |
 | **REQ-DOP-01** | Estimate carrier drift rate ($\text{Hz/s}$) across time-frequency waterfalls using trajectory ridge extraction and OLS regression with analytical standard error. | Goal 4 | Complete | Automated test suite (`test_analysis_trajectory.py`, `test_analysis_drift_estimation.py`, `test_analysis_evaluation.py`) validating linear regression, analytical SE uncertainty, and Phase 3 ground-truth recovery. |
 | **REQ-DOP-02** | Pure-functional, non-destructive linear de-Doppler drift compensation shearing 2D arrays by $-\dot{f}\Delta t$ into vertical columns without circular wraparound. | Goal 4 | Complete | Automated test suite (`test_analysis_dedrift.py`, `test_analysis_drift_search.py`, `test_api_analysis.py`) asserting source immutability, boundary clipping, column alignment, and REST API execution. |
-| **REQ-RFI-01** | Multi-cadence on/off target comparison (ABACAD) to flag signals persisting in off-target pointings. | Goal 5 | Pending | Cadence test verifying candidate score penalty when present in off-target beam. |
-| **REQ-RFI-02** | Classify known terrestrial interference patterns (zero drift, wideband, local airport/radar/clock harmonics). | Goal 5 | Pending | Rule evaluation test confirming matching frequency windows trigger RFI flags. |
-| **REQ-RFI-03** | Generate human-readable, explainable scientific disposition rationale for all downgraded candidates. | Goal 5 | Pending | Assertion on candidate disposition object containing plain-language explanation array. |
+| **REQ-RFI-01** | Multi-cadence on/off target comparison (ABACAD) to flag signals persisting in off-target pointings. | Phase 8 | Pending | Cadence test verifying candidate score penalty when present in off-target beam. |
+| **REQ-RFI-02** | Classify known terrestrial interference patterns (zero drift, wideband, local airport/radar/clock harmonics). | Phase 8 | Pending | Rule evaluation test confirming matching frequency windows trigger RFI flags. |
+| **REQ-RFI-03** | Generate human-readable, explainable scientific disposition rationale for all downgraded candidates. | Phase 8 | Pending | Assertion on candidate disposition object containing plain-language explanation array. |
 | **REQ-ML-01** | Calculate deterministic physical signal metrics (SNR, bandwidth, dispersion, temporal persistence, narrowband concentration). | Goal 6 | Complete | Automated test suite (`test_detection_features.py`) validating 11 distribution-free numerical features under schema v1.0.0. |
 | **REQ-ML-02** | Implement an Isolation Forest and robust statistical anomaly scoring model over spectral feature vectors. | Goal 6 | Complete | Automated test suite (`test_detection_baseline.py`, `test_detection_isolation_forest.py`, `test_detection_evaluation.py`, `test_api_detection.py`) validating score inversion, threshold calibration, and train/test split isolation. |
-| **REQ-ML-03** | Implement a lightweight PyTorch CNN spectrogram classifier providing separate confidence scores. | Goal 6 | Pending | Model test validating tensor input/output and inference latency <50ms. |
+| **REQ-ML-03** | Implement a lightweight PyTorch CNN spectrogram classifier providing separate confidence scores. | Phase 12 | Pending | Model test validating tensor input/output and inference latency <50ms. |
 | **REQ-ML-04** | Combine physical metrics, anomaly scores, and ML confidence into a transparent, documented composite candidate score. | Goal 6 | Complete | Automated test suite (`test_candidates_scoring_and_evidence.py`, `test_api_candidates.py`) validating versioned heuristic formula ($[0.0, 100.0]$), deterministic weights, and missing-evidence handling. |
 | **REQ-TRI-01** | Structured candidate case file model with identity, physical metrics, observing context, evidence plots, and disposition. | Goal 7 | Complete | Automated test suite (`test_candidates_eligibility_and_grouping.py`, `test_candidates_review_lifecycle.py`, `test_api_candidates.py`) validating Pydantic schemas, SQLite WAL persistence, IoU grouping, and review audit history. |
 | **REQ-DOS-01** | Export publication-ready scientific PDF dossiers with embedded high-resolution spectrograms, measurements, and provenance hashes. | Goal 7 | Complete | Automated test suite (`test_candidates_dossier_and_pdf.py`, `test_api_candidates.py`) validating `matplotlib.backends.backend_pdf` vector PDF compilation, table layouts, reproducibility appendix, and disclaimers. |

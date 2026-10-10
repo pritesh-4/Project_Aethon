@@ -17,6 +17,8 @@ dependencies = [
     "pydantic>=2.9.0",
     "pydantic-settings>=2.4.0",
     "python-multipart>=0.0.9",
+    "numpy>=1.26.0",
+    "matplotlib>=3.8.0",
     "astropy>=6.0.0",
     "blimpy>=2.1.4",
     "setigen>=2.7.0",
@@ -31,6 +33,10 @@ dev = [
     "ruff>=0.8.0",
     "mypy>=1.11.0",
 ]
+cnn = [
+    "torch>=2.0.0",
+]
+
 
 [tool.ruff]
 line-length = 100

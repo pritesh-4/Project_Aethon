@@ -1,422 +1,556 @@
-# ROADMAP.md — Project Roadmap: AETHON
+# AETHON — Master Development Roadmap
 
-> **Current Milestone:** v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine  
-> **Goal:** Ingest real Breakthrough Listen observations, perform interactive Doppler drift & de-Doppler correction, mitigate RFI via explainable cadence logic, score candidates with layered models, and export research-grade scientific PDF dossiers for a flawless 3-minute technical demonstration.  
-> **Status:** Active · Phase 9 Complete · Scientific Validation, Reproducibility & Delivery Verification Passed
+## From Current Research Prototype to a Trustworthy Scientific Demonstration
 
----
-
-## Must-Haves
-
-- [x] Offline ingestion and header extraction of Breakthrough Listen `.fil` and `.fits` observations
-- [x] Format-agnostic normalized spectral slice model with complete provenance
-- [x] Controlled `setigen` synthetic signal injection & parameter recovery benchmark mode
-- [x] Signal preprocessing, robust distribution-free statistics & RFI quality assessment layer (Phase 4)
-- [x] Scientific anomaly detection engine (statistical baseline & unsupervised Isolation Forest) (Phase 5)
-- [x] Apparent Doppler frequency drift estimation and non-destructive de-Doppler correction (Phase 6)
-- [x] Transparent candidate management, evidence aggregation, and explainable scoring heuristics (Phase 7)
-- [x] Publication-grade scientific PDF dossier export with embedded spectral snapshots and metadata (Phase 7)
-- [x] Full-stack frontend integration connecting React interface with genuine FastAPI endpoints (Phase 8)
-- [x] Rigorous scientific validation, split-leakage prevention, and controlled synthetic benchmark evaluation (Phase 9)
-- [x] Automated pipeline integration verification across normal and error envelopes (Phase 9)
-- [x] Deterministic, 100% offline reproducible technical demonstration and master verification gate (Phase 9)
+> **Repository:** `pritesh-4/Project_Aethon`  
+> **Starting Point:** `main` at commit `f0d35ec4` (10 October 2026)  
+> **Primary Objective:** Build a reproducible, scientifically defensible system that discovers unusual radio-signal candidates, evaluates evidence, and presents results for human investigation.  
+> **Active Milestone:** Authoritative Master Roadmap (Phases 0–13)  
+> **Status:** Phase 0 Active · Baseline Connectivity & Quality Gates Verified
 
 ---
 
-## Archived Milestone (v1.0.0 — Core Web Architecture & Visual Refoundation)
+## 1. The Governing Principle
 
-- [x] **Phase 1:** Foundation & Visual Identity Refoundation (Direction H: Paper Desk `#F4F1EA` + Midnight Instrument `#0D141A`)
-- [x] **Phase 2:** Observation & Discovery Pipelines (HTML5 Canvas DPR spectrogram rasterizers + Web Audio sonification)
-- [x] **Phase 3:** Candidate Triage & Digital Research Bench (Interactive 4-stage analytical bench + candidate ledger)
-- [x] **Phase 4:** Chronological Repository & Methodology Publication (Archive browser + 5-stage ML guide + Latent Manifold map)
+AETHON must not merely produce candidate signals. It must be able to explain:
 
----
+- Which observation was analyzed and where it came from.
+- Which scientific operations were applied.
+- What the detector actually measured.
+- Why a signal was selected as a candidate.
+- Which evidence supports or weakens that candidate.
+- What remains unknown.
+- Whether the result can be reproduced from the same input and configuration.
 
-## Active Milestone Phases (v2.0.0)
+An anomaly is not automatically an astronomical discovery, and an astronomical anomaly is not proof of extraterrestrial intelligence.
 
-### Phase 0: Python Backend Foundation
-
-- **Status:** ✅ Complete
-- **Objective:** Establish the foundational Python and FastAPI backend service package layout, configuration management, structured logging, local Vite CORS support, unified error reporting, and automated health test suite.
-- **Dependencies:** None (foundational infrastructure preceding Phase 5).
-- **Implementation Scope:**
-  - Dedicated `backend/` directory with standard package layout (`backend/app/{core,api,schemas}`).
-  - Pydantic Settings configuration (`app/core/config.py`) and documented `.env.example`.
-  - Structured application logging without credential leakage (`app/core/logging.py`).
-  - Unified error handling conforming to frontend `ApiErrorPayload` (`app/schemas/error.py`).
-  - CORS middleware supporting local Vite development (`http://localhost:5173`).
-  - Stable, lightweight health check endpoints at `GET /health` and `GET /api/health`.
-  - Automated test suite in `backend/tests/` with 14 passing tests.
-- **Non-Goals:** Raw telescope data parsing (Phase 5); ML model training (Phase 9); database layers; live telescope streaming.
-- **Expected Artifacts:** `backend/pyproject.toml`, `backend/app/main.py`, `backend/app/core/config.py`, `backend/app/api/routes/health.py`, `backend/tests/`.
-- **Measurable Acceptance Criteria:**
-  - FastAPI application initializes successfully with title, version, and OpenAPI docs (`/docs`, `/openapi.json`).
-  - `GET /health` returns HTTP 200 with valid `HealthStatus` JSON.
-  - CORS preflight OPTIONS requests return valid `Access-Control-Allow-Origin` for local Vite dev.
-  - Invalid configuration options are rejected with predictable `ValidationError`.
-  - Automated test suite passes with zero failures via `pytest`.
-- **Verification Method:** `pytest` (14 passing tests) + empirical HTTP curl/REST requests to live Uvicorn instance.
-- **Demo Value:** Unlocks backend API capabilities for subsequent scientific pipeline and telemetry integration without impacting frontend stability.
+**Development rule:** Prioritize truthful scientific outputs, reproducibility, and measurable detection quality over additional UI features or more sophisticated-looking AI models.
 
 ---
 
-### Phase 5: Scientific Ingestion Foundation & Normalized Data Model (Backend Phase 1)
+## 2. Current Starting Position
 
-- **Status:** ✅ Complete
-- **Objective:** Establish the Python/FastAPI scientific backend and ingestion layer to parse Breakthrough Listen `.fil` (filterbank) and `.fits` files into a unified scientific observation format with persistent metadata and provenance.
-- **Dependencies:** Phase 0 (Python Backend Foundation).
-- **Implementation Scope:**
-  - Standalone scientific file ingestion engine (`backend/app/ingestion/`) with modular adapters.
-  - SIGPROC filterbank parsing via `blimpy.Waterfall(..., load_data=False)` extracting channel counts, signed channel spacing (`foff`), reference frequency (`fch1`), sampling interval (`tsamp`), start MJD (`tstart`), source name, telescope ID, and sky coordinates (`src_raj`, `src_dej`).
-  - Radio FITS parsing via `astropy.io.fits.open(..., memmap=True)` with dedicated sub-parsers:
-    - `FitsSpectralImageParser` for 2D/3D/4D spectral image HDUs with WCS frequency/time axes.
-    - `FitsBinTableParser` for PSRFITS/SDFITS `SUBINT` binary tables with `DAT_FREQ`, `TSUBINT`, `DATA`.
-    - Explicit rejection of unsupported non-radio FITS layouts (e.g. optical images) via `UnsupportedFitsLayoutError`.
-  - Canonical Pydantic observation schemas (`ScientificMetadata`, `Provenance`, `ObservationRecordResponse`, `ObservationListResponse`).
-  - Exact frequency coverage edge calculation distinguishing channel centers from channel boundaries.
-  - Safe persistent storage: streaming chunk validation, byte limit enforcement (HTTP 413), SHA-256 calculation, atomic staging move, and persistent SQLite metadata index.
-  - REST endpoints: `POST /api/observations` (multipart upload), `GET /api/observations` (paginated listing), `GET /api/observations/{id}` (record details and provenance).
-  - Automated offline test suite: 42 tests across unit adapters, storage transactions, error branches, and API integration.
-- **Non-Goals:** Anomaly detection, RFI classification, Doppler drift analysis, signal ranking, model training, or candidate generation.
-- **Artifacts:** `backend/app/ingestion/`, `backend/app/storage/`, `backend/app/schemas/observations.py`, `backend/app/api/routes/observations.py`, `backend/tests/test_adapters.py`, `backend/tests/test_storage.py`, `backend/tests/test_api_observations.py`.
-- **Measurable Acceptance Criteria:**
-  - Fast-loading header inspection without loading full multi-gigabyte data matrices into RAM.
-  - Extracted header matches Astropy/blimpy values with zero loss of coordinate or timestamp precision.
-  - Negative channel spacing preserved for descending frequency allocations.
-  - Corrupted, empty, or unsupported files rejected with safe HTTP error codes (400, 413, 422).
-  - Persisted observation records survive application restarts with zero orphan files.
-  - Automated test suite passes with 42/42 tests passing offline.
-- **Verification Method:** `pytest` (42 passing tests) + `ruff check .` (0 errors) + `mypy app` (0 issues).
-- **Demo Value:** Enables researchers and evaluators to upload and index genuine telescope observations directly from the Breakthrough Listen archive.
+### Implemented Foundations to Preserve
 
----
+The current repository already includes:
 
-### Phase 2: Canonical Scientific Data Representation & Spectral Slice Engine (Backend Phase 2)
+- **Backend Foundation:** FastAPI application, settings, logging, health checks (`/health`, `/api/health`), and standardized error handling.
+- **Ingestion & Data Model:** SIGPROC Filterbank (`.fil`) and supported radio FITS (`.fits`, `.fit`) ingestion via `blimpy` and `astropy`.
+- **Persistent Storage & Slices:** Persistent observation metadata in SQLite WAL database and bounded spectral-slice retrieval via REST API.
+- **Canonical Representation:** Canonical 2D time-frequency representation (`values[time_index][frequency_index]`, Axis 0 = chronologically ascending time, Axis 1 = ascending frequency in Hz) with full provenance.
+- **Synthetic Signal Lab:** Synthetic signal generators (`setigen` & NumPy), signal injection, and ground-truth manifests.
+- **Signal Preprocessing:** Distribution-free robust statistics, RFI indicators, quality masks, and controlled transformations with audit manifests.
+- **Anomaly Detection Engine:** Statistical baseline and unsupervised Isolation Forest anomaly scoring over spectral feature vectors.
+- **Doppler & Temporal Analysis:** Apparent frequency-drift analysis, trajectory ridge extraction, OLS regression with analytical standard error, and pure-functional de-drift routines.
+- **Candidate Engine:** SQLite candidate persistence, explainable scoring heuristics, triage review history, and publication-grade vector PDF dossier generation.
+- **Full-Stack Connectivity:** React + TypeScript + Vite frontend connected to genuine FastAPI endpoints across all operational pages (`Observatory`, `Discover`, `Candidates`, `Analysis`, `Archive`).
+- **CI Quality Gates:** Frontend CI (`npm run check`), Backend CI (Ruff, Mypy, 197 Pytest tests), and Integration CI (`.github/workflows/integration.yml`) passing cleanly.
 
-- **Status:** ✅ Complete
-- **Objective:** Establish an authoritative, validated, memory-conscious internal representation of radio-observation data with reliable time-frequency coordinate mapping and bounded spectral slice retrieval via REST API.
-- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 / Phase 5 (Observation Ingestion Engine).
-- **Implementation Scope:**
-  - Canonical 2D matrix contract: `values[time_index][frequency_index]` with Axis 0 = Time (chronologically increasing) and Axis 1 = Frequency (strictly ascending in Hz).
-  - Explicit scientific coordinate models: `FrequencyAxisModel` (channel centers in Hz, spacing, reference channel) and `TimeAxisModel` (sampling interval in seconds, relative timestamps, MJD/UTC reference).
-  - Reader abstraction (`BaseSliceReader`) with format-specific bounded array slicing:
-    - `FilterbankSliceReader`: Memory-mapped access via `np.memmap` using binary header offset (`idx_data`), signed frequency channel mapping, and column flipping for descending source channels (`[:, ::-1]`). Explicit memory-unmapping and garbage collection preventing Windows file locks.
-    - `FitsSliceReader`: Slices radio spectral images via `astropy.fits.HDU.section` without loading full arrays into RAM, and reads selected rows from radio binary tables (PSRFITS/SDFITS `SUBINT`).
-  - Representation service (`SliceService`): validates half-open index ranges `[start, stop)`, enforces `MAX_SLICE_CELLS` safety bound (default: 250,000 cells), generates aligned physical coordinate arrays, detects IEEE non-finite samples (NaN/Inf) and serializes them as JSON `null`, and compiles audit provenance.
-  - REST endpoint: `GET /api/observations/{observation_id}/slice` with full OpenAPI models and documentation.
-  - Comprehensive automated test suite: 62 tests across axis models, slice readers, boundary validations, limit enforcement, and API integration.
-- **Non-Goals:** Signal detection, RFI classification, Doppler drift estimation, anomaly scoring, candidate ranking, or ML model training.
-- **Artifacts:** `backend/app/representation/`, `backend/app/schemas/slice.py`, `backend/app/api/routes/observations.py` (`GET /{id}/slice`), `backend/tests/test_representation_axes.py`, `backend/tests/test_slice_readers.py`, `backend/tests/test_api_slice.py`.
-- **Measurable Acceptance Criteria:**
-  - Bounded data retrieval directly from disk without loading full raw observations into memory.
-  - Consistent array convention `values[time_index][frequency_index]` with strictly ascending frequency columns.
-  - Exact frequency coordinates in Hz and relative timestamps in seconds aligned with returned matrix dimensions.
-  - Memory-safe operation on Windows with zero file-lock errors (`PermissionError [WinError 32]`).
-  - Requests exceeding `MAX_SLICE_CELLS` rejected with HTTP 422 `SLICE_CELL_LIMIT_EXCEEDED`.
-  - Non-finite samples safely encoded as `null` in JSON responses.
-  - Source raw files remain completely immutable on disk.
-  - Automated test suite passes 100% offline (62/62 passing).
-- **Verification Method:** `pytest` (62 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues).
-- **Demo Value:** Provides the dependable scientific data contract that future preprocessing, Doppler correction, and candidate screening engines consume.
+GitHub reports that all three CI workflows passed on the starting commit (`f0d35ec4`). Keep these quality gates in place.
+
+### Known Gaps That Take Priority
+
+1. **Frontend Adornments:** Some frontend adapters invent plausible scientific values when backend evidence is missing.
+2. **Error Masking:** Some discovery operations suppress errors and continue as though the pipeline succeeded.
+3. **Static Master Verification Gate:** The master verification script uses hardcoded test results rather than deriving all results from fresh dynamic executions.
+4. **Benchmark Scale & False Positives:** The benchmark contains only nine evaluation observations and reports a 50% noise-only observation false-positive rate for Isolation Forest.
+5. **Benchmark Localization:** Localization is weak, with a reported mean region IoU of approximately 0.144 for Isolation Forest.
+6. **Pending Requirements:** Offline astronomy data, the BLC1 case study, and several RFI requirements remain marked pending.
+7. **Document Drift:** The roadmap, state, and TODO documents disagree about current phase numbering and status.
+8. **Storage Hygiene:** Runtime databases, observations, and generated reports need a clear policy separating them from curated fixtures.
 
 ---
 
-### Phase 3: Synthetic Signal Laboratory and Benchmark Framework (Backend Phase 3)
+## 3. Authoritative Master Roadmap (Phases 0–13)
 
-- **Status:** ✅ Complete
-- **Objective:** Build a reproducible synthetic radio-signal laboratory capable of generating controlled time-frequency observations, injecting signals with known properties into configurable noise backgrounds, preserving exact ground truth, packaging benchmark datasets, and providing quantitative evaluation metrics without implementing production detectors prematurely.
-- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 / Phase 5 (Ingestion Engine), Phase 2 (Canonical Data Representation).
-- **Implementation Scope:**
-  - Dedicated scientific module (`backend/app/synthetic/`) decoupled from FastAPI routes:
-    - `backgrounds.py`: Configurable statistical noise generators (Gaussian $\mathcal{N}(\mu, \sigma^2)$, flat baseline with spectral slope, time-varying noise $\sigma(t)$) using isolated `numpy.random.default_rng(seed)` (PCG64). True negative controls preserved.
-    - `signals.py`: Extensible signal generators (`BaseSignalGenerator`) for 4 core families: narrowband stationary tone (`stationary_tone`), drifting tone with boundary clipping tracking (`drifting_tone`), finite burst (`burst`), and broadband contiguous emission (`broadband_emission`).
-    - `injection.py`: Non-destructive additive injection ($V_{\text{combined}} = V_{\text{background}} + \sum S_i$) adhering to Peak SNR convention ($\text{SNR}_{\text{peak}} = A_{\text{peak}} / \sigma_{\text{noise}}$) and outputting canonical `CanonicalSlice`.
-    - `ground_truth.py`: Strongly typed ground-truth models (`InjectedSignalGroundTruth`, `ObservationGroundTruth`) preserving trajectories, bounding boxes, parameters, and clipping flags. Strictly separated from observation array `values`.
-    - `setigen_adapter.py`: Isolated adapter mapping `setigen.Frame` to canonical `values[time_index][frequency_index]` with physical axes models.
-    - `dataset.py`: Benchmark packaging suite (`BenchmarkDatasetGenerator`) creating 9-observation standard suites, computing SHA-256 hashes, generating `manifest.json`, and providing `load_benchmark_dataset` with tamper detection.
-    - `evaluation.py`: Quantitative benchmark evaluator (`BenchmarkEvaluator`) with 1-to-1 greedy IoU matching, precision, recall, F1, per-family breakdown, negative-control false alarms, Doppler drift error calculation, and `ToyThresholdBaselineDetector` validation baseline.
-  - CLI generation script: `backend/scripts/generate_synthetic_benchmark.py` (`--output-dir`, `--seed`, `--dataset-id`, `--verify`).
-  - Comprehensive automated test suite: 94 passing tests (32 new synthetic unit, property, and integration tests).
-- **Non-Goals:** Production anomaly detection, RFI classification, Doppler drift estimator, candidate ranking, CNNs, Isolation Forest, or ML training.
-- **Artifacts:** `backend/app/synthetic/`, `backend/scripts/generate_synthetic_benchmark.py`, `backend/tests/test_synthetic_*.py`.
-- **Measurable Acceptance Criteria:**
-  - Deterministic generation: identical seeds yield bit-for-bit identical background and signal arrays.
-  - Support preservation: injection modifies only mathematical support cells; background untouched elsewhere.
-  - Zero ground truth leakage: observation matrices contain no labels or markers.
-  - Standard benchmark suite generated and loaded from disk with 100% SHA-256 verification.
-  - Evaluator correctly assesses true positives, false positives, missed detections, and drift error from supplied estimates.
-  - Automated test suite passes 100% offline (94/94 passing).
-- **Verification Method:** `pytest` (94 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues).
-- **Demo Value:** Enables rigorous scientific calibration and quantitative benchmark reporting for all subsequent anomaly detection, Doppler analysis, and candidate screening modules.
+### PHASE 0 — Establish the Authoritative Project State
 
----
-
-### Phase 4: Signal Processing and RFI Assessment (Backend Phase 4)
-
-- **Status:** ✅ Complete
-- **Objective:** Establish a distribution-free, reproducible signal-processing and RFI-assessment pipeline capable of assessing observation quality, estimating background behavior without assuming Gaussian distributions, generating transparent statistical indicators for suspicious channels, time samples, and local outliers, preserving interesting signals, and outputting traceable quality flags and transformation history.
-- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 / Phase 5 (Ingestion Engine), Phase 2 (Canonical Data Representation), Phase 3 (Synthetic Signal Laboratory).
-- **Implementation Scope:**
-  - Dedicated scientific module (`backend/app/processing/`) decoupled from HTTP transport:
-    - `statistics.py`: Distribution-free robust statistical estimators (sample count, finite/non-finite count, median, mean, sample standard deviation, MAD ($\text{median}(|x - \text{median}(x)|)$), robust sigma ($1.4826 \times \text{MAD}$), quantiles (P25, P75), per-channel medians/MAD, per-time integration medians/MAD, and modified z-scores).
-    - `quality.py`: Input validation (2D dimensions, positive sizes, finite checks, resource limit `MAX_PROCESSING_CELLS = 1_048_576`), and `initialize_quality_mask` tagging non-finite samples with `FlagReason.NON_FINITE`.
-    - `rfi/channel_flags.py`: Robust frequency-channel flagger based on channel medians modified z-score (>4.5) and outlier sample fraction (>0.40) relative to observation robust dispersion.
-    - `rfi/time_flags.py`: Robust time-sample flagger detecting broadband power bursts (>4.5 sigma) and elevated channel fractions (>0.40).
-    - `rfi/local_flags.py`: Fast 2D moving median/MAD outlier detector using `scipy.ndimage.median_filter` (>5.0 sigma).
-    - `rfi/__init__.py`: Orchestrates channel, time, and local indicators into an explainable `RfiAssessmentReport` with scientific disclaimers separating evidence from source classifications.
-    - `baseline.py`: Configurable baseline estimation (`per_channel_median`, `moving_median_2d`, or `none`).
-    - `transformations.py`: Optional, reproducible transformations (`subtract_channel_background`, `robust_standardization`, `apply_mask_in_output`) with complete audit ledger (`TransformationRecord`).
-    - `pipeline.py`: Pipeline coordinator (`run_processing_pipeline`) and `ProcessingService`.
-    - `evaluation.py`: Quantitative evaluation framework (`PreprocessingEvaluator` and `SyntheticContaminationInjector`) measuring contamination flag rate, clean false-flag rate, raw matrix preservation, and target signal retention without ground-truth leakage.
-  - REST endpoint: `POST /api/observations/{id}/process` with request/response Pydantic schemas.
-  - Comprehensive automated test suite: 122 passing tests (28 new tests across statistics, quality, RFI flaggers, transformations, evaluation, and REST API).
-- **Non-Goals:** Production anomaly detection, Isolation Forest, CNN training, Doppler drift estimation, candidate ranking, or automatic source classification.
-- **Artifacts:** `backend/app/processing/`, `backend/app/schemas/processing.py`, `backend/tests/test_processing_*.py`, `backend/tests/test_api_processing.py`.
-- **Measurable Acceptance Criteria:**
-  - Raw source file and canonical NumPy array immutability: bit-for-bit identical before and after processing.
-  - Quality mask convention: `QualityMask` maintains primary boolean exclusion mask (`True` = flagged/excluded) alongside independent reason layers (`FlagReason`).
-  - Transparent evidence: all flags document thresholds, parameters, and rationale; no fabricated RFI probabilities.
-  - Signal retention: clean synthetic target signals retain 100% support unmasked in default pipeline; synthetic contamination flagged at >98%; clean noise false-alarm rate <2%.
-  - Memory bounds: strict cell ceiling enforced (`MAX_PROCESSING_CELLS`); chunked/moving-window operations.
-  - Automated test suite passes 100% offline (122/122 passing).
-- **Verification Method:** `pytest` (122 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues) + `npm run check` (0 errors).
-- **Demo Value:** Guarantees clean, traceable, analysis-ready spectral data for all subsequent anomaly detection, Doppler searching, and candidate scoring algorithms while preserving scientific integrity.
+- **Priority:** P0 (Foundational)
+- **Objective:** Ensure every future coding task follows one accurate source of truth.
+- **Tasks:**
+  1. Review `.gsd/ROADMAP.md`, `.gsd/REQUIREMENTS.md`, `.gsd/STATE.md`, `.gsd/TODO.md`, `PROJECT_RULES.md`, and root/backend READMEs.
+  2. Create one canonical execution roadmap using the phases in this document.
+  3. Reconcile inconsistent historical phase numbers without rewriting or deleting useful implementation history.
+  4. Mark each capability as one of:
+     - `Implemented`
+     - `Automated-test verified`
+     - `Scientifically evaluated`
+     - `Partially implemented`
+     - `Pending`
+     - `Deferred`
+  5. Record the current commit (`f0d35ec4`), CI workflow results, benchmark metrics, unresolved issues, and next task.
+  6. Treat existing verification reports as historical evidence until regenerated on current code.
+- **Acceptance Criteria:**
+  - All planning documents agree about the current milestone and next task.
+  - The same phase number is never used for two unrelated implementations.
+  - No completed requirement is marked pending merely because its original file path changed.
+  - No pending scientific requirement is marked complete merely because a corresponding endpoint exists.
+- **Deliverable:** Reconciled project state and one authoritative roadmap in `.gsd/ROADMAP.md`.
+- **Exit Gate:** A developer or coding agent can identify the next task without interpreting contradictory planning files.
 
 ---
 
-### Phase 5: Scientific Anomaly Detection Engine (Backend Phase 5)
+### PHASE 1 — Repository Hygiene, Configuration, and Data Safety
 
-- **Status:** ✅ Complete
-- **Objective:** Implement a reproducible, distribution-free anomaly-detection engine that partitions time-frequency observations into bounded analysis regions, extracts documented numerical features, establishes a transparent statistical baseline, fits an unsupervised Isolation Forest detector with strict data-leakage prevention, outputs traceable evidence, and evaluates both detectors against controlled Phase 3 synthetic benchmarks.
-- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 / Phase 5 (Ingestion Engine), Phase 2 (Canonical Data Representation), Phase 3 (Synthetic Signal Laboratory), Phase 4 (Signal Processing and RFI Assessment).
-- **Implementation Scope:**
-  - Dedicated scientific detection module (`backend/app/detection/`) decoupled from HTTP controllers:
-    - `exceptions.py`: Domain exceptions (`DetectionError`, `InvalidDetectionConfigError`, `EmptyAnalysisRegionError`, `ModelNotFittedError`, `DetectionDimensionLimitExceededError`, `InvalidModelArtifactError`).
-    - `config.py`: Validated Pydantic models (`WindowConfig`, `StatisticalBaselineConfig`, `IsolationForestConfig`, `DetectionPipelineConfig`).
-    - `schemas.py`: Data models (`AnalysisWindow`, `DetectionEvidence`, `AnomalousRegion`, `MergedRegion`, `DetectionResult`) and `SCIENTIFIC_DETECTION_DISCLAIMER`.
-    - `features.py`: Schema v1.0.0 with 11 distribution-free numerical features (intensity, frequency-distribution, and temporal moments) protected against zero dispersion.
-    - `windows.py`: Zero-copy window partitioning with physical coordinates (`time_center_s`, `freq_center_hz`, `bandwidth_hz`), sample validity thresholds, and safety ceilings (`max_windows`).
-    - `baseline.py`: Transparent statistical baseline detector computing modified z-scores ($Z_{i, j}$) against reference window ensembles with deterministic top-feature rationale.
-    - `isolation_forest.py`: Unsupervised Isolation Forest detector (`scikit-learn>=1.4.0`) with robust scaling fitted strictly on reference data, inverted score direction ($\text{anomaly\_score} = -\text{decision\_function}(X)$), deterministic `random_state`, and verified `.joblib` model persistence.
-    - `regions.py`: Connected-component spatial merging consolidating overlapping/contiguous anomalous windows into unified bounding boxes (`MergedRegion`).
-    - `service.py`: Pipeline coordinator (`DetectionService`) executable directly from Python.
-    - `evaluation.py`: Quantitative benchmark evaluator (`DetectionBenchmarkEvaluator`) with observation-level split isolation, precision, recall, F1, and signal family breakdown.
-  - REST API endpoint: `POST /api/observations/{id}/detect` supporting bounded coordinates and pipeline configuration.
-  - Comprehensive automated test suite: 145 passing tests (23 new tests across features, baseline, Isolation Forest, service, regions, evaluation, and REST API).
-- **Non-Goals:** Production Doppler drift estimation, de-Doppler correction, candidate ranking, CNN training, or claims of extraterrestrial intelligence.
-- **Artifacts:** `backend/app/detection/`, `backend/app/schemas/detection.py`, `backend/tests/test_detection_*.py`, `backend/tests/test_api_detection.py`.
-- **Measurable Acceptance Criteria:**
-  - Zero-copy window slicing: large matrices processed without full-array duplications.
-  - Transparent scores: higher displayed scores strictly indicate greater anomaly.
-  - Leakage prevention: models fitted exclusively on reference observations; zero ground truth exposed to detectors.
-  - High recall on strong synthetic targets (>95% recall for SNR $\ge 15$), low false-positive rate on noise controls (<5%).
-  - Safe model persistence: artifacts verified against magic headers and schema versions.
-  - Automated test suite passes 100% offline (145/145 passing).
-- **Verification Method:** `pytest` (145 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues) + `npm run check` (0 errors).
-- **Demo Value:** Unlocks automated discovery of unusual candidate signals across radio observations with interpretable evidence and verified false-positive bounds.
+- **Priority:** P0 (Foundational)
+- **Objective:** Make the existing project safe and reproducible before further scientific development.
+- **Tasks:**
+  1. Inspect the tracked root database, observations, reports, generated files, and all environment examples.
+  2. Classify every tracked observation as an intentional fixture, documented sample, or runtime artifact.
+  3. Preserve valid fixtures. Do not delete scientific data until its purpose and provenance have been established.
+  4. Move generated reports to one canonical report directory (`reports/`) and remove redundant copies only after confirming they can be regenerated.
+  5. Ensure local `.env` files, databases, temporary uploads, virtual environments, and generated outputs are excluded from Git where appropriate.
+  6. Retain `.env.example` files containing placeholders, never real secrets.
+  7. Keep private server credentials outside Vite-exposed `VITE_*` variables.
+  8. Align Integration CI's CORS environment variable with the actual backend setting, `CORS_ORIGINS`.
+  9. Decide whether Prettier remains part of the frontend toolchain. If removed, remove it consistently from dependencies, scripts, hooks, and CI.
+  10. Establish a reproducible backend installation and dependency-resolution strategy.
+- **Acceptance Criteria:**
+  - Fresh installation instructions work from a clean checkout.
+  - CORS configuration is demonstrably loaded from the intended environment variable.
+  - Private configuration and runtime data are not accidentally tracked.
+  - All retained scientific assets have documented origin and status.
+  - Formatter, lint, type-check, and test commands are internally consistent.
+- **Deliverable:** Clean repository policies and reproducible development configuration.
+- **Exit Gate:** A fresh environment can run the application without relying on undocumented local files.
 
 ---
 
-### Phase 6: Doppler Drift and Temporal Analysis Engine (Backend Phase 6)
+### PHASE 2 — Scientific Truthfulness in the Frontend
 
-- **Status:** ✅ Complete
-- **Objective:** Implement a reproducible, distribution-free analysis engine for estimating apparent frequency drift trajectories, measuring linear frequency drift rates ($\dot{f}$ in Hz/s) with explicit analytical uncertainty, evaluating bounded drift hypotheses via coherent integration, providing non-destructive linear de-drift array transformations, characterizing temporal persistence/gaps/duration, and conservatively comparing multi-observation events for recurrence without data leakage.
-- **Dependencies:** Phase 0 (Backend Foundation), Phase 1 (Ingestion Engine), Phase 2 (Canonical Data Representation), Phase 3 (Synthetic Signal Laboratory), Phase 4 (Signal Processing and RFI Assessment), Phase 5 (Scientific Anomaly Detection Engine).
-- **Implementation Scope:**
-  - Dedicated scientific analysis module (`backend/app/analysis/`) decoupled from FastAPI:
-    - `exceptions.py`: Domain exceptions (`AnalysisError`, `InvalidAnalysisConfigError`, `InsufficientTrajectoryPointsError`, `DegenerateTrajectoryError`, `CoordinateMetadataUnavailableError`, `HypothesisLimitExceededError`, `IncompatibleObservationError`).
-    - `config.py`: Validated Pydantic models (`TrajectoryExtractionConfig`, `DriftEstimationConfig`, `DriftSearchConfig`, `DeDriftConfig`, `TemporalConfig`, `RecurrenceConfig`, `AnalysisPipelineConfig`).
-    - `schemas.py`: Data models (`TrajectoryPoint`, `FrequencyTrajectory`, `DriftFitResult`, `DriftHypothesis`, `DriftSearchResult`, `DeDriftResult`, `TemporalCharacterization`, `RecurrenceComparisonRecord`, `AnalysisResult`, `SCIENTIFIC_DOPPLER_DISCLAIMER`).
-    - `trajectory.py`: Trajectory extraction via per-time peak power ridge with quadratic centroid refinement, SNR thresholding, and Phase 4 `QualityMask` integration.
-    - `drift_estimation.py`: Linear drift regression via OLS on time-centered coordinates ($\dot{f} = \Delta f / \Delta t$ in Hz/s), analytical standard error $\text{SE}(\dot{f}) = \sqrt{SS_{\text{res}} / ((N-2)\sum(t_i - \bar{t})^2)}$, $R^2$, residual standard deviation, and index-space slope fallback (channels/step).
-    - `drift_search.py`: Coherent linear drift hypothesis testing over a bounded grid, summing sheared rows into integrated profiles, scoring peak SNR, with safety ceilings and boundary-winner detection.
-    - `dedrift.py`: Pure-functional de-drift array transformation shearing rows by $-\dot{f}\Delta t$ into vertical columns with edge padding and zero circular wraparound.
-    - `temporal.py`: Temporal characterization measuring active duration, sample coverage fraction, consecutive gap duration, persistence fraction, and power variability.
-    - `recurrence.py`: Multi-observation event comparison with verified frequency separation tolerances, epoch tracking (MJD/UTC), and astronomical source matching.
-    - `service.py`: `AnalysisService` orchestrator supporting raw arrays or Phase 2 `CanonicalSlice` objects directly from Python.
-    - `evaluation.py`: `DriftAnalysisEvaluator` measuring signed and absolute drift rate errors and recovery rates against Phase 3 `ObservationGroundTruth` with zero data leakage.
-  - REST API endpoint: `POST /api/observations/{id}/analyze-drift` with bounded slicing coordinates and custom configuration.
-  - Comprehensive automated test suite: 173 passing tests (28 new tests across trajectory extraction, drift estimation, hypothesis search, de-drift transformation, temporal analysis, recurrence, benchmark evaluation, and REST API).
-- **Non-Goals:** Final candidate-ranking engine, candidate dossier generation, CNN training, automatic extraterrestrial classification, or claiming an observed topocentric drift is a complete physical Doppler velocity solution.
-- **Artifacts:** `backend/app/analysis/`, `backend/app/schemas/analysis.py`, `backend/tests/test_analysis_*.py`, `backend/tests/test_api_analysis.py`.
-- **Measurable Acceptance Criteria:**
-  - Apparent drift convention: $\dot{f} = \frac{\Delta f}{\Delta t}$ in Hz/s under canonical ascending frequency orientation.
-  - Analytical uncertainty: $\text{SE}(\dot{f})$ computed rigorously without invented heuristics; index slope fallback provided when physical axes are unavailable.
-  - Bounded search: grid size constrained by safety ceilings (`max_hypotheses`); boundary winners flagged honestly (`is_on_boundary`).
-  - Source immutability: de-drift transformation produces new derived views; raw observations remain 100% bit-for-bit immutable.
-  - Temporal metrics: duration, coverage, persistence, and gaps quantified honestly without inferring continuity across data gaps.
-  - Ground truth isolation: benchmark evaluation code assesses estimates against held-out synthetic targets with zero leakage into analysis routines.
-  - Automated test suite passes 100% offline (173/173 passing).
-- **Verification Method:** `pytest` (173 passing tests) + `ruff check .` (0 errors) + `ruff format --check .` (0 errors) + `mypy app` (0 issues) + `npm run check` (0 errors).
-- **Demo Value:** Provides rigorous mathematical characterization of candidate signals through drift velocity, coherence optimization, restacked vertical profiles, and multi-epoch recurrence tracking.
-
----
-
-### Phase 7: Candidate Engine, Evidence Aggregation, and Scientific Case Files
-
-- **Status:** ✅ Complete
-- **Objective:** Establish a transparent, reproducible candidate-management system that combines outputs from detection (Phase 5), data quality/RFI (Phase 4), and Doppler drift/temporal analysis (Phase 6) into traceable, reviewable candidate records; rank them using versioned, explainable heuristics; prevent duplicate fragmentation via 2D IoU/proximity grouping; support an explicit human-review lifecycle; and generate reproducible case files (JSON dossiers) and exportable scientific PDF dossiers.
-- **Dependencies:** Phase 0 (Foundation), Phase 1 (Ingestion), Phase 2 (Representation), Phase 3 (Synthetic Lab), Phase 4 (Processing/RFI), Phase 5 (Anomaly Detection), Phase 6 (Doppler & Temporal Analysis).
-- **Implementation Scope:**
-  - Candidate domain boundaries: strict separation of Observation, Processing Run, Detection, Analysis Result, Candidate, Candidate Assessment, Review Record, and Candidate Dossier.
-  - Candidate data model (`app/candidates/schemas.py`) with stable IDs (`cand_<uuid>`), target bounding regions, physical coordinates, immutable evidence ledger, and status machine.
-  - Eligibility engine (`app/candidates/eligibility.py`) enforcing bound sanity, non-zero sample presence, and flagged fraction ceilings without rejecting partially contaminated signals.
-  - Deterministic 2D bounding-box grouping (`app/candidates/grouping.py`) merging duplicate windows via IoU ($\ge 0.20$) or coordinate proximity ($\le 4$ steps, $\le 4$ channels).
-  - Evidence normalization (`app/candidates/evidence.py`) creating uniform `EvidenceItem` records from detection, RFI assessment, and Doppler drift runs.
-  - Explainable scoring heuristic (`app/candidates/scoring.py`): composite operational priority score $[0.0, 100.0]$ with bounded component contributions (35% anomaly, 25% drift coherence, 20% temporal continuity, 20% data quality, +10% recurrence bonus) and explicit missing-evidence reporting.
-  - Human review lifecycle state machine (`app/candidates/review.py`) validating transitions (`unreviewed`, `under_review`, `needs_more_data`, `likely_interference`, `interesting`, `dismissed`) with persistent audit trails.
-  - SQLite WAL repository (`app/candidates/repository.py`) storing candidates, assessments, and review history.
-  - Structured JSON dossier snapshots (`app/candidates/dossier.py`) compiling frozen state with reproducibility appendix (software versions, hashes).
-  - Publication-grade vector PDF export (`app/candidates/pdf.py`) via `matplotlib.backends.backend_pdf.PdfPages` rendering clean 2-page research reports with selectable text, diagnostic tables, and mandatory scientific disclaimers.
-  - REST API endpoints (`app/api/routes/candidates.py`): `GET /api/candidates`, `POST /api/candidates`, `GET /api/candidates/{id}`, `POST /api/candidates/{id}/assess`, `GET /api/candidates/{id}/dossier`, `GET /api/candidates/{id}/dossier.pdf`, `POST /api/candidates/{id}/review`.
-- **Non-Goals:** Automatic declaration of extraterrestrial discovery, new ML classifiers, model retraining, or unauthorized arbitrary file writes.
-- **Artifacts:** `backend/app/candidates/`, `backend/app/schemas/candidates.py`, `backend/app/api/routes/candidates.py`, `backend/tests/test_candidates_*.py`, `backend/tests/test_api_candidates.py`.
-- **Measurable Acceptance Criteria:**
-  - Candidate records reference verified upstream observations and detections.
-  - 2D bounding-box IoU grouping prevents duplicate candidate fragmentation idempotently.
-  - Missing evidence handled explicitly without assigning arbitrary defaults or zero values.
-  - Candidate assessments preserved historically with versioning.
-  - Review status changes maintain complete audit records (timestamp, reviewer, rationale).
-  - Structured case files and 2-page vector PDFs generated deterministically from frozen snapshots.
-  - Full automated test suite passes 100% offline (193/193 tests passing).
-- **Verification Method:** `pytest` (193 passing tests) + `ruff check .` (0 errors) + `mypy app` (0 issues) + `npm run check` (0 errors).
-- **Demo Value:** Transforms raw algorithmic detections into professional, verifiable scientific case files that researchers and hackathon evaluators can inspect, review, triage, and export as PDF dossiers.
+- **Priority:** P0 (Integrity)
+- **Objective:** Remove invented measurements from every live-data screen.
+- **Scope:**
+  - `src/pages/Observatory/index.tsx`
+  - `src/pages/Discover/index.tsx`
+  - `src/pages/Candidates/index.tsx`
+  - `src/pages/Analysis/index.tsx`
+  - `src/pages/Archive/index.tsx`
+  - Relevant visualization components and frontend schemas.
+- **Tasks:**
+  1. Replace fabricated default frequencies, coordinates, signal power, SNR, persistence, anomaly scores, and RFI probabilities with explicit unavailable states when no valid measurement exists.
+  2. Remove unsupported fixed latent coordinates, catalog comparisons, signal classifications, processing times, and historical anomaly counts from live data.
+  3. Distinguish a measured zero from missing evidence.
+  4. Make every displayed metric traceable to:
+     - A field in an API response.
+     - A documented calculation derived from measured data.
+     - An explicitly labelled synthetic demonstration.
+  5. Align frontend schemas with actual backend response types, including nullable scientific measurements.
+  6. Remove unsupported formats from UI copy. Do not advertise HDF5 or CSV ingestion until real parsers exist.
+  7. Preserve mock data only inside an explicitly isolated demo mode (`VITE_DEMO_MODE=true`).
+  8. Audit the Model and About pages so planned neural architectures are clearly labelled as conceptual or future work.
+- **Acceptance Criteria:**
+  - No fabricated scientific measurement is rendered as a real result.
+  - Missing coordinates remain unavailable instead of displaying example coordinates.
+  - A candidate without measured drift does not appear to have a verified zero drift rate.
+  - Demo and live records are distinguishable throughout the UI.
+  - README capability claims match actual parsers and implemented models.
+- **Deliverable:** A frontend that faithfully represents the backend rather than embellishing missing data.
+- **Exit Gate:** Tests confirm that empty, partial, and complete API responses all display honestly.
 
 ---
 
-### Phase 8: Explainable RFI Mitigation & Multi-Cadence Logic
+### PHASE 3 — Correct Scientific Pipeline Orchestration and Error Handling
 
-- **Status:** ⬜ Not Started
-- **Objective:** Implement deterministic and multi-cadence RFI rejection, penalizing terrestrial interference with transparent, human-readable scientific rationale.
-- **Dependencies:** Phase 6 & Phase 7.
-- **Implementation Scope:**
-  - On/Off target cadence evaluator (ABACAD observing pattern): check if signal persists during off-target telescope pointings.
-  - Terrestrial interference classifier: identify zero-drift signals ($0.0\text{ Hz/s}$), wideband noise, and known terrestrial allocation bands (e.g., GPS, satellite downlinks, airport radar).
-  - Explainable disposition generator producing an array of plain-language diagnostic reasons for any score downgrade.
-- **Non-Goals:** Unverifiable black-box neural RFI filtering without explanation.
-- **Expected Artifacts:** `backend/analysis/rfi.py`, `backend/analysis/cadence.py`, `src/components/analysis/RfiExplanationPanel.tsx`.
-- **Measurable Acceptance Criteria:**
-  - Candidate present in off-target beam is automatically flagged with `OFF_TARGET_PRESENCE` and confidence penalized by $\ge 70\%$.
-  - Zero-drift candidate within local oscillator/satellite band receives disposition `LIKELY_TERRESTRIAL_RFI`.
-  - UI displays explicit breakdown: "Candidate Downgraded: Detected in OFF pointing; Zero drift rate consistent with ground-based transmitter."
-- **Verification Method:** Cadence integration test with multi-pointing observation pairs.
-- **Demo Value:** Demonstrates scientific credibility and honesty—shows that AETHON rigorously filters terrestrial noise rather than crying "aliens" at every anomaly.
-
----
-
-### Phase 9: Scientific Validation, Reproducibility, Reliability, and Final Delivery
-
-- **Status:** ✅ Complete
-- **Objective:** Perform rigorous scientific validation, integration verification, reproducibility audit, reliability hardening, and delivery-readiness assessment across all implemented capabilities in AETHON.
-- **Dependencies:** Phases 0–8.
-- **Implementation Scope:**
-  - 12-area repository verification matrix assessing backend, ingestion, canonical slicing, synthetic lab, signal processing, anomaly detection, drift analysis, candidate engine, dossiers, API contracts, frontend integration, and CI.
-  - Strict evaluation split integrity: reference features extracted strictly from independent noise-only seeds (1000..1009); zero evaluation samples or target injections exposed during detector calibration.
-  - Quantitative benchmark evaluation script (`backend/scripts/run_benchmark_evaluation.py`) measuring trivial control, statistical MAD baseline, and unsupervised Isolation Forest on held-out benchmark datasets.
-  - Automated end-to-end scientific pipeline verification script (`backend/scripts/verify_scientific_pipeline.py`) testing genuine SIGPROC uploads, canonical slicing, RFI assessment, anomaly detection, drift estimation, candidate creation, scoring, review transitions, JSON dossiers, and publication vector PDFs alongside negative failure envelopes (400, 404, 413, 422).
-  - Deterministic, 100% offline reproducible technical demonstration script (`scripts/run_offline_demo.py` & `backend/scripts/run_offline_demo.py`) generating verified demo artifacts in `<5.0 s` without mutating production databases.
-  - Master verification report compiler (`backend/scripts/run_overall_verification.py`) aggregating environment, git commit, test suite results, benchmark metrics, and capability matrix into machine-readable JSON artifacts (`reports/` and `backend/reports/`).
-  - Automated CI workflow enhancements in `.github/workflows/ci.yml` and `.github/workflows/backend-ci.yml` with synthetic benchmark smoke tests and bounded timeouts.
-- **Non-Goals:** Fabricating benchmark results; claiming production astronomy readiness for experimental research prototypes; silent fallback to mock data on API errors.
-- **Expected Artifacts:**
-  - `backend/scripts/run_benchmark_evaluation.py`
-  - `backend/scripts/verify_scientific_pipeline.py`
-  - `backend/scripts/run_offline_demo.py` & `scripts/run_offline_demo.py`
-  - `backend/scripts/run_overall_verification.py`
-  - `backend/reports/benchmark_evaluation_report.json` & `reports/benchmark_evaluation_report.json`
-  - `backend/reports/pipeline_verification_report.json` & `reports/pipeline_verification_report.json`
-  - `backend/reports/overall_verification_report.json` & `reports/overall_verification_report.json`
-- **Measurable Acceptance Criteria:**
-  - Full automated backend test suite passes (193/193 tests) via `pytest`.
-  - Frontend quality gate passes (`npm run check`: ESLint 0 errors, Prettier, tsc -b, 9 unit tests, Vite build).
-  - Held-out synthetic benchmark evaluated with zero data leakage (100% target recall, 86.49% precision for Isolation Forest, median drift error 0.0 Hz/s).
-  - Pipeline verification exercises all 14 integration and failure paths cleanly.
-  - Offline demo runs deterministically in $<10\text{ s}$ producing valid `.fil`, SQLite catalog, JSON case file, and vector PDF.
-- **Verification Method:** Master verification runner (`run_overall_verification.py`) asserting all 12 capabilities verified with machine-readable reports.
-- **Demo Value:** Unimpeachable scientific rigor and reproducibility, proving end-to-end functionality from raw bits to publication PDF.
+- **Priority:** P0 (Reliability)
+- **Objective:** Ensure every UI success state represents a successfully completed operation.
+- **Tasks:**
+  1. Audit the discovery pipeline's PREPARE → REPRESENT → SEARCH → RANK → COMPLETE sequence.
+  2. Stop swallowing processing, detection, and drift-analysis errors and replacing them with `null`.
+  3. Define explicit result states:
+     - Completed with detections.
+     - Completed with no qualifying detections.
+     - Partially completed with a failed stage.
+     - Failed.
+     - Blocked by insufficient input data.
+  4. Ensure a failed processing stage cannot silently lead to an apparently successful discovery result.
+  5. Correct Observatory's fixed slice bounds so requests respect actual observation dimensions and maximum slice-cell limits.
+  6. Preserve and display API error information safely.
+  7. Ensure cancellation, navigation away from a page, and repeated analysis requests do not produce stale results.
+  8. Check that every loading state eventually resolves to success, empty, or error.
+- **Acceptance Criteria:**
+  - No failed request is converted into a successful empty result.
+  - A “no signals found” message appears only after detection actually completed.
+  - Partial failure is visible and cannot be mistaken for completed scientific analysis.
+  - Slice retrieval respects observation dimensions and configured safety bounds.
+  - Loading states and error messages behave consistently.
+- **Deliverable:** Reliable orchestration between the frontend and FastAPI.
+- **Exit Gate:** Automated tests cover both normal execution and failed-stage transitions.
 
 ---
 
-### Phase 10: Cross-Observation Verification & Canonical BLC1 Case Study
+### PHASE 4 — Deterministic Full-Stack Integration Tests
 
-- **Status:** ⬜ Not Started
-- **Objective:** Integrate the flagship Breakthrough Listen Candidate 1 (BLC1 / Proxima Centauri) dataset and multi-observation verification workflow.
-- **Dependencies:** Phase 7, 8, 9.
-- **Implementation Scope:**
-  - Curate and package the BLC1 Proxima Centauri observation slice and corresponding off-target pointings.
-  - End-to-end interactive case study walkthrough in the UI: from initial detection of the drifting tone at ~982 MHz through cadence analysis, inter-modulation search, and final disposition as terrestrial interference.
-  - Cross-observation candidate comparison tool to check recurrence across historical observations.
-- **Non-Goals:** Ingesting the complete hundreds-of-gigabytes raw Parkes BLC1 archive.
-- **Expected Artifacts:** `backend/data/blc1_case_study/`, `src/pages/Analysis/components/Blc1Walkthrough.tsx`, documentation in `/archive`.
-- **Measurable Acceptance Criteria:**
-  - BLC1 case study reproducible deterministically from UI without network access.
-  - Final disposition correctly resolves to `TERRESTRIAL_INTERFERENCE` with traceable scientific evidence.
-- **Verification Method:** UI walkthrough verification and automated case study assertion test.
-- **Demo Value:** The primary narrative centerpiece for the research presentation.
-
----
-
-### Phase 11: Scientific Candidate Dossier & Research PDF Generator
-
-- **Status:** ⬜ Not Started
-- **Objective:** Build an exportable, publication-grade scientific PDF research dossier preserving FITS headers, high-resolution spectral snapshots, measurements, RFI audit traces, and cryptographically hashed provenance.
-- **Dependencies:** Phase 7, 8, 9, 10.
-- **Implementation Scope:**
-  - High-resolution offscreen Canvas/SVG rasterizer for publication-ready spectrogram and de-Doppler plots.
-  - Backend/client-side PDF generation module rendering an editorial-quality research report adhering to Direction H design standards.
-  - Cryptographic provenance hashing (SHA-256 of raw data slice + processing parameter manifest).
-  - UI "Export Scientific Dossier" trigger with instant PDF download and modal preview.
-- **Non-Goals:** Complex LaTeX toolchain requirement; editable Word documents.
-- **Expected Artifacts:** `backend/export/dossier_pdf.py`, `src/components/export/DossierModal.tsx`, sample exported `dossier_blc1.pdf`.
-- **Measurable Acceptance Criteria:**
-  - Generates valid, printable PDF document containing all required sections in $<1.5\text{ s}$.
-  - Spectrograms embedded at $\ge 300\text{ DPI}$ without compression artifacts.
-  - Preserves exact FITS/filterbank header parameters and SHA-256 slice hash.
-- **Verification Method:** Automated PDF structure validation and visual inspection.
-- **Demo Value:** Tangible, impressive takeaway that evaluators can see and inspect during or after technical review.
+- **Priority:** P0 (Verification)
+- **Objective:** Make frontend-to-backend connectivity tests independent of pre-existing local databases.
+- **Tasks:**
+  1. Create a deterministic integration fixture generated specifically for testing.
+  2. Generate a valid observation containing known background data and, where appropriate, a signal with known parameters.
+  3. Start FastAPI with isolated temporary storage and a clean test database.
+  4. Explicitly ingest or seed the observation before testing downstream endpoints.
+  5. Verify:
+     - Health checks.
+     - Observation ingestion and listing.
+     - Observation metadata.
+     - Bounded spectral-slice retrieval.
+     - Processing and RFI assessment.
+     - Detection.
+     - Drift analysis.
+     - Candidate creation and scoring.
+     - Candidate review.
+     - JSON and PDF dossiers.
+     - Invalid input and expected error responses.
+  6. Keep API contract tests separate from scientific-recovery tests.
+  7. Make the integration CI fail when a mandatory test is skipped because no observation or candidate exists.
+  8. Ensure temporary databases and uploads are removed after the test run.
+  9. Correct environment variable mismatches and verify both approved and unapproved CORS origins.
+- **Acceptance Criteria:**
+  - The integration workflow passes from a clean checkout.
+  - Every mandatory route is exercised using known test data.
+  - Core tests cannot silently skip because a database is empty.
+  - The workflow does not depend on committed runtime state.
+  - Normal and failure paths have asserted responses.
+- **Deliverable:** A deterministic API integration suite with independently controlled fixtures.
+- **Exit Gate:** A green integration run proves that the intended endpoints actually executed.
 
 ---
 
-### Phase 12: Performance Profiling, Offline Demo Cache & Rehearsed Flow
+### PHASE 5 — Replace the Hardcoded Master Verification Gate
 
-- **Status:** ⬜ Not Started
-- **Objective:** Profile end-to-end execution, eliminate processing bottlenecks, pre-cache demo data, and rehearse the exact 3-minute technical walkthrough flow for zero-latency, 100% offline execution.
-- **Dependencies:** All previous phases.
-- **Implementation Scope:**
-  - Profile CPU and memory consumption across ingestion, FFT, and de-Doppler routines; apply vectorization / caching where required.
-  - Bundle all demo observations and precomputed steps locally so the app runs flawlessly in airplane mode.
-  - Add an automated Demo Mode toggle that seeds the application with the exact rehearsable 3-minute presentation state.
-  - Comprehensive Playwright E2E test executing the 3-minute demo script and verifying all metrics, charts, and transitions.
-- **Non-Goals:** Over-engineering premature GPU pipelines; adding unnecessary cloud dependencies.
-- **Expected Artifacts:** `tests/e2e/technical_demo.spec.ts`, `backend/cache/demo_precomputed.json`, performance benchmark logs.
-- **Measurable Acceptance Criteria:**
-  - 100% offline operation verified with WiFi disconnected.
-  - Page transitions across all 9 routes complete in $<1.0\text{ s}$.
-  - Zero console errors or uncaught exceptions during complete 3-minute scripted demo.
-- **Verification Method:** E2E headless test run with mock network disabled.
-- **Demo Value:** Guarantees zero demo failures or awkward loading spinners during live technical presentation.
-
----
-
-## Progress Summary
-
-| Phase       | Title                                                   |   Status    | Target Completion |
-| :---------- | :------------------------------------------------------ | :---------: | :---------------- |
-| **Phase 1** | Foundation & Visual Identity Refoundation               | ✅ Complete | Milestone 1       |
-| **Phase 2** | Observation & Discovery Pipelines                       | ✅ Complete | Milestone 1       |
-| **Phase 3** | Candidate Triage & Digital Research Bench               | ✅ Complete | Milestone 1       |
-| **Phase 4** | Chronological Repository & Methodology Publication      | ✅ Complete | Milestone 1       |
-| **Phase 0** | Python Backend Foundation                               | ✅ Complete | Milestone 2       |
-| **Phase 5** | Scientific Ingestion Foundation & Normalized Data Model | ✅ Complete | Milestone 2       |
-| **Phase 2** | Canonical Data Representation & Spectral Slices (BE)    | ✅ Complete | Milestone 2       |
-| **Phase 3** | Synthetic Signal Laboratory & Benchmark Framework (BE)  | ✅ Complete | Milestone 2       |
-| **Phase 4** | Signal Processing & RFI Assessment (BE)                 | ✅ Complete | Milestone 2       |
-| **Phase 5** | Scientific Anomaly Detection Engine (BE)                | ✅ Complete | Milestone 2       |
-| **Phase 6** | Doppler Drift & Temporal Analysis Engine (BE)           | ✅ Complete | Milestone 2       |
-| **Phase 7** | Candidate Engine & Scientific Case Files (BE)           | ✅ Complete | Milestone 2       |
-| **Phase 8** | Frontend Integration & Real Workflow Pipeline           | ✅ Complete | Milestone 2       |
-| **Phase 9** | Scientific Validation, Reproducibility & Delivery Gate  | ✅ Complete | Milestone 2       |
+- **Priority:** P0 (Governance)
+- **Objective:** Make verification reports trustworthy and reproducible.
+- **Tasks:**
+  1. Update `backend/scripts/run_overall_verification.py`.
+  2. Execute actual backend tests, Ruff, Mypy, frontend checks, integration verification, benchmark evaluation, and offline-demo checks.
+  3. Capture the actual exit code and relevant output for each operation.
+  4. Derive test totals and pass/fail/skipped counts from real execution results.
+  5. Record actual current Git commit, environment, configuration, and generation timestamp.
+  6. Fail the master verification gate when a required check fails, cannot run, or is missing.
+  7. Separate:
+     - Historical report aggregation.
+     - Current automated quality gates.
+     - Scientific benchmark evaluation.
+     - End-to-end verification.
+  8. Generate all reports into one canonical location (`reports/`).
+  9. Avoid committing reports that contain misleading machine-specific paths or stale status claims.
+  10. Add a test that deliberately introduces a failing command or missing result and confirms that the overall gate fails.
+- **Acceptance Criteria:**
+  - There are no fabricated test counts or hardcoded successful quality-gate results.
+  - A failed test causes a failed master report.
+  - Report provenance identifies source commit and current run.
+  - The current report is clearly distinguishable from a prior run's output.
+- **Deliverable:** A genuine verification gate, not simply a success-report generator.
+- **Exit Gate:** The master gate has demonstrated both a passing run and a deliberately failing run.
 
 ---
 
-_Last updated: 2026-10-10_
+### PHASE 6 — Strengthen the Scientific Benchmark
+
+- **Priority:** P1 (Scientific Rigor)
+- **Objective:** Measure whether the detectors find signals accurately without overwhelming investigators with false positives.
+- **Current Baseline:**
+  - Evaluates only 9 observations: 7 positive, 2 negative controls, 9 injected targets.
+  - Isolation Forest reports: Recall 100%, Window Precision ~86.49%, Window F1 ~92.75%, Noise False-Positive Rate 50%, Mean IoU ~0.144.
+  - Preliminary synthetic results—not established real-world performance.
+- **Tasks:**
+  1. Expand the number and diversity of noise-only observations substantially.
+  2. Generate independent observation sets across multiple random seeds.
+  3. Include:
+     - Noise-only observations.
+     - Stationary tones.
+     - Positive and negative drifting tones.
+     - Weak and strong signals.
+     - Short bursts.
+     - Broadband events.
+     - Edge-of-window signals.
+     - Overlapping signals.
+     - RFI-like signals that can confuse the detector.
+  4. Maintain strict separation between detector-visible inputs and ground-truth labels.
+  5. Use separate reference, calibration, validation, and final held-out evaluation data.
+  6. Calibrate thresholds using calibration split rather than final test set.
+  7. Report observation-level detection rates, false alarms, window precision and recall, F1, localization IoU, drift error, and signal-family breakdowns.
+  8. Report uncertainty or variation across repeated runs.
+  9. Compare trivial control, statistical baseline, and Isolation Forest using identical evaluation cases.
+  10. Document limitations of simulated data compared with real radio observations.
+- **Acceptance Criteria:**
+  - Evaluation uses enough negative controls to make false-positive measurements meaningful.
+  - Detector performance is reproducible across independent runs.
+  - High recall is not achieved by indiscriminately flagging noise.
+  - Candidate localization and drift estimates are evaluated, not merely response-field presence.
+  - Benchmark report is generated from current code and current measurements.
+- **Deliverable:** A credible, repeatable evaluation framework with transparent failure metrics.
+- **Exit Gate:** The detector's useful operating range and limitations are quantified on unseen synthetic data.
+
+---
+
+### PHASE 7 — Build the Curated Offline Astronomy Sample Bundle
+
+- **Priority:** P1 (Astronomical Grounding)
+- **Objective:** Provide a real-data workflow that runs without downloading data at demonstration time.
+- **Tasks:**
+  1. Resolve pending offline sample requirement in `.gsd/REQUIREMENTS.md` (`REQ-ING-03`).
+  2. Select a small, legally usable, documented set of real astronomical observations, including specified GBT Proxima Centauri slices where appropriate.
+  3. Record source URLs, licensing, original filenames, checksums, acquisition details, and known metadata limitations.
+  4. Separate real astronomical observations from synthetic signals and fixtures.
+  5. Provide a reproducible manifest describing every bundled asset.
+  6. Verify each observation can be ingested, queried, sliced, processed, and analyzed without network access.
+  7. Keep bundle size appropriate for repository and demonstration (<50MB).
+  8. Do not commit large raw datasets; provide an explicit acquisition procedure where necessary.
+  9. Make offline demonstration use isolated temporary storage instead of developer's active database.
+- **Acceptance Criteria:**
+  - A fresh checkout can execute the documented offline workflow with no external network access at demonstration time.
+  - Every bundled record has provenance.
+  - Real and simulated observations are unmistakably labelled.
+  - Checksums and expected metadata are verified automatically.
+- **Deliverable:** A compact, reproducible astronomy sample pack and its manifest.
+- **Exit Gate:** Offline ingestion and analysis succeed from documented setup on a clean environment.
+
+---
+
+### PHASE 8 — Implement Explainable RFI Reasoning and Cadence Verification
+
+- **Priority:** P1 (Scientific Discrimination)
+- **Objective:** Improve candidate rejection using explicit evidence rather than simple assumptions about frequency drift.
+- **Tasks:**
+  1. Implement pending multi-cadence ON/OFF pointing comparison requirement (`REQ-RFI-01`, `REQ-RFI-02`, `REQ-RFI-03`).
+  2. Define supported cadence representation and data contract.
+  3. Compare candidate evidence across on-target and off-target observations when such data are available.
+  4. Add explicit rules for known interference patterns, including stationary emissions and supported interference-like frequency structures.
+  5. Treat zero drift as evidence that may inform RFI assessment, not proof of terrestrial origin.
+  6. Maintain separate masks and evidence records for suspected RFI; preserve original observation.
+  7. Build human-readable scientific disposition explaining each downgrade.
+  8. Record which rules fired, relevant thresholds, supporting observations, and missing evidence.
+  9. Add synthetic tests for:
+     - Signals appearing in on-target observations only.
+     - Signals recurring in both on-target and off-target observations.
+     - Stationary interference.
+     - Broadband interference.
+     - Ambiguous or insufficient evidence.
+  10. Ensure unknown cadence information is not treated as negative evidence.
+- **Acceptance Criteria:**
+  - Multi-cadence decisions are based on actual cadence records.
+  - RFI rules have independently tested thresholds and documented limitations.
+  - Candidate downgrades include readable explanations and traceable evidence.
+  - Raw source data remain unchanged.
+- **Deliverable:** An explainable RFI assessment layer with tested cadence-based evidence.
+- **Exit Gate:** The system can distinguish a supported RFI downgrade from an inconclusive observation without overstating confidence.
+
+---
+
+### PHASE 9 — Build the Canonical BLC1 Investigation Case Study
+
+- **Priority:** P1 (Scientific Demonstration)
+- **Objective:** Demonstrate AETHON's scientific reasoning through a traceable case study.
+- **Tasks:**
+  1. Obtain and document public source data and provenance appropriate for a BLC1 reproduction (`REQ-CASE-01`).
+  2. Preserve distinction between original observations and analysis dataset.
+  3. Implement necessary observation relationships and on/off cadence metadata.
+  4. Run ingestion, preprocessing, anomaly detection, drift analysis, and cadence comparison.
+  5. Link every candidate to its original observations, time-frequency region, analysis runs, and evidence.
+  6. Demonstrate how evidence changes candidate operational priority and disposition.
+  7. Compare result with published interpretation using explicitly documented assumptions.
+  8. Avoid claiming exact reproduction if required observations, cadence metadata, or processing context are unavailable.
+  9. Generate a case dossier that contains results, provenance, supporting evidence, limitations, and final human-readable explanation.
+  10. Automate case-study verification so regressions are detected in CI where feasible.
+- **Acceptance Criteria:**
+  - Case can be reproduced using documented inputs and configuration.
+  - Every displayed conclusion is supported by retrievable data or explicitly labelled assumptions.
+  - Case demonstrates both candidate discovery and the importance of false-positive rejection.
+  - Dossier distinguishes reproduced facts from AETHON-derived interpretations.
+- **Deliverable:** A complete, evidence-backed investigation case study.
+- **Exit Gate:** Another developer can run the documented case and understand why the system reached its disposition.
+
+---
+
+### PHASE 10 — Audit Candidate Scoring, Persistence, and Scientific Dossiers
+
+- **Priority:** P1 (Auditability)
+- **Objective:** Ensure candidate ranking reflects evidence quality rather than missing-field defaults or arbitrary confidence.
+- **Tasks:**
+  1. Review `backend/app/candidates/scoring.py`, candidate eligibility, evidence aggregation, grouping, and review lifecycle (`REQ-ML-04`, `REQ-TRI-01`, `REQ-DOS-01`).
+  2. Verify that every score component has a definition, valid range, documented weight, and explicit missing-evidence behaviour.
+  3. Ensure missing evidence does not silently receive a favourable default score.
+  4. Distinguish candidate priority from scientific confidence and source classification.
+  5. Re-evaluate ranking against held-out synthetic benchmark cases.
+  6. Check candidate grouping, bounding-region overlap, and identity stability.
+  7. Test repeated requests and database restarts for persistence correctness.
+  8. Verify review lifecycle cannot make invalid status transitions.
+  9. Confirm dossiers preserve assessment version, provenance, and exact supporting evidence used to compute the displayed score.
+  10. Check JSON/PDF consistency and verify downloadable reports remain valid.
+- **Acceptance Criteria:**
+  - Scores can be reproduced from contributing evidence and policy version.
+  - Missing evidence is visible and handled deterministically.
+  - Candidate identity and review history remain stable.
+  - PDF and JSON dossiers agree with persisted candidate state.
+  - No score is presented as a probability of extraterrestrial intelligence.
+- **Deliverable:** An auditable candidate ledger and evidence-based scoring policy.
+- **Exit Gate:** Synthetic test cases demonstrate understandable and reproducible changes in priority when evidence changes.
+
+---
+
+### PHASE 11 — Operational Security, Performance, and Browser Acceptance
+
+- **Priority:** P2 (Hardening)
+- **Objective:** Prepare the integrated application for a dependable technical demonstration.
+- **Tasks:**
+  1. Verify production settings disable debug-oriented behaviour and use explicitly configured CORS origins.
+  2. Recheck upload size limits, temporary-file cleanup, malformed-file handling, path safety, and maximum slice dimensions.
+  3. Confirm external credentials remain server-side and no real credentials have been committed.
+  4. Establish a reproducible environment and document supported Python and Node versions.
+  5. Profile expensive processing operations using realistic observation sizes.
+  6. Measure memory usage, processing latency, and API response payload sizes.
+  7. Only optimize code when measurements demonstrate a bottleneck.
+  8. Add browser-based end-to-end tests for upload, observation selection, analysis, candidate review, and dossier export.
+  9. Check small-screen usability, empty states, backend outage states, and accessible error feedback.
+  10. Run the actual three-minute demonstration workflow from a fresh, clean setup.
+  11. Configure GitHub branch protection and require intended CI checks before merging.
+- **Acceptance Criteria:**
+  - Upload and analysis operations respect resource limits.
+  - UI handles unavailable backend services without presenting false success states.
+  - Core user workflows pass browser-based tests.
+  - Application can be started from documented instructions on a clean machine.
+  - Required quality gates are enforced on protected development paths.
+- **Deliverable:** An operationally reliable research demonstration.
+- **Exit Gate:** Complete user journey works reliably using documented, reproducible inputs.
+
+---
+
+### PHASE 12 — Make the Deep-Learning Decision Using Evidence
+
+- **Priority:** P2 / Research Decision
+- **Objective:** Decide whether the pending PyTorch CNN requirement (`REQ-ML-03`) improves the detector enough to justify additional complexity.
+- **Guiding Rule:** Do not begin by training a CNN merely because it is on the conceptual architecture page. First complete the scientific benchmark and error analysis.
+- **Tasks:**
+  1. Identify where statistical baseline and Isolation Forest fail.
+  2. Determine whether failure is caused by feature representation, interference contamination, weak signals, localization, or thresholding.
+  3. Establish an explicit hypothesis for what a CNN should improve.
+  4. Compare a CNN against existing baselines on the same train/validation/test protocol.
+  5. Keep observations—not overlapping patches from the same observation—as primary separation units where appropriate.
+  6. Check for ground-truth leakage through preprocessing, patch generation, normalization, and dataset splitting.
+  7. Evaluate detection quality, noise false alarms, localization, calibration, inference latency, and memory requirements.
+  8. Save exact model configuration, training-data manifest, seeds, evaluation metrics, and artifact version.
+  9. Add a model-loading and inference test only after a real trained artifact exists.
+  10. If the CNN does not provide a meaningful, reproducible improvement, defer it and document why.
+- **Acceptance Criteria:**
+  - CNN is evaluated against strong, reproducible baselines.
+  - Performance is reported on data not used for training or threshold selection.
+  - Model has a defined operational role and measurable benefit.
+  - Frontend does not describe conceptual neural inference as implemented functionality.
+- **Deliverable:** An evidence-backed decision to implement or defer deep learning.
+- **Exit Gate:** Additional model complexity is justified by a measured improvement, not by appearance or architecture diagrams.
+
+---
+
+### PHASE 13 — Freeze Scope and Release the Research-Prototype Demonstration
+
+- **Priority:** Final Release Milestone
+- **Objective:** Package the work into a stable, reproducible technical demonstration.
+- **Tasks:**
+  1. Run the dynamic master verification gate on the final candidate commit.
+  2. Run all required tests with their actual pass, failure, and skip counts.
+  3. Regenerate benchmark and pipeline reports from current version.
+  4. Execute complete offline demonstration.
+  5. Recheck scientific capability claims in README, Model page, About dossier, and roadmap.
+  6. Document supported input formats, limitations, required installation steps, and expected resource usage.
+  7. Prepare a concise technical walkthrough covering:
+     - Observation ingestion.
+     - Time-frequency representation.
+     - Processing and RFI assessment.
+     - Anomaly detection.
+     - Drift and candidate evidence.
+     - Human verification and dossier generation.
+  8. Ensure every demonstration result identifies whether it is real observational data or a synthetic example.
+  9. Record known limitations rather than hiding them.
+  10. Tag a release only after required gates are successful.
+- **Acceptance Criteria:**
+  - A clean environment can reproduce the demonstration.
+  - Final reports match released code and configuration.
+  - No pending requirement is falsely marked complete.
+  - Workflow shows scientifically meaningful operations and limitations, not just attractive visualizations.
+  - Project can be evaluated without depending on personal local files or an internet connection during offline demonstration.
+- **Deliverable:** A reproducible AETHON research-prototype release with clear scientific limitations and a defensible technical story.
+
+---
+
+## 4. Recommended Execution Sequence
+
+Implement these phases in this exact order unless a blocker requires revisiting an earlier one:
+
+| Order  | Phase        | Title                            | Priority | Main Outcome                                             |
+| :----: | :----------- | :------------------------------- | :------: | :------------------------------------------------------- |
+| **0**  | **PHASE 0**  | Project State Reconciliation     |    P0    | One authoritative roadmap & reconciled state             |
+| **1**  | **PHASE 1**  | Repository & Environment Hygiene |    P0    | Safe, reproducible setup without tracked artifacts       |
+| **2**  | **PHASE 2**  | Frontend Scientific Truthfulness |    P0    | No invented live measurements on any screen              |
+| **3**  | **PHASE 3**  | Pipeline Failure Handling        |    P0    | Honest success, empty, and partial error states          |
+| **4**  | **PHASE 4**  | Full-Stack Integration Tests     |    P0    | Deterministic endpoint coverage with isolated fixtures   |
+| **5**  | **PHASE 5**  | Dynamic Verification Gate        |    P0    | Reports generated dynamically from actual checks         |
+| **6**  | **PHASE 6**  | Scientific Benchmark Improvement |    P1    | Meaningful detector evaluation & low false-positive rate |
+| **7**  | **PHASE 7**  | Offline Astronomy Data Bundle    |    P1    | Reproducible real-data workflow (<50MB)                  |
+| **8**  | **PHASE 8**  | RFI & Cadence Verification       |    P1    | Explainable multi-cadence interference screening         |
+| **9**  | **PHASE 9**  | BLC1 Case Study                  |    P1    | Traceable scientific investigation & disposition         |
+| **10** | **PHASE 10** | Candidate & Dossier Audit        |    P1    | Evidence-backed, reproducible scores & valid PDFs        |
+| **11** | **PHASE 11** | Operational & Browser Hardening  |    P2    | Dependable integrated workflow & E2E tests               |
+| **12** | **PHASE 12** | Deep-Learning Go/No-Go Decision  |    P2    | Evidence-based model decision (CNN vs. baselines)        |
+| **13** | **PHASE 13** | Release & Demonstration Freeze   | Release  | Reproducible research prototype package                  |
+
+---
+
+## 5. Work Deliberately Deferred
+
+Do not prioritize these until earlier phases are complete:
+
+- Building additional frontend pages or another visual redesign.
+- Adding more elaborate conceptual latent-space animations.
+- Training a CNN before the detector's weaknesses are understood.
+- Adding a large self-supervised transformer or massive training dataset.
+- Introducing WebGPU/WASM before profiling the current CPU pipeline.
+- Building multi-observatory coordination or external alert dispatch before evidence quality is established.
+- Adding new scoring terms before auditing the existing score and its benchmark performance.
+
+These are not necessarily bad ideas. They are simply not the highest-value next steps.
+
+---
+
+## 6. Definition of Project Success
+
+AETHON is ready for a credible research-prototype demonstration when it can:
+
+1. Ingest a documented observation and preserve provenance.
+2. Produce a valid, bounded time-frequency representation.
+3. Run preprocessing and anomaly detection reproducibly.
+4. Recover known synthetic signal parameters within measured tolerances.
+5. Quantify false-positive behaviour with meaningful negative controls.
+6. Investigate a candidate using traceable drift, RFI, and temporal evidence.
+7. Preserve review decisions and export consistent scientific dossiers.
+8. Present unknowns and failures honestly in the frontend.
+9. Pass dynamic automated checks on the current commit.
+10. Reproduce the central demonstration from a documented clean setup.
+
+**Final Principle:** AETHON should become more trustworthy before it becomes more complex. The next milestone is not “add more AI.” It is “make the existing science, evidence, and verification reliable enough that its results deserve to be investigated.”
+
+---
+
+## Appendix: Historical Milestone Archive
+
+For traceability, earlier exploratory milestones are preserved below:
+
+### Milestone 1 (v1.0.0 — Web Architecture & Visual Refoundation)
+
+- **Phase 1:** Foundation & Visual Identity Refoundation (Direction H: Paper Desk `#F4F1EA` + Midnight Instrument `#0D141A`). Complete.
+- **Phase 2:** Observation & Discovery Pipelines (HTML5 Canvas DPR spectrogram rasterizers + Web Audio sonification). Complete.
+- **Phase 3:** Candidate Triage & Digital Research Bench (Interactive 4-stage analytical bench + candidate ledger). Complete.
+- **Phase 4:** Chronological Repository & Methodology Publication (Archive browser + ML methodology + Latent Manifold map). Complete.
+
+### Milestone 2 (v2.0.0 — Backend Pipeline & Initial Integration Prototype)
+
+- **Phase 0:** Python Backend Foundation (FastAPI, settings, CORS, health probes). Complete.
+- **Phase 5 (Legacy):** Scientific Ingestion Engine (`.fil` and `.fits` readers, SQLite index). Complete.
+- **Phase 2 (Legacy BE):** Canonical Scientific Data Representation & Spectral Slices. Complete.
+- **Phase 3 (Legacy BE):** Synthetic Signal Laboratory & Parameter Recovery. Complete.
+- **Phase 4 (Legacy BE):** Signal Preprocessing, Robust Statistics & RFI Quality Masks. Complete.
+- **Phase 5 (Legacy BE):** Scientific Anomaly Detection Engine (Baseline & Isolation Forest). Complete.
+- **Phase 6 (Legacy BE):** Doppler Frequency Drift Estimation & Linear De-Doppler Engine. Complete.
+- **Phase 7 (Legacy BE):** Candidate Engine, Scoring Heuristics & Scientific PDF Dossiers. Complete.
+- **Phase 8 (Legacy BE):** Full-Stack React + FastAPI Integration. Complete.
+- **Phase 9 (Legacy BE):** Scientific Validation, Reproducibility & Delivery Gate. Complete.
+- **Master Prompts 01–03:** Environment Configuration, Repository Audit/Cleanup, and Full-Stack Connectivity Audit. Complete (`f0d35ec4`).

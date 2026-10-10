@@ -10,11 +10,7 @@ import type {
   DiscoveryResultSummary,
   CandidatePriority,
 } from './types.ts';
-import {
-  MOCK_DISCOVERY_CANDIDATES,
-  MOCK_DISCOVERY_RESULT,
-  REFERENCE_OBSERVATIONS,
-} from './data/mockDiscovery.ts';
+import { REFERENCE_OBSERVATIONS } from './data/mockDiscovery.ts';
 
 import { DiscoveryHeader } from './components/DiscoveryHeader.tsx';
 import { ObservationInput } from './components/ObservationInput.tsx';
@@ -24,21 +20,31 @@ import { SignalAnalysisViewport } from './components/SignalAnalysisViewport.tsx'
 import { DiscoveryResults } from './components/DiscoveryResults.tsx';
 import { CandidateSummary } from './components/CandidateSummary.tsx';
 import { Button } from '@/components/ui/Button.tsx';
-import { ArrowRight, RotateCcw } from 'lucide-react';
+import { ArrowRight, RotateCcw, AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api } from '@/lib/api.ts';
-import type { ObservationRecordResponse } from '@/types/schemas.ts';
+import type { ObservationRecordResponse, AnalysisResponse } from '@/types/schemas.ts';
+
+interface PipelineErrorState {
+  stage: DiscoveryStage;
+  title: string;
+  message: string;
+}
+
+interface PartialWarningState {
+  stage: DiscoveryStage;
+  title: string;
+  message: string;
+}
 
 export default function DiscoverPage() {
   // Primary State
   const [stage, setStage] = useState<DiscoveryStage>('idle');
   const [observation, setObservation] = useState<DiscoveryObservationMeta | null>(null);
   const [catalogObservations, setCatalogObservations] = useState<DiscoveryObservationMeta[]>([]);
-  const [discoveredCandidates, setDiscoveredCandidates] = useState<DiscoveredCandidate[]>(
-    api.isDemoMode() ? MOCK_DISCOVERY_CANDIDATES.slice(0, 4) : []
-  );
-  const [discoverySummary, setDiscoverySummary] = useState<DiscoveryResultSummary | null>(
-    api.isDemoMode() ? MOCK_DISCOVERY_RESULT : null
-  );
+  const [discoveredCandidates, setDiscoveredCandidates] = useState<DiscoveredCandidate[]>([]);
+  const [discoverySummary, setDiscoverySummary] = useState<DiscoveryResultSummary | null>(null);
+  const [pipelineError, setPipelineError] = useState<PipelineErrorState | null>(null);
+  const [partialWarning, setPartialWarning] = useState<PartialWarningState | null>(null);
 
   const [searchConfig, setSearchConfig] = useState<SearchConfig>({
     sensitivity: 'standard',
@@ -120,6 +126,10 @@ export default function DiscoverPage() {
   // Handle Observation Selection (clicking selected item again toggles off to idle state)
   const handleSelectObservation = (obs: DiscoveryObservationMeta) => {
     setObservation((prev) => (prev?.id === obs.id ? null : obs));
+    setPipelineError(null);
+    setPartialWarning(null);
+    setDiscoveredCandidates([]);
+    setDiscoverySummary(null);
     if (stage === 'complete') {
       setStage('idle');
     }
@@ -136,34 +146,79 @@ export default function DiscoverPage() {
     if (!observation) return;
     if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
 
+    // 1. Reset all state and previous errors/results to prevent stale data
+    setDiscoveredCandidates([]);
+    setDiscoverySummary(null);
+    setPipelineError(null);
+    setPartialWarning(null);
+
     setStage('prepare');
     toast.info(`Initiating analysis for ${observation.id}`);
 
+    let currentStep: DiscoveryStage = 'prepare';
+
     try {
       // Stage 1: PREPARE (Ingestion baseline check)
-      setStage('prepare');
       await new Promise((r) => setTimeout(r, 450));
 
       // Stage 2: REPRESENT (Process moments & RFI assessment)
+      currentStep = 'represent';
       setStage('represent');
-      await api.processObservation(observation.id).catch(() => null);
+      const procRes = await api.processObservation(observation.id);
 
       // Stage 3: SEARCH (Run baseline & isolation forest anomaly search)
+      currentStep = 'search';
       setStage('search');
-      const detRes = await api.detectAnomalies(observation.id).catch(() => null);
+      const detRes = await api.detectAnomalies(observation.id);
+
+      const regions = detRes?.anomalous_regions || [];
+
+      // Outcome C: Completed with NO detections (valid successful completed analysis)
+      if (regions.length === 0) {
+        const summary: DiscoveryResultSummary = {
+          observationId: observation.id,
+          samplesAnalyzed: observation.samplesCount,
+          anomalousRegionsCount: 0,
+          highPriorityCandidatesCount: 0,
+          totalTimeElapsedSec: 3.8,
+          topCandidate: {} as DiscoveredCandidate,
+          candidates: [],
+        };
+
+        setDiscoveredCandidates([]);
+        setDiscoverySummary(summary);
+        setStage('complete');
+        toast.info('Screening completed: no anomalous candidates detected', {
+          description: 'All evaluated spectral windows fit nominal background distributions.',
+        });
+        return;
+      }
 
       // Stage 4: RANK (Doppler drift regression and temporal characterization)
+      currentStep = 'rank';
       setStage('rank');
-      const driftRes = await api.analyzeDrift(observation.id).catch(() => null);
 
-      // Extract real candidate signals from detection and analysis
-      const regions = detRes?.anomalous_regions || [];
+      let driftRes: AnalysisResponse | null = null;
+      let driftError: string | null = null;
+
+      try {
+        driftRes = await api.analyzeDrift(observation.id);
+      } catch (dErr: unknown) {
+        driftError =
+          (dErr as { message?: string })?.message || 'Doppler drift trajectory fitting failed.';
+      }
+
+      // Extract candidate signals using verified API measurements without fabricated fallbacks
       const extracted: DiscoveredCandidate[] = regions.slice(0, 6).map((reg, idx) => {
         const ev = reg.isolation_forest_evidence ?? reg.baseline_evidence;
-        const score = ev?.anomaly_score ?? 0.82;
-        const drift = driftRes?.drift_estimate?.drift_rate_hz_per_s ?? 0;
-        const snr = driftRes?.temporal?.temporal_profile_snr ?? 14.5;
+        const score = ev?.anomaly_score ?? 0.0;
+        const drift = driftRes?.drift_estimate?.drift_rate_hz_per_s ?? 0.0;
+        const snr = driftRes?.temporal?.temporal_profile_snr ?? reg.features?.['snr'] ?? 0.0;
+        const persistence = driftRes?.temporal?.temporal_persistence ?? 0.0;
         const priority: CandidatePriority = score > 0.85 ? 'HIGH' : score > 0.65 ? 'MEDIUM' : 'LOW';
+
+        const rfiRisk =
+          procRes?.primary_mask_flagged_fraction ?? reg.window.flagged_sample_fraction ?? 0.0;
 
         return {
           rank: idx + 1,
@@ -172,68 +227,89 @@ export default function DiscoverPage() {
           frequencyMHz: reg.window.freq_center_hz
             ? reg.window.freq_center_hz / 1e6
             : observation.frequencyMHz,
-          bandwidthKHz: reg.window.bandwidth_hz ? reg.window.bandwidth_hz / 1e3 : 25,
-          snrDb: snr,
-          driftRateHzPerSec: drift,
-          anomalyIndex: score,
-          persistence: driftRes?.temporal?.temporal_persistence ?? 0.88,
-          knownSimilarity: 0.12,
-          rfiRisk: 0.08,
+          bandwidthKHz: reg.window.bandwidth_hz ? reg.window.bandwidth_hz / 1e3 : 0.0,
+          snrDb: Number(snr.toFixed(1)),
+          driftRateHzPerSec: Number(drift.toFixed(2)),
+          anomalyIndex: Number(score.toFixed(3)),
+          persistence: Number(persistence.toFixed(2)),
+          knownSimilarity: 0.0,
+          rfiRisk: Number(rfiRisk.toFixed(2)),
           priority,
           explanation: {
-            latentResidualSigma: 4.8,
-            spatialRejectionScore: 0.94,
+            latentResidualSigma: 0.0,
+            spatialRejectionScore: 0.0,
             persistenceReason:
               ev?.decision_rationale ||
-              'High-sigma divergence from learned astrophysical background.',
+              (driftRes
+                ? `Doppler drift estimated at ${drift.toFixed(2)} Hz/s with temporal SNR ${snr.toFixed(1)} dB.`
+                : 'Candidate region isolated; downstream Doppler drift analysis failed.'),
           },
         };
       });
 
-      const finalCandidates =
-        extracted.length > 0
-          ? extracted
-          : api.isDemoMode()
-            ? MOCK_DISCOVERY_CANDIDATES.slice(0, 4)
-            : [];
-
-      setDiscoveredCandidates(finalCandidates);
-
       const summary: DiscoveryResultSummary = {
         observationId: observation.id,
         samplesAnalyzed: observation.samplesCount,
-        anomalousRegionsCount: regions.length || finalCandidates.length,
-        highPriorityCandidatesCount: finalCandidates.filter((c) => c.priority === 'HIGH').length,
+        anomalousRegionsCount: regions.length,
+        highPriorityCandidatesCount: extracted.filter((c) => c.priority === 'HIGH').length,
         totalTimeElapsedSec: 3.8,
-        topCandidate:
-          finalCandidates[0] ||
-          (api.isDemoMode() ? MOCK_DISCOVERY_RESULT.topCandidate : ({} as DiscoveredCandidate)),
-        candidates: finalCandidates,
+        topCandidate: extracted[0] || ({} as DiscoveredCandidate),
+        candidates: extracted,
       };
 
+      setDiscoveredCandidates(extracted);
       setDiscoverySummary(summary);
       setStage('complete');
-      toast.success('Observation screened', {
-        description: `${finalCandidates.length} candidate events isolated.`,
-      });
-    } catch (err: unknown) {
-      if (api.isDemoMode()) {
-        setDiscoveredCandidates(MOCK_DISCOVERY_CANDIDATES.slice(0, 4));
-        setDiscoverySummary(MOCK_DISCOVERY_RESULT);
-        setStage('complete');
+
+      if (driftError) {
+        // Outcome D: Partially completed
+        setPartialWarning({
+          stage: 'rank',
+          title: 'Doppler Drift Analysis Incomplete',
+          message: driftError,
+        });
+        toast.warning('Observation partially screened', {
+          description: `${extracted.length} anomalous candidate region(s) detected, but downstream drift analysis failed.`,
+        });
       } else {
-        setStage('idle');
-        const msg =
-          (err as { message?: string })?.message ||
-          'Discovery procedure encountered a server error.';
-        toast.error('Discovery screening failed', { description: msg });
+        // Outcome B: Completed with detections
+        setPartialWarning(null);
+        toast.success('Observation screened successfully', {
+          description: `${extracted.length} candidate signal(s) isolated with verified drift analysis.`,
+        });
       }
+    } catch (err: unknown) {
+      // Outcome E: Failed during preprocessing or anomaly detection
+      setStage('idle');
+      const msg =
+        (err as { message?: string })?.message ||
+        'Server error encountered during screening procedure.';
+      const stageLabel =
+        currentStep === 'represent'
+          ? 'Preprocessing & Quality Assessment'
+          : currentStep === 'search'
+            ? 'Anomaly Detection'
+            : 'Observation Preparation';
+
+      setPipelineError({
+        stage: currentStep,
+        title: `${stageLabel} Failed`,
+        message: msg,
+      });
+
+      toast.error(`${stageLabel} failed`, {
+        description: msg,
+      });
     }
   }, [observation]);
 
   // Handle Reset to new discovery
   const handleReset = () => {
     if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
+    setPipelineError(null);
+    setPartialWarning(null);
+    setDiscoveredCandidates([]);
+    setDiscoverySummary(null);
     setStage('idle');
   };
 
@@ -247,6 +323,37 @@ export default function DiscoverPage() {
 
       {/* Main Scientific Procedure Container */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* ==================================================== */}
+        {/* PIPELINE ERROR BANNER (WHEN PROCESSING / DETECTION FAILS) */}
+        {/* ==================================================== */}
+        {pipelineError && (
+          <div className="border border-[#C93B2B]/40 bg-[#FAF4F4] rounded-[3px] p-4 text-xs font-sans space-y-2 text-[#8C2418] shadow-xs animate-in fade-in duration-150">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#C93B2B]/20 pb-2">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-[#C93B2B] shrink-0" />
+                <span className="font-semibold text-sm text-[#17202A]">{pipelineError.title}</span>
+              </div>
+              <span className="font-mono text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-[2px] bg-[#C93B2B]/10 border border-[#C93B2B]/20 font-semibold text-[#8C2418] self-start sm:self-auto">
+                Stage {pipelineError.stage.toUpperCase()} Failed
+              </span>
+            </div>
+            <p className="text-xs text-[#56616A] leading-relaxed">{pipelineError.message}</p>
+            <div className="pt-1 flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<RotateCcw className="h-3 w-3" />}
+                onClick={handleInitiateDiscovery}
+              >
+                Retry screening
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setPipelineError(null)}>
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* ==================================================== */}
         {/* STAGE 1: OBSERVATION INPUT & SEARCH SETTINGS */}
         {/* ==================================================== */}
@@ -281,8 +388,8 @@ export default function DiscoverPage() {
                   <p className="text-xs text-[#56616A]">
                     Observation{' '}
                     <span className="font-mono text-[#376A9B] font-semibold">{observation.id}</span>{' '}
-                    will be processed through baseline calibration, latent manifold mapping, and
-                    Doppler classification.
+                    will be processed through baseline calibration, anomaly detection, and Doppler
+                    drift classification.
                   </p>
                 </div>
 
@@ -331,6 +438,49 @@ export default function DiscoverPage() {
 
             {/* Time-Frequency Spectrogram Viewport */}
             <SignalAnalysisViewport stage={stage} observation={observation} />
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* PARTIAL SCREENING WARNING BANNER */}
+        {/* ==================================================== */}
+        {stage === 'complete' && partialWarning && (
+          <div className="border border-[#C19348]/50 bg-[#FDFBF7] rounded-[3px] p-4 text-xs font-sans space-y-1.5 shadow-xs animate-in fade-in duration-150">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E8CFA0] pb-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-[#C19348] shrink-0" />
+                <span className="font-semibold text-sm text-[#17202A]">{partialWarning.title}</span>
+              </div>
+              <span className="font-mono text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-[2px] bg-[#C19348]/15 border border-[#C19348]/30 font-semibold text-[#8C621E] self-start sm:self-auto">
+                Partial Analysis Only
+              </span>
+            </div>
+            <p className="text-xs text-[#56616A] leading-relaxed">
+              Anomaly detection succeeded and isolated {discoveredCandidates.length} candidate
+              region{discoveredCandidates.length === 1 ? '' : 's'}, but downstream Doppler drift and
+              temporal characterization failed ({partialWarning.message}). Kinematic drift rates and
+              temporal persistence metrics could not be verified. The overall screening pipeline is
+              not fully complete.
+            </p>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* ZERO DETECTIONS INFORMATIONAL BANNER */}
+        {/* ==================================================== */}
+        {stage === 'complete' && !partialWarning && discoveredCandidates.length === 0 && (
+          <div className="border border-[#376A9B]/30 bg-[#F4F8FA] rounded-[3px] p-4 text-xs font-sans space-y-1 shadow-xs animate-in fade-in duration-150">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-[#376A9B] shrink-0" />
+              <span className="font-semibold text-sm text-[#17202A]">
+                No Anomalous Candidates Detected
+              </span>
+            </div>
+            <p className="text-xs text-[#56616A] leading-relaxed">
+              Observation screening completed successfully. All evaluated spectral windows were
+              consistent with baseline noise distributions and did not exceed anomaly detection
+              thresholds.
+            </p>
           </div>
         )}
 

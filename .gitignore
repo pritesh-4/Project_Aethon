@@ -52,3 +52,9 @@ demo_output/
 *.tmp
 data/tmp/
 backend/data/tmp/
+
+# Local development runtime data — do not commit uploaded observations or databases
+/data/*.db
+/data/*.sqlite
+/data/*.sqlite3
+/data/observations/

@@ -1,45 +1,48 @@
 ---
-milestone: v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine
-current_phase: Phase 0 (Python Backend Foundation)
-status: PHASE_0_COMPLETE
-updated: 2026-10-09T16:40:00+05:30
+milestone: Master Development Roadmap (Phases 0–13)
+current_phase: Phase 0 (Establish the authoritative project state)
+status: PHASE_0_ACTIVE
+updated: 2026-10-10T13:08:00+05:30
 ---
 
 # Project State — AETHON
 
 ## Current Position
 
-- **Milestone:** v2.0.0 — Scientific Data Pipeline, Doppler Intelligence & Verifiable Candidate Engine
-- **Phase:** Phase 0 (Python Backend Foundation) completed & verified
-- **Status:** Phase 0 verified (14 automated tests passing + HTTP health/CORS verified) · Ready for Phase 5 Planning (`/plan 5`)
-- **Last Workflow:** Phase 0 Implementation & Verification
+- **Repository:** `pritesh-4/Project_Aethon`
+- **Starting Point:** `main` at commit `f0d35ec4` (10 October 2026)
+- **Active Roadmap:** [`.gsd/ROADMAP.md`](file:///c:/Users/HP/Documents/c_programm/Hackathon/Aethon/.gsd/ROADMAP.md) (Authoritative Master Roadmap, Phases 0–13)
+- **Current Phase:** Phase 0 (Establish the authoritative project state) — In progress
+- **Status:** Connectivity audit complete (`f0d35ec4`), live full-stack verified, quality gates green (197 pytest, 16 frontend/connectivity, clean build). Next execution task is Phase 0 completion and Phase 1 planning.
 
 ## Active Goal
 
-Ingest real Breakthrough Listen observations, perform interactive Doppler drift & de-Doppler correction, mitigate RFI via explainable cadence logic, score candidates with layered models, and export research-grade scientific PDF dossiers for a seamless interactive research demonstration.
+Build a reproducible, scientifically defensible system that discovers unusual radio-signal candidates, evaluates evidence, and presents results for human investigation, strictly following the governing principle: truthful scientific outputs, reproducibility, and measurable detection quality over surface-level embellishments.
 
-## Milestone Phases
+## Canonical Milestone Sequence (Authoritative Roadmap)
 
-- **Phase 0:** Python Backend Foundation — ✅ Complete (FastAPI, Pydantic Settings, logging, CORS, test suite)
-- **Phase 5:** Scientific Ingestion Foundation & Normalized Data Model — ⬜ Next
-- **Phase 6:** Signal Detection & Candidate Extraction Engine — ⬜ Planned
-- **Phase 7:** Interactive Doppler Drift & De-Doppler Correction Bench — ⬜ Planned
-- **Phase 8:** Explainable RFI Mitigation & Multi-Cadence Logic — ⬜ Planned
-- **Phase 9:** Layered ML Anomaly Scoring & Ground-Truth Benchmarks (`setigen`) — ⬜ Planned
-- **Phase 10:** Cross-Observation Verification & Canonical BLC1 Case Study — ⬜ Planned
-- **Phase 11:** Scientific Candidate Dossier & Research PDF Generator — ⬜ Planned
-- **Phase 12:** Performance Profiling, Offline Demo Cache & Rehearsed Flow — ⬜ Planned
+- **Phase 0:** Project State Reconciliation (P0) — 🔄 Active
+- **Phase 1:** Repository & Environment Hygiene (P0) — ⬜ Next
+- **Phase 2:** Frontend Scientific Truthfulness (P0) — ⬜ Planned
+- **Phase 3:** Pipeline Failure Handling (P0) — ⬜ Planned
+- **Phase 4:** Full-Stack Integration Tests (P0) — ⬜ Planned
+- **Phase 5:** Dynamic Verification Gate (P0) — ⬜ Planned
+- **Phase 6:** Scientific Benchmark Improvement (P1) — ⬜ Planned
+- **Phase 7:** Offline Astronomy Data Bundle (P1) — ⬜ Planned
+- **Phase 8:** RFI & Cadence Verification (P1) — ⬜ Planned
+- **Phase 9:** BLC1 Case Study (P1) — ⬜ Planned
+- **Phase 10:** Candidate & Dossier Audit (P1) — ⬜ Planned
+- **Phase 11:** Operational & Browser Hardening (P2) — ⬜ Planned
+- **Phase 12:** Deep-Learning Go/No-Go Decision (P2) — ⬜ Planned
+- **Phase 13:** Release & Demonstration Freeze (Release) — ⬜ Planned
 
-## Next Steps
+## Verification Evidence (Commit `f0d35ec4`)
 
-1. `/plan 5` — Author Phase 5 execution plan (file ingestion with `.fil`/`.fits`, spectral slice model)
-2. `/execute 5` — Implement Python/FastAPI ingestion pipeline and normalized data structures
-
-## Verification Evidence
-
-- `backend/tests/`: 14/14 automated tests passing in 0.10s via `pytest`.
-- Live server verification: `GET http://127.0.0.1:8000/health` (HTTP 200, status="healthy"), `GET http://127.0.0.1:8000/api/health` (HTTP 200), OPTIONS preflight for `http://localhost:5173` returns correct CORS headers.
+- Backend: 197/197 automated tests passing via `pytest -q`, `ruff check` (0 errors), `ruff format` (clean), `mypy app` (0 issues in 98 source files).
+- Frontend: 16/16 tests passing (9 unit + 7 live HTTP connectivity tests), Prettier clean, ESLint clean, `tsc -b` clean, Vite build successful.
+- CI Workflows: `Frontend CI`, `Backend CI`, and `Integration CI` passing on GitHub Actions.
+- Persistence: SQLite database persistence across process restart empirically verified.
 
 ## Blockers
 
-_None. Frontend running independently on `http://localhost:5173/` and backend foundation operational on `http://127.0.0.1:8000`._
+_None. Live FastAPI backend and React frontend connected with zero blocking errors._

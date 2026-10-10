@@ -59,7 +59,7 @@ jobs:
           OBSERVATIONS_DIR: /tmp/aethon_test_data/observations
           TEMP_UPLOAD_DIR: /tmp/aethon_test_data/tmp
           DB_PATH: /tmp/aethon_test_data/aethon_test.db
-          AETHON_ALLOW_ORIGINS: http://localhost:5173
+          CORS_ORIGINS: '["http://localhost:5173","http://127.0.0.1:5173"]'
           ENVIRONMENT: test
           LOG_LEVEL: INFO
         run: |
