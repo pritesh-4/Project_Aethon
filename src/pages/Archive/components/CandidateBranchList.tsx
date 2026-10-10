@@ -31,17 +31,18 @@ export function CandidateBranchList({ observationId, candidates }: CandidateBran
                 {cand.fullId || cand.id}
               </span>
               <span className="text-[#56616A] font-mono text-[11px]">
-                {cand.frequencyMHz.toFixed(2)} MHz
+                {cand.frequencyMHz != null ? `${cand.frequencyMHz.toFixed(2)} MHz` : '—'}
               </span>
             </div>
 
             <div className="flex items-center gap-2 text-[11px] text-[#76828D] font-mono">
-              <span>SNR: +{cand.snrDb.toFixed(1)} dB</span>
+              <span>{cand.snrDb != null ? `SNR: +${cand.snrDb.toFixed(1)} dB` : 'SNR: —'}</span>
               <span>·</span>
               <span>
                 Drift:{' '}
-                {cand.driftRateHzPerSec > 0 ? `+${cand.driftRateHzPerSec}` : cand.driftRateHzPerSec}{' '}
-                Hz/s
+                {cand.driftRateHzPerSec != null
+                  ? `${cand.driftRateHzPerSec > 0 ? '+' : ''}${cand.driftRateHzPerSec} Hz/s`
+                  : '—'}
               </span>
             </div>
           </div>

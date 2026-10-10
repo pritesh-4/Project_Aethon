@@ -158,12 +158,12 @@ export const IMPLEMENTATION_MATRIX: ImplementationItem[] = [
   },
   {
     component: 'Observation Ingestion & Screening Setup',
-    category: 'prototype',
-    categoryLabel: 'Prototype / Demo',
-    scope: 'Client-side Simulation & File Dropzone',
+    category: 'implemented',
+    categoryLabel: 'Implemented',
+    scope: 'Backend Ingestion & Screening Service',
     evidence: 'src/pages/Discover/*',
     notes:
-      'Accepts .fil, .h5, .fits, .csv; parses synthetic spectral payloads and generates client-side screening runs.',
+      'Accepts .fil and .fits; parses spectral payloads and coordinates backend screening and anomaly detection runs.',
   },
   {
     component: 'Observational Archive & Branch Ledger',
@@ -235,7 +235,7 @@ export const ARCHITECTURE_STAGES: ArchitectureStage[] = [
     number: '01',
     name: 'Observational Ingestion',
     layer: 'Observational',
-    input: 'Dual-polarization baseband voltage stream or scientific file (.fil, .h5, .fits)',
+    input: 'Dual-polarization baseband voltage stream or scientific file (.fil, .fits)',
     operation: 'Packet reassembly, bit unpack, header parsing, and metadata validation',
     output: 'Calibrated time-series voltage / power frames with telescope pointings',
     purpose: 'Standardizes disparate radio telescope backends into an analysis-ready stream.',
@@ -425,7 +425,7 @@ export const DATA_FORMAT_SPECS: DataFormatSpec[] = [
     extension: '.fits',
     name: 'Flexible Image Transport System (FITS)',
     role: 'Standard astronomical container for multidimensional image cubes, tables, and calibrated spectra.',
-    status: 'Prototype Simulated',
+    status: 'Target Native Support',
     strengths:
       'Self-documenting ASCII header blocks, immutable coordinate systems (WCS), universal astronomical toolchain support.',
     caveat:
@@ -439,13 +439,13 @@ export const DATA_FORMAT_SPECS: DataFormatSpec[] = [
     strengths:
       'Internal chunking, built-in gzip/bitshuffle compression, hierarchical grouping of multi-beam Stokes parameters.',
     caveat:
-      'Complex I/O stack; requires careful thread-safety handling during parallelized worker ingestion.',
+      'Complex I/O stack; requires dedicated HDF5 C-library backend bindings not yet integrated.',
   },
   {
     extension: '.fil',
     name: 'SIGPROC Filterbank Format',
     role: 'De facto standard binary stream format for pulsar discovery and single-pulse radio searches.',
-    status: 'Prototype Simulated',
+    status: 'Target Native Support',
     strengths:
       'Ultra-low overhead contiguous binary matrices (Time x Frequency); fast sequential streaming.',
     caveat:
@@ -454,7 +454,7 @@ export const DATA_FORMAT_SPECS: DataFormatSpec[] = [
   {
     extension: '.csv / .json',
     name: 'Tabular / Structured Interchange Formats',
-    role: 'Lightweight demonstration interchange formats for metadata exchange, candidate rosters, and telemetry mocks.',
+    role: 'Lightweight demonstration interchange formats for metadata exchange, candidate rosters, and telemetry export.',
     status: 'Interchange Only',
     strengths: 'Human-readable, browser-native JSON parsing, seamless web API transmission.',
     caveat:

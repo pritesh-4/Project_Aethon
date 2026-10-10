@@ -30,11 +30,24 @@ export function CandidateAlert({ observation }: CandidateAlertProps) {
           </div>
 
           <p className="text-xs text-[#17202A] leading-relaxed">
-            Narrowband carrier persistent across the observation window with linear Doppler drift of{' '}
-            <span className="font-mono text-[#C19348] font-semibold">
-              {observation.driftRateHzPerSec.toFixed(2)} Hz/s
-            </span>
-            .
+            {observation.anomaly.classificationLabel || 'Candidate spectral region'} isolated in
+            observation window
+            {observation.driftRateHzPerSec != null ? (
+              <>
+                {' '}
+                with estimated Doppler drift of{' '}
+                <span className="font-mono text-[#C19348] font-semibold">
+                  {observation.driftRateHzPerSec > 0 ? '+' : ''}
+                  {observation.driftRateHzPerSec.toFixed(2)} Hz/s
+                </span>
+                .
+              </>
+            ) : (
+              <>
+                {' '}
+                (Doppler drift: <span className="font-mono text-[#56616A]">Not measured</span>).
+              </>
+            )}
           </p>
         </div>
 

@@ -22,56 +22,38 @@ export function CandidateDetail({ candidate, onClose, onStatusChange }: Candidat
   const getEvidenceClaims = () => {
     const claims: { label: string; detail: string }[] = [];
 
-    if (candidate.knownPatternSimilarity < 0.15) {
+    if (candidate.knownPatternSimilarity != null) {
       claims.push({
-        label: 'Low catalog similarity',
-        detail: `${(candidate.knownPatternSimilarity * 100).toFixed(1)}% match against cataloged natural radio sources.`,
-      });
-    } else if (candidate.knownPatternSimilarity < 0.35) {
-      claims.push({
-        label: 'Moderate profile divergence',
-        detail: `${(candidate.knownPatternSimilarity * 100).toFixed(1)}% match to known profiles.`,
-      });
-    } else {
-      claims.push({
-        label: 'Partial catalog correlation',
-        detail: `Shows morphological overlap with cataloged signals (${(candidate.knownPatternSimilarity * 100).toFixed(1)}%).`,
+        label: 'Catalog similarity',
+        detail: `${(candidate.knownPatternSimilarity * 100).toFixed(1)}% match against cataloged reference sources.`,
       });
     }
 
-    if (candidate.persistence >= 0.75) {
+    if (candidate.persistence != null) {
       claims.push({
-        label: 'Persistent temporal structure',
-        detail: `Maintained across ${(candidate.persistence * 100).toFixed(0)}% of observation sequence without standard fading.`,
-      });
-    } else {
-      claims.push({
-        label: 'Intermittent signal presence',
-        detail: `Detected across ${(candidate.persistence * 100).toFixed(0)}% of pointings.`,
+        label: 'Temporal structure',
+        detail: `Maintained across ${(candidate.persistence * 100).toFixed(0)}% of observation sequence.`,
       });
     }
 
-    if (candidate.interferenceProbability < 0.1) {
+    if (candidate.interferenceProbability != null) {
       claims.push({
-        label: 'Low interference probability',
-        detail: `${(candidate.interferenceProbability * 100).toFixed(1)}% RFI likelihood; spatial screening indicates absence in off-target pointings.`,
-      });
-    } else if (candidate.interferenceProbability < 0.25) {
-      claims.push({
-        label: 'Nominal interference risk',
-        detail: `${(candidate.interferenceProbability * 100).toFixed(1)}% probability of ground or satellite transmitter cross-match.`,
-      });
-    } else {
-      claims.push({
-        label: 'Elevated interference potential',
-        detail: `${(candidate.interferenceProbability * 100).toFixed(1)}% probability of terrestrial origin; spatial multi-beam verification required.`,
+        label: 'RFI evaluation',
+        detail: `${(candidate.interferenceProbability * 100).toFixed(1)}% flagged sample fraction in candidate window.`,
       });
     }
 
-    if (Math.abs(candidate.driftRateHzPerSec) > 0.05) {
+    if (candidate.driftRateHzPerSec != null && Math.abs(candidate.driftRateHzPerSec) > 0.01) {
       claims.push({
         label: 'Doppler frequency drift',
-        detail: `Linear frequency shift (${candidate.driftRateHzPerSec > 0 ? '+' : ''}${candidate.driftRateHzPerSec.toFixed(2)} Hz/s) matches non-terrestrial acceleration.`,
+        detail: `Linear frequency shift (${candidate.driftRateHzPerSec > 0 ? '+' : ''}${candidate.driftRateHzPerSec.toFixed(2)} Hz/s) measured across observation.`,
+      });
+    }
+
+    if (claims.length === 0) {
+      claims.push({
+        label: 'Detection profile',
+        detail: 'Candidate region isolated by unsupervised anomaly detection pipeline.',
       });
     }
 
@@ -157,7 +139,10 @@ export function CandidateDetail({ candidate, onClose, onStatusChange }: Candidat
           <div className="text-xs text-[#17202A] font-medium mt-1">{candidate.targetName}</div>
 
           <div className="text-[11px] font-mono text-[#56616A] mt-0.5">
-            Coordinates: {candidate.coordinates.ra} · {candidate.coordinates.dec}
+            Coordinates:{' '}
+            {candidate.coordinates.ra && candidate.coordinates.dec
+              ? `${candidate.coordinates.ra} · ${candidate.coordinates.dec}`
+              : 'Unavailable'}
           </div>
         </div>
 
@@ -178,10 +163,12 @@ export function CandidateDetail({ candidate, onClose, onStatusChange }: Candidat
         </span>
         <div className="flex items-baseline gap-2">
           <span className="text-sm font-semibold font-mono text-[#9E6E20]">
-            {(candidate.anomalyIndex * 100).toFixed(1)}% anomaly score
+            {candidate.anomalyIndex != null
+              ? `${(candidate.anomalyIndex * 100).toFixed(1)}% anomaly score`
+              : 'Score not evaluated'}
           </span>
           <span className="text-xs text-[#56616A]">
-            · 4.8σ departure from learned astrophysical baseline
+            · Evaluated departure from nominal background distribution
           </span>
         </div>
       </div>
@@ -238,31 +225,38 @@ export function CandidateDetail({ candidate, onClose, onStatusChange }: Candidat
             <div className="flex justify-between py-1">
               <span className="text-[#56616A]">Frequency</span>
               <span className="text-[#17202A] font-medium">
-                {candidate.frequencyMHz.toFixed(4)} MHz
+                {candidate.frequencyMHz != null
+                  ? `${candidate.frequencyMHz.toFixed(4)} MHz`
+                  : 'Unavailable'}
               </span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-[#56616A]">Bandwidth</span>
               <span className="text-[#17202A] font-medium">
-                {candidate.bandwidthKHz.toFixed(1)} kHz
+                {candidate.bandwidthKHz != null
+                  ? `${candidate.bandwidthKHz.toFixed(1)} kHz`
+                  : 'Unavailable'}
               </span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-[#56616A]">Signal-to-Noise Ratio</span>
-              <span className="text-[#17202A] font-medium">+{candidate.snrDb.toFixed(1)} dB</span>
+              <span className="text-[#17202A] font-medium">
+                {candidate.snrDb != null
+                  ? `${candidate.snrDb > 0 ? '+' : ''}${candidate.snrDb.toFixed(1)} dB`
+                  : 'Not measured'}
+              </span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-[#56616A]">Doppler Drift Rate</span>
               <span className="text-[#376A9B] font-medium">
-                {candidate.driftRateHzPerSec > 0 ? '+' : ''}
-                {candidate.driftRateHzPerSec} Hz/s
+                {candidate.driftRateHzPerSec != null
+                  ? `${candidate.driftRateHzPerSec > 0 ? '+' : ''}${candidate.driftRateHzPerSec} Hz/s`
+                  : 'Not measured'}
               </span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-[#56616A]">Peak Power</span>
-              <span className="text-[#17202A] font-medium">
-                {candidate.peakPowerDbm.toFixed(1)} dBm
-              </span>
+              <span className="text-[#76828D] font-medium">Not calibrated</span>
             </div>
           </div>
         )}

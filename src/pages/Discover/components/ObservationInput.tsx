@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'motion/react';
 import type { DiscoveryObservationMeta } from '../types.ts';
-import { REFERENCE_OBSERVATIONS } from '../data/mockDiscovery.ts';
 import { Upload, Check, AlertCircle, Radio, Sparkles, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api.ts';
 import { toast } from 'sonner';
@@ -26,10 +25,7 @@ export function ObservationInput({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const displayList =
-    catalogObservations && catalogObservations.length > 0
-      ? catalogObservations
-      : REFERENCE_OBSERVATIONS;
+  const displayList = catalogObservations ?? [];
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], fileRejections: unknown[]) => {
@@ -51,32 +47,6 @@ export function ObservationInput({
         return;
       }
 
-      // If in demo mode, create local demonstration metadata without network call
-      if (api.isDemoMode()) {
-        const isFits = file.name.endsWith('.fits') || file.name.endsWith('.fit');
-        const format = isFits ? 'FITS' : 'FIL';
-
-        const customMeta: DiscoveryObservationMeta = {
-          id: `OBS-${Math.floor(1000 + Math.random() * 9000)}`,
-          name: file.name.replace(/\.[^/.]+$/, ''),
-          format,
-          samplesCount: 16384,
-          durationString: '00:04:45',
-          bandwidthMHz: 12.5,
-          frequencyMHz: 1420.405,
-          telescope: 'Local Astronomical File',
-          fileSizeBytes: file.size,
-          coordinates: {
-            ra: '14h 29m 42s',
-            dec: '-62° 40′ 46″',
-          },
-        };
-
-        onSelectObservation(customMeta);
-        toast.info(`Demonstration observation loaded from ${file.name}`);
-        return;
-      }
-
       // Real backend ingestion
       setIsUploading(true);
       setUploadProgress(0);
@@ -87,27 +57,35 @@ export function ObservationInput({
         });
 
         const meta = record.metadata;
-        const durSec = (meta?.time_sample_count ?? 64) * (meta?.time_step_seconds ?? 1.0);
-        const m = Math.floor(durSec / 60);
-        const s = Math.floor(durSec % 60);
-        const durStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        const durSec =
+          meta?.time_sample_count != null && meta?.time_step_seconds != null
+            ? meta.time_sample_count * meta.time_step_seconds
+            : null;
+        const durStr =
+          durSec != null
+            ? `${Math.floor(durSec / 60)
+                .toString()
+                .padStart(2, '0')}:${Math.floor(durSec % 60)
+                .toString()
+                .padStart(2, '0')}`
+            : null;
 
         const customMeta: DiscoveryObservationMeta = {
           id: record.id,
           name: meta?.source_name || record.original_filename,
           format: record.format.toUpperCase(),
-          samplesCount: (meta?.time_sample_count ?? 64) * (meta?.channel_count ?? 256),
+          samplesCount:
+            meta?.time_sample_count != null && meta?.channel_count != null
+              ? meta.time_sample_count * meta.channel_count
+              : null,
           durationString: durStr,
-          bandwidthMHz: meta?.bandwidth_mhz ?? 10.0,
-          frequencyMHz: meta?.frequency_reference_mhz ?? 1420.405,
-          telescope: meta?.telescope_name || 'Radio Instrument Feed',
+          bandwidthMHz: meta?.bandwidth_mhz ?? null,
+          frequencyMHz: meta?.frequency_reference_mhz ?? null,
+          telescope: meta?.telescope_name || null,
           fileSizeBytes: record.file_size_bytes,
           coordinates: {
-            ra:
-              meta?.ra_str || (meta?.ra_deg != null ? `${meta.ra_deg.toFixed(4)}°` : '14h 29m 42s'),
-            dec:
-              meta?.dec_str ||
-              (meta?.dec_deg != null ? `${meta.dec_deg.toFixed(4)}°` : '-62° 40′ 46″'),
+            ra: meta?.ra_str || (meta?.ra_deg != null ? `${meta.ra_deg.toFixed(4)}°` : null),
+            dec: meta?.dec_str || (meta?.dec_deg != null ? `${meta.dec_deg.toFixed(4)}°` : null),
           },
         };
 
@@ -160,63 +138,73 @@ export function ObservationInput({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            {displayList.slice(0, 3).map((obs) => {
-              const isSelected = selectedObservation?.id === obs.id;
+            {displayList.length === 0 ? (
+              <div className="sm:col-span-3 p-4 rounded-[4px] border border-[#D6D2C9] bg-[#FAF8F5] text-center text-xs text-[#56616A]">
+                No survey observations available in catalog. Ingest an observation file below.
+              </div>
+            ) : (
+              displayList.slice(0, 3).map((obs) => {
+                const isSelected = selectedObservation?.id === obs.id;
 
-              return (
-                <button
-                  key={obs.id}
-                  type="button"
-                  aria-pressed={isSelected}
-                  disabled={disabled || isUploading}
-                  onClick={() => onSelectObservation(obs)}
-                  className={`relative flex flex-col items-start p-4 rounded-[4px] border text-left transition-all duration-180 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#376A9B] ${
-                    isSelected
-                      ? 'border-[#376A9B] bg-[#FFFFFF] text-[#17202A] shadow-md ring-1 ring-[#376A9B]/30 scale-[1.01]'
-                      : 'border-[#D6D2C9] bg-[#FAF8F5] text-[#56616A] hover:border-[#BCB6A8] hover:bg-[#FFFFFF] hover:shadow-2xs'
-                  } ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {/* Active selection bar indicator */}
-                  {isSelected && (
-                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#376A9B] rounded-t-[4px]" />
-                  )}
+                return (
+                  <button
+                    key={obs.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    disabled={disabled || isUploading}
+                    onClick={() => onSelectObservation(obs)}
+                    className={`relative flex flex-col items-start p-4 rounded-[4px] border text-left transition-all duration-180 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#376A9B] ${
+                      isSelected
+                        ? 'border-[#376A9B] bg-[#FFFFFF] text-[#17202A] shadow-md ring-1 ring-[#376A9B]/30 scale-[1.01]'
+                        : 'border-[#D6D2C9] bg-[#FAF8F5] text-[#56616A] hover:border-[#BCB6A8] hover:bg-[#FFFFFF] hover:shadow-2xs'
+                    } ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {/* Active selection bar indicator */}
+                    {isSelected && (
+                      <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#376A9B] rounded-t-[4px]" />
+                    )}
 
-                  {/* Header: Large ID + Selection State */}
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <span
-                      className={`text-base font-bold font-mono tracking-tight ${
-                        isSelected ? 'text-[#376A9B]' : 'text-[#17202A]'
-                      }`}
-                    >
-                      {obs.id}
+                    {/* Header: Large ID + Selection State */}
+                    <div className="flex w-full items-center justify-between gap-2">
+                      <span
+                        className={`text-base font-bold font-mono tracking-tight ${
+                          isSelected ? 'text-[#376A9B]' : 'text-[#17202A]'
+                        }`}
+                      >
+                        {obs.id}
+                      </span>
+
+                      {isSelected ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-[#376A9B] bg-[#EAF1F8] px-2 py-0.5 rounded-[2px] border border-[#B6CDE2] font-semibold">
+                          <Check className="h-3 w-3" />
+                          Selected
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono text-[#7E8B96] uppercase px-1.5 py-0.5 rounded-[2px] border border-[#D6D2C9] bg-[#FAF8F5]">
+                          Select
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Target Name */}
+                    <span className="mt-2 text-sm font-semibold text-[#17202A] line-clamp-1">
+                      {obs.name}
                     </span>
 
-                    {isSelected ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-[#376A9B] bg-[#EAF1F8] px-2 py-0.5 rounded-[2px] border border-[#B6CDE2] font-semibold">
-                        <Check className="h-3 w-3" />
-                        Selected
+                    {/* Machine Data */}
+                    <div className="mt-3 pt-2.5 border-t border-[#D6D2C9] w-full flex items-center justify-between text-xs text-[#56616A] font-mono">
+                      <span>
+                        {obs.frequencyMHz != null
+                          ? `${obs.frequencyMHz.toFixed(2)} MHz`
+                          : 'Unavailable'}
                       </span>
-                    ) : (
-                      <span className="text-[10px] font-mono text-[#7E8B96] uppercase px-1.5 py-0.5 rounded-[2px] border border-[#D6D2C9] bg-[#FAF8F5]">
-                        Select
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Target Name */}
-                  <span className="mt-2 text-sm font-semibold text-[#17202A] line-clamp-1">
-                    {obs.name}
-                  </span>
-
-                  {/* Machine Data */}
-                  <div className="mt-3 pt-2.5 border-t border-[#D6D2C9] w-full flex items-center justify-between text-xs text-[#56616A] font-mono">
-                    <span>{obs.frequencyMHz.toFixed(2)} MHz</span>
-                    <span className="text-[#BCB6A8]">·</span>
-                    <span>{obs.durationString}</span>
-                  </div>
-                </button>
-              );
-            })}
+                      <span className="text-[#BCB6A8]">·</span>
+                      <span>{obs.durationString || '—'}</span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -352,7 +340,9 @@ export function ObservationInput({
               </div>
             </div>
 
-            <div className="text-xs text-[#7E8B96] font-mono">{selectedObservation.telescope}</div>
+            <div className="text-xs text-[#7E8B96] font-mono">
+              {selectedObservation.telescope || 'Unspecified instrument'}
+            </div>
           </div>
 
           {/* Machine Telemetry Row */}
@@ -360,25 +350,31 @@ export function ObservationInput({
             <div>
               <span className="block text-[10px] text-[#7E8B96] uppercase">Center Frequency</span>
               <span className="text-[#17202A] text-xs font-semibold">
-                {selectedObservation.frequencyMHz.toFixed(4)} MHz
+                {selectedObservation.frequencyMHz != null
+                  ? `${selectedObservation.frequencyMHz.toFixed(4)} MHz`
+                  : 'Unavailable'}
               </span>
             </div>
             <div>
               <span className="block text-[10px] text-[#7E8B96] uppercase">Bandwidth</span>
               <span className="text-[#17202A] text-xs font-semibold">
-                {selectedObservation.bandwidthMHz.toFixed(1)} MHz
+                {selectedObservation.bandwidthMHz != null
+                  ? `${selectedObservation.bandwidthMHz.toFixed(1)} MHz`
+                  : 'Unavailable'}
               </span>
             </div>
             <div>
               <span className="block text-[10px] text-[#7E8B96] uppercase">Duration</span>
               <span className="text-[#17202A] text-xs font-semibold">
-                {selectedObservation.durationString}
+                {selectedObservation.durationString || '—'}
               </span>
             </div>
             <div>
               <span className="block text-[10px] text-[#7E8B96] uppercase">Coordinates</span>
               <span className="text-[#17202A] text-xs font-semibold">
-                {selectedObservation.coordinates.ra} · {selectedObservation.coordinates.dec}
+                {selectedObservation.coordinates.ra && selectedObservation.coordinates.dec
+                  ? `${selectedObservation.coordinates.ra} · ${selectedObservation.coordinates.dec}`
+                  : 'Unavailable'}
               </span>
             </div>
           </div>

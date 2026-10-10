@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 import type { CandidateSignalData, CandidateFilterState } from './types.ts';
-import { CANDIDATE_OBSERVATION_SUMMARY, MOCK_CANDIDATE_SIGNALS } from './data/mockCandidates.ts';
 
 import { CandidateHeader } from './components/CandidateHeader.tsx';
 import { CandidateTable } from './components/CandidateTable.tsx';
@@ -15,10 +14,14 @@ import type { Candidate } from '@/types/schemas.ts';
 
 function backendCandidateToSignalData(cand: Candidate): CandidateSignalData {
   const phys = (cand.physical_coordinates || {}) as Record<string, unknown>;
-  const score = cand.current_assessment?.overall_score ?? 82.0;
-  const band = cand.current_assessment?.priority_band;
+  const score = cand.current_assessment?.overall_score ?? null;
+  const band = cand.current_assessment?.priority_band?.toLowerCase();
   const priority: CandidateSignalData['priority'] =
-    band === 'exceptional' || band === 'high' ? 'HIGH' : band === 'moderate' ? 'MEDIUM' : 'LOW';
+    band === 'exceptional' || band === 'high'
+      ? 'HIGH'
+      : band === 'moderate' || band === 'medium'
+        ? 'MEDIUM'
+        : 'LOW';
 
   const statusMap: Record<string, CandidateSignalData['status']> = {
     unreviewed: 'REVIEW',
@@ -29,55 +32,77 @@ function backendCandidateToSignalData(cand: Candidate): CandidateSignalData {
     needs_more_data: 'REVIEW',
   };
 
-  const durSec = cand.target_region.time_stop - cand.target_region.time_start;
+  const durSec = cand.target_region
+    ? cand.target_region.time_stop - cand.target_region.time_start
+    : null;
+
+  const rawDrift = (phys.drift_rate_hz_s as number) ?? (phys.drift_rate as number) ?? null;
+  const rawSnr = (phys.snr_db as number) ?? null;
+  const rawFreq = (phys.frequency_mhz as number) ?? null;
+  const rawBw = (phys.bandwidth_khz as number) ?? null;
+
+  const rfiProb =
+    typeof cand.current_assessment?.component_contributions?.rfi_risk === 'number'
+      ? cand.current_assessment.component_contributions.rfi_risk
+      : null;
+  const persistence =
+    typeof cand.current_assessment?.component_contributions?.temporal_persistence === 'number'
+      ? cand.current_assessment.component_contributions.temporal_persistence
+      : null;
 
   return {
     id: cand.candidate_id,
     observationId: cand.source_observation_ids[0] || 'OBS-UNKNOWN',
     targetName:
       (phys.target_name as string) || cand.source_observation_ids[0] || 'Target Candidate',
-    frequencyMHz: (phys.frequency_mhz as number) || 1420.405,
-    bandwidthKHz: (phys.bandwidth_khz as number) || 25,
-    durationSeconds: durSec || 300,
-    peakPowerDbm: -92.4,
-    snrDb: (phys.snr_db as number) || 14.5,
-    driftRateHzPerSec: (phys.drift_rate_hz_s as number) || (phys.drift_rate as number) || 0.0,
+    frequencyMHz: rawFreq,
+    bandwidthKHz: rawBw,
+    durationSeconds: durSec,
+    peakPowerDbm: null,
+    snrDb: rawSnr,
+    driftRateHzPerSec: rawDrift,
     firstDetectedTime: cand.created_at_utc.slice(0, 10),
     coordinates: {
-      ra: (phys.ra_str as string) || '14h 29m 42s',
-      dec: (phys.dec_str as string) || '-62° 40′ 46″',
+      ra: (phys.ra_str as string) ?? null,
+      dec: (phys.dec_str as string) ?? null,
     },
-    anomalyIndex: score / 100,
-    persistence: 0.88,
-    knownPatternSimilarity: 0.12,
-    interferenceProbability: 0.08,
+    targetRegion: cand.target_region,
+    anomalyIndex: score != null ? score / 100 : null,
+    persistence,
+    knownPatternSimilarity: null,
+    interferenceProbability: rfiProb,
     priority,
     status: statusMap[cand.status] || 'REVIEW',
     morphology: {
-      observedType: 'Narrowband Doppler Track',
-      nearestKnownType: 'Uncataloged Emitter',
-      divergenceDegree: 'HIGH',
-      cosineDistance: 0.88,
+      observedType: rawDrift != null ? 'Doppler Track' : 'Unsupervised Region',
+      nearestKnownType: 'Not evaluated',
+      divergenceDegree: 'MODERATE',
+      cosineDistance: null,
     },
     evidenceFactors: {
-      anomalousStructure: { state: 'HIGH', sigma: 4.8 },
-      temporalPersistence: { state: 'ELEVATED', cycles: `${durSec || 300}s integration` },
-      knownSimilarity: { state: 'LOW', catalogRef: 'Natural RF Catalog v2' },
-      rfiEstimate: { state: 'LOW', probPercent: 8 },
-      frequencyCoherence: { state: 'STABLE', bandwidthStr: '25 kHz' },
+      anomalousStructure: { state: score != null && score > 75 ? 'HIGH' : 'NOMINAL', sigma: null },
+      temporalPersistence: {
+        state: persistence != null && persistence > 0.7 ? 'ELEVATED' : 'NOMINAL',
+        cycles: durSec != null ? `${durSec}s integration` : '—',
+      },
+      knownSimilarity: { state: 'LOW', catalogRef: 'Not evaluated' },
+      rfiEstimate: {
+        state: rfiProb != null && rfiProb > 0.2 ? 'ELEVATED' : 'LOW',
+        probPercent: rfiProb != null ? Math.round(rfiProb * 100) : null,
+      },
+      frequencyCoherence: {
+        state: rawDrift != null && Math.abs(rawDrift) > 0.1 ? 'DRIFTING' : 'STABLE',
+        bandwidthStr: rawBw != null ? `${rawBw} kHz` : '—',
+      },
     },
-    latentCoordinates: { x: -0.42, y: 0.65 },
-    notes: cand.current_assessment?.explanation || cand.scientific_disclaimer,
+    latentCoordinates: null,
+    notes: cand.current_assessment?.explanation || cand.scientific_disclaimer || '',
   };
 }
 
 export default function CandidatesPage() {
-  const [candidatesList, setCandidatesList] = useState<CandidateSignalData[]>(
-    api.isDemoMode() ? MOCK_CANDIDATE_SIGNALS : []
-  );
-  const [selectedCandidate, setSelectedCandidate] = useState<CandidateSignalData | null>(
-    api.isDemoMode() ? MOCK_CANDIDATE_SIGNALS[0] : null
-  );
+  const [candidatesList, setCandidatesList] = useState<CandidateSignalData[]>([]);
+  const [selectedCandidate, setSelectedCandidate] = useState<CandidateSignalData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<CandidateFilterState>({
@@ -96,24 +121,16 @@ export default function CandidatesPage() {
         const mapped = res.items.map((c: Candidate) => backendCandidateToSignalData(c));
         setCandidatesList(mapped);
         setSelectedCandidate(mapped[0]);
-      } else if (api.isDemoMode()) {
-        setCandidatesList(MOCK_CANDIDATE_SIGNALS);
-        setSelectedCandidate(MOCK_CANDIDATE_SIGNALS[0]);
       } else {
         setCandidatesList([]);
         setSelectedCandidate(null);
       }
     } catch (err: unknown) {
-      if (api.isDemoMode()) {
-        setCandidatesList(MOCK_CANDIDATE_SIGNALS);
-        setSelectedCandidate(MOCK_CANDIDATE_SIGNALS[0]);
-      } else {
-        setCandidatesList([]);
-        setSelectedCandidate(null);
-        const msg =
-          (err as { message?: string })?.message || 'Failed to load candidate ledger from backend.';
-        setLoadError(msg);
-      }
+      setCandidatesList([]);
+      setSelectedCandidate(null);
+      const msg =
+        (err as { message?: string })?.message || 'Failed to load candidate ledger from backend.';
+      setLoadError(msg);
     }
   }, []);
 
@@ -133,7 +150,7 @@ export default function CandidatesPage() {
         if (q) {
           const matchesId = cand.id.toLowerCase().includes(q);
           const matchesTarget = cand.targetName.toLowerCase().includes(q);
-          const matchesFreq = cand.frequencyMHz.toString().includes(q);
+          const matchesFreq = cand.frequencyMHz != null && cand.frequencyMHz.toString().includes(q);
           if (!matchesId && !matchesTarget && !matchesFreq) return false;
         }
 
@@ -149,7 +166,7 @@ export default function CandidatesPage() {
         const priorityWeights = { HIGH: 3, MEDIUM: 2, LOW: 1 };
         const pDiff = priorityWeights[b.priority] - priorityWeights[a.priority];
         if (pDiff !== 0) return pDiff;
-        return b.anomalyIndex - a.anomalyIndex;
+        return (b.anomalyIndex ?? 0) - (a.anomalyIndex ?? 0);
       });
   }, [candidatesList, filters]);
 
@@ -210,10 +227,7 @@ export default function CandidatesPage() {
     <PageTransition className="space-y-0">
       {/* 1. Header with triage context & search/filter controls */}
       <CandidateHeader
-        observationId={
-          selectedCandidate?.observationId ||
-          (api.isDemoMode() ? CANDIDATE_OBSERVATION_SUMMARY.observationId : '—')
-        }
+        observationId={selectedCandidate?.observationId || '—'}
         totalIdentified={candidatesList.length}
         highPriorityCount={candidatesList.filter((c) => c.priority === 'HIGH').length}
         filters={filters}

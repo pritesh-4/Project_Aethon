@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { PageTransition } from '@/components/ui/motion.tsx';
-import { api, isDemoMode } from '@/lib/api.ts';
+import { api } from '@/lib/api.ts';
 import type { ObservationRecordResponse, CandidateResponse } from '@/types/schemas.ts';
 
 import type {
@@ -9,8 +9,8 @@ import type {
   ArchiveFilterState,
   ArchivedCandidateEvent,
   ArchiveSummaryStats,
+  CandidatePriority,
 } from './types.ts';
-import { MOCK_ARCHIVED_OBSERVATIONS } from './data/mockArchive.ts';
 
 import { ArchiveHeader } from './components/ArchiveHeader.tsx';
 import { ArchiveToolbar } from './components/ArchiveToolbar.tsx';
@@ -22,46 +22,65 @@ function mapObservationToArchived(
   obs: ObservationRecordResponse,
   linkedCandidates: CandidateResponse[] = []
 ): ArchivedObservation {
-  const fRef = obs.metadata?.frequency_reference_mhz ?? 1420.0;
-  const bw = obs.metadata?.bandwidth_mhz ?? 0.5;
-  const sampleCount = obs.metadata?.time_sample_count ?? 1024;
-  const dt = obs.metadata?.time_step_seconds ?? 0.5;
-  const durationSec = Math.round(sampleCount * dt);
-  const minutes = Math.floor(durationSec / 60);
-  const seconds = durationSec % 60;
-  const durationString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  const fRef = obs.metadata?.frequency_reference_mhz ?? null;
+  const bw = obs.metadata?.bandwidth_mhz ?? null;
+  const sampleCount = obs.metadata?.time_sample_count ?? null;
+  const dt = obs.metadata?.time_step_seconds ?? null;
+  let durationSec: number | null = null;
+  let durationString = '—';
+  if (sampleCount != null && dt != null) {
+    durationSec = Math.round(sampleCount * dt);
+    const minutes = Math.floor(durationSec / 60);
+    const seconds = durationSec % 60;
+    durationString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
 
   const candidatesMapped: ArchivedCandidateEvent[] = linkedCandidates.map((c, idx) => {
-    const score = c.current_assessment?.overall_score
-      ? c.current_assessment.overall_score / 100
-      : 0.82;
+    const score =
+      typeof c.current_assessment?.overall_score === 'number'
+        ? c.current_assessment.overall_score / 100
+        : null;
     const driftEvidence = c.evidence_items?.find((e) => e.evidence_type === 'drift');
     const drift =
       typeof driftEvidence?.scores_or_parameters?.drift_rate_hz_per_s === 'number'
         ? (driftEvidence.scores_or_parameters.drift_rate_hz_per_s as number)
-        : 0.15;
+        : null;
     const snr =
       typeof driftEvidence?.scores_or_parameters?.snr === 'number'
         ? (driftEvidence.scores_or_parameters.snr as number)
-        : 14.5;
-    const chSpacing = (obs.metadata?.channel_spacing_mhz ?? 0.001) * 1000;
-    const bwKHz = Math.abs(c.target_region.freq_stop - c.target_region.freq_start) * chSpacing;
+        : null;
+
+    let bwKHz: number | null = null;
+    let freqMHz: number | null = null;
+    if (obs.metadata?.channel_spacing_mhz && c.target_region) {
+      const chSpacing = obs.metadata.channel_spacing_mhz * 1000;
+      bwKHz =
+        Math.round(
+          Math.abs(c.target_region.freq_stop - c.target_region.freq_start) * chSpacing * 10
+        ) / 10;
+      if (fRef != null) {
+        freqMHz =
+          fRef +
+          ((c.target_region.freq_start + c.target_region.freq_stop) / 2) *
+            obs.metadata.channel_spacing_mhz;
+      }
+    }
+
+    const priority: CandidatePriority =
+      score != null ? (score > 0.8 ? 'HIGH' : score > 0.5 ? 'MEDIUM' : 'LOW') : 'LOW';
 
     return {
       id: `C${String(idx + 1).padStart(2, '0')}`,
       fullId: c.candidate_id,
       signalId: c.candidate_id,
       label: `C${String(idx + 1).padStart(2, '0')}`,
-      priority: score > 0.8 ? 'HIGH' : score > 0.5 ? 'MEDIUM' : 'LOW',
-      frequencyMHz:
-        fRef +
-        ((c.target_region.freq_start + c.target_region.freq_stop) / 2) *
-          (obs.metadata?.channel_spacing_mhz ?? 0.001),
-      bandwidthKHz: Math.round(bwKHz * 10) / 10,
+      priority,
+      frequencyMHz: freqMHz,
+      bandwidthKHz: bwKHz,
       driftRateHzPerSec: drift,
-      snrDb: Math.round(snr * 10) / 10,
+      snrDb: snr != null ? Math.round(snr * 10) / 10 : null,
       anomalyScore: score,
-      classification: 'Linear Drift Carrier',
+      classification: undefined,
     };
   });
 
@@ -75,17 +94,20 @@ function mapObservationToArchived(
     targetName: obs.metadata?.source_name || obs.original_filename,
     telescope: obs.metadata?.telescope_name || 'Radio Telescope',
     coordinates: {
-      ra: obs.metadata?.ra_str || '18h 05m 27s',
-      dec: obs.metadata?.dec_str || '-04° 38′ 45″',
+      ra: obs.metadata?.ra_str || null,
+      dec: obs.metadata?.dec_str || null,
     },
     frequency: fRef,
     bandwidth: bw,
     duration: durationSec,
     durationString,
     sampleCount,
-    anomalousRegions: candidatesMapped.length * 3 + (obs.status === 'processed' ? 1 : 0),
+    anomalousRegions: candidatesMapped.length,
     highPriorityCandidates: highPriority,
-    anomalyIndex: candidatesMapped.length > 0 ? candidatesMapped[0].anomalyScore : 0.45,
+    anomalyIndex:
+      candidatesMapped.length > 0 && candidatesMapped[0].anomalyScore != null
+        ? candidatesMapped[0].anomalyScore
+        : null,
     status:
       candidatesMapped.length > 0
         ? 'candidate'
@@ -97,13 +119,13 @@ function mapObservationToArchived(
     modelVersion: '1.0.0',
     modelName: 'AETHON-DSP',
     analysisMode: 'SPECTRAL_DRIFT',
-    pipelineStatus: 'SYNCHRONIZED',
-    analysisTimeMs: 120,
+    pipelineStatus: obs.status.toUpperCase(),
+    analysisTimeMs: null,
     provenance: {
       ingestedTime: obs.ingested_at,
-      preprocessedTime: obs.ingested_at,
-      analyzedTime: obs.ingested_at,
-      candidatesGeneratedTime: obs.ingested_at,
+      preprocessedTime: obs.status === 'processed' ? obs.ingested_at : 'Pending',
+      analyzedTime: obs.status === 'processed' ? obs.ingested_at : 'Pending',
+      candidatesGeneratedTime: candidatesMapped.length > 0 ? obs.ingested_at : 'None',
     },
     notes: `Ingested from ${obs.original_filename} (${obs.format.toUpperCase()}, ${Math.round(obs.file_size_bytes / 1024)} KB, SHA256: ${obs.sha256.slice(0, 10)}...)`,
   };
@@ -113,10 +135,8 @@ export default function ArchivePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedId = searchParams.get('id');
 
-  // Observations dataset
-  const [observations, setObservations] = useState<ArchivedObservation[]>(
-    isDemoMode() ? MOCK_ARCHIVED_OBSERVATIONS : []
-  );
+  // Observations dataset populated strictly from backend
+  const [observations, setObservations] = useState<ArchivedObservation[]>([]);
 
   // Filter state
   const [filters, setFilters] = useState<ArchiveFilterState>({
@@ -129,7 +149,7 @@ export default function ArchivePage() {
   });
 
   // Selected observation ID state
-  const [selectedIdState, setSelectedIdState] = useState<string>(isDemoMode() ? 'AET-04721' : '');
+  const [selectedIdState, setSelectedIdState] = useState<string>('');
 
   // Query real observations and linked candidates from backend
   useEffect(() => {
@@ -152,24 +172,16 @@ export default function ArchivePage() {
           return mapObservationToArchived(obs, linked);
         });
 
-        // Merge with mock observations if demo mode is enabled
-        const combined = isDemoMode() ? [...mapped, ...MOCK_ARCHIVED_OBSERVATIONS] : mapped;
-
-        setObservations(combined);
-        if (combined.length > 0) {
+        setObservations(mapped);
+        if (mapped.length > 0) {
           setSelectedIdState((curr) => {
-            if (requestedId && combined.some((m) => m.id === requestedId)) return requestedId;
-            if (combined.some((m) => m.id === curr)) return curr;
-            return combined[0].id;
+            if (requestedId && mapped.some((m) => m.id === requestedId)) return requestedId;
+            if (mapped.some((m) => m.id === curr)) return curr;
+            return mapped[0].id;
           });
         }
       } else {
-        // Fallback to mock records only if demo mode is enabled
-        if (isDemoMode()) {
-          setObservations(MOCK_ARCHIVED_OBSERVATIONS);
-        } else {
-          setObservations([]);
-        }
+        setObservations([]);
       }
     });
 
@@ -227,7 +239,7 @@ export default function ArchivePage() {
           const matchesId = obs.id.toLowerCase().includes(q);
           const matchesTarget = obs.targetName.toLowerCase().includes(q);
           const matchesTelescope = obs.telescope.toLowerCase().includes(q);
-          const matchesFreq = obs.frequency.toString().includes(q);
+          const matchesFreq = obs.frequency != null && obs.frequency.toString().includes(q);
           const matchesDate = obs.date.includes(q);
           const matchesStatus = obs.status.toLowerCase().includes(q);
           const matchesCandidates = obs.candidates.some(
@@ -287,7 +299,7 @@ export default function ArchivePage() {
           case 'oldest':
             return a.timestamp.localeCompare(b.timestamp);
           case 'anomalyIndex':
-            return b.anomalyIndex - a.anomalyIndex;
+            return (b.anomalyIndex ?? 0) - (a.anomalyIndex ?? 0);
           case 'candidateCount':
             return b.candidates.length - a.candidates.length;
           case 'priority': {

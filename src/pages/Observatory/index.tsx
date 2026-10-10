@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { AlertTriangle, RefreshCw, Radio, Upload } from 'lucide-react';
 
 import type { ObservationData, ObservationStatus } from './types.ts';
-import { MOCK_OBSERVATIONS } from './data/mockObservations.ts';
 import { ObservatoryHeader } from './components/ObservatoryHeader.tsx';
 import { SignalViewport } from './components/SignalViewport.tsx';
 import { CandidateAlert } from './components/CandidateAlert.tsx';
@@ -27,32 +26,118 @@ function recordToObservationData(
   analysis?: AnalysisResponse | null
 ): ObservationData {
   const meta = rec.metadata;
-  const fCenter = meta?.frequency_reference_mhz ?? 1420.405;
-  const bwMHz = meta?.bandwidth_mhz ?? 10.0;
-  const tStep = meta?.time_step_seconds ?? 1.0;
-  const nInt = meta?.time_sample_count ?? 64;
-  const durSec = nInt * tStep;
-  const m = Math.floor(durSec / 60);
-  const s = Math.floor(durSec % 60);
-  const durStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  const fCenter =
+    typeof meta?.frequency_reference_mhz === 'number' && !Number.isNaN(meta.frequency_reference_mhz)
+      ? meta.frequency_reference_mhz
+      : null;
+  const bwMHz =
+    typeof meta?.bandwidth_mhz === 'number' && !Number.isNaN(meta.bandwidth_mhz)
+      ? meta.bandwidth_mhz
+      : null;
+  const tStep =
+    typeof meta?.time_step_seconds === 'number' && !Number.isNaN(meta.time_step_seconds)
+      ? meta.time_step_seconds
+      : null;
+  const nInt =
+    typeof meta?.time_sample_count === 'number' && !Number.isNaN(meta.time_sample_count)
+      ? meta.time_sample_count
+      : null;
+
+  let durSec: number | null = null;
+  let durStr: string | null = null;
+  if (tStep != null && nInt != null) {
+    durSec = nInt * tStep;
+    const m = Math.floor(durSec / 60);
+    const s = Math.floor(durSec % 60);
+    durStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
 
   const topRegion = detection?.anomalous_regions?.[0];
   const topEvidence = topRegion?.isolation_forest_evidence ?? topRegion?.baseline_evidence;
-  const driftRate = analysis?.drift_estimate?.drift_rate_hz_per_s ?? 0;
-  const snr = analysis?.temporal?.temporal_profile_snr ?? 14.2;
-  const anomalyScore = topEvidence?.anomaly_score
-    ? Math.min(100, Math.max(0, topEvidence.anomaly_score * 100))
-    : 0;
-  const persistencePct = analysis?.temporal?.temporal_persistence
-    ? analysis.temporal.temporal_persistence * 100
-    : topRegion
-      ? 82.5
-      : 0;
+
+  // Preserve genuine numerical zeros returned by backend; null when absent
+  const driftRate =
+    typeof analysis?.drift_estimate?.drift_rate_hz_per_s === 'number' &&
+    !Number.isNaN(analysis.drift_estimate.drift_rate_hz_per_s)
+      ? analysis.drift_estimate.drift_rate_hz_per_s
+      : null;
+
+  const snr =
+    typeof analysis?.temporal?.temporal_profile_snr === 'number' &&
+    !Number.isNaN(analysis.temporal.temporal_profile_snr)
+      ? analysis.temporal.temporal_profile_snr
+      : null;
+
+  const anomalyScore =
+    typeof topEvidence?.anomaly_score === 'number' && !Number.isNaN(topEvidence.anomaly_score)
+      ? Math.min(100, Math.max(0, topEvidence.anomaly_score * 100))
+      : null;
+
+  const persistencePct =
+    typeof analysis?.temporal?.temporal_persistence === 'number' &&
+    !Number.isNaN(analysis.temporal.temporal_persistence)
+      ? analysis.temporal.temporal_persistence * 100
+      : null;
 
   const raStr =
-    meta?.ra_str || (meta?.ra_deg != null ? `${meta.ra_deg.toFixed(4)}°` : '19h 44m 28s');
+    meta?.ra_str ||
+    (typeof meta?.ra_deg === 'number' && !Number.isNaN(meta.ra_deg)
+      ? `${meta.ra_deg.toFixed(4)}°`
+      : null);
   const decStr =
-    meta?.dec_str || (meta?.dec_deg != null ? `${meta.dec_deg.toFixed(4)}°` : '+27° 05′ 29″');
+    meta?.dec_str ||
+    (typeof meta?.dec_deg === 'number' && !Number.isNaN(meta.dec_deg)
+      ? `${meta.dec_deg.toFixed(4)}°`
+      : null);
+
+  let region: {
+    timeStartSec: number | null;
+    timeEndSec: number | null;
+    freqOffsetKHz: number | null;
+    bandwidthKHz: number | null;
+  } | null = null;
+
+  if (topRegion) {
+    const w = topRegion.window;
+    let timeStartSec: number | null = null;
+    let timeEndSec: number | null = null;
+    if (w.time_center_s != null && w.time_span_s != null) {
+      timeStartSec = w.time_center_s - w.time_span_s / 2;
+      timeEndSec = w.time_center_s + w.time_span_s / 2;
+    } else if (tStep != null) {
+      timeStartSec = w.time_start * tStep;
+      timeEndSec = w.time_stop * tStep;
+    }
+
+    const bandwidthKHz =
+      typeof w.bandwidth_hz === 'number' && !Number.isNaN(w.bandwidth_hz)
+        ? w.bandwidth_hz / 1000
+        : null;
+
+    region = {
+      timeStartSec,
+      timeEndSec,
+      freqOffsetKHz: null,
+      bandwidthKHz,
+    };
+  }
+
+  // Do not treat anomalous region as proof of Doppler drift; check drift analysis
+  let classificationLabel: string | null = null;
+  if (topRegion) {
+    if (analysis?.drift_estimate?.is_physical && driftRate != null && Math.abs(driftRate) > 0.01) {
+      classificationLabel = 'Doppler Linear Drift Candidate';
+    } else if (topEvidence?.detector_name) {
+      classificationLabel = `Spectral Anomaly (${topEvidence.detector_name})`;
+    } else {
+      classificationLabel = 'Unclassified Spectral Anomaly';
+    }
+  }
+
+  let priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+  if (anomalyScore != null) {
+    priority = anomalyScore > 85 ? 'CRITICAL' : anomalyScore > 65 ? 'HIGH' : 'LOW';
+  }
 
   return {
     id: rec.id,
@@ -63,46 +148,38 @@ function recordToObservationData(
     bandwidthMHz: bwMHz,
     windowDuration: durStr,
     durationSeconds: durSec,
-    signalPowerDbm: -92.4,
-    noiseFloorDbm: -108.6,
+    signalPowerDbm: null, // Raw uncalibrated detector counts; not calibrated in dBm
+    noiseFloorDbm: null,
     snrDb: snr,
-    rfiRisk: 'LOW',
+    rfiRisk: null, // No RFI assessment performed on raw ingestion
     driftRateHzPerSec: driftRate,
     coordinates: {
       ra: raStr,
       dec: decStr,
     },
     anomaly: {
-      indexPercent: anomalyScore || (topRegion ? 84.5 : 0),
-      knownPatternSimilarityPercent: 12.0,
-      interferenceProbabilityPercent: 8,
-      persistencePercent: persistencePct || (topRegion ? 78.4 : 0),
-      region: {
-        timeStartSec: topRegion?.window?.time_start ?? 0,
-        timeEndSec: topRegion?.window?.time_stop ?? durSec,
-        freqOffsetKHz: 0,
-        bandwidthKHz: 25,
-      },
-      classificationLabel: topRegion ? 'Doppler Linear Drift' : 'Standard Baseline',
+      indexPercent: anomalyScore,
+      knownPatternSimilarityPercent: null,
+      interferenceProbabilityPercent: null,
+      persistencePercent: persistencePct,
+      region,
+      classificationLabel,
     },
-    priority: anomalyScore > 85 ? 'CRITICAL' : anomalyScore > 65 ? 'HIGH' : 'LOW',
+    priority,
     telemetryNotes: `Ingested via ${rec.format.toUpperCase()} filterbank reader. File hash: ${rec.sha256.slice(0, 12)}...`,
+    isDemoMode: false,
   };
 }
 
 export default function ObservatoryPage() {
-  const [selectedObsId, setSelectedObsId] = useState<string>(
-    api.isDemoMode() ? MOCK_OBSERVATIONS[0].id : ''
-  );
+  const [selectedObsId, setSelectedObsId] = useState<string>('');
   const [status, setStatus] = useState<ObservationStatus>('IDLE');
   const [isPaused, setIsPaused] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
 
   // Backend state
   const [recordMap, setRecordMap] = useState<Record<string, ObservationRecordResponse>>({});
-  const [observationList, setObservationList] = useState<{ id: string; name: string }[]>(
-    api.isDemoMode() ? MOCK_OBSERVATIONS.map((o) => ({ id: o.id, name: o.name })) : []
-  );
+  const [observationList, setObservationList] = useState<{ id: string; name: string }[]>([]);
   const [sliceData, setSliceData] = useState<SpectralSliceResponse | null>(null);
   const [isLoadingSlice, setIsLoadingSlice] = useState(false);
   const [detectionData, setDetectionData] = useState<DetectionResponse | null>(null);
@@ -132,23 +209,18 @@ export default function ObservatoryPage() {
 
         // Select the first observation from backend
         setSelectedObsId(items[0].id);
-      } else if (api.isDemoMode()) {
-        setObservationList(MOCK_OBSERVATIONS.map((o) => ({ id: o.id, name: o.name })));
-        setSelectedObsId(MOCK_OBSERVATIONS[0].id);
       } else {
+        setRecordMap({});
         setObservationList([]);
         setSelectedObsId('');
       }
     } catch (err: unknown) {
-      if (api.isDemoMode()) {
-        setObservationList(MOCK_OBSERVATIONS.map((o) => ({ id: o.id, name: o.name })));
-        setSelectedObsId(MOCK_OBSERVATIONS[0].id);
-      } else {
-        const msg =
-          (err as { message?: string })?.message ||
-          'Failed to connect to backend observation feed.';
-        setLoadError(msg);
-      }
+      setRecordMap({});
+      setObservationList([]);
+      setSelectedObsId('');
+      const msg =
+        (err as { message?: string })?.message || 'Failed to connect to backend observation feed.';
+      setLoadError(msg);
     }
   }, []);
 
@@ -164,8 +236,7 @@ export default function ObservatoryPage() {
     let isCancelled = false;
 
     const fetchSlice = async () => {
-      // If observation is not in backend recordMap and we are in demo mode, skip slice fetch
-      if (!recordMap[selectedObsId] && api.isDemoMode()) {
+      if (!selectedObsId || !recordMap[selectedObsId]) {
         setSliceData(null);
         return;
       }
@@ -174,9 +245,7 @@ export default function ObservatoryPage() {
       try {
         const slice = await api.getObservationSlice(selectedObsId, {
           time_start: 0,
-          time_stop: 64,
           frequency_start: 0,
-          frequency_stop: 256,
         });
         if (!isCancelled) {
           setSliceData(slice);
@@ -210,9 +279,6 @@ export default function ObservatoryPage() {
   const currentObservation: ObservationData | null = useMemo(() => {
     if (recordMap[selectedObsId]) {
       return recordToObservationData(recordMap[selectedObsId], detectionData, analysisData);
-    }
-    if (api.isDemoMode()) {
-      return MOCK_OBSERVATIONS.find((o) => o.id === selectedObsId) || MOCK_OBSERVATIONS[0];
     }
     return null;
   }, [recordMap, selectedObsId, detectionData, analysisData]);
@@ -256,6 +322,16 @@ export default function ObservatoryPage() {
         setAnalysisData(analysis);
         setScanProgress(1);
 
+        if (detRes.status === 'rejected' && anaRes.status === 'rejected') {
+          setStatus('IDLE');
+          const errorMsg =
+            (detRes.reason as { message?: string })?.message ||
+            (anaRes.reason as { message?: string })?.message ||
+            'Backend anomaly detection and drift analysis failed.';
+          toast.error('Analysis error', { description: errorMsg });
+          return;
+        }
+
         if (detection && detection.anomalous_regions && detection.anomalous_regions.length > 0) {
           setStatus('ANOMALY_DETECTED');
           toast.success(
@@ -266,9 +342,7 @@ export default function ObservatoryPage() {
           }, 800);
         } else {
           setStatus('IDLE');
-          toast.info(
-            `Analysis complete for ${selectedObsId}: no coherent carrier exceeded 3.5σ threshold.`
-          );
+          toast.info(`Analysis complete for ${selectedObsId}: no anomalous regions detected.`);
         }
       } catch (err: unknown) {
         setStatus('IDLE');
@@ -381,7 +455,7 @@ export default function ObservatoryPage() {
             </h2>
             <p className="max-w-md text-xs text-[#56616A] leading-relaxed">
               The observation repository is currently empty. Ingest or upload an observation file
-              (FITS, Filterbank, H5) to begin analysis.
+              (FITS, Filterbank) to begin analysis.
             </p>
             <div className="mt-4 flex items-center gap-3">
               <Button
@@ -419,7 +493,7 @@ export default function ObservatoryPage() {
         onTogglePause={handleTogglePause}
         onReset={handleReset}
         onOpenUpload={() => setIsUploadModalOpen(true)}
-        isDemoMode={api.isDemoMode()}
+        isDemoMode={false}
       />
 
       {/* 2. Primary Signal Viewport — the dominant focal object */}
@@ -432,6 +506,7 @@ export default function ObservatoryPage() {
           sliceData={sliceData}
           isLoadingSlice={isLoadingSlice}
           detectionData={detectionData}
+          isDemoMode={false}
         />
       </div>
 

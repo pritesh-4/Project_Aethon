@@ -8,11 +8,11 @@ export interface ArchivedCandidateEvent {
   signalId: string; // for router navigation to /analysis/:signalId
   label: string; // e.g. "C01"
   priority: CandidatePriority;
-  frequencyMHz: number;
-  bandwidthKHz: number;
-  driftRateHzPerSec: number;
-  snrDb: number;
-  anomalyScore: number;
+  frequencyMHz: number | null;
+  bandwidthKHz: number | null;
+  driftRateHzPerSec: number | null;
+  snrDb: number | null;
+  anomalyScore: number | null;
   classification?: string;
 }
 
@@ -23,17 +23,17 @@ export interface ArchivedObservation {
   targetName: string;
   telescope: string;
   coordinates: {
-    ra: string;
-    dec: string;
+    ra: string | null;
+    dec: string | null;
   };
-  frequency: number; // Center frequency in MHz (e.g. 1420.37)
-  bandwidth: number; // Bandwidth in MHz (e.g. 12.5)
-  duration: number; // Duration in seconds (e.g. 272)
-  durationString: string; // "00:04:32"
-  sampleCount: number; // e.g. 148320
+  frequency: number | null; // Center frequency in MHz (e.g. 1420.37)
+  bandwidth: number | null; // Bandwidth in MHz (e.g. 12.5)
+  duration: number | null; // Duration in seconds (e.g. 272)
+  durationString: string; // "00:04:32" or "—"
+  sampleCount: number | null; // e.g. 148320
   anomalousRegions: number; // e.g. 17
   highPriorityCandidates: number; // e.g. 4
-  anomalyIndex: number; // 0.000 to 1.000
+  anomalyIndex: number | null; // 0.000 to 1.000
   status: ArchiveStatus;
   topCandidate?: string; // e.g. "AET-04721-C01"
   candidates: ArchivedCandidateEvent[];
@@ -41,7 +41,7 @@ export interface ArchivedObservation {
   modelName: string; // e.g. "AETHON-CORE"
   analysisMode: string; // e.g. "STANDARD DISCOVERY"
   pipelineStatus: string; // e.g. "SYNCHRONIZED" | "CORRUPTED_BUFFER"
-  analysisTimeMs: number; // e.g. 6400
+  analysisTimeMs: number | null; // e.g. 6400
   provenance: {
     ingestedTime: string;
     preprocessedTime: string;

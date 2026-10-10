@@ -12,27 +12,27 @@ export interface SignalAnalysisRecord {
   candidateId: string;
   observationId: string;
   targetName: string;
-  frequencyMHz: number;
-  bandwidthKHz: number;
-  durationSeconds: number;
-  snrDb: number;
-  peakPowerDbm: number;
-  noiseFloorDbm: number;
-  samplesCount: number;
-  driftRateHzPerSec: number;
+  frequencyMHz: number | null;
+  bandwidthKHz: number | null;
+  durationSeconds: number | null;
+  snrDb: number | null;
+  peakPowerDbm: number | null;
+  noiseFloorDbm: number | null;
+  samplesCount: number | null;
+  driftRateHzPerSec: number | null;
   firstDetectedTime: string;
-  anomalyStartSec: number;
-  anomalyEndSec: number;
+  anomalyStartSec: number | null;
+  anomalyEndSec: number | null;
   coordinates: {
-    ra: string;
-    dec: string;
+    ra: string | null;
+    dec: string | null;
   };
-  telescope: string;
+  telescope: string | null;
   priority: 'HIGH' | 'MEDIUM' | 'LOW';
-  anomalyIndex: number;
-  knownPatternSimilarity: number;
-  interferenceProbability: number;
-  persistence: number;
+  anomalyIndex: number | null;
+  knownPatternSimilarity: number | null;
+  interferenceProbability: number | null;
+  persistence: number | null;
   classificationTaxonomy: string;
   morphology: {
     temporalCoherence: 'HIGH' | 'MODERATE' | 'LOW';
@@ -46,14 +46,14 @@ export interface SignalAnalysisRecord {
     observedSignature: string;
     nearestKnownPattern: string;
     catalogReference: string;
-    cosineDistance: number;
-    divergenceDegree: 'HIGH' | 'MODERATE' | 'LOW';
-  };
+    cosineDistance: number | null;
+    divergenceDegree: 'HIGH' | 'MODERATE' | 'LOW' | 'Not evaluated';
+  } | null;
   timelineEvents: {
     timeSec: number;
     label: string;
     description: string;
-    intensityDbm: number;
+    intensityDbm?: number | null;
   }[];
   flaggedReasons: {
     id: string;

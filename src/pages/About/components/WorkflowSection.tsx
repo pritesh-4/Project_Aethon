@@ -5,7 +5,7 @@ export function WorkflowSection() {
       title: 'Select or Ingest Observation',
       route: '/discover or /archive',
       action:
-        'Load calibrated radio telemetry file (.fil, .h5, .fits) or select an active telescope session.',
+        'Load calibrated radio telemetry file (.fil, .fits) or select an active telescope session.',
     },
     {
       step: '02',

@@ -12,6 +12,7 @@ export interface SignalViewportProps {
   sliceData?: SpectralSliceResponse | null;
   isLoadingSlice?: boolean;
   detectionData?: DetectionResponse | null;
+  isDemoMode?: boolean;
 }
 
 export function SignalViewport({
@@ -22,12 +23,15 @@ export function SignalViewport({
   sliceData = null,
   isLoadingSlice = false,
   detectionData = null,
+  isDemoMode = false,
 }: SignalViewportProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [zoomLevel, setZoomLevel] = useState<1 | 2>(1);
   const [isAudioActive, setIsAudioActive] = useState(false);
+
+  const isEffectiveDemoMode = Boolean(isDemoMode || observation.isDemoMode);
 
   // Compute robust slice stats when real slice is available
   const sliceStats = useMemo(() => {
@@ -52,9 +56,10 @@ export function SignalViewport({
 
   // Hover coordinate readout state
   const [hoverCoord, setHoverCoord] = useState<{
-    freqMHz: number;
-    timeSec: number;
-    powerDbm: number;
+    freqMHz: number | null;
+    timeSec: number | null;
+    powerVal: number | null;
+    powerUnit: string;
     x: number;
     y: number;
   } | null>(null);
@@ -68,6 +73,7 @@ export function SignalViewport({
     sliceData,
     sliceStats,
     detectionData,
+    isDemoMode: isEffectiveDemoMode,
   });
 
   useEffect(() => {
@@ -80,6 +86,7 @@ export function SignalViewport({
       sliceData,
       sliceStats,
       detectionData,
+      isDemoMode: isEffectiveDemoMode,
     };
   }, [
     observation,
@@ -90,39 +97,30 @@ export function SignalViewport({
     sliceData,
     sliceStats,
     detectionData,
+    isEffectiveDemoMode,
   ]);
 
   // Audio coupling
   const toggleAudio = useCallback(() => {
+    if (!sliceData) {
+      return;
+    }
     const active = observatoryAudio.toggle();
     setIsAudioActive(active);
     if (active) {
       observatoryAudio.updateCarrierPresence(
         status === 'ANOMALY_DETECTED' || status === 'CANDIDATE_READY' ? 0.9 : 0.3,
-        observation.driftRateHzPerSec
+        observation.driftRateHzPerSec ?? 0
       );
     }
-  }, [status, observation.driftRateHzPerSec]);
+  }, [status, observation.driftRateHzPerSec, sliceData]);
 
   useEffect(() => {
-    if (isAudioActive) {
+    if (isAudioActive && sliceData) {
       const intensity = status === 'ANOMALY_DETECTED' || status === 'CANDIDATE_READY' ? 0.95 : 0.3;
-      observatoryAudio.updateCarrierPresence(intensity, observation.driftRateHzPerSec);
+      observatoryAudio.updateCarrierPresence(intensity, observation.driftRateHzPerSec ?? 0);
     }
-  }, [isAudioActive, status, observation.driftRateHzPerSec]);
-
-  // Noise matrix pre-generation
-  const noiseMatrixRef = useRef<Float32Array | null>(null);
-  const cols = 120;
-  const rows = 48;
-
-  useEffect(() => {
-    const data = new Float32Array(cols * rows);
-    for (let i = 0; i < cols * rows; i++) {
-      data[i] = Math.random();
-    }
-    noiseMatrixRef.current = data;
-  }, [observation.id]);
+  }, [isAudioActive, status, observation.driftRateHzPerSec, sliceData]);
 
   // Main Canvas Render Loop
   useEffect(() => {
@@ -135,9 +133,6 @@ export function SignalViewport({
     let animId: number;
     let width = 0;
     let height = 0;
-    const startTime = performance.now();
-    let lastTime = startTime;
-    let internalTime = 0;
 
     const handleResize = () => {
       const container = containerRef.current;
@@ -160,15 +155,8 @@ export function SignalViewport({
     const ro = new ResizeObserver(handleResize);
     if (containerRef.current) ro.observe(containerRef.current);
 
-    const render = (now: number) => {
-      const dt = (now - lastTime) * 0.001;
-      lastTime = now;
-
+    const render = () => {
       const current = stateRef.current;
-      if (!current.isPaused) {
-        internalTime += dt;
-      }
-      const t = internalTime;
 
       // Layout geometry
       const paddingLeft = 60;
@@ -234,78 +222,6 @@ export function SignalViewport({
             }
           }
         }
-      } else {
-        // Fallback synthetic matrix for demo/standby mode
-        const matrix = noiseMatrixRef.current;
-        if (matrix && plotW > 0 && plotH > 0) {
-          const cellW = plotW / cols;
-          const cellH = plotH / rows;
-          const driftSlope = current.observation.driftRateHzPerSec;
-
-          for (let r = 0; r < rows; r++) {
-            const normFreq = 1 - r / rows;
-            for (let c = 0; c < cols; c++) {
-              const normTime = c / cols;
-              const noiseVal = matrix[r * cols + c] * 0.18;
-
-              // Carrier row with Doppler drift
-              const carrierRowNorm =
-                0.52 + (normTime - 0.5) * (driftSlope * 0.45) * (current.zoomLevel === 2 ? 1.8 : 1);
-              const distToCarrier = Math.abs(normFreq - carrierRowNorm);
-
-              let intensity = noiseVal;
-
-              if (distToCarrier < 0.035 * (current.zoomLevel === 2 ? 1.5 : 1)) {
-                const carrierPower = 1 - distToCarrier / 0.035;
-                const flicker = 0.85 + 0.15 * Math.sin(c * 0.4 - t * 4);
-                intensity += carrierPower * 0.75 * flicker;
-              }
-
-              // Anomaly zone intensity boost
-              const isInsideAnomaly =
-                normTime >= 0.35 &&
-                normTime <= 0.78 &&
-                normFreq >= 0.42 &&
-                normFreq <= 0.62 &&
-                (current.status === 'ANOMALY_DETECTED' || current.status === 'CANDIDATE_READY');
-
-              if (isInsideAnomaly && distToCarrier < 0.055) {
-                intensity += 0.22 * Math.sin(c * 0.6 + t * 5);
-              }
-
-              if (intensity > 0.04) {
-                const cl = Math.min(1, intensity);
-                let cr: number;
-                let cg: number;
-                let cb: number;
-
-                if (cl < 0.35) {
-                  cr = Math.floor(13 + 20 * cl);
-                  cg = Math.floor(20 + 35 * cl);
-                  cb = Math.floor(26 + 65 * cl);
-                } else if (cl < 0.72) {
-                  const factor = (cl - 0.35) / 0.37;
-                  cr = Math.floor(35 + 155 * factor);
-                  cg = Math.floor(75 + 70 * factor);
-                  cb = Math.floor(125 - 55 * factor);
-                } else {
-                  const factor = (cl - 0.72) / 0.28;
-                  cr = Math.floor(190 + 65 * factor);
-                  cg = Math.floor(145 + 110 * factor);
-                  cb = Math.floor(70 + 185 * factor);
-                }
-
-                ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
-                ctx.fillRect(
-                  paddingLeft + c * cellW,
-                  paddingTop + r * cellH,
-                  cellW + 0.5,
-                  cellH + 0.5
-                );
-              }
-            }
-          }
-        }
       }
 
       // 3. Subtle Frequency / Time Reticle
@@ -331,28 +247,6 @@ export function SignalViewport({
         ctx.stroke();
       }
       ctx.setLineDash([]);
-
-      // 4. Primary Coherent Carrier Line in observatory blue
-      ctx.save();
-      ctx.strokeStyle = '#5C89B7';
-      ctx.shadowColor = 'rgba(92, 137, 183, 0.3)';
-      ctx.shadowBlur = 3;
-      ctx.lineWidth = 1.3;
-
-      ctx.beginPath();
-      for (let x = 0; x <= plotW; x += 3) {
-        const normX = x / plotW;
-        const driftSlope = current.observation.driftRateHzPerSec;
-        const carrierRowNorm =
-          0.52 + (normX - 0.5) * (driftSlope * 0.45) * (current.zoomLevel === 2 ? 1.8 : 1);
-        const driftY = paddingTop + (1 - carrierRowNorm) * plotH;
-        const ripple = Math.sin(normX * 36 - t * 6) * 1.2;
-
-        if (x === 0) ctx.moveTo(paddingLeft + x, driftY + ripple);
-        else ctx.lineTo(paddingLeft + x, driftY + ripple);
-      }
-      ctx.stroke();
-      ctx.restore();
 
       // 5. Analyzing Scan Sweep (Observatory blue curtain)
       if (current.status === 'ANALYZING') {
@@ -440,7 +334,10 @@ export function SignalViewport({
           ((fMax + fMin * 3) / 4).toFixed(4),
           fMin.toFixed(4),
         ];
-      } else {
+      } else if (
+        current.observation.frequencyMHz != null &&
+        current.observation.bandwidthMHz != null
+      ) {
         const centerF = current.observation.frequencyMHz;
         const spanF = current.observation.bandwidthMHz;
         freqLabels = [
@@ -450,6 +347,10 @@ export function SignalViewport({
           (centerF - spanF * 0.25).toFixed(2),
           (centerF - spanF * 0.5).toFixed(2),
         ];
+      } else if (current.observation.frequencyMHz != null) {
+        freqLabels = ['—', '—', `${current.observation.frequencyMHz.toFixed(4)} f₀`, '—', '—'];
+      } else {
+        freqLabels = ['—', '—', 'Unavailable', '—', '—'];
       }
 
       ctx.textAlign = 'right';
@@ -477,11 +378,15 @@ export function SignalViewport({
 
       for (let i = 0; i <= timeSteps; i++) {
         const x = paddingLeft + (plotW / timeSteps) * i;
-        const sec = Math.floor(tStart + (tSpan / timeSteps) * i);
-        const m = Math.floor(sec / 60);
-        const s = sec % 60;
-        const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        ctx.fillText(timeStr, x, paddingTop + plotH + 16);
+        if (tSpan != null && tSpan > 0) {
+          const sec = Math.floor(tStart + (tSpan / timeSteps) * i);
+          const m = Math.floor(sec / 60);
+          const s = sec % 60;
+          const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+          ctx.fillText(timeStr, x, paddingTop + plotH + 16);
+        } else {
+          ctx.fillText('—', x, paddingTop + plotH + 16);
+        }
 
         ctx.beginPath();
         ctx.moveTo(x, paddingTop + plotH);
@@ -507,6 +412,13 @@ export function SignalViewport({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const current = stateRef.current;
+    // Without real slice data, do not display synthetic hover readout
+    if (!current.sliceData || !current.sliceStats) {
+      setHoverCoord(null);
+      return;
+    }
+
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -528,41 +440,34 @@ export function SignalViewport({
       const normX = (x - paddingLeft) / plotW;
       const normY = 1 - (y - paddingTop) / plotH;
 
-      let freqMHz: number;
-      let timeSec: number;
-      let powerDbm: number;
+      const t_idx = Math.max(
+        0,
+        Math.min(current.sliceStats.n_time - 1, Math.floor(normX * current.sliceStats.n_time))
+      );
+      const f_idx = Math.max(
+        0,
+        Math.min(current.sliceStats.n_freq - 1, Math.floor(normY * current.sliceStats.n_freq))
+      );
+      const freqMHz =
+        current.sliceData.frequency_coordinates_hz &&
+        current.sliceData.frequency_coordinates_hz[f_idx] != null
+          ? current.sliceData.frequency_coordinates_hz[f_idx] / 1e6
+          : null;
+      const timeSec =
+        current.sliceData.time_coordinates_seconds &&
+        current.sliceData.time_coordinates_seconds[t_idx] != null
+          ? current.sliceData.time_coordinates_seconds[t_idx]
+          : null;
+      const powerVal = current.sliceData.values[t_idx]?.[f_idx] ?? null;
+      const powerUnit =
+        current.sliceData.sample_value_unit ||
+        (current.sliceData.sample_value_semantics === 'calibrated_dbm' ? 'dBm' : 'counts');
 
-      if (sliceData && sliceStats) {
-        const t_idx = Math.max(
-          0,
-          Math.min(sliceStats.n_time - 1, Math.floor(normX * sliceStats.n_time))
-        );
-        const f_idx = Math.max(
-          0,
-          Math.min(sliceStats.n_freq - 1, Math.floor(normY * sliceStats.n_freq))
-        );
-        freqMHz =
-          ((sliceData.frequency_coordinates_hz && sliceData.frequency_coordinates_hz[f_idx]) || 0) /
-          1e6;
-        timeSec =
-          (sliceData.time_coordinates_seconds && sliceData.time_coordinates_seconds[t_idx]) || 0;
-        powerDbm = sliceData.values[t_idx]?.[f_idx] ?? 0;
-      } else {
-        timeSec = normX * observation.durationSeconds;
-        const centerF = observation.frequencyMHz;
-        const spanF = observation.bandwidthMHz;
-        freqMHz = centerF - spanF * 0.5 + normY * spanF;
-
-        const carrierY =
-          0.52 +
-          (normX - 0.5) * (observation.driftRateHzPerSec * 0.45) * (zoomLevel === 2 ? 1.8 : 1);
-        const dist = Math.abs(normY - carrierY);
-        powerDbm = dist < 0.04 ? observation.signalPowerDbm : observation.noiseFloorDbm;
-      }
       setHoverCoord({
         freqMHz,
         timeSec,
-        powerDbm,
+        powerVal,
+        powerUnit,
         x,
         y,
       });
@@ -584,7 +489,9 @@ export function SignalViewport({
           <span className="font-medium text-[#E3EBF2]">Spectrogram</span>
           <span className="text-[#31495D]">|</span>
           <span className="text-[11px] text-[#A6B7C6] font-mono">
-            {observation.frequencyMHz.toFixed(4)} MHz
+            {observation.frequencyMHz != null
+              ? `${observation.frequencyMHz.toFixed(4)} MHz`
+              : 'Unavailable'}
           </span>
         </div>
 
@@ -593,16 +500,27 @@ export function SignalViewport({
           <button
             type="button"
             aria-pressed={isAudioActive}
+            disabled={!sliceData}
             onClick={toggleAudio}
-            title={isAudioActive ? 'Mute audio' : 'Enable audio carrier'}
-            className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1 text-xs transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] min-h-[28px] ${
-              isAudioActive
-                ? 'border-[#376A9B] bg-[#376A9B]/15 text-[#5C89B7]'
-                : 'border-[#213240] bg-[#182632] text-[#A6B7C6] hover:text-[#E3EBF2]'
+            title={
+              !sliceData
+                ? 'Sonification unavailable (no spectral slice)'
+                : isAudioActive
+                  ? 'Mute sonification'
+                  : 'Generated sonification (simulation)'
+            }
+            className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1 text-xs transition-colors outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] min-h-[28px] ${
+              !sliceData
+                ? 'border-[#213240] bg-[#182632]/50 text-[#6A7E8F] cursor-not-allowed opacity-50'
+                : isAudioActive
+                  ? 'border-[#376A9B] bg-[#376A9B]/15 text-[#5C89B7] cursor-pointer'
+                  : 'border-[#213240] bg-[#182632] text-[#A6B7C6] hover:text-[#E3EBF2] cursor-pointer'
             }`}
           >
             {isAudioActive ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
-            <span className="text-[11px]">{isAudioActive ? 'Audio on' : 'Audio off'}</span>
+            <span className="text-[11px]">
+              {isAudioActive ? 'Sonification on' : 'Sonification off'}
+            </span>
           </button>
 
           <button
@@ -644,11 +562,17 @@ export function SignalViewport({
             className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-10 rounded-[2px] border border-[#213240] bg-[#131E27] px-2.5 py-1 font-mono text-[10px] text-[#E3EBF2] shadow-md"
             style={{ left: hoverCoord.x, top: hoverCoord.y }}
           >
-            <span className="text-[#5C89B7]">{hoverCoord.freqMHz.toFixed(4)} MHz</span>
+            <span className="text-[#5C89B7]">
+              {hoverCoord.freqMHz != null ? `${hoverCoord.freqMHz.toFixed(4)} MHz` : '—'}
+            </span>
             <span className="text-[#6A7E8F] mx-1.5">·</span>
-            <span>T+{hoverCoord.timeSec.toFixed(1)}s</span>
+            <span>{hoverCoord.timeSec != null ? `T+${hoverCoord.timeSec.toFixed(1)}s` : '—'}</span>
             <span className="text-[#6A7E8F] mx-1.5">·</span>
-            <span className="text-[#A6B7C6]">{hoverCoord.powerDbm.toFixed(1)} dBm</span>
+            <span className="text-[#A6B7C6]">
+              {hoverCoord.powerVal != null
+                ? `${hoverCoord.powerVal.toFixed(1)} ${hoverCoord.powerUnit}`
+                : 'Not calibrated'}
+            </span>
           </div>
         )}
 
@@ -662,6 +586,22 @@ export function SignalViewport({
                   ? 'Buffering scientific slice from backend...'
                   : 'Buffering observation data...'}
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* Real Backend: Spectral Slice Unavailable Overlay */}
+        {!isEffectiveDemoMode && !isLoadingSlice && !sliceData && status !== 'LOADING' && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0D141A]/92 px-6 text-center">
+            <div className="max-w-md space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border border-[#213240] bg-[#131E27] text-xs font-mono text-[#A6B7C6]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#7E8B96]" />
+                <span>SPECTRAL SLICE UNAVAILABLE</span>
+              </div>
+              <p className="text-xs text-[#6A7E8F] leading-relaxed">
+                Raw spectral matrix data is not available for this observation from the backend
+                service. Synthetic data generation is disabled in live mode.
+              </p>
             </div>
           </div>
         )}

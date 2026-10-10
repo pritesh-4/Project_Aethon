@@ -22,19 +22,22 @@ export function ObservatoryDetails({ observation, status }: ObservatoryDetailsPr
       case 'ELEVATED':
       case 'HIGH':
         return 'text-[#B64B4B]';
+      default:
+        return 'text-[#7E8B96]';
     }
   };
 
   const formatRisk = (risk: ObservationData['rfiRisk']) => {
     switch (risk) {
       case 'LOW':
-        return 'Low (<5%)';
+        return 'Low (<10%)';
       case 'MODERATE':
         return 'Moderate (~40%)';
       case 'ELEVATED':
-        return 'Elevated (~70%)';
       case 'HIGH':
-        return 'High (>90%)';
+        return 'Elevated (>70%)';
+      default:
+        return 'Not evaluated';
     }
   };
 
@@ -50,13 +53,15 @@ export function ObservatoryDetails({ observation, status }: ObservatoryDetailsPr
             </span>
             <div className="flex items-baseline gap-2 mt-1.5">
               <span className="text-xl font-semibold font-mono text-[#C19348]">
-                {isAnalyzed ? `${anomaly.indexPercent.toFixed(1)}%` : '—'}
+                {isAnalyzed && anomaly.indexPercent != null
+                  ? `${anomaly.indexPercent.toFixed(1)}%`
+                  : '—'}
               </span>
               <span className="text-xs text-[#56616A]">anomaly score</span>
             </div>
             <p className="text-xs text-[#56616A] mt-1 leading-relaxed">
               {isAnalyzed
-                ? `${anomaly.classificationLabel} · 4.8σ divergence`
+                ? anomaly.classificationLabel || 'Spectral anomaly isolated'
                 : 'Awaiting anomaly analysis'}
             </p>
           </div>
@@ -68,13 +73,17 @@ export function ObservatoryDetails({ observation, status }: ObservatoryDetailsPr
             </span>
             <div className="flex items-baseline gap-2 mt-1.5">
               <span className="text-xl font-semibold font-mono text-[#17202A]">
-                {isAnalyzed ? `${anomaly.persistencePercent.toFixed(1)}%` : '—'}
+                {isAnalyzed && anomaly.persistencePercent != null
+                  ? `${anomaly.persistencePercent.toFixed(1)}%`
+                  : '—'}
               </span>
               <span className="text-xs text-[#56616A]">window active</span>
             </div>
             <p className="text-xs text-[#56616A] mt-1 leading-relaxed">
               {isAnalyzed
-                ? 'Coherent continuous carrier across 300s integration'
+                ? anomaly.persistencePercent != null
+                  ? 'Temporal persistence evaluated from drift profile'
+                  : 'Persistence unavailable'
                 : 'Measured during observation window'}
             </p>
           </div>
@@ -92,7 +101,9 @@ export function ObservatoryDetails({ observation, status }: ObservatoryDetailsPr
               </span>
             </div>
             <p className="text-xs text-[#56616A] mt-1 leading-relaxed">
-              Uncorrelated with local facility transmitters and sidelobes
+              {observation.rfiRisk != null
+                ? 'Evaluated against primary sample mask'
+                : 'No RFI assessment evaluated'}
             </p>
           </div>
         </div>
@@ -103,14 +114,16 @@ export function ObservatoryDetails({ observation, status }: ObservatoryDetailsPr
             <span>
               Bandwidth:{' '}
               <span className="text-[#17202A] font-mono font-medium">
-                {observation.bandwidthMHz.toFixed(1)} MHz
+                {observation.bandwidthMHz != null
+                  ? `${observation.bandwidthMHz.toFixed(1)} MHz`
+                  : 'Unavailable'}
               </span>
             </span>
             <span>·</span>
             <span>
               Integration:{' '}
               <span className="text-[#17202A] font-mono font-medium">
-                {observation.windowDuration}
+                {observation.windowDuration || 'Unavailable'}
               </span>
             </span>
           </div>
@@ -154,22 +167,31 @@ export function ObservatoryDetails({ observation, status }: ObservatoryDetailsPr
                 {[
                   {
                     label: 'Peak power',
-                    value: `${observation.signalPowerDbm.toFixed(1)} dBm`,
+                    value:
+                      observation.signalPowerDbm != null
+                        ? `${observation.signalPowerDbm.toFixed(1)} dBm`
+                        : 'Not calibrated',
                     color: 'text-[#17202A]',
                   },
                   {
                     label: 'Noise floor',
-                    value: `${observation.noiseFloorDbm.toFixed(1)} dBm`,
+                    value:
+                      observation.noiseFloorDbm != null
+                        ? `${observation.noiseFloorDbm.toFixed(1)} dBm`
+                        : 'Not calibrated',
                     color: 'text-[#56616A]',
                   },
                   {
                     label: 'Peak SNR',
-                    value: `+${observation.snrDb.toFixed(1)} dB`,
-                    color: 'text-[#376A9B]',
+                    value:
+                      observation.snrDb != null
+                        ? `${observation.snrDb > 0 ? '+' : ''}${observation.snrDb.toFixed(1)} dB`
+                        : 'Not measured',
+                    color: observation.snrDb != null ? 'text-[#376A9B]' : 'text-[#7E8B96]',
                   },
                   {
                     label: 'Source',
-                    value: `${observation.telescope} (Simulated)`,
+                    value: `${observation.telescope}${observation.isDemoMode ? ' (Demo)' : ''}`,
                     color: 'text-[#17202A]',
                   },
                 ].map((item) => (

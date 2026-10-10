@@ -15,133 +15,110 @@ interface StageContent {
 }
 
 function buildContent(record: SignalAnalysisRecord): Record<AnalysisStageId, StageContent> {
+  const fCenterStr =
+    record.frequencyMHz != null ? `${record.frequencyMHz.toFixed(3)} MHz` : 'Unavailable';
+  const bwStr =
+    record.bandwidthKHz != null ? `${record.bandwidthKHz.toFixed(1)} kHz` : 'Unavailable';
+  const durStr =
+    record.durationSeconds != null ? `${record.durationSeconds.toFixed(1)}s` : 'Unavailable';
+  const snrStr = record.snrDb != null ? `${record.snrDb.toFixed(1)} dB` : 'Not measured';
+  const driftStr =
+    record.driftRateHzPerSec != null
+      ? `${record.driftRateHzPerSec > 0 ? '+' : ''}${record.driftRateHzPerSec.toFixed(2)} Hz/s`
+      : 'Not measured';
+  const anomStr =
+    record.anomalyIndex != null ? `${record.anomalyIndex.toFixed(3)} / 1.000` : 'Not evaluated';
+  const rfiStr =
+    record.interferenceProbability != null
+      ? `${(record.interferenceProbability * 100).toFixed(1)}%`
+      : 'Not evaluated';
+  const persistStr =
+    record.persistence != null ? `${(record.persistence * 100).toFixed(1)}%` : 'Not evaluated';
+
   return {
     observation: {
       question: 'What was observed?',
-      summary: `A continuous narrowband radio emission isolated during pointings of ${record.targetName} at ${record.frequencyMHz.toFixed(2)} MHz. The signal emerges distinctly above system thermal noise and persists across the duration of the observation.`,
+      summary: `Astronomical observation candidate isolated from source ${record.targetName} at center frequency ${fCenterStr}.`,
       metrics: [
-        {
-          label: 'Center frequency',
-          value: `${record.frequencyMHz.toFixed(3)} MHz`,
-          hint: 'Target radio window',
-        },
-        {
-          label: 'Bandwidth',
-          value: `${record.bandwidthKHz} kHz`,
-          hint: 'Narrowband profile',
-        },
-        {
-          label: 'Duration',
-          value: `${record.durationSeconds.toFixed(1)}s`,
-          hint: 'Continuous emission',
-        },
-        { label: 'Signal-to-noise', value: `${record.snrDb} dB`, hint: 'Above 3σ detection floor' },
+        { label: 'Center frequency', value: fCenterStr, hint: 'Target radio window' },
+        { label: 'Bandwidth', value: bwStr, hint: 'Isolated candidate window' },
+        { label: 'Duration', value: durStr, hint: 'Candidate window span' },
+        { label: 'Signal-to-noise', value: snrStr, hint: 'Temporal / feature SNR' },
       ],
       evidence: [
         {
-          title: 'Celestial pointing origin',
-          text: `Acquired by ${record.telescope} at coordinates RA ${record.coordinates.ra}, Dec ${record.coordinates.dec}.`,
+          title: 'Observation origin',
+          text: `Acquired by ${record.telescope || 'telescope'} at coordinates RA ${record.coordinates.ra || 'Unavailable'}, Dec ${record.coordinates.dec || 'Unavailable'}.`,
         },
         {
-          title: 'Spatial multi-beam confirmation',
-          text: 'Signal is present exclusively during on-target beam pointing and absent in adjacent off-target reference beams.',
+          title: 'Target region bounds',
+          text: `Target region indexed in observation ${record.observationId}.`,
         },
       ],
     },
     representation: {
-      question: 'How is it encoded?',
+      question: 'How is it characterised?',
       summary:
-        'Raw complex voltages are channelized into high-cadence time-frequency patches and mapped into a learned 768-dimensional latent manifold, preserving fine spectral continuity and phase structure.',
+        'Spectral regions are channelized into time-frequency matrices. The operational pipeline extracts statistical window moments and evaluates adaptive primary and secondary RFI flags.',
       metrics: [
-        { label: 'Latent dimension', value: '768-d vector space', hint: 'Continuous embedding' },
-        { label: 'Time cadence', value: '0.5s window', hint: 'Temporal resolution' },
-        { label: 'Channels', value: '4,096 PFB channels', hint: 'Polyphase filterbank' },
-        { label: 'Reconstruction loss', value: '0.042 residual', hint: 'Autoencoder loss' },
+        {
+          label: 'Representation method',
+          value: 'Statistical moments',
+          hint: 'Window mean, variance, skew, kurtosis',
+        },
+        { label: 'RFI evaluation', value: rfiStr, hint: 'Flagged sample fraction' },
+        { label: 'Learned embeddings', value: 'Not evaluated', hint: 'Offline research track' },
+        { label: 'Attention weights', value: 'Not evaluated', hint: 'Not in baseline' },
       ],
       evidence: [
         {
-          title: 'Manifold projection',
-          text: 'Frequency drift trajectories map as smooth geodesic paths in latent space rather than discontinuous noise spikes.',
+          title: 'Moment-based feature extraction',
+          text: 'The statistical detector computes distributional moments across local frequency and time windows to isolate anomalies.',
         },
         {
-          title: 'Feature preservation',
-          text: 'Extracted tokens retain phase coherence, dispersion profile, and duration without heuristic template matching.',
+          title: 'RFI mask thresholding',
+          text: 'Spectral samples exceeding adaptive radiometric thresholds are masked prior to anomaly scoring.',
         },
       ],
     },
     comparison: {
-      question: 'Does this signal fit the known population?',
-      summary: `Cross-referenced against cataloged natural astrophysical emitters (pulsars, fast radio bursts, masers) and known terrestrial transmitters. The signal exhibits divergence from natural sources (${(record.knownPatternSimilarity * 100).toFixed(1)}% match).`,
+      question: 'Does this signal fit known catalog populations?',
+      summary:
+        'Catalog cross-matching against external pulsar (ATNF) or orbital satellite ephemerides is not currently evaluated by the backend service.',
       metrics: [
         {
           label: 'Nearest catalog profile',
-          value: record.comparison.nearestKnownPattern,
-          hint: 'Astrophysical catalog',
+          value: 'Not evaluated',
+          hint: 'No active cross-match endpoint',
         },
-        {
-          label: 'Cosine distance',
-          value: record.comparison.cosineDistance.toFixed(3),
-          hint: 'High divergence (> 0.85)',
-        },
-        {
-          label: 'Catalog similarity',
-          value: `${(record.knownPatternSimilarity * 100).toFixed(1)}%`,
-          hint: 'Low match to natural pulsars',
-        },
-        {
-          label: 'Terrestrial RFI risk',
-          value: `${(record.interferenceProbability * 100).toFixed(1)}%`,
-          hint: 'Low interference probability',
-        },
+        { label: 'Cosine distance', value: 'Not evaluated', hint: 'Requires learned embedding' },
+        { label: 'Catalog similarity', value: 'Not evaluated', hint: 'Not computed' },
+        { label: 'Flagged RFI fraction', value: rfiStr, hint: 'Mask flagged fraction' },
       ],
       evidence: [
         {
-          title: 'Divergence from natural pulsars',
-          text: 'Natural pulsars produce broadband harmonic pulses. This candidate displays an un-pulsed continuous monochromatic carrier.',
-        },
-        {
-          title: 'Distinction from orbital satellites',
-          text: 'Low-Earth orbit satellites exhibit non-linear S-curve Doppler shifts; this candidate exhibits a steady linear drift rate.',
+          title: 'Catalog matching limitation',
+          text: 'Operational backend does not perform automatic matching against astronomical or satellite catalogs.',
         },
       ],
     },
     anomaly: {
-      question: 'Why is this unusual?',
-      summary: `Prioritized because it deviates significantly from expected Gaussian thermal background noise (+4.8σ residual) while maintaining a persistent Doppler drift (${record.driftRateHzPerSec.toFixed(2)} Hz/s) across all observation pointings.`,
+      question: 'Why was this candidate flagged?',
+      summary: `Flagged by unsupervised Isolation Forest and statistical baseline detectors with anomaly score ${anomStr} and fitted Doppler drift ${driftStr}.`,
       metrics: [
-        {
-          label: 'Anomaly index',
-          value: `${record.anomalyIndex.toFixed(3)} / 1.000`,
-          hint: 'Statistical deviance score',
-        },
-        {
-          label: 'Residual divergence',
-          value: '+4.8σ from baseline',
-          hint: 'Latent reconstruction residual',
-        },
-        {
-          label: 'Doppler drift rate',
-          value: `${record.driftRateHzPerSec > 0 ? '+' : ''}${record.driftRateHzPerSec.toFixed(2)} Hz/s`,
-          hint: 'Non-terrestrial acceleration',
-        },
-        {
-          label: 'Temporal persistence',
-          value: `${(record.persistence * 100).toFixed(1)}%`,
-          hint: 'Maintained across 4 pointings',
-        },
+        { label: 'Anomaly score', value: anomStr, hint: 'Isolation Forest / baseline score' },
+        { label: 'Doppler drift rate', value: driftStr, hint: 'Doppler drift regression' },
+        { label: 'Temporal persistence', value: persistStr, hint: 'Temporal continuity' },
+        { label: 'Priority band', value: record.priority, hint: 'Candidate triage classification' },
       ],
       evidence: [
         {
-          title: 'Low similarity to learned profiles',
-          text: `Shows only ${(record.knownPatternSimilarity * 100).toFixed(1)}% alignment with cataloged natural radio sources.`,
+          title: 'Statistical anomaly detection',
+          text: 'Window feature vector departed from baseline background distributions.',
         },
         {
-          title: 'Persistent temporal structure',
-          text: 'Maintains carrier phase coherence across all 4 ON/OFF target cycles without fading or dispersion smearing.',
-        },
-        {
-          title: 'Low estimated interference',
-          text: `Drift rate (${record.driftRateHzPerSec.toFixed(2)} Hz/s) excludes fixed ground transmitters, with low cross-match to known orbital satellites (${(record.interferenceProbability * 100).toFixed(1)}%).`,
+          title: 'Doppler drift estimate',
+          text: `Trajectory regression yielded ${driftStr}.`,
         },
       ],
     },

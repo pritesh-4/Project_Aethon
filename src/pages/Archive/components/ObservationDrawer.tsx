@@ -205,21 +205,26 @@ export function ObservationDrawer({
             <div>
               <span className="block text-[11px] text-[#76828D] font-mono">Coordinates</span>
               <span className="text-[#17202A] font-mono text-xs">
-                {observation.coordinates.ra} · {observation.coordinates.dec}
+                {observation.coordinates.ra || observation.coordinates.dec
+                  ? `${observation.coordinates.ra ?? '—'} · ${observation.coordinates.dec ?? '—'}`
+                  : 'Not recorded'}
               </span>
             </div>
 
             <div>
               <span className="block text-[11px] text-[#76828D] font-mono">Center freq</span>
               <span className="text-[#376A9B] font-mono tabular-nums text-xs font-semibold">
-                {observation.frequency.toFixed(4)} MHz
+                {observation.frequency != null
+                  ? `${observation.frequency.toFixed(4)} MHz`
+                  : 'Not recorded'}
               </span>
             </div>
 
             <div>
               <span className="block text-[11px] text-[#76828D] font-mono">Duration / pts</span>
               <span className="text-[#17202A] font-mono tabular-nums text-xs font-medium">
-                {observation.durationString} ({observation.sampleCount.toLocaleString()})
+                {observation.durationString} (
+                {observation.sampleCount != null ? observation.sampleCount.toLocaleString() : '—'})
               </span>
             </div>
           </div>

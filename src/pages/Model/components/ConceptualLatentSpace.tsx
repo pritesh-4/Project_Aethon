@@ -1,368 +1,343 @@
-import { useEffect, useRef, useState } from 'react';
-import { AlertCircle, Filter } from 'lucide-react';
-
-interface ClusterPoint {
-  x: number;
-  y: number;
-  category: 'NOISE' | 'PULSAR' | 'RFI' | 'MASER' | 'CANDIDATE';
-  label: string;
-  id: string;
-}
+import { useState } from 'react';
+import { Info } from 'lucide-react';
 
 export function ConceptualLatentSpace() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  const [hoveredPoint, setHoveredPoint] = useState<ClusterPoint | null>(null);
-  const [activeFilter, setActiveFilter] = useState<'ALL' | 'KNOWN' | 'ANOMALOUS'>('ALL');
-
-  const pointsRef = useRef<ClusterPoint[]>([]);
-
-  useEffect(() => {
-    const pts: ClusterPoint[] = [];
-
-    // Cluster 1: Thermal Background Noise (center around -0.35, -0.2)
-    for (let i = 0; i < 70; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = Math.random() * 0.22;
-      pts.push({
-        x: -0.35 + Math.cos(angle) * radius,
-        y: -0.2 + Math.sin(angle) * radius,
-        category: 'NOISE',
-        label: 'Astrophysical thermal noise floor',
-        id: `NOISE-${1000 + i}`,
-      });
-    }
-
-    // Cluster 2: Pulsar & Periodic Transients (center around 0.25, -0.3)
-    for (let i = 0; i < 40; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = Math.random() * 0.16;
-      pts.push({
-        x: 0.25 + Math.cos(angle) * radius,
-        y: -0.3 + Math.sin(angle) * radius,
-        category: 'PULSAR',
-        label: 'Cataloged pulsar harmonics',
-        id: `PSR-${2000 + i}`,
-      });
-    }
-
-    // Cluster 3: Satellite RFI / Ground Transmitters (center around -0.15, 0.35)
-    for (let i = 0; i < 50; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = Math.random() * 0.18;
-      pts.push({
-        x: -0.15 + Math.cos(angle) * radius,
-        y: 0.35 + Math.sin(angle) * radius,
-        category: 'RFI',
-        label: 'Terrestrial / orbital satellite RFI',
-        id: `RFI-${3000 + i}`,
-      });
-    }
-
-    // Cluster 4: Interstellar Masers (center around 0.35, 0.2)
-    for (let i = 0; i < 30; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = Math.random() * 0.14;
-      pts.push({
-        x: 0.35 + Math.cos(angle) * radius,
-        y: 0.2 + Math.sin(angle) * radius,
-        category: 'MASER',
-        label: 'Hydroxyl / methanol maser profile',
-        id: `MSR-${4000 + i}`,
-      });
-    }
-
-    // High-Anomaly Candidate Outliers (Clearly separated)
-    pts.push({
-      x: 0.65,
-      y: 0.6,
-      category: 'CANDIDATE',
-      label: 'Narrowband persistent carrier (AET-4892)',
-      id: 'AET-4892',
-    });
-
-    pts.push({
-      x: -0.6,
-      y: 0.55,
-      category: 'CANDIDATE',
-      label: 'Accelerating Doppler chirp (AET-4901)',
-      id: 'AET-4901',
-    });
-
-    pts.push({
-      x: 0.7,
-      y: -0.5,
-      category: 'CANDIDATE',
-      label: 'Ultra-narrow drift carrier (AET-5120)',
-      id: 'AET-5120',
-    });
-
-    pointsRef.current = pts;
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    let width = 0;
-    let height = 0;
-
-    const handleResize = () => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = container.clientWidth;
-      height = container.clientHeight;
-
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-
-      ctx.resetTransform();
-      ctx.scale(dpr, dpr);
-    };
-
-    handleResize();
-    const ro = new ResizeObserver(handleResize);
-    if (containerRef.current) ro.observe(containerRef.current);
-
-    const render = () => {
-      // Midnight Instrument Canvas
-      ctx.fillStyle = '#0D141A';
-      ctx.fillRect(0, 0, width, height);
-
-      const cx = width * 0.5;
-      const cy = height * 0.5;
-      const scale = Math.min(width, height) * 0.45;
-
-      // Coordinate Grid Lines
-      ctx.strokeStyle = '#1D2A37';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([2, 4]);
-
-      ctx.beginPath();
-      ctx.moveTo(0, cy);
-      ctx.lineTo(width, cy);
-      ctx.moveTo(cx, 0);
-      ctx.lineTo(cx, height);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, scale * 0.5, 0, Math.PI * 2);
-      ctx.arc(cx, cy, scale * 0.85, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Cluster Points
-      pointsRef.current.forEach((pt) => {
-        let isVisible = true;
-        if (activeFilter === 'KNOWN' && pt.category === 'CANDIDATE') isVisible = false;
-        if (activeFilter === 'ANOMALOUS' && pt.category !== 'CANDIDATE') isVisible = false;
-
-        if (!isVisible) return;
-
-        const px = cx + pt.x * scale;
-        const py = cy - pt.y * scale;
-
-        let color = '#485966';
-        let radius = 2.5;
-
-        switch (pt.category) {
-          case 'NOISE':
-            color = '#2E3D48';
-            radius = 2;
-            break;
-          case 'PULSAR':
-            color = '#647B8F';
-            radius = 2.5;
-            break;
-          case 'RFI':
-            color = '#485966';
-            radius = 2.5;
-            break;
-          case 'MASER':
-            color = '#7A96AD';
-            radius = 3;
-            break;
-          case 'CANDIDATE':
-            color = '#C19348';
-            radius = 4.5;
-            break;
-        }
-
-        if (pt.category === 'CANDIDATE') {
-          ctx.strokeStyle = 'rgba(193, 147, 72, 0.4)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.arc(px, py, radius + 4, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(px, py, radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      animId = requestAnimationFrame(render);
-    };
-
-    animId = requestAnimationFrame(render);
-
-    return () => {
-      cancelAnimationFrame(animId);
-      ro.disconnect();
-    };
-  }, [activeFilter]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-
-    const cx = rect.width * 0.5;
-    const cy = rect.height * 0.5;
-    const scale = Math.min(rect.width, rect.height) * 0.45;
-
-    let closest: ClusterPoint | null = null;
-    let minDist = 16;
-
-    pointsRef.current.forEach((pt) => {
-      const px = cx + pt.x * scale;
-      const py = cy - pt.y * scale;
-      const d = Math.hypot(mx - px, my - py);
-      if (d < minDist) {
-        minDist = d;
-        closest = pt;
-      }
-    });
-
-    setHoveredPoint(closest);
-  };
+  const [activeDomain, setActiveDomain] = useState<'nominal' | 'boundary' | 'anomaly'>('nominal');
 
   return (
     <div className="border-t border-[#D6D2C9] pt-6 select-none space-y-4 font-sans">
-      {/* Title & Filter Strip */}
+      {/* Title Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#D6D2C9] pb-2.5">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-[#17202A]">Latent Manifold Projection</h3>
+            <h3 className="text-sm font-semibold text-[#17202A]">Feature Space Schematic</h3>
             <span className="text-[11px] font-mono uppercase tracking-wider text-[#76828D]">
-              2D Pedagogical Map
+              Non-Quantitative Conceptual Model
             </span>
           </div>
           <p className="text-xs text-[#56616A] mt-0.5">
-            Illustrative manifold space demonstrating cluster separation between learned background
-            distributions and candidate outliers.
+            Architectural schematic illustrating the principle of separating nominal thermal
+            background distributions from isolated anomalous candidates.
           </p>
         </div>
 
-        {/* Filter Buttons */}
-        <div
-          className="flex items-center gap-1.5 self-start sm:self-auto text-xs font-mono"
-          role="group"
-          aria-label="Filter points"
-        >
-          <Filter className="h-3 w-3 text-[#76828D] mr-1" />
-          <button
-            type="button"
-            aria-pressed={activeFilter === 'ALL'}
-            onClick={() => setActiveFilter('ALL')}
-            className={`px-2.5 py-0.5 rounded-[2px] transition-colors cursor-pointer text-[11px] ${
-              activeFilter === 'ALL'
-                ? 'bg-[#EAE7E0] text-[#17202A] border border-[#376A9B] font-semibold'
-                : 'text-[#56616A] hover:text-[#17202A] border border-[#D6D2C9] bg-[#FAF8F5]'
-            }`}
-          >
-            ALL
-          </button>
-          <button
-            type="button"
-            aria-pressed={activeFilter === 'KNOWN'}
-            onClick={() => setActiveFilter('KNOWN')}
-            className={`px-2.5 py-0.5 rounded-[2px] transition-colors cursor-pointer text-[11px] ${
-              activeFilter === 'KNOWN'
-                ? 'bg-[#EAE7E0] text-[#17202A] border border-[#376A9B] font-semibold'
-                : 'text-[#56616A] hover:text-[#17202A] border border-[#D6D2C9] bg-[#FAF8F5]'
-            }`}
-          >
-            CATALOG
-          </button>
-          <button
-            type="button"
-            aria-pressed={activeFilter === 'ANOMALOUS'}
-            onClick={() => setActiveFilter('ANOMALOUS')}
-            className={`px-2.5 py-0.5 rounded-[2px] transition-colors cursor-pointer text-[11px] ${
-              activeFilter === 'ANOMALOUS'
-                ? 'bg-[#EAE7E0] text-[#17202A] border border-[#376A9B] font-semibold'
-                : 'text-[#56616A] hover:text-[#17202A] border border-[#D6D2C9] bg-[#FAF8F5]'
-            }`}
-          >
-            DEVIATIONS
-          </button>
+        <div className="flex items-center gap-1.5 self-start sm:self-auto text-xs font-mono">
+          <span className="text-[10px] uppercase tracking-wider text-[#376A9B] bg-[#F4F8FA] px-2 py-0.5 rounded-[2px] border border-[#376A9B]/20 font-semibold">
+            Methodological Schematic
+          </span>
         </div>
       </div>
 
       {/* Scientific Footnote */}
-      <div className="border-l-2 border-[#376A9B] pl-3 py-1 text-xs text-[#56616A] leading-normal flex items-start gap-2 bg-[#FAF8F5] p-2 rounded-r-[2px]">
-        <AlertCircle className="h-3.5 w-3.5 text-[#376A9B] shrink-0 mt-0.5" />
+      <div className="border-l-2 border-[#376A9B] pl-3 py-2 text-xs text-[#56616A] leading-relaxed flex items-start gap-2 bg-[#FAF8F5] p-2.5 rounded-r-[2px] border-y border-r border-[#D6D2C9]">
+        <Info className="h-4 w-4 text-[#376A9B] shrink-0 mt-0.5" />
         <span>
-          <strong className="text-[#17202A] font-semibold font-mono text-[11px] uppercase">
-            Methodological note:
-          </strong>{' '}
-          This projection is a 2D pedagogical visualization illustrating multi-dimensional latent
-          distance. Points represent feature embeddings showing how outlier detection isolates
-          signals distant from the learned astrophysical manifold.
+          <strong className="text-[#17202A] font-semibold font-mono text-[11px] uppercase tracking-wider block mb-0.5">
+            Methodological Disclosure & Truthfulness Note
+          </strong>
+          AETHON does not currently deploy an active learned latent embedding space or continuous
+          token manifold in production. The operational backend uses robust radiometric statistical
+          baselines and Isolation Forest anomaly scoring. This schematic illustrates the
+          mathematical concept of density-based outlier isolation without presenting fabricated
+          cluster counts or synthetic embedding points.
         </span>
       </div>
 
-      {/* Canvas Viewport (Dark Instrument) */}
-      <div className="relative rounded-[3px] border border-[#213240] bg-[#0D141A] overflow-hidden shadow-md">
-        <div ref={containerRef} className="h-[280px] sm:h-[320px] w-full">
-          <canvas
-            ref={canvasRef}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => setHoveredPoint(null)}
-            className="h-full w-full cursor-crosshair"
-          />
+      {/* Schematic Diagram Viewport (Dark Instrument) */}
+      <div className="relative rounded-[3px] border border-[#213240] bg-[#0D141A] overflow-hidden shadow-md p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Visual SVG Conceptual Architecture */}
+          <div className="lg:col-span-7 flex flex-col items-center justify-center">
+            <svg
+              viewBox="0 0 460 300"
+              className="w-full max-w-[440px] h-auto select-none"
+              aria-label="Conceptual feature space decision boundary diagram"
+            >
+              {/* Coordinate Grid Frame */}
+              <defs>
+                <radialGradient id="nominalGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#376A9B" stopOpacity="0.35" />
+                  <stop offset="70%" stopColor="#1E3A52" stopOpacity="0.15" />
+                  <stop offset="100%" stopColor="#0D141A" stopOpacity="0" />
+                </radialGradient>
+                <radialGradient id="anomalyGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#C19348" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#0D141A" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+
+              {/* Grid Lines */}
+              <line
+                x1="30"
+                y1="150"
+                x2="430"
+                y2="150"
+                stroke="#1D2A37"
+                strokeWidth="1"
+                strokeDasharray="3 3"
+              />
+              <line
+                x1="230"
+                y1="20"
+                x2="230"
+                y2="280"
+                stroke="#1D2A37"
+                strokeWidth="1"
+                strokeDasharray="3 3"
+              />
+
+              {/* Concentric Calibration Reticles */}
+              <circle cx="180" cy="150" r="100" stroke="#1D2A37" strokeWidth="1" fill="none" />
+              <circle
+                cx="180"
+                cy="150"
+                r="65"
+                stroke="#213240"
+                strokeWidth="1"
+                strokeDasharray="2 4"
+                fill="none"
+              />
+
+              {/* High-Density Nominal Sky Distribution Domain */}
+              <ellipse
+                cx="180"
+                cy="150"
+                rx="85"
+                ry="60"
+                fill="url(#nominalGlow)"
+                stroke={activeDomain === 'nominal' ? '#5C89B7' : '#2A4358'}
+                strokeWidth={activeDomain === 'nominal' ? '2' : '1.2'}
+                className="transition-all cursor-pointer"
+                onClick={() => setActiveDomain('nominal')}
+              />
+
+              {/* Nominal Centroid Marker */}
+              <circle cx="180" cy="150" r="4" fill="#5C89B7" />
+              <text
+                x="180"
+                y="140"
+                fill="#E3EBF2"
+                fontSize="11"
+                fontFamily="sans-serif"
+                textAnchor="middle"
+                fontWeight="600"
+              >
+                Nominal Sky Baseline
+              </text>
+              <text
+                x="180"
+                y="166"
+                fill="#8EA8BD"
+                fontSize="9"
+                fontFamily="monospace"
+                textAnchor="middle"
+              >
+                Thermal Gaussian Noise Density
+              </text>
+
+              {/* Isolation Decision Boundary Contour */}
+              <ellipse
+                cx="180"
+                cy="150"
+                rx="125"
+                ry="95"
+                fill="none"
+                stroke={activeDomain === 'boundary' ? '#C19348' : '#3E566A'}
+                strokeWidth={activeDomain === 'boundary' ? '2' : '1.2'}
+                strokeDasharray="4 4"
+                className="transition-all cursor-pointer"
+                onClick={() => setActiveDomain('boundary')}
+              />
+              <text
+                x="290"
+                y="70"
+                fill={activeDomain === 'boundary' ? '#C19348' : '#7C8E9E'}
+                fontSize="9"
+                fontFamily="monospace"
+                textAnchor="middle"
+              >
+                Anomaly Decision Boundary (&tau; &gt; 3.5&sigma;)
+              </text>
+
+              {/* Low-Density Outlier Anomaly Domain */}
+              <circle
+                cx="370"
+                cy="75"
+                r="38"
+                fill="url(#anomalyGlow)"
+                stroke={activeDomain === 'anomaly' ? '#E0B56C' : '#9E6E20'}
+                strokeWidth={activeDomain === 'anomaly' ? '2' : '1.2'}
+                className="transition-all cursor-pointer"
+                onClick={() => setActiveDomain('anomaly')}
+              />
+              <circle cx="370" cy="75" r="3.5" fill="#E0B56C" />
+              <text
+                x="370"
+                y="65"
+                fill="#E0B56C"
+                fontSize="10"
+                fontFamily="sans-serif"
+                textAnchor="middle"
+                fontWeight="600"
+              >
+                Outlier Domain
+              </text>
+              <text
+                x="370"
+                y="90"
+                fill="#C19348"
+                fontSize="8.5"
+                fontFamily="monospace"
+                textAnchor="middle"
+              >
+                Persistent Carrier
+              </text>
+
+              {/* Feature Axis Labels */}
+              <text
+                x="430"
+                y="165"
+                fill="#6A7E8F"
+                fontSize="9"
+                fontFamily="monospace"
+                textAnchor="end"
+              >
+                Feature 1 (&sigma; deviation) &rarr;
+              </text>
+              <text
+                x="240"
+                y="28"
+                fill="#6A7E8F"
+                fontSize="9"
+                fontFamily="monospace"
+                textAnchor="start"
+              >
+                &uarr; Feature 2 (temporal persistence)
+              </text>
+            </svg>
+          </div>
+
+          {/* Interactive Pedagogical Detail Panel */}
+          <div className="lg:col-span-5 space-y-3.5 bg-[#111A22] border border-[#213240] rounded-[3px] p-4 text-xs font-mono">
+            <div className="flex items-center justify-between border-b border-[#213240] pb-2">
+              <span className="text-[11px] uppercase tracking-wider text-[#7C8E9E]">
+                Conceptual Element
+              </span>
+              <span className="text-[10px] text-[#5C89B7] uppercase font-semibold">
+                {activeDomain === 'nominal'
+                  ? 'High-Density Nominal'
+                  : activeDomain === 'boundary'
+                    ? 'Isolation Boundary'
+                    : 'Low-Density Outlier'}
+              </span>
+            </div>
+
+            {activeDomain === 'nominal' && (
+              <div className="space-y-2 text-[#A6B7C6] font-sans">
+                <p className="text-xs text-[#E3EBF2] font-medium">
+                  High-Density Nominal Distribution
+                </p>
+                <p className="text-[11px] text-[#A6B7C6] leading-relaxed">
+                  In nominal sky observations, thermal noise, stable background emissions, and
+                  instrumental baselines concentrate in a dense statistical core. In AETHON, this is
+                  modeled via robust median and Median Absolute Deviation (MAD).
+                </p>
+                <div className="pt-2 border-t border-[#213240] text-[10px] font-mono text-[#5C89B7]">
+                  Backend Implementation: Robust Median / MAD baseline
+                </div>
+              </div>
+            )}
+
+            {activeDomain === 'boundary' && (
+              <div className="space-y-2 text-[#A6B7C6] font-sans">
+                <p className="text-xs text-[#E3EBF2] font-medium">
+                  Isolation &amp; Deviance Threshold
+                </p>
+                <p className="text-[11px] text-[#A6B7C6] leading-relaxed">
+                  The boundary separating nominal sky observations from candidates is determined by
+                  isolation path length in an Isolation Forest and standard deviations above noise
+                  floor, rather than arbitrary manual cutoffs.
+                </p>
+                <div className="pt-2 border-t border-[#213240] text-[10px] font-mono text-[#C19348]">
+                  Backend Implementation: IsolationForest (n_estimators=100)
+                </div>
+              </div>
+            )}
+
+            {activeDomain === 'anomaly' && (
+              <div className="space-y-2 text-[#A6B7C6] font-sans">
+                <p className="text-xs text-[#E3EBF2] font-medium">
+                  Outlier Domain (Candidate Signals)
+                </p>
+                <p className="text-[11px] text-[#A6B7C6] leading-relaxed">
+                  Signals residing far outside the nominal density manifold exhibit low isolation
+                  depth and high statistical deviance. Surviving coherent narrowband signals are
+                  subsequently subjected to Doppler drift regression.
+                </p>
+                <div className="pt-2 border-t border-[#213240] text-[10px] font-mono text-[#E0B56C]">
+                  Backend Implementation: Linear OLS Drift Regression
+                </div>
+              </div>
+            )}
+
+            {/* Element Selector Buttons */}
+            <div className="pt-3 border-t border-[#213240] flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setActiveDomain('nominal')}
+                className={`px-2 py-1 rounded-[2px] text-[10px] uppercase font-mono transition-colors cursor-pointer ${
+                  activeDomain === 'nominal'
+                    ? 'bg-[#376A9B] text-white'
+                    : 'bg-[#182632] text-[#A6B7C6] hover:text-white'
+                }`}
+              >
+                Nominal Core
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveDomain('boundary')}
+                className={`px-2 py-1 rounded-[2px] text-[10px] uppercase font-mono transition-colors cursor-pointer ${
+                  activeDomain === 'boundary'
+                    ? 'bg-[#9E6E20] text-white'
+                    : 'bg-[#182632] text-[#A6B7C6] hover:text-white'
+                }`}
+              >
+                Threshold Boundary
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveDomain('anomaly')}
+                className={`px-2 py-1 rounded-[2px] text-[10px] uppercase font-mono transition-colors cursor-pointer ${
+                  activeDomain === 'anomaly'
+                    ? 'bg-[#C19348] text-white'
+                    : 'bg-[#182632] text-[#A6B7C6] hover:text-white'
+                }`}
+              >
+                Candidate Outlier
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Hover Readout Tooltip */}
-        {hoveredPoint && (
-          <div className="absolute top-3 left-3 rounded-[2px] border border-[#213240] bg-[#111A22]/95 px-3 py-1.5 text-xs font-mono space-y-0.5 shadow-md">
-            <span className="text-[#C19348] font-semibold block">{hoveredPoint.id}</span>
-            <span className="text-[#E3EBF2] text-[11px] block">{hoveredPoint.label}</span>
-          </div>
-        )}
-
         {/* Legend Overlay */}
-        <div className="absolute bottom-2.5 right-3 flex flex-wrap items-center gap-3 text-[10px] font-mono uppercase tracking-wider text-[#7C8E9E] bg-[#111A22]/90 px-3 py-1.5 rounded-[2px] border border-[#213240]">
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#2E3D48]" />
-            <span>Thermal noise</span>
+        <div className="mt-4 pt-3 border-t border-[#213240] flex flex-wrap items-center justify-between gap-3 text-[10px] font-mono text-[#7C8E9E]">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#376A9B]" />
+              <span>Nominal Sky Core</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full border border-dashed border-[#C19348]" />
+              <span>Deviance Boundary</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#C19348]" />
+              <span>Candidate Outlier</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#647B8F]" />
-            <span>Pulsars</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#485966]" />
-            <span>Satellite RFI</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#C19348]" />
-            <span className="text-[#C19348] font-semibold">Candidate outlier</span>
-          </div>
+          <span className="text-[#5C89B7]">
+            Non-quantitative schematic &middot; No fake candidate data points
+          </span>
         </div>
       </div>
     </div>

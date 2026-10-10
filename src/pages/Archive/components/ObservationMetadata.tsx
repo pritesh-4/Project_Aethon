@@ -10,20 +10,44 @@ export function ObservationMetadata({ observation }: ObservationMetadataProps) {
     { label: 'Data source', value: observation.telescope, mono: false },
     {
       label: 'Target coordinates',
-      value: `RA ${observation.coordinates.ra} · Dec ${observation.coordinates.dec}`,
+      value:
+        observation.coordinates.ra || observation.coordinates.dec
+          ? `RA ${observation.coordinates.ra ?? '—'} · Dec ${observation.coordinates.dec ?? '—'}`
+          : 'Not recorded',
       mono: true,
     },
-    { label: 'Frequency', value: `${observation.frequency.toFixed(4)} MHz`, mono: true },
-    { label: 'Bandwidth', value: `${observation.bandwidth.toFixed(1)} MHz`, mono: true },
+    {
+      label: 'Frequency',
+      value:
+        observation.frequency != null ? `${observation.frequency.toFixed(4)} MHz` : 'Not recorded',
+      mono: true,
+    },
+    {
+      label: 'Bandwidth',
+      value:
+        observation.bandwidth != null ? `${observation.bandwidth.toFixed(1)} MHz` : 'Not recorded',
+      mono: true,
+    },
     {
       label: 'Duration',
-      value: `${observation.durationString} (${observation.duration}s)`,
+      value:
+        observation.duration != null
+          ? `${observation.durationString} (${observation.duration}s)`
+          : 'Not recorded',
       mono: true,
     },
-    { label: 'Sample count', value: observation.sampleCount.toLocaleString(), mono: true },
+    {
+      label: 'Sample count',
+      value:
+        observation.sampleCount != null ? observation.sampleCount.toLocaleString() : 'Not recorded',
+      mono: true,
+    },
     {
       label: 'Analysis duration',
-      value: `${(observation.analysisTimeMs / 1000).toFixed(2)}s (${observation.analysisTimeMs} ms)`,
+      value:
+        observation.analysisTimeMs != null
+          ? `${(observation.analysisTimeMs / 1000).toFixed(2)}s (${observation.analysisTimeMs} ms)`
+          : 'Not evaluated',
       mono: true,
     },
     {

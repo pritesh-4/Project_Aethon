@@ -25,10 +25,14 @@ export function DiscoveryResults({ summary, onReset, onViewCandidates }: Discove
 
           <div className="flex items-baseline gap-2">
             <span className="text-base font-semibold tracking-tight text-[#17202A]">
-              {summary.candidates.length} candidate signals isolated
+              {summary.candidates.length > 0
+                ? `${summary.candidates.length} candidate signals isolated`
+                : 'No anomalous signals detected'}
             </span>
             <span className="text-xs text-[#56616A] hidden md:inline">
-              Narrowband carriers with persistent Doppler drift confirmed across baseline
+              {summary.candidates.length > 0
+                ? 'Narrowband carriers with persistent Doppler drift confirmed across baseline'
+                : 'All evaluated spectral windows match nominal background distributions'}
             </span>
           </div>
         </div>
@@ -44,14 +48,16 @@ export function DiscoveryResults({ summary, onReset, onViewCandidates }: Discove
             Reset
           </Button>
 
-          <Button
-            variant="primary"
-            size="sm"
-            icon={<ArrowDown className="h-3.5 w-3.5" />}
-            onClick={onViewCandidates}
-          >
-            Review candidates
-          </Button>
+          {summary.candidates.length > 0 && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<ArrowDown className="h-3.5 w-3.5" />}
+              onClick={onViewCandidates}
+            >
+              Review candidates
+            </Button>
+          )}
         </div>
       </div>
     </section>

@@ -15,7 +15,7 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
     {
       id: 'represent',
       name: 'Represent',
-      desc: 'Time–frequency latent representation',
+      desc: 'Time–frequency moments & RFI assessment',
     },
     {
       id: 'search',
@@ -25,7 +25,7 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
     {
       id: 'rank',
       name: 'Rank',
-      desc: 'Doppler drift & candidate classification',
+      desc: 'Doppler drift trajectory fitting',
     },
   ];
 

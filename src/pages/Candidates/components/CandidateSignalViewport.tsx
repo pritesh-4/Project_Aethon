@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import type { CandidateSignalData } from '../types.ts';
+import type { SpectralSliceResponse } from '@/types/schemas.ts';
+import { api } from '@/lib/api.ts';
 import { observatoryAudio } from '@/lib/audio-synth.ts';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, AlertCircle, Loader2 } from 'lucide-react';
 
 export interface CandidateSignalViewportProps {
   candidate: CandidateSignalData;
@@ -12,36 +14,110 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isAudioActive, setIsAudioActive] = useState(false);
 
-  const candidateRef = useRef(candidate);
+  const [sliceData, setSliceData] = useState<SpectralSliceResponse | null>(null);
+  const [isLoadingSlice, setIsLoadingSlice] = useState(false);
+  const [sliceError, setSliceError] = useState<string | null>(null);
+
+  // Fetch real candidate slice from backend
   useEffect(() => {
-    candidateRef.current = candidate;
-  }, [candidate]);
+    let isCancelled = false;
+
+    const fetchSlice = async () => {
+      if (!candidate.observationId || candidate.observationId === 'OBS-UNKNOWN') {
+        setSliceData(null);
+        setSliceError('No associated observation found for this candidate.');
+        return;
+      }
+
+      setIsLoadingSlice(true);
+      setSliceError(null);
+
+      try {
+        const tr = candidate.targetRegion;
+        const res = await api.getObservationSlice(candidate.observationId, {
+          time_start: tr?.time_start ?? 0,
+          time_stop: tr?.time_stop ?? 64,
+          frequency_start: tr?.freq_start ?? 0,
+          frequency_stop: tr?.freq_stop ?? 128,
+        });
+
+        if (!isCancelled) {
+          if (res && res.values && res.values.length > 0) {
+            setSliceData(res);
+          } else {
+            setSliceData(null);
+            setSliceError('Observation slice returned empty matrix.');
+          }
+        }
+      } catch (err: unknown) {
+        if (!isCancelled) {
+          setSliceData(null);
+          const msg =
+            (err as { message?: string })?.message ||
+            'Spectral slice unavailable from backend service.';
+          setSliceError(msg);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingSlice(false);
+        }
+      }
+    };
+
+    fetchSlice();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [candidate.id, candidate.observationId, candidate.targetRegion]);
+
+  const sliceStats = useMemo(() => {
+    if (!sliceData || !sliceData.values || sliceData.values.length === 0) return null;
+    let min = Infinity;
+    let max = -Infinity;
+    const n_time = sliceData.values.length;
+    const n_freq = sliceData.values[0]?.length || 0;
+    if (n_freq === 0) return null;
+    for (let t = 0; t < n_time; t++) {
+      const row = sliceData.values[t];
+      if (!row) continue;
+      for (let f = 0; f < row.length; f++) {
+        const v = row[f];
+        if (typeof v === 'number' && !Number.isNaN(v)) {
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
+      }
+    }
+    if (!Number.isFinite(min)) min = 0;
+    if (!Number.isFinite(max)) max = 1;
+    return { min, max, n_time, n_freq };
+  }, [sliceData]);
 
   const toggleAudio = useCallback(() => {
+    if (!sliceData) return;
     const active = observatoryAudio.toggle();
     setIsAudioActive(active);
     if (active) {
-      observatoryAudio.updateCarrierPresence(0.85, candidate.driftRateHzPerSec);
+      observatoryAudio.updateCarrierPresence(0.85, candidate.driftRateHzPerSec ?? 0);
     }
-  }, [candidate.driftRateHzPerSec]);
+  }, [sliceData, candidate.driftRateHzPerSec]);
 
   useEffect(() => {
-    if (isAudioActive) {
-      observatoryAudio.updateCarrierPresence(0.85, candidate.driftRateHzPerSec);
-    }
-  }, [isAudioActive, candidate.driftRateHzPerSec]);
+    return () => {
+      observatoryAudio.mute();
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !sliceData || !sliceStats) return;
 
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    let animId: number;
     let width = 0;
     let height = 0;
-    const startTime = performance.now();
 
     const handleResize = () => {
       const container = containerRef.current;
@@ -64,21 +140,11 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
     const ro = new ResizeObserver(handleResize);
     if (containerRef.current) ro.observe(containerRef.current);
 
-    const cols = 64;
-    const rows = 28;
-    const noiseMatrix = new Float32Array(cols * rows);
-    for (let i = 0; i < cols * rows; i++) {
-      noiseMatrix[i] = Math.random();
-    }
-
-    const render = (now: number) => {
-      const t = (now - startTime) * 0.001;
-      const current = candidateRef.current;
-
+    const render = () => {
       const paddingLeft = 46;
       const paddingRight = 16;
       const paddingTop = 14;
-      const paddingBottom = 22;
+      const paddingBottom = 24;
 
       const plotW = Math.max(10, width - paddingLeft - paddingRight);
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
@@ -113,28 +179,19 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
       }
       ctx.setLineDash([]);
 
-      // Spectrogram Noise & Carrier (Deep midnight to observatory blue to solar gold highlight)
-      const cellW = plotW / cols;
-      const cellH = plotH / rows;
-      const driftSlope = current.driftRateHzPerSec;
+      // Draw real spectral data
+      const { min, max, n_time, n_freq } = sliceStats;
+      const cellW = plotW / n_time;
+      const cellH = plotH / n_freq;
+      const range = max - min || 1;
 
-      for (let r = 0; r < rows; r++) {
-        const normFreq = 1 - r / rows;
-        for (let c = 0; c < cols; c++) {
-          const normTime = c / cols;
-          const noise = noiseMatrix[r * cols + c] * 0.16;
+      for (let t = 0; t < n_time; t++) {
+        for (let f = 0; f < n_freq; f++) {
+          const rawVal = sliceData.values[t]?.[f];
+          if (rawVal === null || rawVal === undefined || Number.isNaN(rawVal)) continue;
+          const cl = Math.max(0, Math.min(1, (rawVal - min) / range));
 
-          // Carrier with Doppler slope
-          const carrierCenter = 0.52 + (normTime - 0.5) * (driftSlope * 0.45);
-          const dist = Math.abs(normFreq - carrierCenter);
-
-          let intensity = noise;
-          if (dist < 0.045) {
-            intensity += (1 - dist / 0.045) * (0.68 + Math.sin(c * 0.4 - t * 4) * 0.14);
-          }
-
-          if (intensity > 0.06) {
-            const cl = Math.min(1, intensity);
+          if (cl > 0.02) {
             let cr: number;
             let cg: number;
             let cb: number;
@@ -156,8 +213,9 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
               cb = Math.floor(181 - 70 * factor);
             }
 
+            const r = n_freq - 1 - f;
             ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
-            ctx.fillRect(paddingLeft + c * cellW, paddingTop + r * cellH, cellW + 0.5, cellH + 0.5);
+            ctx.fillRect(paddingLeft + t * cellW, paddingTop + r * cellH, cellW + 0.6, cellH + 0.6);
           }
         }
       }
@@ -167,62 +225,124 @@ export function CandidateSignalViewport({ candidate }: CandidateSignalViewportPr
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
-      // Clean Axis Ticks
+      // Axes Labels
       ctx.fillStyle = '#7C8E9E';
-      ctx.font = '10px "IBM Plex Mono", monospace';
+      ctx.font = '9px "IBM Plex Mono", monospace';
 
-      // Left Frequency Axis
+      // Frequency Axis
+      const freqCoords = sliceData.frequency_coordinates_hz;
       ctx.textAlign = 'right';
-      ctx.fillText('+20k', paddingLeft - 5, paddingTop + 8);
-      ctx.fillText('f₀', paddingLeft - 5, paddingTop + plotH * 0.5 + 3);
-      ctx.fillText('-20k', paddingLeft - 5, paddingTop + plotH - 2);
+      if (freqCoords && freqCoords.length > 0) {
+        const topF = freqCoords[freqCoords.length - 1] / 1e6;
+        const botF = freqCoords[0] / 1e6;
+        ctx.fillText(`${topF.toFixed(3)}`, paddingLeft - 4, paddingTop + 8);
+        ctx.fillText(`${botF.toFixed(3)}`, paddingLeft - 4, paddingTop + plotH - 2);
+      } else if (candidate.frequencyMHz != null) {
+        ctx.fillText(
+          `${candidate.frequencyMHz.toFixed(2)}`,
+          paddingLeft - 4,
+          paddingTop + plotH * 0.5 + 3
+        );
+      } else {
+        ctx.fillText('—', paddingLeft - 4, paddingTop + plotH * 0.5 + 3);
+      }
 
-      // Bottom Time Axis
+      // Time Axis
       ctx.textAlign = 'center';
-      ctx.fillText('0s', paddingLeft + 10, paddingTop + plotH + 14);
+      ctx.fillText('00:00', paddingLeft + 12, paddingTop + plotH + 14);
+      ctx.fillText('Integration', paddingLeft + plotW * 0.5, paddingTop + plotH + 14);
       ctx.fillText(
-        `${current.durationSeconds.toFixed(0)}s`,
-        paddingLeft + plotW - 10,
+        candidate.durationSeconds != null ? `${candidate.durationSeconds}s` : '—',
+        paddingLeft + plotW - 12,
         paddingTop + plotH + 14
       );
-
-      animId = requestAnimationFrame(render);
     };
 
-    animId = requestAnimationFrame(render);
+    const animId = requestAnimationFrame(render);
 
     return () => {
       cancelAnimationFrame(animId);
       ro.disconnect();
     };
-  }, [candidate]);
+  }, [sliceData, sliceStats, candidate]);
 
   return (
-    <div className="rounded-[3px] border border-[#213240] bg-[#0D141A] overflow-hidden select-none">
-      <div className="flex items-center justify-between border-b border-[#213240] bg-[#111A22] px-3.5 py-2 text-xs text-[#7C8E9E]">
-        <span className="font-semibold text-[#E3EBF2]">Spectrogram slice</span>
+    <div className="rounded-[2px] border border-[#213240] bg-[#0D141A] overflow-hidden select-none">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between border-b border-[#213240] bg-[#131E27] px-3 py-1.5 text-xs">
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#376A9B]" />
+          <span className="font-medium text-[#E3EBF2] text-[11px]">Candidate Spectrogram</span>
+          <span className="text-[#31495D]">|</span>
+          <span className="text-[10px] text-[#A6B7C6] font-mono">
+            {candidate.frequencyMHz != null
+              ? `${candidate.frequencyMHz.toFixed(3)} MHz`
+              : 'Unavailable'}
+          </span>
+        </div>
 
+        {/* Audio Toggle */}
         <button
           type="button"
           aria-pressed={isAudioActive}
+          disabled={!sliceData}
           onClick={toggleAudio}
-          className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] ${
-            isAudioActive
-              ? 'border-[#376A9B] bg-[#376A9B]/20 text-[#5C89B7]'
-              : 'border-[#213240] bg-[#1D2A37] text-[#7C8E9E] hover:text-[#E3EBF2]'
+          title={
+            !sliceData
+              ? 'Sonification unavailable (no spectral slice)'
+              : isAudioActive
+                ? 'Mute sonification'
+                : 'Generated sonification (simulation)'
+          }
+          className={`inline-flex items-center gap-1 rounded-[2px] border px-2 py-0.5 text-[10px] transition-colors outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] ${
+            !sliceData
+              ? 'border-[#213240] bg-[#182632]/50 text-[#6A7E8F] cursor-not-allowed opacity-50'
+              : isAudioActive
+                ? 'border-[#376A9B] bg-[#376A9B]/15 text-[#5C89B7] cursor-pointer'
+                : 'border-[#213240] bg-[#182632] text-[#A6B7C6] hover:text-[#E3EBF2] cursor-pointer'
           }`}
         >
           {isAudioActive ? (
-            <Volume2 className="h-3.5 w-3.5" />
+            <Volume2 className="h-2.5 w-2.5" />
           ) : (
-            <VolumeX className="h-3.5 w-3.5" />
+            <VolumeX className="h-2.5 w-2.5" />
           )}
-          <span>{isAudioActive ? 'Monitoring' : 'Audio feed'}</span>
+          <span>{isAudioActive ? 'On' : 'Off'}</span>
         </button>
       </div>
 
-      <div ref={containerRef} className="relative h-[160px] sm:h-[180px] w-full bg-[#0D141A]">
+      {/* Main Canvas Viewport */}
+      <div ref={containerRef} className="relative h-[180px] w-full bg-[#0D141A]">
         <canvas ref={canvasRef} className="h-full w-full select-none" />
+
+        {/* Loading Overlay */}
+        {isLoadingSlice && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0D141A]/90">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#5C89B7]">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Buffering candidate spectral slice...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Honest Unavailable State when slice is missing */}
+        {!isLoadingSlice && (!sliceData || !sliceStats) && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0D141A]/95 px-4 text-center">
+            <div className="max-w-xs space-y-1.5">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] border border-[#213240] bg-[#131E27] text-[10px] font-mono text-[#A6B7C6]">
+                <AlertCircle className="h-3 w-3 text-[#7E8B96]" />
+                <span>SIGNAL VISUALIZATION UNAVAILABLE</span>
+              </div>
+              <p className="text-[11px] text-[#6A7E8F] leading-snug">
+                {sliceError ||
+                  'Spectral slice matrix is unavailable for this candidate. Synthetic signal traces are disabled in operational mode.'}
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-[#4A6375]">
+                Observation: {candidate.observationId}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

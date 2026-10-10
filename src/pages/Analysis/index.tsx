@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router';
 import { PageTransition } from '@/components/ui/motion.tsx';
 import { Button } from '@/components/ui/Button.tsx';
 import { AlertTriangle, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
-import { api, isDemoMode } from '@/lib/api.ts';
+import { api } from '@/lib/api.ts';
 import type {
   CandidateResponse,
   ObservationRecordResponse,
@@ -11,7 +11,6 @@ import type {
 } from '@/types/schemas.ts';
 
 import type { AnalysisStageId, SignalAnalysisRecord } from './types.ts';
-import { MOCK_ANALYSIS_RECORDS, CANDIDATE_ORDER_LIST } from './data/mockAnalysis.ts';
 
 import { AnalysisHeader } from './components/AnalysisHeader.tsx';
 import { StageSelector } from './components/StageSelector.tsx';
@@ -24,38 +23,59 @@ function candidateToAnalysisRecord(
   candidate: CandidateResponse,
   obs?: ObservationRecordResponse | null
 ): SignalAnalysisRecord {
-  const fRef = obs?.metadata?.frequency_reference_mhz ?? 1420.0;
-  const chSpacingMhz = obs?.metadata?.channel_spacing_mhz ?? 0.001;
-  const fCenter =
-    fRef +
-    ((candidate.target_region.freq_start + candidate.target_region.freq_stop) / 2) * chSpacingMhz;
+  const fRef = obs?.metadata?.frequency_reference_mhz ?? null;
+  const chSpacingMhz = obs?.metadata?.channel_spacing_mhz ?? null;
+
+  const physCoords = candidate.physical_coordinates as Record<string, unknown> | null | undefined;
+  const physFreq = typeof physCoords?.frequency_mhz === 'number' ? physCoords.frequency_mhz : null;
+  const physDrift =
+    typeof physCoords?.drift_rate_hz_s === 'number' ? physCoords.drift_rate_hz_s : null;
+  const physSnr = typeof physCoords?.snr_db === 'number' ? physCoords.snr_db : null;
+
+  let fCenter: number | null = physFreq;
+  if (fCenter == null && fRef != null && chSpacingMhz != null) {
+    fCenter =
+      fRef +
+      ((candidate.target_region.freq_start + candidate.target_region.freq_stop) / 2) * chSpacingMhz;
+  }
+
   const bwKHz =
-    Math.abs(candidate.target_region.freq_stop - candidate.target_region.freq_start) *
-    (chSpacingMhz * 1000);
-  const dt = obs?.metadata?.time_step_seconds ?? 0.5;
+    chSpacingMhz != null
+      ? Math.abs(candidate.target_region.freq_stop - candidate.target_region.freq_start) *
+        (chSpacingMhz * 1000)
+      : null;
+
+  const dt = obs?.metadata?.time_step_seconds ?? null;
   const duration =
-    Math.abs(candidate.target_region.time_stop - candidate.target_region.time_start) * dt;
+    dt != null
+      ? Math.abs(candidate.target_region.time_stop - candidate.target_region.time_start) * dt
+      : null;
 
   const driftEvidence = candidate.evidence_items?.find((e) => e.evidence_type === 'drift');
   const drift =
-    typeof driftEvidence?.scores_or_parameters?.drift_rate_hz_per_s === 'number'
-      ? (driftEvidence.scores_or_parameters.drift_rate_hz_per_s as number)
-      : 0;
+    physDrift != null
+      ? physDrift
+      : typeof driftEvidence?.scores_or_parameters?.drift_rate_hz_per_s === 'number'
+        ? (driftEvidence.scores_or_parameters.drift_rate_hz_per_s as number)
+        : null;
+
   const snr =
-    typeof driftEvidence?.scores_or_parameters?.snr === 'number'
-      ? (driftEvidence.scores_or_parameters.snr as number)
-      : 14.5;
+    physSnr != null
+      ? physSnr
+      : typeof driftEvidence?.scores_or_parameters?.snr === 'number'
+        ? (driftEvidence.scores_or_parameters.snr as number)
+        : null;
 
   const assessment = candidate.current_assessment;
-  const anomalyScore = assessment ? assessment.overall_score / 100 : 0.85;
+  const anomalyScore = assessment?.overall_score != null ? assessment.overall_score / 100 : null;
   const rfiProb =
     typeof assessment?.component_contributions?.rfi_risk === 'number'
       ? assessment.component_contributions.rfi_risk
-      : 0.05;
+      : null;
   const persistence =
     typeof assessment?.component_contributions?.temporal_persistence === 'number'
       ? assessment.component_contributions.temporal_persistence
-      : 0.92;
+      : null;
 
   const obsId = candidate.source_observation_ids?.[0] || 'obs_unknown';
 
@@ -65,91 +85,121 @@ function candidateToAnalysisRecord(
           id: `WARN-${idx + 1}`,
           title: warn.slice(0, 32).toUpperCase(),
           description: warn,
-          metric: `${anomalyScore.toFixed(2)} score`,
+          metric: anomalyScore != null ? `${anomalyScore.toFixed(2)} score` : 'Flagged',
         }))
       : [
-          {
-            id: 'FLAG-1',
-            title: 'Linear Doppler Drift Rate',
-            description: `Consistent drift of ${drift.toFixed(2)} Hz/s indicates origin accelerating relative to topocentric frame.`,
-            metric: `${drift.toFixed(2)} Hz/s`,
-          },
-          {
-            id: 'FLAG-2',
-            title: 'Narrowband Emission Profile',
-            description: `Channel bandwidth of ${bwKHz.toFixed(1)} kHz is narrower than natural thermal astrophysical emission mechanisms.`,
-            metric: `< ${Math.max(1, Math.round(bwKHz))} kHz`,
-          },
-          {
-            id: 'FLAG-3',
-            title: 'Temporal Persistence',
-            description: `Persistent signal structure observed with ${(persistence * 100).toFixed(0)}% stability.`,
-            metric: `${(persistence * 100).toFixed(0)}%`,
-          },
+          ...(drift != null
+            ? [
+                {
+                  id: 'FLAG-1',
+                  title: 'Linear Doppler Drift Rate',
+                  description: `Drift estimate of ${drift.toFixed(2)} Hz/s measured by Doppler regression.`,
+                  metric: `${drift.toFixed(2)} Hz/s`,
+                },
+              ]
+            : []),
+          ...(bwKHz != null
+            ? [
+                {
+                  id: 'FLAG-2',
+                  title: 'Target Channel Bandwidth',
+                  description: `Isolated candidate window spans ${bwKHz.toFixed(1)} kHz.`,
+                  metric: `${bwKHz.toFixed(1)} kHz`,
+                },
+              ]
+            : []),
+          ...(persistence != null
+            ? [
+                {
+                  id: 'FLAG-3',
+                  title: 'Temporal Persistence',
+                  description: `Persistence fraction across observation window is ${(persistence * 100).toFixed(1)}%.`,
+                  metric: `${(persistence * 100).toFixed(1)}%`,
+                },
+              ]
+            : []),
         ];
+
+  const priorityBand = assessment?.priority_band?.toUpperCase();
+  const priority: 'HIGH' | 'MEDIUM' | 'LOW' =
+    priorityBand === 'HIGH' || priorityBand === 'MEDIUM' || priorityBand === 'LOW'
+      ? priorityBand
+      : anomalyScore != null
+        ? anomalyScore > 0.8
+          ? 'HIGH'
+          : anomalyScore > 0.5
+            ? 'MEDIUM'
+            : 'LOW'
+        : 'LOW';
+
+  const timelineEvents =
+    dt != null
+      ? [
+          {
+            timeSec: candidate.target_region.time_start * dt,
+            label: 'Candidate Window Start',
+            description: `Target window start at index ${candidate.target_region.time_start}`,
+            intensityDbm: null,
+          },
+          {
+            timeSec:
+              ((candidate.target_region.time_start + candidate.target_region.time_stop) / 2) * dt,
+            label: 'Window Center',
+            description: 'Midpoint of detected anomalous region',
+            intensityDbm: null,
+          },
+          {
+            timeSec: candidate.target_region.time_stop * dt,
+            label: 'Candidate Window End',
+            description: `Target window stop at index ${candidate.target_region.time_stop}`,
+            intensityDbm: null,
+          },
+        ]
+      : [];
 
   return {
     candidateId: candidate.candidate_id,
     observationId: obsId,
-    targetName: obs?.metadata?.source_name || 'Radio Survey Source',
+    targetName: obs?.metadata?.source_name || obs?.original_filename || 'Radio Survey Source',
     frequencyMHz: fCenter,
-    bandwidthKHz: Math.round(bwKHz * 10) / 10,
-    durationSeconds: Math.round(duration * 10) / 10,
-    snrDb: Math.round(snr * 10) / 10,
-    peakPowerDbm: -92.4,
-    noiseFloorDbm: -108.1,
-    samplesCount: obs?.metadata?.time_sample_count ?? 1024,
-    driftRateHzPerSec: drift,
+    bandwidthKHz: bwKHz != null ? Math.round(bwKHz * 10) / 10 : null,
+    durationSeconds: duration != null ? Math.round(duration * 10) / 10 : null,
+    snrDb: snr != null ? Math.round(snr * 10) / 10 : null,
+    peakPowerDbm: null,
+    noiseFloorDbm: null,
+    samplesCount: obs?.metadata?.time_sample_count ?? null,
+    driftRateHzPerSec: drift != null ? Math.round(drift * 100) / 100 : null,
     firstDetectedTime: candidate.created_at_utc,
-    anomalyStartSec: candidate.target_region.time_start * dt,
-    anomalyEndSec: candidate.target_region.time_stop * dt,
+    anomalyStartSec: dt != null ? candidate.target_region.time_start * dt : null,
+    anomalyEndSec: dt != null ? candidate.target_region.time_stop * dt : null,
     coordinates: {
-      ra: obs?.metadata?.ra_str || '18h 05m 27s',
-      dec: obs?.metadata?.dec_str || '-04° 38′ 45″',
+      ra:
+        obs?.metadata?.ra_str ||
+        (obs?.metadata?.ra_deg != null ? `${obs.metadata.ra_deg.toFixed(4)}°` : null),
+      dec:
+        obs?.metadata?.dec_str ||
+        (obs?.metadata?.dec_deg != null ? `${obs.metadata.dec_deg.toFixed(4)}°` : null),
     },
-    telescope: obs?.metadata?.telescope_name || 'Parkes 64m (Murriyang)',
-    priority: anomalyScore > 0.8 ? 'HIGH' : anomalyScore > 0.5 ? 'MEDIUM' : 'LOW',
+    telescope: obs?.metadata?.telescope_name || null,
+    priority,
     anomalyIndex: anomalyScore,
-    knownPatternSimilarity: Math.max(0.01, 1 - anomalyScore),
+    knownPatternSimilarity: null,
     interferenceProbability: rfiProb,
-    persistence: persistence,
-    classificationTaxonomy: 'Technosignature Candidate / Linear Drift Carrier',
+    persistence,
+    classificationTaxonomy: 'Unsupervised Detection / Candidate Record',
     morphology: {
-      temporalCoherence: persistence > 0.7 ? 'HIGH' : 'MODERATE',
-      frequencyStability: Math.abs(drift) < 5 ? 'HIGH' : 'DRIFTING',
-      bandwidthCategory: bwKHz < 5 ? 'NARROWBAND' : 'MODERATE',
-      persistenceState: persistence > 0.8 ? 'HIGH' : 'TRANSIENT',
-      morphologicalDeviation: anomalyScore > 0.7 ? 'HIGH' : 'MODERATE',
-      description: `Monochromatic carrier with linear Doppler drift rate of ${drift.toFixed(2)} Hz/s. Persistent emission across observation timeframe.`,
+      temporalCoherence: persistence != null && persistence > 0.7 ? 'HIGH' : 'MODERATE',
+      frequencyStability: drift != null && Math.abs(drift) < 5 ? 'HIGH' : 'DRIFTING',
+      bandwidthCategory: bwKHz != null && bwKHz < 5 ? 'NARROWBAND' : 'MODERATE',
+      persistenceState: persistence != null && persistence > 0.8 ? 'HIGH' : 'TRANSIENT',
+      morphologicalDeviation: anomalyScore != null && anomalyScore > 0.7 ? 'HIGH' : 'MODERATE',
+      description:
+        drift != null
+          ? `Doppler drift fitted at ${drift.toFixed(2)} Hz/s.`
+          : 'Doppler trajectory not evaluated.',
     },
-    comparison: {
-      observedSignature: `Linear drifting carrier (${drift.toFixed(2)} Hz/s)`,
-      nearestKnownPattern: 'PSR B1937+21 Pulsar Harmonic / Terrestrial Uplink',
-      catalogReference: 'ATNF Pulsar Catalogue v1.70',
-      cosineDistance: 0.884,
-      divergenceDegree: anomalyScore > 0.7 ? 'HIGH' : 'MODERATE',
-    },
-    timelineEvents: [
-      {
-        timeSec: candidate.target_region.time_start * dt,
-        label: 'Candidate Onset',
-        description: 'Emission threshold exceeded detection floor',
-        intensityDbm: -94.2,
-      },
-      {
-        timeSec:
-          ((candidate.target_region.time_start + candidate.target_region.time_stop) / 2) * dt,
-        label: 'Peak Signal',
-        description: 'Maximum SNR observed with coherent phase structure',
-        intensityDbm: -92.4,
-      },
-      {
-        timeSec: candidate.target_region.time_stop * dt,
-        label: 'Window End',
-        description: 'Target region boundary reached',
-        intensityDbm: -96.1,
-      },
-    ],
+    comparison: null,
+    timelineEvents,
     flaggedReasons,
   };
 }
@@ -193,17 +243,13 @@ export default function AnalysisPage() {
 
       let targetId = signalId;
       if (!targetId) {
-        if (isDemoMode()) {
-          targetId = 'AET-04721';
-        } else {
-          try {
-            const listRes = await api.getCandidates({ limit: 1 });
-            if (listRes.items && listRes.items.length > 0) {
-              targetId = listRes.items[0].candidate_id;
-            }
-          } catch {
-            // Backend offline or empty
+        try {
+          const listRes = await api.getCandidates({ limit: 1 });
+          if (listRes.items && listRes.items.length > 0) {
+            targetId = listRes.items[0].candidate_id;
           }
+        } catch {
+          // Backend offline or empty
         }
       }
 
@@ -251,7 +297,7 @@ export default function AnalysisPage() {
         }
         return;
       } catch {
-        // Backend candidate not found, proceed to observation or mock check
+        // Backend candidate not found, proceed to observation check
       }
 
       // 2. Try observation ID lookup
@@ -283,77 +329,6 @@ export default function AnalysisPage() {
             }
           }
 
-          // If in demo mode, synthesize explicit demo candidate
-          if (isDemoMode()) {
-            const totalSamples = obs.metadata?.time_sample_count ?? 1024;
-            const totalChannels = obs.metadata?.channel_count ?? 512;
-
-            const demoCandidate: CandidateResponse = {
-              candidate_id: `cand_${obs.id.slice(4, 12)}`,
-              created_at_utc: obs.ingested_at,
-              updated_at_utc: obs.ingested_at,
-              status: 'unreviewed',
-              source_observation_ids: [obs.id],
-              target_region: {
-                time_start: 0,
-                time_stop: Math.min(60, totalSamples),
-                freq_start: 0,
-                freq_stop: Math.min(128, totalChannels),
-              },
-              current_assessment: {
-                assessment_id: `ass_${obs.id.slice(4, 10)}`,
-                candidate_id: `cand_${obs.id.slice(4, 12)}`,
-                version: 1,
-                created_at_utc: obs.ingested_at,
-                policy_name: 'demo_synthetic',
-                policy_version: '1.0.0',
-                overall_score: 82.5,
-                priority_band: 'high',
-                component_contributions: {
-                  anomaly_significance: 0.85,
-                  rfi_risk: 0.08,
-                  temporal_persistence: 0.91,
-                },
-                contributing_evidence_ids: [],
-                missing_evidence: [],
-                detector_disagreement: false,
-                explanation: '[DEMO MODE] Synthetic benchmark signal with linear drift carrier',
-                warnings: [],
-              },
-              associated_detection_ids: [],
-              processing_run_ids: [],
-              analysis_run_ids: [],
-              physical_coordinates: {},
-              evidence_items: [],
-              review_history: [],
-              schema_version: '1.0.0',
-              is_synthetic: true,
-              provenance: {},
-              warnings: [],
-              scientific_disclaimer: '[DEMO MODE] Synthetic demonstration representation',
-            };
-
-            try {
-              const slice = await api.getObservationSlice(obs.id, {
-                time_start: 0,
-                time_stop: Math.min(60, totalSamples),
-                frequency_start: 0,
-                frequency_stop: Math.min(128, totalChannels),
-              });
-              if (isMounted) {
-                setSliceData(slice);
-              }
-            } catch {
-              // Non-fatal
-            }
-
-            if (isMounted) {
-              setRecord(candidateToAnalysisRecord(demoCandidate, obs));
-              setIsLoading(false);
-            }
-            return;
-          }
-
           // Operational mode: observation exists but has no candidate yet
           if (isMounted) {
             setRecord(null);
@@ -365,24 +340,7 @@ export default function AnalysisPage() {
         }
       }
 
-      // 3. Check mock analysis records (for demo mode only)
-      const normalized = targetId.toUpperCase();
-      const mock =
-        MOCK_ANALYSIS_RECORDS[normalized] ||
-        Object.entries(MOCK_ANALYSIS_RECORDS).find(
-          ([k]) => k.toLowerCase() === targetId.toLowerCase()
-        )?.[1];
-
-      if (mock && isDemoMode()) {
-        if (isMounted) {
-          setRecord(mock);
-          setSliceData(null);
-          setIsLoading(false);
-        }
-        return;
-      }
-
-      // 4. Candidate record not found
+      // 3. Candidate record not found
       if (isMounted) {
         setRecord(null);
         setSliceData(null);
@@ -400,14 +358,8 @@ export default function AnalysisPage() {
     };
   }, [signalId]);
 
-  // Combined candidates order list for prev/next navigation
-  const availableCandidateIds = useMemo(() => {
-    const combined = [...backendCandidateIds];
-    for (const id of CANDIDATE_ORDER_LIST) {
-      if (!combined.includes(id)) combined.push(id);
-    }
-    return combined;
-  }, [backendCandidateIds]);
+  // Candidates order list for prev/next navigation
+  const availableCandidateIds = backendCandidateIds;
 
   const { prevCandidateId, nextCandidateId } = useMemo(() => {
     if (!record) return { prevCandidateId: null, nextCandidateId: null };

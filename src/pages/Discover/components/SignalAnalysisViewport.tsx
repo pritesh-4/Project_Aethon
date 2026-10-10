@@ -1,5 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import type { DiscoveryStage, DiscoveryObservationMeta } from '../types.ts';
+import { api } from '@/lib/api.ts';
+import type { SpectralSliceResponse } from '@/types/schemas.ts';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 export interface SignalAnalysisViewportProps {
   stage: DiscoveryStage;
@@ -10,22 +13,87 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const stateRef = useRef({ stage, observation });
-  useEffect(() => {
-    stateRef.current = { stage, observation };
-  }, [stage, observation]);
+  const [sliceData, setSliceData] = useState<SpectralSliceResponse | null>(null);
+  const [isLoadingSlice, setIsLoadingSlice] = useState(false);
+  const [sliceError, setSliceError] = useState<string | null>(null);
 
+  // Fetch real spectral slice from backend
+  useEffect(() => {
+    let isCancelled = false;
+
+    const fetchSlice = async () => {
+      setIsLoadingSlice(true);
+      setSliceError(null);
+
+      try {
+        const res = await api.getObservationSlice(observation.id, {
+          time_start: 0,
+          time_stop: 64,
+          frequency_start: 0,
+          frequency_stop: 128,
+        });
+        if (!isCancelled) {
+          if (res && res.values && res.values.length > 0) {
+            setSliceData(res);
+          } else {
+            setSliceData(null);
+            setSliceError('Backend returned empty spectral matrix.');
+          }
+        }
+      } catch (err: unknown) {
+        if (!isCancelled) {
+          setSliceData(null);
+          const msg =
+            (err as { message?: string })?.message || 'Spectral slice unavailable from backend.';
+          setSliceError(msg);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingSlice(false);
+        }
+      }
+    };
+
+    fetchSlice();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [observation.id]);
+
+  // Compute stats from real slice data
+  const sliceStats = useMemo(() => {
+    if (!sliceData || !sliceData.values || sliceData.values.length === 0) return null;
+    let min = Infinity;
+    let max = -Infinity;
+    const n_time = sliceData.values.length;
+    const n_freq = sliceData.values[0]?.length || 0;
+
+    for (let t = 0; t < n_time; t++) {
+      const row = sliceData.values[t];
+      if (!row) continue;
+      for (let f = 0; f < row.length; f++) {
+        const val = row[f];
+        if (val !== null && val !== undefined && !Number.isNaN(val)) {
+          if (val < min) min = val;
+          if (val > max) max = val;
+        }
+      }
+    }
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+    return { min, max, n_time, n_freq };
+  }, [sliceData]);
+
+  // Render real spectral slice onto canvas
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !sliceData || !sliceStats) return;
 
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    let animId: number;
     let width = 0;
     let height = 0;
-    const startTime = performance.now();
 
     const handleResize = () => {
       const container = containerRef.current;
@@ -48,36 +116,65 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
     const ro = new ResizeObserver(handleResize);
     if (containerRef.current) ro.observe(containerRef.current);
 
-    // Pre-calculate synthetic matrix cells
-    const cols = 80;
-    const rows = 36;
-    const noiseMatrix = new Float32Array(cols * rows);
-    for (let i = 0; i < cols * rows; i++) {
-      noiseMatrix[i] = Math.random();
-    }
-
-    const render = (now: number) => {
-      const t = (now - startTime) * 0.001;
-      const { stage: currentStage } = stateRef.current;
-
-      const paddingLeft = 52;
+    const render = () => {
+      const paddingLeft = 60;
       const paddingRight = 24;
       const paddingTop = 20;
-      const paddingBottom = 28;
+      const paddingBottom = 32;
 
       const plotW = Math.max(10, width - paddingLeft - paddingRight);
       const plotH = Math.max(10, height - paddingTop - paddingBottom);
-      const cy = paddingTop + plotH * 0.5;
 
-      // 1. Instrument Background (#0D141A)
+      // Background
       ctx.fillStyle = '#0D141A';
       ctx.fillRect(0, 0, width, height);
 
-      // Plot Area Fill (#111A22)
+      // Plot Area Fill
       ctx.fillStyle = '#111A22';
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
-      // 2. Reticle Grid
+      // Draw real spectral data
+      const { min, max, n_time, n_freq } = sliceStats;
+      const cellW = plotW / n_time;
+      const cellH = plotH / n_freq;
+      const range = max - min || 1;
+
+      for (let t = 0; t < n_time; t++) {
+        for (let f = 0; f < n_freq; f++) {
+          const rawVal = sliceData.values[t]?.[f];
+          if (rawVal === null || rawVal === undefined || Number.isNaN(rawVal)) continue;
+          const cl = Math.max(0, Math.min(1, (rawVal - min) / range));
+
+          if (cl > 0.02) {
+            let cr: number;
+            let cg: number;
+            let cb: number;
+
+            if (cl < 0.35) {
+              cr = Math.floor(13 + 20 * cl);
+              cg = Math.floor(20 + 35 * cl);
+              cb = Math.floor(26 + 65 * cl);
+            } else if (cl < 0.72) {
+              const factor = (cl - 0.35) / 0.37;
+              cr = Math.floor(35 + 155 * factor);
+              cg = Math.floor(75 + 70 * factor);
+              cb = Math.floor(125 - 55 * factor);
+            } else {
+              const factor = (cl - 0.72) / 0.28;
+              cr = Math.floor(190 + 65 * factor);
+              cg = Math.floor(145 + 110 * factor);
+              cb = Math.floor(70 + 185 * factor);
+            }
+
+            // High frequency at top
+            const r = n_freq - 1 - f;
+            ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
+            ctx.fillRect(paddingLeft + t * cellW, paddingTop + r * cellH, cellW + 0.6, cellH + 0.6);
+          }
+        }
+      }
+
+      // Reticle Grid
       ctx.strokeStyle = '#1D2A37';
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
@@ -99,198 +196,116 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
       }
       ctx.setLineDash([]);
 
-      // 3. Stage Visual Progression
-      const isPrepare = currentStage === 'prepare' || currentStage === 'idle';
-      const isRepresent = currentStage === 'represent';
-      const isSearch = currentStage === 'search';
-      const isRankOrComplete = currentStage === 'rank' || currentStage === 'complete';
-
-      // Waveform display during prepare (Observatory Blue)
-      if (isPrepare) {
-        ctx.save();
-        ctx.strokeStyle = '#5C89B7';
-        ctx.lineWidth = 1.4;
-
-        ctx.beginPath();
-        for (let x = 0; x <= plotW; x += 2) {
-          const nx = x / plotW;
-          const noise =
-            Math.sin(x * 0.04 + t * 4) * 3 +
-            Math.sin(x * 0.09 - t * 6) * 1.5 +
-            (Math.random() - 0.5) * 2;
-          const envelope = Math.exp(-Math.pow((nx - 0.5) * 4, 2));
-          const carrier = Math.sin(x * 0.08 - t * 8) * 18 * envelope;
-
-          const y = cy + noise + carrier;
-          if (x === 0) ctx.moveTo(paddingLeft + x, y);
-          else ctx.lineTo(paddingLeft + x, y);
-        }
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Spectrogram display during represent, search, rank, complete
-      if (isRepresent || isSearch || isRankOrComplete) {
-        ctx.save();
-        const cellW = plotW / cols;
-        const cellH = plotH / rows;
-
-        for (let r = 0; r < rows; r++) {
-          const normFreq = 1 - r / rows;
-          for (let c = 0; c < cols; c++) {
-            const normTime = c / cols;
-            const baseNoise = noiseMatrix[r * cols + c] * 0.16;
-
-            // Carrier slope
-            const carrierCenter = 0.54 + (normTime - 0.5) * -0.28;
-            const dist = Math.abs(normFreq - carrierCenter);
-
-            let intensity = baseNoise;
-            if (dist < 0.045) {
-              const strength = 1 - dist / 0.045;
-              intensity += strength * (0.65 + Math.sin(c * 0.3 - t * 4) * 0.15);
-            }
-
-            if (intensity > 0.06) {
-              const cl = Math.min(1, intensity);
-              let cr: number;
-              let cg: number;
-              let cb: number;
-
-              if (cl < 0.4) {
-                // Dark midnight to observatory blue
-                cr = Math.floor(13 + 30 * cl);
-                cg = Math.floor(20 + 60 * cl);
-                cb = Math.floor(26 + 100 * cl);
-              } else if (cl < 0.8) {
-                // Observatory blue to sky cyan
-                const f = (cl - 0.4) / 0.4;
-                cr = Math.floor(25 + 60 * f);
-                cg = Math.floor(44 + 90 * f);
-                cb = Math.floor(66 + 115 * f);
-              } else {
-                // Peak highlight to solar gold
-                const f = (cl - 0.8) / 0.2;
-                cr = Math.floor(85 + 110 * f);
-                cg = Math.floor(134 + 60 * f);
-                cb = Math.floor(181 - 70 * f);
-              }
-
-              ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
-              ctx.fillRect(
-                paddingLeft + c * cellW,
-                paddingTop + r * cellH,
-                cellW + 0.5,
-                cellH + 0.5
-              );
-            }
-          }
-        }
-        ctx.restore();
-      }
-
-      // Anomaly isolation bracket during search, rank, and complete (Solar Gold #C19348)
-      if (isSearch || isRankOrComplete) {
-        ctx.save();
-        const bx = paddingLeft + plotW * 0.42;
-        const bw = plotW * 0.34;
-        const by = paddingTop + plotH * 0.32;
-        const bh = plotH * 0.34;
-
-        ctx.strokeStyle = '#C19348';
-        ctx.lineWidth = 1.3;
-        const cLen = 10;
-
-        // Top-left
-        ctx.beginPath();
-        ctx.moveTo(bx, by + cLen);
-        ctx.lineTo(bx, by);
-        ctx.lineTo(bx + cLen, by);
-        ctx.stroke();
-
-        // Top-right
-        ctx.beginPath();
-        ctx.moveTo(bx + bw - cLen, by);
-        ctx.lineTo(bx + bw, by);
-        ctx.lineTo(bx + bw, by + cLen);
-        ctx.stroke();
-
-        // Bottom-left
-        ctx.beginPath();
-        ctx.moveTo(bx, by + bh - cLen);
-        ctx.lineTo(bx, by + bh);
-        ctx.lineTo(bx + cLen, by + bh);
-        ctx.stroke();
-
-        // Bottom-right
-        ctx.beginPath();
-        ctx.moveTo(bx + bw - cLen, by + bh);
-        ctx.lineTo(bx + bw, by + bh);
-        ctx.lineTo(bx + bw, by + bh - cLen);
-        ctx.stroke();
-
-        // Drift line
-        ctx.beginPath();
-        ctx.moveTo(bx + 8, by + 12);
-        ctx.lineTo(bx + bw - 8, by + bh - 12);
-        ctx.stroke();
-
-        // Clean label
-        ctx.font = '500 11px "Source Sans 3", sans-serif';
-        ctx.fillStyle = '#C19348';
-        ctx.textAlign = 'left';
-        ctx.fillText(
-          isRankOrComplete ? 'Candidate signal isolated' : 'Anomaly detected',
-          bx + 4,
-          by - 6
-        );
-
-        ctx.restore();
-      }
-
       // Outer Plot Border
       ctx.strokeStyle = '#213240';
       ctx.lineWidth = 1;
       ctx.strokeRect(paddingLeft, paddingTop, plotW, plotH);
 
-      // Clean Scientific Axes
+      // Axes labels
       ctx.fillStyle = '#7C8E9E';
       ctx.font = '10px "IBM Plex Mono", monospace';
 
       // Frequency axis (Y)
-      const f0 = observation.frequencyMHz;
-      const halfBw = (observation.bandwidthMHz / 2).toFixed(1);
+      const freqCoords = sliceData.frequency_coordinates_hz;
       ctx.textAlign = 'right';
-      ctx.fillText(`+${halfBw} MHz`, paddingLeft - 6, paddingTop + 8);
-      ctx.fillText(`${f0.toFixed(2)} MHz`, paddingLeft - 6, cy + 3);
-      ctx.fillText(`-${halfBw} MHz`, paddingLeft - 6, paddingTop + plotH - 2);
+      if (freqCoords && freqCoords.length > 0) {
+        const topF = freqCoords[freqCoords.length - 1] / 1e6;
+        const midF = freqCoords[Math.floor(freqCoords.length / 2)] / 1e6;
+        const botF = freqCoords[0] / 1e6;
+        ctx.fillText(`${topF.toFixed(3)} MHz`, paddingLeft - 6, paddingTop + 8);
+        ctx.fillText(`${midF.toFixed(3)} MHz`, paddingLeft - 6, paddingTop + plotH * 0.5 + 3);
+        ctx.fillText(`${botF.toFixed(3)} MHz`, paddingLeft - 6, paddingTop + plotH - 2);
+      } else if (observation.frequencyMHz != null) {
+        ctx.fillText(
+          `${observation.frequencyMHz.toFixed(3)} MHz`,
+          paddingLeft - 6,
+          paddingTop + plotH * 0.5 + 3
+        );
+      } else {
+        ctx.fillText('—', paddingLeft - 6, paddingTop + plotH * 0.5 + 3);
+      }
 
       // Time axis (X)
+      const timeCoords = sliceData.time_coordinates_seconds;
       ctx.textAlign = 'center';
-      ctx.fillText('00:00', paddingLeft + 16, paddingTop + plotH + 16);
-      ctx.fillText('Observation duration', paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
-      ctx.fillText(observation.durationString, paddingLeft + plotW - 16, paddingTop + plotH + 16);
-
-      animId = requestAnimationFrame(render);
+      if (timeCoords && timeCoords.length > 0) {
+        const t0 = timeCoords[0];
+        const tEnd = timeCoords[timeCoords.length - 1];
+        ctx.fillText(`+${t0.toFixed(1)}s`, paddingLeft + 16, paddingTop + plotH + 16);
+        ctx.fillText('Observation duration', paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
+        ctx.fillText(`+${tEnd.toFixed(1)}s`, paddingLeft + plotW - 16, paddingTop + plotH + 16);
+      } else {
+        ctx.fillText('00:00', paddingLeft + 16, paddingTop + plotH + 16);
+        ctx.fillText(
+          observation.durationString || 'Duration',
+          paddingLeft + plotW * 0.5,
+          paddingTop + plotH + 16
+        );
+        ctx.fillText('—', paddingLeft + plotW - 16, paddingTop + plotH + 16);
+      }
     };
 
-    animId = requestAnimationFrame(render);
+    const animId = requestAnimationFrame(render);
 
     return () => {
       cancelAnimationFrame(animId);
       ro.disconnect();
     };
-  }, [observation]);
+  }, [sliceData, sliceStats, observation]);
 
   return (
     <div className="rounded-[3px] border border-[#213240] bg-[#0D141A] overflow-hidden select-none font-sans shadow-md">
       <div className="flex items-center justify-between border-b border-[#213240] bg-[#111A22] px-4 py-2.5 text-xs">
-        <span className="font-semibold text-[#E3EBF2]">Time–frequency spectrogram</span>
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#376A9B]" />
+          <span className="font-semibold text-[#E3EBF2]">Time–frequency spectrogram</span>
+          <span className="text-[#31495D]">|</span>
+          <span className="font-mono text-[11px] text-[#5C89B7] uppercase tracking-wider">
+            Stage: {stage}
+          </span>
+        </div>
         <span className="text-[11px] text-[#7C8E9E] font-mono">{observation.name}</span>
       </div>
 
       <div ref={containerRef} className="relative h-[220px] sm:h-[260px] w-full bg-[#0D141A]">
+        {/* Real Canvas */}
         <canvas ref={canvasRef} className="h-full w-full select-none" />
+
+        {/* Loading Overlay */}
+        {isLoadingSlice && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0D141A]/90">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#5C89B7]">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Buffering spectral slice from backend...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Honest Unavailable State when slice is missing */}
+        {!isLoadingSlice && (!sliceData || !sliceStats) && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0D141A]/95 px-6 text-center">
+            <div className="max-w-md space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border border-[#213240] bg-[#131E27] text-xs font-mono text-[#A6B7C6]">
+                <AlertCircle className="h-3.5 w-3.5 text-[#7E8B96]" />
+                <span>SPECTRAL SLICE UNAVAILABLE</span>
+              </div>
+              <p className="text-xs text-[#6A7E8F] leading-relaxed">
+                {sliceError ||
+                  'Raw spectral matrix data is not available for this observation from backend service. Procedural signal synthesis is disabled.'}
+              </p>
+              <div className="pt-2 text-[11px] font-mono text-[#4A6375] flex items-center justify-center gap-3">
+                <span>Target: {observation.id}</span>
+                <span>•</span>
+                <span>
+                  Frequency:{' '}
+                  {observation.frequencyMHz != null
+                    ? `${observation.frequencyMHz.toFixed(3)} MHz`
+                    : 'Unavailable'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

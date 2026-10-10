@@ -99,14 +99,18 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
         <div className="flex flex-col">
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono text-xs font-semibold text-[#9E6E20]">
-              {(candidate.anomalyIndex * 100).toFixed(1)}%
+              {candidate.anomalyIndex != null
+                ? `${(candidate.anomalyIndex * 100).toFixed(1)}%`
+                : '—'}
             </span>
             <span className="text-[10px] text-[#76828D] uppercase font-mono">anomaly</span>
           </div>
           <span className="text-[11px] text-[#56616A] line-clamp-1">
-            {candidate.persistence > 0.7
-              ? 'Persistent carrier across baseline'
-              : 'Intermittent localized structure'}
+            {candidate.persistence != null
+              ? candidate.persistence > 0.7
+                ? 'Persistent carrier across baseline'
+                : 'Intermittent localized structure'
+              : 'Persistence not evaluated'}
           </span>
         </div>
       </td>

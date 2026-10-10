@@ -90,9 +90,13 @@ export function AnalysisHeader({ record, prevCandidateId, nextCandidateId }: Ana
               {record.targetName}
             </span>
             <span className="text-[#D6D2C9]">·</span>
-            <span>{record.frequencyMHz.toFixed(3)} MHz</span>
+            <span>
+              {record.frequencyMHz != null
+                ? `${record.frequencyMHz.toFixed(3)} MHz`
+                : 'Unavailable'}
+            </span>
             <span className="text-[#D6D2C9]">·</span>
-            <span>{record.telescope}</span>
+            <span>{record.telescope || 'Unspecified instrument'}</span>
           </div>
         </div>
       </div>

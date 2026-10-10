@@ -6,40 +6,46 @@ export interface CandidateSignalData {
   id: string;
   observationId: string;
   targetName: string;
-  frequencyMHz: number;
-  bandwidthKHz: number;
-  durationSeconds: number;
-  peakPowerDbm: number;
-  snrDb: number;
-  driftRateHzPerSec: number;
+  frequencyMHz: number | null;
+  bandwidthKHz: number | null;
+  durationSeconds: number | null;
+  peakPowerDbm: number | null;
+  snrDb: number | null;
+  driftRateHzPerSec: number | null;
   firstDetectedTime: string;
   coordinates: {
-    ra: string;
-    dec: string;
+    ra: string | null;
+    dec: string | null;
   };
-  anomalyIndex: number; // 0.000 to 1.000
-  persistence: number; // 0.000 to 1.000
-  knownPatternSimilarity: number; // 0.000 to 1.000
-  interferenceProbability: number; // 0.000 to 1.000
+  targetRegion?: {
+    time_start: number;
+    time_stop: number;
+    freq_start: number;
+    freq_stop: number;
+  } | null;
+  anomalyIndex: number | null; // 0.000 to 1.000
+  persistence: number | null; // 0.000 to 1.000
+  knownPatternSimilarity: number | null; // 0.000 to 1.000
+  interferenceProbability: number | null; // 0.000 to 1.000
   priority: CandidatePriority;
   status: CandidateStatus;
   morphology: {
     observedType: string;
     nearestKnownType: string;
     divergenceDegree: 'HIGH' | 'MODERATE' | 'LOW';
-    cosineDistance: number;
+    cosineDistance: number | null;
   };
   evidenceFactors: {
-    anomalousStructure: { state: 'HIGH' | 'ELEVATED' | 'NOMINAL'; sigma: number };
+    anomalousStructure: { state: 'HIGH' | 'ELEVATED' | 'NOMINAL'; sigma: number | null };
     temporalPersistence: { state: 'ELEVATED' | 'NOMINAL' | 'TRANSIENT'; cycles: string };
     knownSimilarity: { state: 'LOW' | 'MODERATE' | 'HIGH'; catalogRef: string };
-    rfiEstimate: { state: 'LOW' | 'ELEVATED' | 'HIGH'; probPercent: number };
+    rfiEstimate: { state: 'LOW' | 'ELEVATED' | 'HIGH'; probPercent: number | null };
     frequencyCoherence: { state: 'STABLE' | 'DRIFTING' | 'DISPERSED'; bandwidthStr: string };
   };
   latentCoordinates: {
     x: number; // Normalized -1 to 1 in 2D latent projection
     y: number;
-  };
+  } | null;
   notes: string;
 }
 

@@ -11,7 +11,7 @@ export function ScientificCaution() {
     },
     {
       heading: 'Model confidence ≠ empirical proof',
-      body: 'A high anomaly index reflects reconstruction residual in latent space. Scientific confirmation requires independent multi-observatory replication and interferometric verification.',
+      body: 'An anomaly index reflects statistical deviance in windowed spectral moments and detector scoring. Scientific confirmation requires independent multi-observatory replication and interferometric verification.',
     },
     {
       heading: 'Uncataloged interference sources',

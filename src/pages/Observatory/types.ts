@@ -8,34 +8,35 @@ export interface ObservationData {
   name: string;
   targetName: string;
   telescope: string;
-  frequencyMHz: number;
-  bandwidthMHz: number;
-  windowDuration: string; // e.g. "00:04:32"
-  durationSeconds: number;
-  signalPowerDbm: number;
-  noiseFloorDbm: number;
-  snrDb: number;
-  rfiRisk: 'LOW' | 'MODERATE' | 'ELEVATED' | 'HIGH';
-  driftRateHzPerSec: number;
+  frequencyMHz: number | null;
+  bandwidthMHz: number | null;
+  windowDuration: string | null; // e.g. "00:04:32"
+  durationSeconds: number | null;
+  signalPowerDbm: number | null;
+  noiseFloorDbm: number | null;
+  snrDb: number | null;
+  rfiRisk: 'LOW' | 'MODERATE' | 'ELEVATED' | 'HIGH' | null;
+  driftRateHzPerSec: number | null;
   coordinates: {
-    ra: string;
-    dec: string;
+    ra: string | null;
+    dec: string | null;
   };
   anomaly: {
-    indexPercent: number;
-    knownPatternSimilarityPercent: number;
-    interferenceProbabilityPercent: number;
-    persistencePercent: number;
+    indexPercent: number | null;
+    knownPatternSimilarityPercent: number | null;
+    interferenceProbabilityPercent: number | null;
+    persistencePercent: number | null;
     region: {
-      timeStartSec: number;
-      timeEndSec: number;
-      freqOffsetKHz: number;
-      bandwidthKHz: number;
-    };
-    classificationLabel: string;
+      timeStartSec: number | null;
+      timeEndSec: number | null;
+      freqOffsetKHz: number | null;
+      bandwidthKHz: number | null;
+    } | null;
+    classificationLabel: string | null;
   };
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   telemetryNotes: string;
+  isDemoMode?: boolean;
 }
 
 export interface PipelineState {

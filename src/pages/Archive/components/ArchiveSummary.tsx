@@ -41,7 +41,7 @@ export function ArchiveSummary({ stats }: ArchiveSummaryProps) {
 
         {/* Disclaimer */}
         <div className="text-[11px] text-[#76828D] sm:text-right font-mono">
-          <span>Demonstration data registry</span>
+          <span>Archival observation registry</span>
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ export interface ObservatoryHeaderProps {
   observationId: string;
   status: ObservationStatus;
   targetName: string;
-  frequencyMHz: number;
+  frequencyMHz: number | null;
   observationList: { id: string; name: string }[];
   onSelectObservation: (id: string) => void;
   isPaused: boolean;
@@ -153,7 +153,7 @@ export function ObservatoryHeader({
             <span className="text-[#D6D2C9] hidden sm:inline">•</span>
 
             <span className="font-mono text-[#17202A] text-xs font-medium">
-              {frequencyMHz.toFixed(4)} MHz
+              {frequencyMHz != null ? `${frequencyMHz.toFixed(4)} MHz` : 'Unavailable'}
             </span>
 
             <span className="text-[#D6D2C9] hidden sm:inline">•</span>
