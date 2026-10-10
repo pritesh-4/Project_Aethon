@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import type { ObservationData, ObservationStatus } from '../types.ts';
+import type { SpectralSliceResponse, DetectionResponse } from '@/types/schemas.ts';
 import { observatoryAudio } from '@/lib/audio-synth.ts';
 import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 
@@ -8,6 +9,9 @@ export interface SignalViewportProps {
   status: ObservationStatus;
   isPaused: boolean;
   scanProgress: number; // 0.0 to 1.0 during ANALYZING
+  sliceData?: SpectralSliceResponse | null;
+  isLoadingSlice?: boolean;
+  detectionData?: DetectionResponse | null;
 }
 
 export function SignalViewport({
@@ -15,12 +19,36 @@ export function SignalViewport({
   status,
   isPaused,
   scanProgress,
+  sliceData = null,
+  isLoadingSlice = false,
+  detectionData = null,
 }: SignalViewportProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [zoomLevel, setZoomLevel] = useState<1 | 2>(1);
   const [isAudioActive, setIsAudioActive] = useState(false);
+
+  // Compute robust slice stats when real slice is available
+  const sliceStats = useMemo(() => {
+    if (!sliceData || !sliceData.values || sliceData.values.length === 0) return null;
+    let min = Infinity;
+    let max = -Infinity;
+    const n_time = sliceData.values.length;
+    const n_freq = sliceData.values[0]?.length || 0;
+    if (n_freq === 0) return null;
+    for (let t = 0; t < n_time; t++) {
+      const row = sliceData.values[t];
+      for (let f = 0; f < row.length; f++) {
+        const v = row[f];
+        if (typeof v === 'number' && !Number.isNaN(v)) {
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
+      }
+    }
+    return { min, max, n_time, n_freq };
+  }, [sliceData]);
 
   // Hover coordinate readout state
   const [hoverCoord, setHoverCoord] = useState<{
@@ -37,6 +65,9 @@ export function SignalViewport({
     isPaused,
     scanProgress,
     zoomLevel,
+    sliceData,
+    sliceStats,
+    detectionData,
   });
 
   useEffect(() => {
@@ -46,8 +77,20 @@ export function SignalViewport({
       isPaused,
       scanProgress,
       zoomLevel,
+      sliceData,
+      sliceStats,
+      detectionData,
     };
-  }, [observation, status, isPaused, scanProgress, zoomLevel]);
+  }, [
+    observation,
+    status,
+    isPaused,
+    scanProgress,
+    zoomLevel,
+    sliceData,
+    sliceStats,
+    detectionData,
+  ]);
 
   // Audio coupling
   const toggleAudio = useCallback(() => {
@@ -145,75 +188,121 @@ export function SignalViewport({
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 2. Render Spectrogram Matrix with rich scientific colormap (deep slate -> observatory blue -> solar gold -> white)
-      const matrix = noiseMatrixRef.current;
-      if (matrix && plotW > 0 && plotH > 0) {
-        const cellW = plotW / cols;
-        const cellH = plotH / rows;
-        const driftSlope = current.observation.driftRateHzPerSec;
+      if (current.sliceData && current.sliceStats && plotW > 0 && plotH > 0) {
+        // Real numerical spectral matrix from backend
+        const { min, max, n_time, n_freq } = current.sliceStats;
+        const cellW = plotW / n_time;
+        const cellH = plotH / n_freq;
+        const range = max - min || 1;
 
-        for (let r = 0; r < rows; r++) {
-          const normFreq = 1 - r / rows;
-          for (let c = 0; c < cols; c++) {
-            const normTime = c / cols;
-            const noiseVal = matrix[r * cols + c] * 0.18;
+        for (let t_idx = 0; t_idx < n_time; t_idx++) {
+          for (let f_idx = 0; f_idx < n_freq; f_idx++) {
+            const rawVal = current.sliceData.values[t_idx][f_idx];
+            if (rawVal === null || rawVal === undefined || Number.isNaN(rawVal)) continue;
+            const cl = Math.max(0, Math.min(1, (rawVal - min) / range));
 
-            // Carrier row with Doppler drift
-            const carrierRowNorm =
-              0.52 + (normTime - 0.5) * (driftSlope * 0.45) * (current.zoomLevel === 2 ? 1.8 : 1);
-            const distToCarrier = Math.abs(normFreq - carrierRowNorm);
-
-            let intensity = noiseVal;
-
-            if (distToCarrier < 0.035 * (current.zoomLevel === 2 ? 1.5 : 1)) {
-              const carrierPower = 1 - distToCarrier / 0.035;
-              const flicker = 0.85 + 0.15 * Math.sin(c * 0.4 - t * 4);
-              intensity += carrierPower * 0.75 * flicker;
-            }
-
-            // Anomaly zone intensity boost
-            const isInsideAnomaly =
-              normTime >= 0.35 &&
-              normTime <= 0.78 &&
-              normFreq >= 0.42 &&
-              normFreq <= 0.62 &&
-              (current.status === 'ANOMALY_DETECTED' || current.status === 'CANDIDATE_READY');
-
-            if (isInsideAnomaly && distToCarrier < 0.055) {
-              intensity += 0.22 * Math.sin(c * 0.6 + t * 5);
-            }
-
-            if (intensity > 0.04) {
-              const cl = Math.min(1, intensity);
+            if (cl > 0.02) {
               let cr: number;
               let cg: number;
               let cb: number;
 
               if (cl < 0.35) {
-                // Quiet deep midnight/ink noise floor
                 cr = Math.floor(13 + 20 * cl);
                 cg = Math.floor(20 + 35 * cl);
                 cb = Math.floor(26 + 65 * cl);
               } else if (cl < 0.72) {
-                // Transition into observatory blue to warm gold
                 const factor = (cl - 0.35) / 0.37;
                 cr = Math.floor(35 + 155 * factor);
                 cg = Math.floor(75 + 70 * factor);
                 cb = Math.floor(125 - 55 * factor);
               } else {
-                // High-power core: solar gold to brilliant white
                 const factor = (cl - 0.72) / 0.28;
                 cr = Math.floor(190 + 65 * factor);
                 cg = Math.floor(145 + 110 * factor);
                 cb = Math.floor(70 + 185 * factor);
               }
 
+              // High frequency at top
+              const r = n_freq - 1 - f_idx;
               ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
               ctx.fillRect(
-                paddingLeft + c * cellW,
+                paddingLeft + t_idx * cellW,
                 paddingTop + r * cellH,
-                cellW + 0.5,
-                cellH + 0.5
+                cellW + 0.6,
+                cellH + 0.6
               );
+            }
+          }
+        }
+      } else {
+        // Fallback synthetic matrix for demo/standby mode
+        const matrix = noiseMatrixRef.current;
+        if (matrix && plotW > 0 && plotH > 0) {
+          const cellW = plotW / cols;
+          const cellH = plotH / rows;
+          const driftSlope = current.observation.driftRateHzPerSec;
+
+          for (let r = 0; r < rows; r++) {
+            const normFreq = 1 - r / rows;
+            for (let c = 0; c < cols; c++) {
+              const normTime = c / cols;
+              const noiseVal = matrix[r * cols + c] * 0.18;
+
+              // Carrier row with Doppler drift
+              const carrierRowNorm =
+                0.52 + (normTime - 0.5) * (driftSlope * 0.45) * (current.zoomLevel === 2 ? 1.8 : 1);
+              const distToCarrier = Math.abs(normFreq - carrierRowNorm);
+
+              let intensity = noiseVal;
+
+              if (distToCarrier < 0.035 * (current.zoomLevel === 2 ? 1.5 : 1)) {
+                const carrierPower = 1 - distToCarrier / 0.035;
+                const flicker = 0.85 + 0.15 * Math.sin(c * 0.4 - t * 4);
+                intensity += carrierPower * 0.75 * flicker;
+              }
+
+              // Anomaly zone intensity boost
+              const isInsideAnomaly =
+                normTime >= 0.35 &&
+                normTime <= 0.78 &&
+                normFreq >= 0.42 &&
+                normFreq <= 0.62 &&
+                (current.status === 'ANOMALY_DETECTED' || current.status === 'CANDIDATE_READY');
+
+              if (isInsideAnomaly && distToCarrier < 0.055) {
+                intensity += 0.22 * Math.sin(c * 0.6 + t * 5);
+              }
+
+              if (intensity > 0.04) {
+                const cl = Math.min(1, intensity);
+                let cr: number;
+                let cg: number;
+                let cb: number;
+
+                if (cl < 0.35) {
+                  cr = Math.floor(13 + 20 * cl);
+                  cg = Math.floor(20 + 35 * cl);
+                  cb = Math.floor(26 + 65 * cl);
+                } else if (cl < 0.72) {
+                  const factor = (cl - 0.35) / 0.37;
+                  cr = Math.floor(35 + 155 * factor);
+                  cg = Math.floor(75 + 70 * factor);
+                  cb = Math.floor(125 - 55 * factor);
+                } else {
+                  const factor = (cl - 0.72) / 0.28;
+                  cr = Math.floor(190 + 65 * factor);
+                  cg = Math.floor(145 + 110 * factor);
+                  cb = Math.floor(70 + 185 * factor);
+                }
+
+                ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
+                ctx.fillRect(
+                  paddingLeft + c * cellW,
+                  paddingTop + r * cellH,
+                  cellW + 0.5,
+                  cellH + 0.5
+                );
+              }
             }
           }
         }
@@ -339,15 +428,29 @@ export function SignalViewport({
       ctx.font = '9px "IBM Plex Mono", monospace';
 
       // Frequency Axis Ticks (Left)
-      const centerF = current.observation.frequencyMHz;
-      const spanF = current.observation.bandwidthMHz;
-      const freqLabels = [
-        (centerF + spanF * 0.5).toFixed(2),
-        (centerF + spanF * 0.25).toFixed(2),
-        centerF.toFixed(4) + ' f₀',
-        (centerF - spanF * 0.25).toFixed(2),
-        (centerF - spanF * 0.5).toFixed(2),
-      ];
+      let freqLabels: string[];
+      const coords = current.sliceData?.frequency_coordinates_hz;
+      if (current.sliceData && coords && coords.length > 0) {
+        const fMin = coords[0] / 1e6;
+        const fMax = coords[coords.length - 1] / 1e6;
+        freqLabels = [
+          fMax.toFixed(4),
+          ((fMax * 3 + fMin) / 4).toFixed(4),
+          ((fMax + fMin) / 2).toFixed(4) + ' f₀',
+          ((fMax + fMin * 3) / 4).toFixed(4),
+          fMin.toFixed(4),
+        ];
+      } else {
+        const centerF = current.observation.frequencyMHz;
+        const spanF = current.observation.bandwidthMHz;
+        freqLabels = [
+          (centerF + spanF * 0.5).toFixed(2),
+          (centerF + spanF * 0.25).toFixed(2),
+          centerF.toFixed(4) + ' f₀',
+          (centerF - spanF * 0.25).toFixed(2),
+          (centerF - spanF * 0.5).toFixed(2),
+        ];
+      }
 
       ctx.textAlign = 'right';
       freqLabels.forEach((label, idx) => {
@@ -362,13 +465,19 @@ export function SignalViewport({
       });
 
       // Time Axis Ticks (Bottom)
-      const dur = current.observation.durationSeconds;
+      let tStart = 0;
+      let tSpan = current.observation.durationSeconds;
+      const tCoords = current.sliceData?.time_coordinates_seconds;
+      if (current.sliceData && tCoords && tCoords.length > 0) {
+        tStart = tCoords[0];
+        tSpan = tCoords[tCoords.length - 1] - tStart || 1;
+      }
       const timeSteps = 5;
       ctx.textAlign = 'center';
 
       for (let i = 0; i <= timeSteps; i++) {
         const x = paddingLeft + (plotW / timeSteps) * i;
-        const sec = Math.floor((dur / timeSteps) * i);
+        const sec = Math.floor(tStart + (tSpan / timeSteps) * i);
         const m = Math.floor(sec / 60);
         const s = sec % 60;
         const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
@@ -419,16 +528,37 @@ export function SignalViewport({
       const normX = (x - paddingLeft) / plotW;
       const normY = 1 - (y - paddingTop) / plotH;
 
-      const timeSec = normX * observation.durationSeconds;
-      const centerF = observation.frequencyMHz;
-      const spanF = observation.bandwidthMHz;
-      const freqMHz = centerF - spanF * 0.5 + normY * spanF;
+      let freqMHz: number;
+      let timeSec: number;
+      let powerDbm: number;
 
-      const carrierY =
-        0.52 + (normX - 0.5) * (observation.driftRateHzPerSec * 0.45) * (zoomLevel === 2 ? 1.8 : 1);
-      const dist = Math.abs(normY - carrierY);
-      const powerDbm = dist < 0.04 ? observation.signalPowerDbm : observation.noiseFloorDbm;
+      if (sliceData && sliceStats) {
+        const t_idx = Math.max(
+          0,
+          Math.min(sliceStats.n_time - 1, Math.floor(normX * sliceStats.n_time))
+        );
+        const f_idx = Math.max(
+          0,
+          Math.min(sliceStats.n_freq - 1, Math.floor(normY * sliceStats.n_freq))
+        );
+        freqMHz =
+          ((sliceData.frequency_coordinates_hz && sliceData.frequency_coordinates_hz[f_idx]) || 0) /
+          1e6;
+        timeSec =
+          (sliceData.time_coordinates_seconds && sliceData.time_coordinates_seconds[t_idx]) || 0;
+        powerDbm = sliceData.values[t_idx]?.[f_idx] ?? 0;
+      } else {
+        timeSec = normX * observation.durationSeconds;
+        const centerF = observation.frequencyMHz;
+        const spanF = observation.bandwidthMHz;
+        freqMHz = centerF - spanF * 0.5 + normY * spanF;
 
+        const carrierY =
+          0.52 +
+          (normX - 0.5) * (observation.driftRateHzPerSec * 0.45) * (zoomLevel === 2 ? 1.8 : 1);
+        const dist = Math.abs(normY - carrierY);
+        powerDbm = dist < 0.04 ? observation.signalPowerDbm : observation.noiseFloorDbm;
+      }
       setHoverCoord({
         freqMHz,
         timeSec,
@@ -523,11 +653,15 @@ export function SignalViewport({
         )}
 
         {/* Loading Buffer Overlay */}
-        {status === 'LOADING' && (
+        {(status === 'LOADING' || isLoadingSlice) && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0D141A]/90">
             <div className="flex items-center gap-2 text-[#5C89B7] text-xs font-mono">
               <span className="inline-block animate-spin">◌</span>
-              <span>Buffering observation data...</span>
+              <span>
+                {isLoadingSlice
+                  ? 'Buffering scientific slice from backend...'
+                  : 'Buffering observation data...'}
+              </span>
             </div>
           </div>
         )}

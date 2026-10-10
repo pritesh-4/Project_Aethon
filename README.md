@@ -473,16 +473,38 @@ pytest -v               # Run complete automated test suite
 
 ---
 
-## 14. Future Roadmap
+## 14. Running the Integrated System
 
-1. **Backend Integration:** Connect real-time WebSocket telemetry to a Python FastAPI backend wrapping PyTorch inference models.
-2. **Astropy Integration:** Direct ingestion and celestial coordinate transformation (`astropy.coordinates.SkyCoord`) for automated catalog cross-matching (SIMBAD, Gaia, ATNF Pulsar Database).
-3. **Multi-Station Spatial Correlation:** Ingest synchronized streams from multiple geographically distributed telescopes (e.g., Green Bank and MeerKAT) to implement sub-millisecond VLBI interferometric coincidence checking.
-4. **Foundation Models for Radio Astronomy:** Pretraining large-scale self-supervised spectrogram autoencoders on petabyte archives from Breakthrough Listen and FAST (Five-hundred-meter Aperture Spherical radio Telescope).
+To run the complete full-stack AETHON discovery workspace:
+
+```bash
+# 1. Start the FastAPI Scientific Backend Service
+cd backend
+.venv\Scripts\activate          # Windows PowerShell / CMD
+uvicorn app.main:app --port 8000
+
+# 2. In a separate terminal, launch the Vite React Interface
+npm install
+npm run dev
+```
+
+- **Frontend Console:** http://localhost:5173/
+- **Backend API Docs:** http://localhost:8000/docs
+- **Health Check Endpoint:** http://localhost:8000/api/health
+- **Demo Mode:** By default, AETHON connects to the real authoritative backend. To force explicit demonstration mode without backend connectivity, set `VITE_DEMO_MODE=true` in `.env.local`.
 
 ---
 
-## 15. Acknowledgments & Scientific Attribution
+## 15. Future Roadmap
+
+1. **Canonical BLC1 Cadence Case Study:** Deep multi-pointing ON/OFF target spatial cross-match with BLC1 Proxima Centauri data.
+2. **Astropy Integration:** Direct ingestion and celestial coordinate transformation (`astropy.coordinates.SkyCoord`) for automated catalog cross-matching (SIMBAD, Gaia, ATNF Pulsar Database).
+3. **Multi-Station Spatial Correlation:** Ingest synchronized streams from multiple geographically distributed telescopes (e.g., Green Bank and MeerKAT) to implement sub-millisecond VLBI interferometric coincidence checking.
+4. **Foundation Models for Radio Astronomy:** Pretraining large-scale self-supervised spectrogram autoencoders on petabyte archives from Breakthrough Listen and FAST.
+
+---
+
+## 16. Acknowledgments & Scientific Attribution
 
 Project AETHON is an independent research prototype for astronomical signal discovery.
 
@@ -496,6 +518,6 @@ Scientific inspiration and methodology acknowledge open-source research and data
 
 ---
 
-## 16. License
+## 17. License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.

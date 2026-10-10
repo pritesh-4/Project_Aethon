@@ -3,15 +3,20 @@ import { Link } from 'react-router';
 import type { CandidateSignalData } from '../types.ts';
 import { Button } from '@/components/ui/Button.tsx';
 import { CandidateSignalViewport } from './CandidateSignalViewport.tsx';
-import { X, ChevronDown, ChevronRight, ArrowRight } from 'lucide-react';
+import { X, ChevronDown, ChevronRight, ArrowRight, Download, CheckCircle, Ban } from 'lucide-react';
+import { api } from '@/lib/api.ts';
+import { toast } from 'sonner';
 
 export interface CandidateDetailProps {
   candidate: CandidateSignalData;
   onClose: () => void;
+  onStatusChange?: (newStatus: CandidateSignalData['status']) => void;
 }
 
-export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
+export function CandidateDetail({ candidate, onClose, onStatusChange }: CandidateDetailProps) {
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   // Plain-language evidence claims strictly supported by candidate data
   const getEvidenceClaims = () => {
@@ -74,6 +79,56 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
   };
 
   const evidenceClaims = getEvidenceClaims();
+
+  // Handle PDF Export
+  const handleExportPdf = async () => {
+    setIsExportingPdf(true);
+    try {
+      const blob = await api.downloadCandidatePdf(candidate.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `candidate_${candidate.id}_dossier.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(`Scientific case dossier for ${candidate.id} downloaded.`);
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message || 'Failed to generate PDF case dossier.';
+      toast.error('Export failed', { description: msg });
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  // Handle Candidate Status Review Action
+  const handleReview = async (
+    newBackendStatus: 'interesting' | 'likely_interference' | 'dismissed'
+  ) => {
+    setIsReviewing(true);
+    try {
+      await api.reviewCandidate(candidate.id, {
+        new_status: newBackendStatus,
+        reviewer_id: 'Investigating Analyst',
+        action: 'status_transition',
+        notes: `Triage decision via candidate inspection interface. Status changed to ${newBackendStatus}.`,
+      });
+      const uiStatus: CandidateSignalData['status'] =
+        newBackendStatus === 'interesting'
+          ? 'CONFIRMED'
+          : newBackendStatus === 'likely_interference'
+            ? 'FLAGGED_RFI'
+            : 'REJECTED';
+      onStatusChange?.(uiStatus);
+      toast.success(`Candidate ${candidate.id} marked as ${newBackendStatus}.`);
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message || 'Failed to update review status.';
+      toast.error('Review update failed', { description: msg });
+    } finally {
+      setIsReviewing(false);
+    }
+  };
 
   return (
     <div className="rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] select-none flex flex-col overflow-hidden font-sans shadow-xs">
@@ -213,18 +268,57 @@ export function CandidateDetail({ candidate, onClose }: CandidateDetailProps) {
         )}
       </div>
 
-      {/* 6. PRIMARY ACTION: EXAMINE IN ANALYSIS */}
-      <div className="border-t border-[#D6D2C9] p-4 bg-[#EAE7E0]">
-        <Link to={`/analysis/${candidate.id}`} className="block w-full">
+      {/* 6. TRIAGE ACTIONS & PDF EXPORT */}
+      <div className="border-t border-[#D6D2C9] p-4 bg-[#EAE7E0] space-y-2.5">
+        <div className="grid grid-cols-2 gap-2">
           <Button
-            variant="primary"
-            size="md"
-            icon={<ArrowRight className="h-4 w-4" />}
-            className="w-full text-xs font-semibold justify-center shadow-xs"
+            variant="secondary"
+            size="sm"
+            onClick={() => handleReview('interesting')}
+            disabled={isReviewing}
+            icon={<CheckCircle className="h-3.5 w-3.5 text-[#3D7D54]" />}
+            className="text-xs font-mono justify-center"
           >
-            Examine candidate in analysis
+            Promote
           </Button>
-        </Link>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => handleReview('likely_interference')}
+            disabled={isReviewing}
+            icon={<Ban className="h-3.5 w-3.5 text-[#B64B4B]" />}
+            className="text-xs font-mono justify-center"
+          >
+            Flag RFI
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleExportPdf}
+            disabled={isExportingPdf}
+            state={isExportingPdf ? 'loading' : 'idle'}
+            loadingText="Exporting PDF..."
+            icon={<Download className="h-3.5 w-3.5" />}
+            className="text-xs font-mono justify-center border border-[#D6D2C9]"
+          >
+            Export Dossier (PDF)
+          </Button>
+
+          <Link to={`/analysis/${candidate.id}`} className="block w-full">
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<ArrowRight className="h-4 w-4" />}
+              className="w-full text-xs font-semibold justify-center shadow-xs"
+            >
+              Detailed analysis
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

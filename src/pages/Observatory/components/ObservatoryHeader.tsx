@@ -1,6 +1,6 @@
 import type { ObservationStatus } from '../types.ts';
 import { Button } from '@/components/ui/Button.tsx';
-import { Play, Pause, RotateCcw, Radio } from 'lucide-react';
+import { Play, Pause, RotateCcw, Radio, Upload } from 'lucide-react';
 
 export interface ObservatoryHeaderProps {
   observationId: string;
@@ -13,6 +13,8 @@ export interface ObservatoryHeaderProps {
   onStartAnalysis: () => void;
   onTogglePause: () => void;
   onReset: () => void;
+  onOpenUpload?: () => void;
+  isDemoMode?: boolean;
 }
 
 export function ObservatoryHeader({
@@ -26,6 +28,8 @@ export function ObservatoryHeader({
   onStartAnalysis,
   onTogglePause,
   onReset,
+  onOpenUpload,
+  isDemoMode = false,
 }: ObservatoryHeaderProps) {
   const isAnalyzing = status === 'ANALYZING' || status === 'LOADING';
   const hasResult = status === 'ANOMALY_DETECTED' || status === 'CANDIDATE_READY';
@@ -88,7 +92,12 @@ export function ObservatoryHeader({
           </div>
 
           {/* Status Display */}
-          <div className="flex items-center gap-2 self-start sm:self-end pb-1 font-mono text-xs">
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-end pb-1 font-mono text-xs">
+            {isDemoMode && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[3px] border border-[#E8CFA0] bg-[#FDF6E9] text-[10px] font-mono text-[#9E6E20] font-semibold">
+                DEMO MODE: Synthetic Data
+              </span>
+            )}
             <span
               className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-[3px] border ${statusInfo.color}`}
             >
@@ -127,6 +136,19 @@ export function ObservatoryHeader({
                 ))}
               </select>
             </div>
+
+            {onOpenUpload && (
+              <button
+                type="button"
+                onClick={onOpenUpload}
+                disabled={isAnalyzing}
+                title="Ingest new astronomical observation file (.fil, .fits)"
+                className="h-8 px-2.5 flex items-center gap-1.5 rounded-[3px] border border-[#B6CDE2] bg-[#EAF1F8] text-xs font-mono text-[#376A9B] hover:bg-[#D8E6F3] transition-colors cursor-pointer disabled:opacity-40"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                <span>INGEST FILE</span>
+              </button>
+            )}
 
             <span className="text-[#D6D2C9] hidden sm:inline">•</span>
 

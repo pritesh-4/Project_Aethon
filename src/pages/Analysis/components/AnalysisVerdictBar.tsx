@@ -4,6 +4,7 @@ import type { SignalAnalysisRecord } from '../types.ts';
 import { Button } from '@/components/ui/Button.tsx';
 import { CheckCircle2, Clock, ArrowLeft, Download, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '@/lib/api.ts';
 
 export interface AnalysisVerdictBarProps {
   record: SignalAnalysisRecord;
@@ -12,9 +13,19 @@ export interface AnalysisVerdictBarProps {
 export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
   const [isMarked, setIsMarked] = useState(false);
 
-  const handleMarkForInvestigation = () => {
+  const handleMarkForInvestigation = async () => {
     setIsMarked(true);
-    toast.success(`Candidate ${record.candidateId} marked for review`);
+    try {
+      await api.reviewCandidate(record.candidateId, {
+        new_status: 'under_review',
+        action: 'confirm',
+        reviewer_id: 'researcher_desk',
+        notes: 'Marked for follow-up via Analysis view',
+      });
+      toast.success(`Candidate ${record.candidateId} marked for review`);
+    } catch {
+      toast.info(`Candidate ${record.candidateId} marked locally for review`);
+    }
   };
 
   const handleExportAnalysis = () => {
@@ -98,9 +109,25 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
             variant="secondary"
             size="sm"
             icon={<Download className="h-3.5 w-3.5" />}
-            onClick={handleExportAnalysis}
+            onClick={async () => {
+              try {
+                const blob = await api.downloadCandidatePdf(record.candidateId);
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `candidate_${record.candidateId}_dossier.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                toast.success(`Dossier PDF downloaded for ${record.candidateId}`);
+              } catch {
+                // If PDF generation is not available (e.g. observation without candidate dossier), fallback to JSON
+                handleExportAnalysis();
+              }
+            }}
           >
-            Export
+            Export Dossier
           </Button>
 
           <Link to="/candidates">

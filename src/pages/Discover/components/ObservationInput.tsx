@@ -3,53 +3,122 @@ import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'motion/react';
 import type { DiscoveryObservationMeta } from '../types.ts';
 import { REFERENCE_OBSERVATIONS } from '../data/mockDiscovery.ts';
-import { Upload, Check, AlertCircle, Radio, Sparkles } from 'lucide-react';
+import { Upload, Check, AlertCircle, Radio, Sparkles, Loader2 } from 'lucide-react';
+import { api } from '@/lib/api.ts';
+import { toast } from 'sonner';
 
 export interface ObservationInputProps {
   selectedObservation: DiscoveryObservationMeta | null;
   onSelectObservation: (obs: DiscoveryObservationMeta) => void;
+  catalogObservations?: DiscoveryObservationMeta[];
   disabled?: boolean;
 }
+
+const MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB backend limit
 
 export function ObservationInput({
   selectedObservation,
   onSelectObservation,
+  catalogObservations,
   disabled = false,
 }: ObservationInputProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const displayList =
+    catalogObservations && catalogObservations.length > 0
+      ? catalogObservations
+      : REFERENCE_OBSERVATIONS;
 
   const onDrop = useCallback(
-    (acceptedFiles: File[], fileRejections: unknown[]) => {
+    async (acceptedFiles: File[], fileRejections: unknown[]) => {
       setErrorMsg(null);
       if (fileRejections && (fileRejections as unknown[]).length > 0) {
-        setErrorMsg('Unsupported format — please select a FITS, HDF5, CSV, or JSON file.');
+        setErrorMsg(
+          'Unsupported format — please select a .fil or .fits astronomical observation file.'
+        );
         return;
       }
 
       if (acceptedFiles.length === 0) return;
       const file = acceptedFiles[0];
 
-      const isJson = file.name.endsWith('.json');
-      const isFits = file.name.endsWith('.fits') || file.name.endsWith('.fit');
-      const format = isFits ? 'FITS' : isJson ? 'JSON' : 'CSV';
+      if (file.size > MAX_SIZE_BYTES) {
+        setErrorMsg(
+          `File exceeds maximum upload limit of 100 MB (${(file.size / (1024 * 1024)).toFixed(1)} MB selected).`
+        );
+        return;
+      }
 
-      const customMeta: DiscoveryObservationMeta = {
-        id: `OBS-${Math.floor(1000 + Math.random() * 9000)}`,
-        name: file.name.replace(/\.[^/.]+$/, ''),
-        format,
-        samplesCount: Math.floor(120000 + Math.random() * 60000),
-        durationString: '00:04:45',
-        bandwidthMHz: 12.5,
-        frequencyMHz: 1420.405,
-        telescope: 'Custom Astronomical Feed',
-        fileSizeBytes: file.size,
-        coordinates: {
-          ra: '14h 29m 42s',
-          dec: '-62° 40′ 46″',
-        },
-      };
+      // If in demo mode, create local demonstration metadata without network call
+      if (api.isDemoMode()) {
+        const isFits = file.name.endsWith('.fits') || file.name.endsWith('.fit');
+        const format = isFits ? 'FITS' : 'FIL';
 
-      onSelectObservation(customMeta);
+        const customMeta: DiscoveryObservationMeta = {
+          id: `OBS-${Math.floor(1000 + Math.random() * 9000)}`,
+          name: file.name.replace(/\.[^/.]+$/, ''),
+          format,
+          samplesCount: 16384,
+          durationString: '00:04:45',
+          bandwidthMHz: 12.5,
+          frequencyMHz: 1420.405,
+          telescope: 'Local Astronomical File',
+          fileSizeBytes: file.size,
+          coordinates: {
+            ra: '14h 29m 42s',
+            dec: '-62° 40′ 46″',
+          },
+        };
+
+        onSelectObservation(customMeta);
+        toast.info(`Demonstration observation loaded from ${file.name}`);
+        return;
+      }
+
+      // Real backend ingestion
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      try {
+        const record = await api.uploadObservation(file, (pct: number) => {
+          setUploadProgress(pct);
+        });
+
+        const meta = record.metadata;
+        const durSec = (meta?.time_sample_count ?? 64) * (meta?.time_step_seconds ?? 1.0);
+        const m = Math.floor(durSec / 60);
+        const s = Math.floor(durSec % 60);
+        const durStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+        const customMeta: DiscoveryObservationMeta = {
+          id: record.id,
+          name: meta?.source_name || record.original_filename,
+          format: record.format.toUpperCase(),
+          samplesCount: (meta?.time_sample_count ?? 64) * (meta?.channel_count ?? 256),
+          durationString: durStr,
+          bandwidthMHz: meta?.bandwidth_mhz ?? 10.0,
+          frequencyMHz: meta?.frequency_reference_mhz ?? 1420.405,
+          telescope: meta?.telescope_name || 'Radio Instrument Feed',
+          fileSizeBytes: record.file_size_bytes,
+          coordinates: {
+            ra:
+              meta?.ra_str || (meta?.ra_deg != null ? `${meta.ra_deg.toFixed(4)}°` : '14h 29m 42s'),
+            dec:
+              meta?.dec_str ||
+              (meta?.dec_deg != null ? `${meta.dec_deg.toFixed(4)}°` : '-62° 40′ 46″'),
+          },
+        };
+
+        onSelectObservation(customMeta);
+        toast.success(`Observation ${record.id} uploaded and ready for screening!`);
+      } catch (err: unknown) {
+        const apiErr = err as { message?: string };
+        setErrorMsg(apiErr?.message || 'Failed to upload observation file to backend.');
+      } finally {
+        setIsUploading(false);
+      }
     },
     [onSelectObservation]
   );
@@ -57,12 +126,10 @@ export function ObservationInput({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     maxFiles: 1,
-    disabled,
+    disabled: disabled || isUploading,
     accept: {
-      'text/csv': ['.csv'],
-      'application/json': ['.json'],
       'application/fits': ['.fits', '.fit'],
-      'text/plain': ['.txt'],
+      'application/octet-stream': ['.fil'],
     },
   });
 
@@ -89,11 +156,11 @@ export function ObservationInput({
             <span className="text-[#7E8B96] uppercase tracking-wider font-semibold">
               Select observation
             </span>
-            <span className="text-[#7E8B96]">3 calibrated survey pointings</span>
+            <span className="text-[#7E8B96]">{displayList.length} survey pointings</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            {REFERENCE_OBSERVATIONS.map((obs) => {
+            {displayList.slice(0, 3).map((obs) => {
               const isSelected = selectedObservation?.id === obs.id;
 
               return (
@@ -101,13 +168,13 @@ export function ObservationInput({
                   key={obs.id}
                   type="button"
                   aria-pressed={isSelected}
-                  disabled={disabled}
+                  disabled={disabled || isUploading}
                   onClick={() => onSelectObservation(obs)}
                   className={`relative flex flex-col items-start p-4 rounded-[4px] border text-left transition-all duration-180 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#376A9B] ${
                     isSelected
                       ? 'border-[#376A9B] bg-[#FFFFFF] text-[#17202A] shadow-md ring-1 ring-[#376A9B]/30 scale-[1.01]'
                       : 'border-[#D6D2C9] bg-[#FAF8F5] text-[#56616A] hover:border-[#BCB6A8] hover:bg-[#FFFFFF] hover:shadow-2xs'
-                  } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {/* Active selection bar indicator */}
                   {isSelected && (
@@ -171,13 +238,13 @@ export function ObservationInput({
             <span className="text-[#7E8B96] uppercase tracking-wider font-semibold">
               Upload observation file
             </span>
-            <span className="text-[#7E8B96]">FITS · HDF5 · CSV · JSON</span>
+            <span className="text-[#7E8B96]">.fil · .fits · 100 MB max</span>
           </div>
 
           <div
             {...getRootProps()}
             className={`relative flex min-h-[110px] flex-col items-center justify-center rounded-[4px] border border-dashed transition-all duration-150 cursor-pointer p-6 text-center outline-none focus-visible:ring-2 focus-visible:ring-[#376A9B] ${
-              disabled ? 'opacity-50 cursor-not-allowed' : ''
+              disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''
             } ${
               isDragActive
                 ? 'border-[#376A9B] bg-[#EAF1F8]'
@@ -189,7 +256,26 @@ export function ObservationInput({
             <input {...getInputProps()} aria-label="Upload observation file" />
 
             <AnimatePresence mode="wait">
-              {isDragActive ? (
+              {isUploading ? (
+                <motion.div
+                  key="uploading-state"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="flex items-center gap-2 text-xs font-mono text-[#376A9B]">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Uploading and calibrating observation... {uploadProgress}%</span>
+                  </div>
+                  <div className="w-48 h-1 bg-[#EAE7E0] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#376A9B] transition-all duration-150"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </motion.div>
+              ) : isDragActive ? (
                 <motion.div
                   key="drag-active"
                   initial={{ opacity: 0 }}
@@ -222,12 +308,14 @@ export function ObservationInput({
                   {/* Action First */}
                   <div className="flex items-center gap-2 text-sm font-semibold text-[#17202A]">
                     <Upload className="h-4 w-4 text-[#376A9B]" />
-                    <span>Upload a data file</span>
+                    <span>Upload an observation file</span>
                   </div>
 
                   {/* Supporting text */}
-                  <div className="font-mono text-xs text-[#56616A]">FITS · HDF5 · CSV · JSON</div>
-                  <div className="text-[11px] text-[#7E8B96]">250 MB maximum stream size</div>
+                  <div className="font-mono text-xs text-[#56616A]">
+                    Breakthrough Listen .fil · FITS
+                  </div>
+                  <div className="text-[11px] text-[#7E8B96]">100 MB maximum stream size</div>
                 </motion.div>
               )}
             </AnimatePresence>

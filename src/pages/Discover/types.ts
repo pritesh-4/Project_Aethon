@@ -7,7 +7,7 @@ export type CandidatePriority = 'HIGH' | 'MEDIUM' | 'LOW';
 export interface DiscoveryObservationMeta {
   id: string;
   name: string;
-  format: 'CSV' | 'JSON' | 'FITS' | 'H5';
+  format: 'CSV' | 'JSON' | 'FITS' | 'H5' | 'FIL' | 'SYNTHETIC' | string;
   samplesCount: number;
   durationString: string;
   bandwidthMHz: number;

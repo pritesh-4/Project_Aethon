@@ -402,10 +402,10 @@
 | **Phase 5**  | Scientific Anomaly Detection Engine (BE)                | ✅ Complete | Milestone 2       |
 | **Phase 6**  | Doppler Drift & Temporal Analysis Engine (BE)           | ✅ Complete | Milestone 2       |
 | **Phase 7**  | Candidate Engine & Scientific Case Files (BE)           | ✅ Complete | Milestone 2       |
-| **Phase 8**  | Frontend Integration & Cadence Workflow                 | ⬜ Planned  | Milestone 2       |
+| **Phase 8**  | Frontend Integration & Cadence Workflow                 | ✅ Complete | Milestone 2       |
 | **Phase 9**  | Canonical BLC1 Case Study & Cross-Verification          | ⬜ Planned  | Milestone 2       |
 | **Phase 10** | Performance Profiling & 3-Minute Demo Cache             | ⬜ Planned  | Milestone 2       |
 
 ---
 
-_Last updated: 2026-10-09_
+_Last updated: 2026-10-10_

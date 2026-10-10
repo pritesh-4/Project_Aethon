@@ -1,4 +1,4 @@
-"""SQLite persistence and file management for AETHON astronomical observations."""
+from __future__ import annotations
 
 import json
 import shutil

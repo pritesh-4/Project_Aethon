@@ -1,4 +1,4 @@
-"""Scientific observation ingestion service orchestrating staging, parsing, and persistence."""
+from __future__ import annotations
 
 import hashlib
 import os
@@ -6,6 +6,7 @@ import re
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from fastapi import UploadFile
 
@@ -23,7 +24,9 @@ from app.ingestion.exceptions import (
 )
 from app.ingestion.models import ObservationRecordInternal
 from app.schemas.observations import ObservationRecordResponse
-from app.storage.repository import ObservationRepository
+
+if TYPE_CHECKING:
+    from app.storage.repository import ObservationRepository
 
 logger = get_logger("ingestion.service")
 

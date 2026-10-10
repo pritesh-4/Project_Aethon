@@ -20,6 +20,7 @@ from app.candidates.exceptions import (
     IneligibleDetectionError,
     InvalidCandidateStateTransitionError,
 )
+from app.candidates.repository import CandidateRepository
 from app.core.config import Settings
 from app.core.config import settings as default_settings
 from app.core.logging import get_logger, setup_logging
@@ -62,6 +63,8 @@ def create_app(custom_settings: Settings | None = None) -> FastAPI:
             observations_dir=Path(app_settings.observations_dir),
         )
         repo.init_db()
+        cand_repo = CandidateRepository(db_path=Path(app_settings.db_path))
+        cand_repo.init_db()
 
         yield
         # Shutdown phase

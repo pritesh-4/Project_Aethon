@@ -1,9 +1,16 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { PageTransition } from '@/components/ui/motion.tsx';
+import { api, isDemoMode } from '@/lib/api.ts';
+import type { ObservationRecordResponse, CandidateResponse } from '@/types/schemas.ts';
 
-import type { ArchivedObservation, ArchiveFilterState } from './types.ts';
-import { MOCK_ARCHIVED_OBSERVATIONS, ARCHIVE_SUMMARY_STATS } from './data/mockArchive.ts';
+import type {
+  ArchivedObservation,
+  ArchiveFilterState,
+  ArchivedCandidateEvent,
+  ArchiveSummaryStats,
+} from './types.ts';
+import { MOCK_ARCHIVED_OBSERVATIONS } from './data/mockArchive.ts';
 
 import { ArchiveHeader } from './components/ArchiveHeader.tsx';
 import { ArchiveToolbar } from './components/ArchiveToolbar.tsx';
@@ -11,9 +18,105 @@ import { ArchiveTimeline } from './components/ArchiveTimeline.tsx';
 import { ObservationDrawer } from './components/ObservationDrawer.tsx';
 import { ArchiveEmptyState } from './components/ArchiveEmptyState.tsx';
 
+function mapObservationToArchived(
+  obs: ObservationRecordResponse,
+  linkedCandidates: CandidateResponse[] = []
+): ArchivedObservation {
+  const fRef = obs.metadata?.frequency_reference_mhz ?? 1420.0;
+  const bw = obs.metadata?.bandwidth_mhz ?? 0.5;
+  const sampleCount = obs.metadata?.time_sample_count ?? 1024;
+  const dt = obs.metadata?.time_step_seconds ?? 0.5;
+  const durationSec = Math.round(sampleCount * dt);
+  const minutes = Math.floor(durationSec / 60);
+  const seconds = durationSec % 60;
+  const durationString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+  const candidatesMapped: ArchivedCandidateEvent[] = linkedCandidates.map((c, idx) => {
+    const score = c.current_assessment?.overall_score
+      ? c.current_assessment.overall_score / 100
+      : 0.82;
+    const driftEvidence = c.evidence_items?.find((e) => e.evidence_type === 'drift');
+    const drift =
+      typeof driftEvidence?.scores_or_parameters?.drift_rate_hz_per_s === 'number'
+        ? (driftEvidence.scores_or_parameters.drift_rate_hz_per_s as number)
+        : 0.15;
+    const snr =
+      typeof driftEvidence?.scores_or_parameters?.snr === 'number'
+        ? (driftEvidence.scores_or_parameters.snr as number)
+        : 14.5;
+    const chSpacing = (obs.metadata?.channel_spacing_mhz ?? 0.001) * 1000;
+    const bwKHz = Math.abs(c.target_region.freq_stop - c.target_region.freq_start) * chSpacing;
+
+    return {
+      id: `C${String(idx + 1).padStart(2, '0')}`,
+      fullId: c.candidate_id,
+      signalId: c.candidate_id,
+      label: `C${String(idx + 1).padStart(2, '0')}`,
+      priority: score > 0.8 ? 'HIGH' : score > 0.5 ? 'MEDIUM' : 'LOW',
+      frequencyMHz:
+        fRef +
+        ((c.target_region.freq_start + c.target_region.freq_stop) / 2) *
+          (obs.metadata?.channel_spacing_mhz ?? 0.001),
+      bandwidthKHz: Math.round(bwKHz * 10) / 10,
+      driftRateHzPerSec: drift,
+      snrDb: Math.round(snr * 10) / 10,
+      anomalyScore: score,
+      classification: 'Linear Drift Carrier',
+    };
+  });
+
+  const highPriority = candidatesMapped.filter((c) => c.priority === 'HIGH').length;
+  const dateStr = obs.ingested_at.split('T')[0] || new Date().toISOString().split('T')[0];
+
+  return {
+    id: obs.id,
+    date: dateStr,
+    timestamp: obs.ingested_at.replace('T', ' ').slice(0, 19) + ' UTC',
+    targetName: obs.metadata?.source_name || obs.original_filename,
+    telescope: obs.metadata?.telescope_name || 'Radio Telescope',
+    coordinates: {
+      ra: obs.metadata?.ra_str || '18h 05m 27s',
+      dec: obs.metadata?.dec_str || '-04° 38′ 45″',
+    },
+    frequency: fRef,
+    bandwidth: bw,
+    duration: durationSec,
+    durationString,
+    sampleCount,
+    anomalousRegions: candidatesMapped.length * 3 + (obs.status === 'processed' ? 1 : 0),
+    highPriorityCandidates: highPriority,
+    anomalyIndex: candidatesMapped.length > 0 ? candidatesMapped[0].anomalyScore : 0.45,
+    status:
+      candidatesMapped.length > 0
+        ? 'candidate'
+        : obs.status === 'processed'
+          ? 'analyzed'
+          : 'archived',
+    topCandidate: candidatesMapped[0]?.fullId,
+    candidates: candidatesMapped,
+    modelVersion: '1.0.0',
+    modelName: 'AETHON-DSP',
+    analysisMode: 'SPECTRAL_DRIFT',
+    pipelineStatus: 'SYNCHRONIZED',
+    analysisTimeMs: 120,
+    provenance: {
+      ingestedTime: obs.ingested_at,
+      preprocessedTime: obs.ingested_at,
+      analyzedTime: obs.ingested_at,
+      candidatesGeneratedTime: obs.ingested_at,
+    },
+    notes: `Ingested from ${obs.original_filename} (${obs.format.toUpperCase()}, ${Math.round(obs.file_size_bytes / 1024)} KB, SHA256: ${obs.sha256.slice(0, 10)}...)`,
+  };
+}
+
 export default function ArchivePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedId = searchParams.get('id');
+
+  // Observations dataset
+  const [observations, setObservations] = useState<ArchivedObservation[]>(
+    MOCK_ARCHIVED_OBSERVATIONS
+  );
 
   // Filter state
   const [filters, setFilters] = useState<ArchiveFilterState>({
@@ -28,119 +131,186 @@ export default function ArchivePage() {
   // Selected observation ID state
   const [selectedIdState, setSelectedIdState] = useState<string>('AET-04721');
 
+  // Query real observations and linked candidates from backend
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.allSettled([
+      api.getObservations({ limit: 100 }),
+      api.getCandidates({ limit: 100 }),
+    ]).then(([obsResult, candResult]) => {
+      if (!isMounted) return;
+
+      if (
+        obsResult.status === 'fulfilled' &&
+        obsResult.value.items &&
+        obsResult.value.items.length > 0
+      ) {
+        const allCands = candResult.status === 'fulfilled' ? candResult.value.items : [];
+        const mapped = obsResult.value.items.map((obs) => {
+          const linked = allCands.filter((c) => c.source_observation_ids.includes(obs.id));
+          return mapObservationToArchived(obs, linked);
+        });
+
+        // Merge with mock observations if demo mode is enabled
+        const combined = isDemoMode() ? [...mapped, ...MOCK_ARCHIVED_OBSERVATIONS] : mapped;
+
+        setObservations(combined);
+        if (combined.length > 0) {
+          setSelectedIdState((curr) => {
+            if (requestedId && combined.some((m) => m.id === requestedId)) return requestedId;
+            if (combined.some((m) => m.id === curr)) return curr;
+            return combined[0].id;
+          });
+        }
+      } else {
+        // Fallback to mock records if backend is offline or empty
+        setObservations(MOCK_ARCHIVED_OBSERVATIONS);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [requestedId]);
+
   // Selected ID preference: URL search param if valid, otherwise internal state
   const selectedId = useMemo(() => {
-    if (requestedId && MOCK_ARCHIVED_OBSERVATIONS.some((o) => o.id === requestedId)) {
+    if (requestedId && observations.some((o) => o.id === requestedId)) {
       return requestedId;
     }
     return selectedIdState;
-  }, [requestedId, selectedIdState]);
+  }, [requestedId, selectedIdState, observations]);
 
   // Mobile drawer visibility toggle
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
+  // Dynamic Archive Stats computed from active observations
+  const archiveStats: ArchiveSummaryStats = useMemo(() => {
+    const total = observations.length;
+    const analyzed = observations.filter(
+      (o) => o.status === 'analyzed' || o.status === 'candidate'
+    ).length;
+    const candidateEvents = observations.reduce((acc, o) => acc + o.candidates.length, 0);
+    const flaggedForReview = observations.filter(
+      (o) => o.status === 'review' || o.highPriorityCandidates > 0
+    ).length;
+    const anomalous = observations.filter((o) => o.anomalousRegions > 0).length;
+    const highPriority = observations.reduce((acc, o) => acc + o.highPriorityCandidates, 0);
+    return {
+      totalObservations: total,
+      analyzed,
+      candidateEvents,
+      flaggedForReview,
+      anomalous,
+      highPriority,
+    };
+  }, [observations]);
+
   // Available unique dates
   const availableDates = useMemo(() => {
-    const dates = Array.from(new Set(MOCK_ARCHIVED_OBSERVATIONS.map((o) => o.date)));
+    const dates = Array.from(new Set(observations.map((o) => o.date)));
     return dates.sort((a, b) => b.localeCompare(a));
-  }, []);
+  }, [observations]);
 
   // Filter & Sort observations
   const filteredObservations = useMemo(() => {
-    return MOCK_ARCHIVED_OBSERVATIONS.filter((obs) => {
-      // 1. Search Query
-      const q = filters.searchQuery.toLowerCase().trim();
-      if (q) {
-        const matchesId = obs.id.toLowerCase().includes(q);
-        const matchesTarget = obs.targetName.toLowerCase().includes(q);
-        const matchesTelescope = obs.telescope.toLowerCase().includes(q);
-        const matchesFreq = obs.frequency.toString().includes(q);
-        const matchesDate = obs.date.includes(q);
-        const matchesStatus = obs.status.toLowerCase().includes(q);
-        const matchesCandidates = obs.candidates.some(
-          (c) =>
-            c.id.toLowerCase().includes(q) ||
-            c.fullId.toLowerCase().includes(q) ||
-            (c.classification && c.classification.toLowerCase().includes(q))
-        );
-        if (
-          !matchesId &&
-          !matchesTarget &&
-          !matchesTelescope &&
-          !matchesFreq &&
-          !matchesDate &&
-          !matchesStatus &&
-          !matchesCandidates
-        ) {
+    return observations
+      .filter((obs) => {
+        // 1. Search Query
+        const q = filters.searchQuery.toLowerCase().trim();
+        if (q) {
+          const matchesId = obs.id.toLowerCase().includes(q);
+          const matchesTarget = obs.targetName.toLowerCase().includes(q);
+          const matchesTelescope = obs.telescope.toLowerCase().includes(q);
+          const matchesFreq = obs.frequency.toString().includes(q);
+          const matchesDate = obs.date.includes(q);
+          const matchesStatus = obs.status.toLowerCase().includes(q);
+          const matchesCandidates = obs.candidates.some(
+            (c) =>
+              c.id.toLowerCase().includes(q) ||
+              c.fullId.toLowerCase().includes(q) ||
+              (c.classification && c.classification.toLowerCase().includes(q))
+          );
+          if (
+            !matchesId &&
+            !matchesTarget &&
+            !matchesTelescope &&
+            !matchesFreq &&
+            !matchesDate &&
+            !matchesStatus &&
+            !matchesCandidates
+          ) {
+            return false;
+          }
+        }
+
+        // 2. Date Filter
+        if (filters.dateFilter !== 'ALL' && obs.date !== filters.dateFilter) {
           return false;
         }
-      }
 
-      // 2. Date Filter
-      if (filters.dateFilter !== 'ALL' && obs.date !== filters.dateFilter) {
-        return false;
-      }
-
-      // 3. Status Filter
-      if (filters.statusFilter !== 'ALL' && obs.status !== filters.statusFilter) {
-        return false;
-      }
-
-      // 4. Anomaly Filter
-      if (filters.anomalyFilter === 'ANOMALOUS' && obs.anomalousRegions <= 0) {
-        return false;
-      }
-      if (filters.anomalyFilter === 'HIGH' && obs.anomalousRegions < 10) {
-        return false;
-      }
-      if (filters.anomalyFilter === 'NONE' && obs.anomalousRegions !== 0) {
-        return false;
-      }
-
-      // 5. Priority Filter
-      if (filters.priorityFilter !== 'ALL') {
-        const hasPriorityCandidate = obs.candidates.some(
-          (c) => c.priority === filters.priorityFilter
-        );
-        if (!hasPriorityCandidate) return false;
-      }
-
-      return true;
-    }).sort((a, b) => {
-      switch (filters.sortBy) {
-        case 'newest':
-          return b.timestamp.localeCompare(a.timestamp);
-        case 'oldest':
-          return a.timestamp.localeCompare(b.timestamp);
-        case 'anomalyIndex':
-          return b.anomalyIndex - a.anomalyIndex;
-        case 'candidateCount':
-          return b.candidates.length - a.candidates.length;
-        case 'priority': {
-          const priorityVal = (obs: ArchivedObservation) => {
-            if (obs.status === 'review') return 4;
-            if (obs.highPriorityCandidates > 0) return 3;
-            if (obs.candidates.length > 0) return 2;
-            if (obs.status === 'analyzed') return 1;
-            return 0;
-          };
-          return priorityVal(b) - priorityVal(a);
+        // 3. Status Filter
+        if (filters.statusFilter !== 'ALL' && obs.status !== filters.statusFilter) {
+          return false;
         }
-        default:
-          return 0;
-      }
-    });
-  }, [filters]);
+
+        // 4. Anomaly Filter
+        if (filters.anomalyFilter === 'ANOMALOUS' && obs.anomalousRegions <= 0) {
+          return false;
+        }
+        if (filters.anomalyFilter === 'HIGH' && obs.anomalousRegions < 10) {
+          return false;
+        }
+        if (filters.anomalyFilter === 'NONE' && obs.anomalousRegions !== 0) {
+          return false;
+        }
+
+        // 5. Priority Filter
+        if (filters.priorityFilter !== 'ALL') {
+          const hasPriorityCandidate = obs.candidates.some(
+            (c) => c.priority === filters.priorityFilter
+          );
+          if (!hasPriorityCandidate) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        switch (filters.sortBy) {
+          case 'newest':
+            return b.timestamp.localeCompare(a.timestamp);
+          case 'oldest':
+            return a.timestamp.localeCompare(b.timestamp);
+          case 'anomalyIndex':
+            return b.anomalyIndex - a.anomalyIndex;
+          case 'candidateCount':
+            return b.candidates.length - a.candidates.length;
+          case 'priority': {
+            const priorityVal = (obs: ArchivedObservation) => {
+              if (obs.status === 'review') return 4;
+              if (obs.highPriorityCandidates > 0) return 3;
+              if (obs.candidates.length > 0) return 2;
+              if (obs.status === 'analyzed') return 1;
+              return 0;
+            };
+            return priorityVal(b) - priorityVal(a);
+          }
+          default:
+            return 0;
+        }
+      });
+  }, [observations, filters]);
 
   // Selected observation object
   const selectedObservation = useMemo(() => {
     return (
       filteredObservations.find((o) => o.id === selectedId) ||
       filteredObservations[0] ||
-      MOCK_ARCHIVED_OBSERVATIONS.find((o) => o.id === selectedId) ||
+      observations.find((o) => o.id === selectedId) ||
       null
     );
-  }, [filteredObservations, selectedId]);
+  }, [filteredObservations, selectedId, observations]);
 
   // Adjacent observation navigation
   const currentIndex = useMemo(() => {
@@ -179,7 +349,6 @@ export default function ArchivePage() {
   // Keyboard navigation for records (ArrowUp / ArrowDown)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is typing in an input
       if (
         document.activeElement instanceof HTMLInputElement ||
         document.activeElement instanceof HTMLTextAreaElement ||
@@ -206,19 +375,19 @@ export default function ArchivePage() {
   return (
     <PageTransition>
       <div className="min-h-[calc(100vh-2.5rem)] bg-[#F4F1EA] text-[#17202A] flex flex-col selection:bg-[#376A9B]/20 selection:text-[#376A9B]">
-        {/* 1. Header */}
-        <ArchiveHeader stats={ARCHIVE_SUMMARY_STATS} />
+        {/* 1. Header with dynamic counts */}
+        <ArchiveHeader stats={archiveStats} />
 
         {/* 2. Toolbar (Search, Filter, Sort) */}
         <ArchiveToolbar
           filters={filters}
           onFilterChange={setFilters}
           availableDates={availableDates}
-          totalRecords={MOCK_ARCHIVED_OBSERVATIONS.length}
+          totalRecords={observations.length}
           filteredCount={filteredObservations.length}
         />
 
-        {/* 4. Main Body: Timeline + Right-Side Drawer */}
+        {/* 3. Main Body: Timeline + Right-Side Drawer */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           {/* Left Column: Timeline List */}
           <div

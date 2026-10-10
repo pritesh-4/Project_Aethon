@@ -1,22 +1,47 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import type { SignalAnalysisRecord, AnalysisStageId } from '../types.ts';
+import type { SpectralSliceResponse } from '@/types/schemas.ts';
 import { observatoryAudio } from '@/lib/audio-synth.ts';
 import { Volume2, VolumeX } from 'lucide-react';
 
 export interface PrimarySignalVisualProps {
   record: SignalAnalysisRecord;
   activeStage: AnalysisStageId;
+  sliceData?: SpectralSliceResponse | null;
 }
 
-export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisualProps) {
+export function PrimarySignalVisual({ record, activeStage, sliceData }: PrimarySignalVisualProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isAudioActive, setIsAudioActive] = useState(false);
 
-  const stateRef = useRef({ record, activeStage });
+  const sliceStats = useMemo(() => {
+    if (!sliceData || !sliceData.values || sliceData.values.length === 0) return null;
+    let min = Infinity;
+    let max = -Infinity;
+    const n_time = sliceData.values.length;
+    const n_freq = sliceData.values[0]?.length || 0;
+    if (n_freq === 0) return null;
+    for (let t = 0; t < n_time; t++) {
+      const row = sliceData.values[t];
+      if (!row) continue;
+      for (let f = 0; f < row.length; f++) {
+        const v = row[f];
+        if (typeof v === 'number' && !Number.isNaN(v)) {
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
+      }
+    }
+    if (!Number.isFinite(min)) min = 0;
+    if (!Number.isFinite(max)) max = 1;
+    return { min, max, n_time, n_freq };
+  }, [sliceData]);
+
+  const stateRef = useRef({ record, activeStage, sliceData, sliceStats });
   useEffect(() => {
-    stateRef.current = { record, activeStage };
-  }, [record, activeStage]);
+    stateRef.current = { record, activeStage, sliceData, sliceStats };
+  }, [record, activeStage, sliceData, sliceStats]);
 
   const toggleAudio = useCallback(() => {
     const active = observatoryAudio.toggle();
@@ -128,54 +153,104 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       // STAGE 1: OBSERVATION (Raw Time-Frequency Spectrogram)
       // ========================================================
       if (stage === 'observation') {
-        const cellW = plotW / cols;
-        const cellH = plotH / rows;
-        const driftSlope = rec.driftRateHzPerSec;
+        const currentSlice = stateRef.current.sliceData;
+        const currentStats = stateRef.current.sliceStats;
 
-        for (let r = 0; r < rows; r++) {
-          const normFreq = 1 - r / rows;
-          for (let c = 0; c < cols; c++) {
-            const normTime = c / cols;
-            const noise = noiseMatrix[r * cols + c] * 0.18;
+        if (currentSlice && currentStats && plotW > 0 && plotH > 0) {
+          const { min, max, n_time, n_freq } = currentStats;
+          const cellW = plotW / n_time;
+          const cellH = plotH / n_freq;
+          const range = max - min || 1;
 
-            const carrierCenter = 0.52 + (normTime - 0.5) * (driftSlope * 0.45);
-            const dist = Math.abs(normFreq - carrierCenter);
+          for (let t_idx = 0; t_idx < n_time; t_idx++) {
+            for (let f_idx = 0; f_idx < n_freq; f_idx++) {
+              const rawVal = currentSlice.values[t_idx][f_idx];
+              if (rawVal === null || rawVal === undefined || Number.isNaN(rawVal)) continue;
+              const cl = Math.max(0, Math.min(1, (rawVal - min) / range));
 
-            let intensity = noise;
-            if (dist < 0.045) {
-              intensity += (1 - dist / 0.045) * (0.65 + Math.sin(c * 0.4 - t * 4) * 0.15);
+              if (cl > 0.02) {
+                let cr: number;
+                let cg: number;
+                let cb: number;
+
+                if (cl < 0.35) {
+                  const factor = cl / 0.35;
+                  cr = Math.floor(13 + 30 * factor);
+                  cg = Math.floor(20 + 60 * factor);
+                  cb = Math.floor(26 + 100 * factor);
+                } else if (cl < 0.75) {
+                  const factor = (cl - 0.35) / 0.4;
+                  cr = Math.floor(25 + 60 * factor);
+                  cg = Math.floor(44 + 90 * factor);
+                  cb = Math.floor(66 + 115 * factor);
+                } else {
+                  const factor = (cl - 0.75) / 0.25;
+                  cr = Math.floor(85 + 120 * factor);
+                  cg = Math.floor(134 + 60 * factor);
+                  cb = Math.floor(181 - 70 * factor);
+                }
+
+                const r = n_freq - 1 - f_idx;
+                ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
+                ctx.fillRect(
+                  paddingLeft + t_idx * cellW,
+                  paddingTop + r * cellH,
+                  cellW + 0.6,
+                  cellH + 0.6
+                );
+              }
             }
+          }
+        } else {
+          const cellW = plotW / cols;
+          const cellH = plotH / rows;
+          const driftSlope = rec.driftRateHzPerSec;
 
-            if (intensity > 0.06) {
-              const cl = Math.min(1, intensity);
-              let cr: number;
-              let cg: number;
-              let cb: number;
+          for (let r = 0; r < rows; r++) {
+            const normFreq = 1 - r / rows;
+            for (let c = 0; c < cols; c++) {
+              const normTime = c / cols;
+              const noise = noiseMatrix[r * cols + c] * 0.18;
 
-              if (cl < 0.35) {
-                const factor = cl / 0.35;
-                cr = Math.floor(13 + 30 * factor);
-                cg = Math.floor(20 + 60 * factor);
-                cb = Math.floor(26 + 100 * factor);
-              } else if (cl < 0.75) {
-                const factor = (cl - 0.35) / 0.4;
-                cr = Math.floor(25 + 60 * factor);
-                cg = Math.floor(44 + 90 * factor);
-                cb = Math.floor(66 + 115 * factor);
-              } else {
-                const factor = (cl - 0.75) / 0.25;
-                cr = Math.floor(85 + 120 * factor);
-                cg = Math.floor(134 + 60 * factor);
-                cb = Math.floor(181 - 70 * factor);
+              const carrierCenter = 0.52 + (normTime - 0.5) * (driftSlope * 0.45);
+              const dist = Math.abs(normFreq - carrierCenter);
+
+              let intensity = noise;
+              if (dist < 0.045) {
+                intensity += (1 - dist / 0.045) * (0.65 + Math.sin(c * 0.4 - t * 4) * 0.15);
               }
 
-              ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
-              ctx.fillRect(
-                paddingLeft + c * cellW,
-                paddingTop + r * cellH,
-                cellW + 0.5,
-                cellH + 0.5
-              );
+              if (intensity > 0.06) {
+                const cl = Math.min(1, intensity);
+                let cr: number;
+                let cg: number;
+                let cb: number;
+
+                if (cl < 0.35) {
+                  const factor = cl / 0.35;
+                  cr = Math.floor(13 + 30 * factor);
+                  cg = Math.floor(20 + 60 * factor);
+                  cb = Math.floor(26 + 100 * factor);
+                } else if (cl < 0.75) {
+                  const factor = (cl - 0.35) / 0.4;
+                  cr = Math.floor(25 + 60 * factor);
+                  cg = Math.floor(44 + 90 * factor);
+                  cb = Math.floor(66 + 115 * factor);
+                } else {
+                  const factor = (cl - 0.75) / 0.25;
+                  cr = Math.floor(85 + 120 * factor);
+                  cg = Math.floor(134 + 60 * factor);
+                  cb = Math.floor(181 - 70 * factor);
+                }
+
+                ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
+                ctx.fillRect(
+                  paddingLeft + c * cellW,
+                  paddingTop + r * cellH,
+                  cellW + 0.5,
+                  cellH + 0.5
+                );
+              }
             }
           }
         }
@@ -301,43 +376,71 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       // STAGE 4: ANOMALY (Residual Divergence & Doppler Drift)
       // ========================================================
       if (stage === 'anomaly') {
-        const cellW = plotW / cols;
-        const cellH = plotH / rows;
-        const driftSlope = rec.driftRateHzPerSec;
+        const currentSlice = stateRef.current.sliceData;
+        const currentStats = stateRef.current.sliceStats;
 
-        // Spectrogram
-        for (let r = 0; r < rows; r++) {
-          const normFreq = 1 - r / rows;
-          for (let c = 0; c < cols; c++) {
-            const normTime = c / cols;
-            const noise = noiseMatrix[r * cols + c] * 0.16;
+        if (currentSlice && currentStats && plotW > 0 && plotH > 0) {
+          const { min, max, n_time, n_freq } = currentStats;
+          const cellW = plotW / n_time;
+          const cellH = plotH / n_freq;
+          const range = max - min || 1;
 
-            const carrierCenter = 0.52 + (normTime - 0.5) * (driftSlope * 0.45);
-            const dist = Math.abs(normFreq - carrierCenter);
-
-            let intensity = noise;
-            if (dist < 0.045) {
-              intensity += (1 - dist / 0.045) * 0.75;
+          for (let t_idx = 0; t_idx < n_time; t_idx++) {
+            for (let f_idx = 0; f_idx < n_freq; f_idx++) {
+              const rawVal = currentSlice.values[t_idx][f_idx];
+              if (rawVal === null || rawVal === undefined || Number.isNaN(rawVal)) continue;
+              const cl = Math.max(0, Math.min(1, (rawVal - min) / range));
+              if (cl > 0.04) {
+                const r = n_freq - 1 - f_idx;
+                ctx.fillStyle = `rgba(92, 137, 183, ${cl * 0.85})`;
+                ctx.fillRect(
+                  paddingLeft + t_idx * cellW,
+                  paddingTop + r * cellH,
+                  cellW + 0.6,
+                  cellH + 0.6
+                );
+              }
             }
+          }
+        } else {
+          const cellW = plotW / cols;
+          const cellH = plotH / rows;
+          const driftSlope = rec.driftRateHzPerSec;
 
-            if (intensity > 0.06) {
-              const cl = Math.min(1, intensity);
-              ctx.fillStyle = `rgba(92, 137, 183, ${cl * 0.85})`;
-              ctx.fillRect(
-                paddingLeft + c * cellW,
-                paddingTop + r * cellH,
-                cellW + 0.5,
-                cellH + 0.5
-              );
+          // Spectrogram
+          for (let r = 0; r < rows; r++) {
+            const normFreq = 1 - r / rows;
+            for (let c = 0; c < cols; c++) {
+              const normTime = c / cols;
+              const noise = noiseMatrix[r * cols + c] * 0.16;
+
+              const carrierCenter = 0.52 + (normTime - 0.5) * (driftSlope * 0.45);
+              const dist = Math.abs(normFreq - carrierCenter);
+
+              let intensity = noise;
+              if (dist < 0.045) {
+                intensity += (1 - dist / 0.045) * 0.75;
+              }
+
+              if (intensity > 0.06) {
+                const cl = Math.min(1, intensity);
+                ctx.fillStyle = `rgba(92, 137, 183, ${cl * 0.85})`;
+                ctx.fillRect(
+                  paddingLeft + c * cellW,
+                  paddingTop + r * cellH,
+                  cellW + 0.5,
+                  cellH + 0.5
+                );
+              }
             }
           }
         }
 
         // Anomaly Bounding Bracket & Vector (Solar Gold #C19348)
-        const ax = paddingLeft + plotW * 0.35;
-        const aw = plotW * 0.42;
-        const ay = paddingTop + plotH * 0.28;
-        const ah = plotH * 0.42;
+        const ax = paddingLeft + plotW * 0.28;
+        const aw = plotW * 0.48;
+        const ay = paddingTop + plotH * 0.24;
+        const ah = plotH * 0.48;
 
         ctx.strokeStyle = '#C19348';
         ctx.lineWidth = 1.3;
@@ -398,22 +501,48 @@ export function PrimarySignalVisual({ record, activeStage }: PrimarySignalVisual
       ctx.fillStyle = '#7C8E9E';
       ctx.font = '10px "IBM Plex Mono", monospace';
 
-      // Left Frequency Axis
-      const f0 = rec.frequencyMHz;
-      ctx.textAlign = 'right';
-      ctx.fillText('+20 kHz', paddingLeft - 6, paddingTop + 8);
-      ctx.fillText(`${f0.toFixed(2)} MHz`, paddingLeft - 6, cy + 3);
-      ctx.fillText('-20 kHz', paddingLeft - 6, paddingTop + plotH - 2);
+      const currentSlice = stateRef.current.sliceData;
+      const fCoords = currentSlice?.frequency_coordinates_hz;
+      const tCoords = currentSlice?.time_coordinates_seconds;
+      if (currentSlice && fCoords && fCoords.length > 0) {
+        // Left Frequency Axis
+        const fMin = fCoords[0] / 1e6;
+        const fMax = fCoords[fCoords.length - 1] / 1e6;
+        const fMid = (fMin + fMax) / 2;
 
-      // Bottom Time Axis
-      ctx.textAlign = 'center';
-      ctx.fillText('0s', paddingLeft + 12, paddingTop + plotH + 16);
-      ctx.fillText(`Midpoint`, paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
-      ctx.fillText(
-        `${rec.durationSeconds.toFixed(1)}s`,
-        paddingLeft + plotW - 14,
-        paddingTop + plotH + 16
-      );
+        ctx.textAlign = 'right';
+        ctx.fillText(`${fMax.toFixed(2)} MHz`, paddingLeft - 6, paddingTop + 8);
+        ctx.fillText(`${fMid.toFixed(2)} MHz`, paddingLeft - 6, cy + 3);
+        ctx.fillText(`${fMin.toFixed(2)} MHz`, paddingLeft - 6, paddingTop + plotH - 2);
+
+        // Bottom Time Axis
+        const tStart = tCoords && tCoords.length > 0 ? tCoords[0] : 0;
+        const tEnd =
+          tCoords && tCoords.length > 0 ? tCoords[tCoords.length - 1] : rec.durationSeconds;
+        const tMid = (tStart + tEnd) / 2;
+
+        ctx.textAlign = 'center';
+        ctx.fillText(`${tStart.toFixed(1)}s`, paddingLeft + 12, paddingTop + plotH + 16);
+        ctx.fillText(`${tMid.toFixed(1)}s`, paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
+        ctx.fillText(`${tEnd.toFixed(1)}s`, paddingLeft + plotW - 14, paddingTop + plotH + 16);
+      } else {
+        // Left Frequency Axis
+        const f0 = rec.frequencyMHz;
+        ctx.textAlign = 'right';
+        ctx.fillText('+20 kHz', paddingLeft - 6, paddingTop + 8);
+        ctx.fillText(`${f0.toFixed(2)} MHz`, paddingLeft - 6, cy + 3);
+        ctx.fillText('-20 kHz', paddingLeft - 6, paddingTop + plotH - 2);
+
+        // Bottom Time Axis
+        ctx.textAlign = 'center';
+        ctx.fillText('0s', paddingLeft + 12, paddingTop + plotH + 16);
+        ctx.fillText(`Midpoint`, paddingLeft + plotW * 0.5, paddingTop + plotH + 16);
+        ctx.fillText(
+          `${rec.durationSeconds.toFixed(1)}s`,
+          paddingLeft + plotW - 14,
+          paddingTop + plotH + 16
+        );
+      }
 
       animId = requestAnimationFrame(render);
     };

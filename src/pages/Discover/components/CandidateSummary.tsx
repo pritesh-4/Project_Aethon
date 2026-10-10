@@ -3,6 +3,8 @@ import { Link } from 'react-router';
 import type { DiscoveredCandidate, CandidatePriority } from '../types.ts';
 import { Button } from '@/components/ui/Button.tsx';
 import { ExternalLink, ArrowRight } from 'lucide-react';
+import { api } from '@/lib/api.ts';
+import { toast } from 'sonner';
 
 export interface CandidateSummaryProps {
   candidates: DiscoveredCandidate[];
@@ -174,7 +176,7 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#D6D2C9]">
+          <div className="pt-3 border-t border-[#D6D2C9] space-y-2">
             <Link to={`/analysis/${selectedCandidate.id}`} className="block w-full">
               <Button
                 variant="primary"
@@ -185,6 +187,40 @@ export function CandidateSummary({ candidates, observationId }: CandidateSummary
                 Inspect candidate in detail
               </Button>
             </Link>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={async () => {
+                if (!observationId) return;
+                try {
+                  await api.createCandidate({
+                    observation_id: observationId,
+                    target_region: {
+                      time_start: 0,
+                      time_stop: 64,
+                      freq_start: 0,
+                      freq_stop: 256,
+                    },
+                    physical_coordinates: {
+                      frequency_mhz: selectedCandidate.frequencyMHz,
+                      drift_rate_hz_s: selectedCandidate.driftRateHzPerSec,
+                      snr_db: selectedCandidate.snrDb,
+                    },
+                  });
+                  toast.success(`Candidate ${selectedCandidate.id} saved to Candidate Ledger!`, {
+                    description: 'Viewable on Candidate Review Ledger page.',
+                  });
+                } catch (err: unknown) {
+                  const msg =
+                    (err as { message?: string })?.message || 'Failed to save candidate to ledger.';
+                  toast.error('Could not save candidate', { description: msg });
+                }
+              }}
+              className="w-full text-xs font-mono"
+            >
+              Save to candidate ledger
+            </Button>
           </div>
         </div>
       </div>
