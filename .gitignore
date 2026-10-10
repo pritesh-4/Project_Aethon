@@ -41,3 +41,6 @@ venv/
 
 .mypy_cache
 .ruff_cache
+
+# Generated offline demonstration output
+demo_output/

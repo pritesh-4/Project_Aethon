@@ -1,0 +1,207 @@
+{
+  "verification_id": "aethon_phase9_pipeline_verification",
+  "verified_at_utc": "2026-10-10T05:37:36.938013+00:00",
+  "total_steps": 14,
+  "passed_steps": 14,
+  "all_passed": true,
+  "steps": [
+    {
+      "step": "1. Application Startup & Health Check",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:32.962032+00:00",
+      "details": {
+        "status_code": 200,
+        "response": {
+          "status": "healthy",
+          "service": "aethon-backend",
+          "version": "0.1.0",
+          "environment": "development",
+          "timestamp": "2026-10-10T05:37:32.953265Z"
+        }
+      }
+    },
+    {
+      "step": "2. Generate Format-Valid Filterbank Fixture",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:33.011330+00:00",
+      "details": {
+        "fixture_path": "C:\\Users\\HP\\AppData\\Local\\Temp\\tmppyswv_7n\\voyager1_carrier.fil",
+        "size_bytes": 8414
+      }
+    },
+    {
+      "step": "3. Observation Ingestion & Provenance Registration",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:33.160904+00:00",
+      "details": {
+        "status_code": 201,
+        "observation_id": "50f5994f-f81f-4abd-9d81-fea0bf42c86e",
+        "sha256": "77e8ac84c2f0a21ec7799960470b66cd18520bd4114c9f932e524927042fb75a",
+        "provenance": {
+          "parser_name": "blimpy.filterbank",
+          "parser_version": "2.1.4",
+          "parsed_at": "2026-10-10T05:37:33.105930+00:00",
+          "source_format": "fil",
+          "layout": "sigproc_filterbank",
+          "notes": "Parsed via blimpy Waterfall header reader without array loading"
+        }
+      }
+    },
+    {
+      "step": "4. Verify Persisted Observation Record & Astronomical Metadata",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:33.225137+00:00",
+      "details": {
+        "status_code": 200,
+        "channel_count": 64,
+        "time_samples": 32,
+        "source_name": "VOYAGER-1"
+      }
+    },
+    {
+      "step": "5. Canonical Spectral Slice Retrieval (2D Axis Semantics)",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:33.568177+00:00",
+      "details": {
+        "status_code": 200,
+        "shape": [
+          16,
+          32
+        ],
+        "time_axis_samples": 16,
+        "freq_axis_channels": 32
+      }
+    },
+    {
+      "step": "6. Robust Signal Processing & RFI Quality Assessment",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:33.911076+00:00",
+      "details": {
+        "status_code": 200,
+        "median": 1.0,
+        "mad": 0.0,
+        "total_flagged_cells": 0,
+        "flagged_fraction": 0.0
+      }
+    },
+    {
+      "step": "7. Statistical Baseline & Isolation Forest Anomaly Detection",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:34.567722+00:00",
+      "details": {
+        "status_code": 200,
+        "total_windows_evaluated": 21,
+        "anomalous_regions_count": 21
+      }
+    },
+    {
+      "step": "8. Doppler Frequency Drift & Temporal Analysis",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:34.930512+00:00",
+      "details": {
+        "status_code": 200,
+        "estimated_drift_hz_s": null,
+        "drift_uncertainty": null,
+        "observed_duration_s": null
+      }
+    },
+    {
+      "step": "9. Candidate Record Creation & Spatial Ledger Registration",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:35.061059+00:00",
+      "details": {
+        "status_code": 201,
+        "candidate_id": "cand_325b4e7c5e1b",
+        "status": "unreviewed"
+      }
+    },
+    {
+      "step": "10. Versioned Explainable Candidate Scoring",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:35.150996+00:00",
+      "details": {
+        "status_code": 200,
+        "overall_score": 10.0,
+        "policy_version": "1.0.0",
+        "component_contributions": {
+          "anomaly_evidence": 0.0,
+          "doppler_drift": 0.0,
+          "temporal_persistence": 0.0,
+          "data_quality": 10.0,
+          "recurrence_bonus": 0.0
+        }
+      }
+    },
+    {
+      "step": "11. Candidate Review Lifecycle State Transition",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:35.224045+00:00",
+      "details": {
+        "status_code": 200,
+        "new_status": "under_review",
+        "review_id": "rev_5d11db9c0b84"
+      }
+    },
+    {
+      "step": "12. Structured Scientific Dossier Generation (JSON Snapshot)",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:35.284735+00:00",
+      "details": {
+        "status_code": 200,
+        "dossier_id": "dos_a6ab48209800",
+        "assessment_version": 2,
+        "review_history_count": 1
+      }
+    },
+    {
+      "step": "13. Publication-Grade Vector PDF Research Dossier Export",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:36.540517+00:00",
+      "details": {
+        "status_code": 200,
+        "content_type": "application/pdf",
+        "pdf_size_bytes": 52883,
+        "is_valid_pdf_magic": true
+      }
+    },
+    {
+      "step": "14. Negative & Failure Branch Robustness (Safe Error Envelopes)",
+      "passed": true,
+      "timestamp_utc": "2026-10-10T05:37:36.927000+00:00",
+      "details": {
+        "checks": [
+          {
+            "test": "unsupported_upload",
+            "status_code": 400,
+            "passed": true
+          },
+          {
+            "test": "missing_observation_slice",
+            "status_code": 404,
+            "passed": true
+          },
+          {
+            "test": "out_of_bounds_slice",
+            "status_code": 422,
+            "passed": true
+          },
+          {
+            "test": "missing_candidate",
+            "status_code": 404,
+            "passed": true
+          },
+          {
+            "test": "invalid_status_transition",
+            "status_code": 422,
+            "passed": true
+          },
+          {
+            "test": "missing_candidate_pdf",
+            "status_code": 404,
+            "passed": true
+          }
+        ]
+      }
+    }
+  ]
+}

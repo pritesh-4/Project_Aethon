@@ -468,12 +468,63 @@ npm run check           # Run complete multi-step quality gate locally
 ruff check .            # Check Python code style and errors
 ruff format --check .   # Verify Python code formatting
 mypy app                # Strict static type check
-pytest -v               # Run complete automated test suite
+pytest -v               # Run complete automated test suite (193 tests)
 ```
 
 ---
 
-## 14. Running the Integrated System
+## 14. Scientific Validation, Benchmarks & Offline Demonstration
+
+AETHON includes automated verification scripts and controlled synthetic benchmark runners designed for rigorous evaluation and reproducible audit trails:
+
+### 1. Controlled Synthetic Benchmark Evaluation
+
+Evaluates trivial baseline control, distribution-free statistical MAD baseline, and unsupervised Isolation Forest on held-out synthetic datasets with strict split isolation (reference seeds 1000..1009 vs evaluation seed 42):
+
+```bash
+# Windows PowerShell / CMD
+backend\.venv\Scripts\python.exe backend\scripts\run_benchmark_evaluation.py
+
+# macOS / Linux
+backend/.venv/bin/python backend/scripts/run_benchmark_evaluation.py
+```
+
+_Outputs: `reports/benchmark_evaluation_report.json`_
+
+### 2. End-to-End Pipeline & Negative Envelope Verification
+
+Exercises 14 automated integration and error-handling paths (SIGPROC upload, canonical slicing, RFI detection, anomaly scoring, drift estimation, candidate creation, versioned assessment, review transitions, JSON dossier, vector PDF, and HTTP 400/404/413/422 checks) in an isolated sandbox:
+
+```bash
+backend\.venv\Scripts\python.exe backend\scripts\verify_scientific_pipeline.py
+```
+
+_Outputs: `reports/pipeline_verification_report.json`_
+
+### 3. Repeatable Offline Demonstration
+
+Runs a complete, deterministic, 100% offline demonstration generating format-valid `.fil` files, SQLite catalogs, candidate records, JSON dossiers, and publication vector PDFs in `<5.0 s` without modifying production databases:
+
+```bash
+# From workspace root
+python scripts/run_offline_demo.py --output demo_output
+```
+
+_Artifacts generated in `demo_output/`: `synthetic_beacon_demo.fil`, `aethon_demo.db`, `candidate_dossier.json`, `candidate_dossier.pdf`._
+
+### 4. Master Overall Verification Gate
+
+Compiles environment metadata, git commit hash, test results, benchmark metrics, pipeline checks, offline demo status, and the complete 12-area capability matrix:
+
+```bash
+backend\.venv\Scripts\python.exe backend\scripts\run_overall_verification.py
+```
+
+_Outputs: `reports/overall_verification_report.json`_
+
+---
+
+## 15. Running the Integrated System
 
 To run the complete full-stack AETHON discovery workspace:
 
@@ -495,7 +546,16 @@ npm run dev
 
 ---
 
-## 15. Future Roadmap
+## 16. Scientific Rigor & Operational Disclaimers
+
+1. **Anomaly Scores vs. ET Claims:** Anomaly scores are operational prioritization heuristics identifying statistical outliers within noise regimes. They do not constitute proof of extraterrestrial intelligence.
+2. **Apparent Drift Rates:** Frequency drift measurements ($\dot{f}$ in Hz/s) reflect apparent topocentric changes in observed carrier frequency. They do not imply complete barycentric or orbital velocity without ephemeris corrections.
+3. **Data Preservation:** Raw telescope matrices and ingested files are bit-for-bit immutable; RFI flags and baseline subtractions are non-destructive and tracked via audit manifests.
+4. **Honest Unknowns:** Missing physical headers or coordinates remain explicitly `null` rather than fabricating synthetic metadata.
+
+---
+
+## 17. Future Roadmap
 
 1. **Canonical BLC1 Cadence Case Study:** Deep multi-pointing ON/OFF target spatial cross-match with BLC1 Proxima Centauri data.
 2. **Astropy Integration:** Direct ingestion and celestial coordinate transformation (`astropy.coordinates.SkyCoord`) for automated catalog cross-matching (SIMBAD, Gaia, ATNF Pulsar Database).

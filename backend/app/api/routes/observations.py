@@ -257,7 +257,7 @@ def get_observation_slice(
     ),
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApiErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ApiErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApiErrorResponse},
     },
 )
 def process_observation(
@@ -327,8 +327,8 @@ def process_observation(
     ),
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApiErrorResponse},
-        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"model": ApiErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ApiErrorResponse},
+        status.HTTP_413_CONTENT_TOO_LARGE: {"model": ApiErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApiErrorResponse},
     },
 )
 def detect_observation_anomalies(
@@ -374,8 +374,8 @@ def detect_observation_anomalies(
     ),
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApiErrorResponse},
-        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"model": ApiErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ApiErrorResponse},
+        status.HTTP_413_CONTENT_TOO_LARGE: {"model": ApiErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApiErrorResponse},
     },
 )
 def analyze_observation_drift(

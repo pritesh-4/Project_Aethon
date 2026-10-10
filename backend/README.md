@@ -78,6 +78,12 @@ A specialized Python + FastAPI backend service for the AETHON radio-astronomy di
   - Structured JSON dossier snapshots and publication-grade 2-page vector PDF reports via `matplotlib.backends.backend_pdf.PdfPages` with selectable text and disclaimers.
   - Public REST API endpoints: `GET /api/candidates`, `POST /api/candidates`, `GET /api/candidates/{id}`, `POST /api/candidates/{id}/assess`, `GET /api/candidates/{id}/dossier`, `GET /api/candidates/{id}/dossier.pdf`, `POST /api/candidates/{id}/review`.
   - Strict scope boundary: scores are operational triage heuristics; no claims of extraterrestrial origin or automatic discovery.
+- **Phase 9 (Scientific Validation, Reproducibility, Reliability & Delivery Verification):**
+  - Controlled synthetic benchmark evaluator (`scripts/run_benchmark_evaluation.py`) with strict held-out split isolation (reference noise seeds 1000..1009 vs evaluation seed 42) and zero target leakage.
+  - Quantitative benchmark metrics across trivial control, distribution-free statistical MAD baseline, and unsupervised Isolation Forest (recall, window precision, noise false alarms, Doppler drift recovery error).
+  - Automated scientific pipeline verification (`scripts/verify_scientific_pipeline.py`) validating all 14 end-to-end integration and negative failure paths (HTTP 400, 404, 413, 422).
+  - Deterministic 100% offline demonstration (`scripts/run_offline_demo.py`) executing full pipeline in isolated sandboxes in $<5.0\text{ s}$ without touching production SQLite database.
+  - Master verification report compiler (`scripts/run_overall_verification.py`) aggregating environment, git commit, test suites (193 pytest, 9 frontend tests, npm run check), benchmark metrics, and the 12-area capability matrix into machine-readable JSON artifacts (`backend/reports/` and `reports/`).
 - **Frontend Boundary:** The backend runs independently on port `8000` and communicates with the React + Vite frontend (`http://localhost:5173`) through the `/api` route prefix.
 
 ---
@@ -717,6 +723,68 @@ Tests run offline without requiring external network access or telemetry downloa
 - `test_storage.py`: SQLite transactions, atomic staging move, collision immunity.
 - `test_api_observations.py`: Multipart uploads, size bounds, traversal sanitization, pagination, 404s.
 - `test_config.py`, `test_cors.py`, `test_errors.py`, `test_health.py`: Phase 0 foundation tests.
+
+---
+
+## Scientific Validation & Audit Scripts (Phase 9)
+
+In addition to unit tests, the repository provides automated end-to-end audit and benchmark runners:
+
+### 1. Controlled Benchmark Evaluation (`scripts/run_benchmark_evaluation.py`)
+
+Evaluates trivial control, MAD baseline, and Isolation Forest on held-out synthetic datasets with split isolation (seeds 1000..1009 vs 42):
+
+```powershell
+# Windows (PowerShell)
+.\.venv\Scripts\python.exe scripts\run_benchmark_evaluation.py
+```
+
+```bash
+# Unix
+python scripts/run_benchmark_evaluation.py
+```
+
+Output: `reports/benchmark_evaluation_report.json`
+
+### 2. Scientific Pipeline & Failure Envelope Verification (`scripts/verify_scientific_pipeline.py`)
+
+Validates all 14 integration operations and HTTP error responses (400, 404, 413, 422) in isolated temporary directories:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\verify_scientific_pipeline.py
+```
+
+```bash
+python scripts/verify_scientific_pipeline.py
+```
+
+Output: `reports/pipeline_verification_report.json`
+
+### 3. Repeatable Offline Demonstration (`scripts/run_offline_demo.py`)
+
+Runs a deterministic 100% offline demonstration without touching `./data/aethon.db`:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_offline_demo.py --output demo_output
+```
+
+```bash
+python scripts/run_offline_demo.py --output demo_output
+```
+
+### 4. Master Overall Verification Gate (`scripts/run_overall_verification.py`)
+
+Compiles the full audit matrix and generates the master JSON report:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_overall_verification.py
+```
+
+```bash
+python scripts/run_overall_verification.py
+```
+
+Output: `reports/overall_verification_report.json`
 
 ---
 

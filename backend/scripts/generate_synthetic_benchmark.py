@@ -10,7 +10,7 @@ backend_root = script_dir.parent
 if str(backend_root) not in sys.path:
     sys.path.insert(0, str(backend_root))
 
-from app.synthetic.dataset import BenchmarkDatasetGenerator, load_benchmark_dataset  # noqa: E402
+from app.synthetic.dataset import BenchmarkDatasetGenerator, load_benchmark_dataset
 
 
 def main() -> None:

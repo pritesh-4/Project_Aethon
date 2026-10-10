@@ -64,3 +64,7 @@ jobs:
       - name: Import and application smoke test
         run: |
           python -c "from app.main import create_app; from fastapi.testclient import TestClient; client = TestClient(create_app()); res = client.get('/health'); assert res.status_code == 200 and res.json()['status'] == 'healthy'; print('Smoke test passed:', res.json())"
+
+      - name: Scientific benchmark generation smoke test
+        run: |
+          python scripts/generate_synthetic_benchmark.py --output-dir /tmp/synthetic_smoke --seed 42 --dataset-id ci_smoke --verify

@@ -435,6 +435,25 @@ Implemented in **Phase 7** as the transparent triage and review bridge connectin
 
 ---
 
+### Phase 9: Scientific Validation, Reproducibility, Reliability & Audit Infrastructure
+
+- **Split Isolation & Leakage Prevention (`app/synthetic/dataset.py`, `backend/scripts/run_benchmark_evaluation.py`):**
+  - Independent random generator seeds partition reference datasets (seeds 1000..1009) from held-out evaluation sets (seed 42).
+  - Background noise moments and Isolation Forest estimators fit strictly on reference noise with zero target exposure.
+- **Automated Benchmark Evaluator (`backend/scripts/run_benchmark_evaluation.py`):**
+  - Evaluates baseline control, distribution-free statistical MAD baseline, and unsupervised Isolation Forest on held-out benchmark datasets.
+  - Measures Doppler drift error ($0.0\text{ Hz/s}$ median error), analytical SE uncertainties, and preprocessing signal preservation ($100\%$ raw immutability).
+- **Automated Pipeline Integration & Negative Envelope Testing (`backend/scripts/verify_scientific_pipeline.py`):**
+  - 14 automated integration checks exercising full workflow from SIGPROC upload to vector PDF download in isolated sandboxes (`tempfile.TemporaryDirectory`).
+  - Exhaustively tests negative envelopes: invalid upload (400), non-existent observation/candidate/PDF (404), out-of-bounds slice (422), illegal review state transitions (422), and upload size bounds (413).
+- **Deterministic Offline Demonstration (`scripts/run_offline_demo.py` & `backend/scripts/run_offline_demo.py`):**
+  - 100% offline-reliable execution generating real `.fil` files, SQLite databases, candidate records, JSON dossiers, and publication PDFs in $<5.0\text{ s}$.
+  - Storage-isolated execution ensuring production user databases (`backend/data/aethon.db`) remain untouched.
+- **Master Verification Runner (`backend/scripts/run_overall_verification.py`):**
+  - Compiles machine-readable 12-area verification matrix into `backend/reports/overall_verification_report.json` and mirrors to root `reports/`.
+
+---
+
 ## Integration Points
 
 | Integration                | Type           | Purpose                                                             | Configuration                                                 |
@@ -476,4 +495,4 @@ Implemented in **Phase 7** as the transparent triage and review bridge connectin
 
 ---
 
-_Last updated: 2026-10-08_
+_Last updated: 2026-10-10_

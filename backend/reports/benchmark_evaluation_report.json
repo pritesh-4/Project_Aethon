@@ -1,0 +1,618 @@
+{
+  "benchmark_id": "aethon_phase9_scientific_validation",
+  "evaluated_at_utc": "2026-10-10T05:31:37.718399+00:00",
+  "environment": {
+    "python_version": "3.14.6",
+    "platform": "win32"
+  },
+  "dataset_metadata": {
+    "dataset_version": "1.0.0",
+    "generator_name": "AETHON Synthetic Laboratory",
+    "evaluation_base_seed": 42,
+    "reference_split_base_seed": 1000,
+    "split_policy": "Strict observation-level separation (seeds 1000..1009 vs 42)",
+    "leakage_protection": "Reference features extracted exclusively from pure background; zero targets exposed"
+  },
+  "detectors": {
+    "trivial_control": {
+      "benchmark_id": "bench_trivial_control",
+      "detector_name": "trivial_control",
+      "evaluated_at_utc": "2026-10-10T05:31:34.514114+00:00",
+      "dataset_version": "1.0.0",
+      "split_summary": {
+        "reference_samples_count": 10,
+        "evaluation_samples_count": 9,
+        "reference_features_extracted": 0
+      },
+      "detector_config": {
+        "window": {
+          "time_size": 16,
+          "freq_size": 16,
+          "time_stride": 8,
+          "freq_stride": 8,
+          "min_valid_sample_fraction": 0.5
+        },
+        "baseline": {
+          "enabled": true,
+          "mad_threshold": 4.0,
+          "reference_mode": "in_situ",
+          "aggregation": "robust_mean"
+        },
+        "isolation_forest": {
+          "enabled": true,
+          "n_estimators": 100,
+          "max_samples": "auto",
+          "contamination": 0.05,
+          "random_state": 42,
+          "standardize_features": true,
+          "score_percentile_threshold": null
+        },
+        "max_windows": 20000,
+        "merge_overlapping_regions": false
+      },
+      "metrics": {
+        "total_eval_observations": 9,
+        "positive_observations_count": 7,
+        "negative_control_count": 2,
+        "total_injected_targets": 9,
+        "matched_targets_count": 0,
+        "unmatched_targets_count": 9,
+        "total_detected_windows": 0,
+        "true_positive_windows": 0,
+        "false_positive_windows": 0,
+        "target_recall": 0.0,
+        "window_precision": 0.0,
+        "window_recall": 0.0,
+        "window_f1": 0.0,
+        "observation_detection_rate": 0.0,
+        "noise_false_positive_rate": 0.0,
+        "mean_matched_iou": 0.0
+      },
+      "family_breakdown": {
+        "stationary_tone": {
+          "total_targets": 4.0,
+          "detected_targets": 0.0,
+          "recovery_rate": 0.0
+        },
+        "drifting_tone": {
+          "total_targets": 3.0,
+          "detected_targets": 0.0,
+          "recovery_rate": 0.0
+        },
+        "burst": {
+          "total_targets": 1.0,
+          "detected_targets": 0.0,
+          "recovery_rate": 0.0
+        },
+        "broadband_emission": {
+          "total_targets": 1.0,
+          "detected_targets": 0.0,
+          "recovery_rate": 0.0
+        }
+      },
+      "snr_breakdown": {
+        "snr_low_<5": {
+          "total_targets": 0.0,
+          "detected_targets": 0.0,
+          "recovery_rate": 0.0
+        },
+        "snr_med_5-10": {
+          "total_targets": 1.0,
+          "detected_targets": 0.0,
+          "recovery_rate": 0.0
+        },
+        "snr_high_>10": {
+          "total_targets": 8.0,
+          "detected_targets": 0.0,
+          "recovery_rate": 0.0
+        }
+      },
+      "per_observation_results": [
+        {
+          "observation_id": "benchmark_eval_obs_001_neg_control_a",
+          "is_negative_control": true,
+          "target_count": 0,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        },
+        {
+          "observation_id": "benchmark_eval_obs_002_neg_control_b",
+          "is_negative_control": true,
+          "target_count": 0,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        },
+        {
+          "observation_id": "benchmark_eval_obs_003_stationary_tone_snr12",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        },
+        {
+          "observation_id": "benchmark_eval_obs_004_drifting_positive",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        },
+        {
+          "observation_id": "benchmark_eval_obs_005_drifting_negative",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        },
+        {
+          "observation_id": "benchmark_eval_obs_006_burst_short",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        },
+        {
+          "observation_id": "benchmark_eval_obs_007_broadband",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        },
+        {
+          "observation_id": "benchmark_eval_obs_008_multi_target",
+          "is_negative_control": false,
+          "target_count": 2,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        },
+        {
+          "observation_id": "benchmark_eval_obs_009_edge_boundary",
+          "is_negative_control": false,
+          "target_count": 2,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        }
+      ],
+      "warnings": [],
+      "scientific_disclaimer": "Synthetic benchmark results measure detector response on controlled simulated signals only and do not establish real-world astronomical discovery rates."
+    },
+    "statistical_baseline": {
+      "benchmark_id": "bench_statistical_baseline",
+      "detector_name": "statistical_baseline",
+      "evaluated_at_utc": "2026-10-10T05:31:35.939189+00:00",
+      "dataset_version": "1.0.0",
+      "split_summary": {
+        "reference_samples_count": 10,
+        "evaluation_samples_count": 9,
+        "reference_features_extracted": 218
+      },
+      "detector_config": {
+        "window": {
+          "time_size": 16,
+          "freq_size": 16,
+          "time_stride": 8,
+          "freq_stride": 8,
+          "min_valid_sample_fraction": 0.5
+        },
+        "baseline": {
+          "enabled": true,
+          "mad_threshold": 4.0,
+          "reference_mode": "in_situ",
+          "aggregation": "robust_mean"
+        },
+        "isolation_forest": {
+          "enabled": true,
+          "n_estimators": 100,
+          "max_samples": "auto",
+          "contamination": 0.05,
+          "random_state": 42,
+          "standardize_features": true,
+          "score_percentile_threshold": null
+        },
+        "max_windows": 20000,
+        "merge_overlapping_regions": false
+      },
+      "metrics": {
+        "total_eval_observations": 9,
+        "positive_observations_count": 7,
+        "negative_control_count": 2,
+        "total_injected_targets": 9,
+        "matched_targets_count": 9,
+        "unmatched_targets_count": 0,
+        "total_detected_windows": 181,
+        "true_positive_windows": 66,
+        "false_positive_windows": 115,
+        "target_recall": 1.0,
+        "window_precision": 0.3646,
+        "window_recall": 1.0,
+        "window_f1": 0.5344,
+        "observation_detection_rate": 1.0,
+        "noise_false_positive_rate": 1.0,
+        "mean_matched_iou": 0.1379
+      },
+      "family_breakdown": {
+        "stationary_tone": {
+          "total_targets": 4.0,
+          "detected_targets": 4.0,
+          "recovery_rate": 1.0
+        },
+        "drifting_tone": {
+          "total_targets": 3.0,
+          "detected_targets": 3.0,
+          "recovery_rate": 1.0
+        },
+        "burst": {
+          "total_targets": 1.0,
+          "detected_targets": 1.0,
+          "recovery_rate": 1.0
+        },
+        "broadband_emission": {
+          "total_targets": 1.0,
+          "detected_targets": 1.0,
+          "recovery_rate": 1.0
+        }
+      },
+      "snr_breakdown": {
+        "snr_low_<5": {
+          "total_targets": 0.0,
+          "detected_targets": 0.0,
+          "recovery_rate": 0.0
+        },
+        "snr_med_5-10": {
+          "total_targets": 1.0,
+          "detected_targets": 1.0,
+          "recovery_rate": 1.0
+        },
+        "snr_high_>10": {
+          "total_targets": 8.0,
+          "detected_targets": 8.0,
+          "recovery_rate": 1.0
+        }
+      },
+      "per_observation_results": [
+        {
+          "observation_id": "benchmark_eval_obs_001_neg_control_a",
+          "is_negative_control": true,
+          "target_count": 0,
+          "windows_flagged": 24,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_002_neg_control_b",
+          "is_negative_control": true,
+          "target_count": 0,
+          "windows_flagged": 27,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_003_stationary_tone_snr12",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 6,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_004_drifting_positive",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 29,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_005_drifting_negative",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 19,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_006_burst_short",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 20,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_007_broadband",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 25,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_008_multi_target",
+          "is_negative_control": false,
+          "target_count": 2,
+          "windows_flagged": 8,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_009_edge_boundary",
+          "is_negative_control": false,
+          "target_count": 2,
+          "windows_flagged": 23,
+          "observation_flagged": true
+        }
+      ],
+      "warnings": [],
+      "scientific_disclaimer": "Synthetic benchmark results measure detector response on controlled simulated signals only and do not establish real-world astronomical discovery rates."
+    },
+    "isolation_forest": {
+      "benchmark_id": "bench_isolation_forest",
+      "detector_name": "isolation_forest",
+      "evaluated_at_utc": "2026-10-10T05:31:37.684826+00:00",
+      "dataset_version": "1.0.0",
+      "split_summary": {
+        "reference_samples_count": 10,
+        "evaluation_samples_count": 9,
+        "reference_features_extracted": 218
+      },
+      "detector_config": {
+        "window": {
+          "time_size": 16,
+          "freq_size": 16,
+          "time_stride": 8,
+          "freq_stride": 8,
+          "min_valid_sample_fraction": 0.5
+        },
+        "baseline": {
+          "enabled": true,
+          "mad_threshold": 4.0,
+          "reference_mode": "in_situ",
+          "aggregation": "robust_mean"
+        },
+        "isolation_forest": {
+          "enabled": true,
+          "n_estimators": 100,
+          "max_samples": "auto",
+          "contamination": 0.05,
+          "random_state": 42,
+          "standardize_features": true,
+          "score_percentile_threshold": null
+        },
+        "max_windows": 20000,
+        "merge_overlapping_regions": false
+      },
+      "metrics": {
+        "total_eval_observations": 9,
+        "positive_observations_count": 7,
+        "negative_control_count": 2,
+        "total_injected_targets": 9,
+        "matched_targets_count": 9,
+        "unmatched_targets_count": 0,
+        "total_detected_windows": 74,
+        "true_positive_windows": 64,
+        "false_positive_windows": 10,
+        "target_recall": 1.0,
+        "window_precision": 0.8649,
+        "window_recall": 1.0,
+        "window_f1": 0.9275,
+        "observation_detection_rate": 1.0,
+        "noise_false_positive_rate": 0.5,
+        "mean_matched_iou": 0.1441
+      },
+      "family_breakdown": {
+        "stationary_tone": {
+          "total_targets": 4.0,
+          "detected_targets": 4.0,
+          "recovery_rate": 1.0
+        },
+        "drifting_tone": {
+          "total_targets": 3.0,
+          "detected_targets": 3.0,
+          "recovery_rate": 1.0
+        },
+        "burst": {
+          "total_targets": 1.0,
+          "detected_targets": 1.0,
+          "recovery_rate": 1.0
+        },
+        "broadband_emission": {
+          "total_targets": 1.0,
+          "detected_targets": 1.0,
+          "recovery_rate": 1.0
+        }
+      },
+      "snr_breakdown": {
+        "snr_low_<5": {
+          "total_targets": 0.0,
+          "detected_targets": 0.0,
+          "recovery_rate": 0.0
+        },
+        "snr_med_5-10": {
+          "total_targets": 1.0,
+          "detected_targets": 1.0,
+          "recovery_rate": 1.0
+        },
+        "snr_high_>10": {
+          "total_targets": 8.0,
+          "detected_targets": 8.0,
+          "recovery_rate": 1.0
+        }
+      },
+      "per_observation_results": [
+        {
+          "observation_id": "benchmark_eval_obs_001_neg_control_a",
+          "is_negative_control": true,
+          "target_count": 0,
+          "windows_flagged": 0,
+          "observation_flagged": false
+        },
+        {
+          "observation_id": "benchmark_eval_obs_002_neg_control_b",
+          "is_negative_control": true,
+          "target_count": 0,
+          "windows_flagged": 5,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_003_stationary_tone_snr12",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 8,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_004_drifting_positive",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 7,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_005_drifting_negative",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 10,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_006_burst_short",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 7,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_007_broadband",
+          "is_negative_control": false,
+          "target_count": 1,
+          "windows_flagged": 12,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_008_multi_target",
+          "is_negative_control": false,
+          "target_count": 2,
+          "windows_flagged": 18,
+          "observation_flagged": true
+        },
+        {
+          "observation_id": "benchmark_eval_obs_009_edge_boundary",
+          "is_negative_control": false,
+          "target_count": 2,
+          "windows_flagged": 7,
+          "observation_flagged": true
+        }
+      ],
+      "warnings": [],
+      "scientific_disclaimer": "Synthetic benchmark results measure detector response on controlled simulated signals only and do not establish real-world astronomical discovery rates."
+    }
+  },
+  "doppler_drift_analysis": {
+    "total_evaluated_targets": 9,
+    "successfully_recovered_targets": 5,
+    "drift_recovery_rate": 0.5556,
+    "mean_absolute_drift_error_hz_per_s": 11.787,
+    "median_absolute_drift_error_hz_per_s": 0.0,
+    "max_absolute_drift_error_hz_per_s": 85.7143,
+    "targets": [
+      {
+        "signal_id": "sig_stat_01",
+        "family": "stationary_tone",
+        "effective_snr": 12.0,
+        "true_drift_hz_s": 0.0,
+        "estimated_drift_hz_s": 0.0,
+        "abs_error_hz_s": 0.0,
+        "uncertainty_hz_s": 0.0,
+        "is_recovered": true
+      },
+      {
+        "signal_id": "sig_drift_pos_01",
+        "family": "drifting_tone",
+        "effective_snr": 15.0,
+        "true_drift_hz_s": 1500.0,
+        "estimated_drift_hz_s": 1492.4812,
+        "abs_error_hz_s": 7.5188,
+        "uncertainty_hz_s": 14.3428,
+        "is_recovered": false
+      },
+      {
+        "signal_id": "sig_drift_neg_01",
+        "family": "drifting_tone",
+        "effective_snr": 14.0,
+        "true_drift_hz_s": -2000.0,
+        "estimated_drift_hz_s": -2000.0,
+        "abs_error_hz_s": 0.0,
+        "uncertainty_hz_s": 0.0,
+        "is_recovered": true
+      },
+      {
+        "signal_id": "sig_burst_01",
+        "family": "burst",
+        "effective_snr": 18.0,
+        "true_drift_hz_s": 0.0,
+        "estimated_drift_hz_s": -85.7143,
+        "abs_error_hz_s": 85.7143,
+        "uncertainty_hz_s": 437.0588,
+        "is_recovered": false
+      },
+      {
+        "signal_id": "sig_broadband_01",
+        "family": "broadband_emission",
+        "effective_snr": 10.0,
+        "true_drift_hz_s": 0.0,
+        "estimated_drift_hz_s": null,
+        "abs_error_hz_s": null,
+        "uncertainty_hz_s": null,
+        "is_recovered": false
+      },
+      {
+        "signal_id": "sig_multi_01",
+        "family": "stationary_tone",
+        "effective_snr": 12.0,
+        "true_drift_hz_s": 0.0,
+        "estimated_drift_hz_s": 0.0,
+        "abs_error_hz_s": 0.0,
+        "uncertainty_hz_s": 0.0,
+        "is_recovered": true
+      },
+      {
+        "signal_id": "sig_multi_02",
+        "family": "drifting_tone",
+        "effective_snr": 16.0,
+        "true_drift_hz_s": 1200.0,
+        "estimated_drift_hz_s": 1201.063,
+        "abs_error_hz_s": 1.063,
+        "uncertainty_hz_s": 5.4554,
+        "is_recovered": false
+      },
+      {
+        "signal_id": "sig_edge_01",
+        "family": "stationary_tone",
+        "effective_snr": 15.0,
+        "true_drift_hz_s": 0.0,
+        "estimated_drift_hz_s": 0.0,
+        "abs_error_hz_s": 0.0,
+        "uncertainty_hz_s": 0.0,
+        "is_recovered": true
+      },
+      {
+        "signal_id": "sig_edge_02",
+        "family": "stationary_tone",
+        "effective_snr": 15.0,
+        "true_drift_hz_s": 0.0,
+        "estimated_drift_hz_s": 0.0,
+        "abs_error_hz_s": 0.0,
+        "uncertainty_hz_s": 0.0,
+        "is_recovered": true
+      }
+    ]
+  },
+  "signal_processing_preservation": {
+    "raw_array_preserved": true,
+    "contamination_flag_rate": 1.0,
+    "clean_false_flag_rate": 0.0098,
+    "target_signal_retention_rate": 1.0,
+    "target_signal_flag_rate": 1.0
+  },
+  "scientific_conclusions": {
+    "isolation_forest_target_recall": 1.0,
+    "statistical_baseline_target_recall": 1.0,
+    "trivial_control_target_recall": 0.0,
+    "noise_false_alarm_rate_iforest": 0.5,
+    "noise_false_alarm_rate_baseline": 1.0,
+    "drift_mean_abs_error_hz_s": 11.787,
+    "target_signal_retention_rate": 1.0,
+    "disclaimer": "Synthetic benchmark measurements establish mathematical correctness and detector behavior under controlled numerical assumptions. They do not claim astronomical discovery probability or source classification for uncalibrated real-world observations."
+  }
+}

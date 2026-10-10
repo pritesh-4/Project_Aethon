@@ -84,7 +84,7 @@ def list_candidates(
     response_model=CandidateResponse,
     summary="Create or group a scientific candidate record",
     responses={
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ApiErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApiErrorResponse},
     },
 )
 def create_candidate(
@@ -200,7 +200,7 @@ def download_candidate_pdf(
     summary="Record a human or automated triage review action",
     responses={
         status.HTTP_404_NOT_FOUND: {"model": ApiErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ApiErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ApiErrorResponse},
     },
 )
 def review_candidate(
