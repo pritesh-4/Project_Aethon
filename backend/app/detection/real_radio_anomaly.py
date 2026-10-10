@@ -21,9 +21,11 @@ background structure.
 
 from __future__ import annotations
 
+import gc
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -33,6 +35,296 @@ import torch.nn as nn
 TILE_H: int = 32
 TILE_W: int = 32
 LATENT_DIM: int = 64
+
+SIGPROC_TELESCOPES: dict[int, str] = {
+    0: "Fake/Simulated",
+    1: "Arecibo",
+    2: "Ooty",
+    3: "Nancay",
+    4: "Parkes (Murriyang)",
+    5: "Jodrell Bank",
+    6: "Green Bank Telescope (GBT)",
+    7: "Giant Metrewave Radio Telescope (GMRT)",
+    8: "Effelsberg",
+}
+
+
+def sha256_file(path: Path) -> str:
+    """Compute SHA-256 hash of a file without loading it entirely into RAM."""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1048576), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+@dataclass
+class ObservationMetadata:
+    """Validated metadata for a genuine radio telescope observation."""
+
+    observation_id: str
+    filepath: Path
+    telescope_id: int
+    telescope_name: str
+    source_name: str
+    nchans: int
+    nbits: int
+    fch1_mhz: float
+    foff_mhz: float
+    tsamp_s: float
+    n_ints: int
+    file_size_bytes: int
+    sha256: str
+    is_frequency_descending: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "observation_id": self.observation_id,
+            "filepath": str(self.filepath),
+            "telescope_id": self.telescope_id,
+            "telescope_name": self.telescope_name,
+            "source_name": self.source_name,
+            "nchans": self.nchans,
+            "nbits": self.nbits,
+            "fch1_mhz": self.fch1_mhz,
+            "foff_mhz": self.foff_mhz,
+            "tsamp_s": self.tsamp_s,
+            "n_ints": self.n_ints,
+            "file_size_bytes": self.file_size_bytes,
+            "sha256": self.sha256,
+            "is_frequency_descending": self.is_frequency_descending,
+        }
+
+
+def inspect_observation_file(filepath: Path, obs_id: str | None = None) -> ObservationMetadata:
+    """Inspect and validate a genuine radio observation (.fil or .h5) header.
+
+    Validates:
+        - File exists and is non-empty.
+        - nbits is in (8, 16, 32). Rejects unsupported formats (e.g. 2, 4-bit).
+        - Dimensions (nchans, n_ints) and sampling metadata are positive and finite.
+    """
+    if not filepath.exists():
+        raise FileNotFoundError(f"Observation file not found: {filepath}")
+    file_size = filepath.stat().st_size
+    if file_size == 0:
+        raise ValueError(f"Observation file is empty (0 bytes): {filepath}")
+
+    from blimpy import Waterfall
+
+    try:
+        wf = Waterfall(str(filepath.resolve()), load_data=False)
+    except Exception as exc:
+        msg = f"Failed to inspect observation header for {filepath.name}: {exc}"
+        raise ValueError(msg) from exc
+
+    h = wf.header
+    nbits = int(h.get("nbits", 0))
+    if nbits not in (8, 16, 32):
+        raise ValueError(
+            f"Unsupported bit depth nbits={nbits} in {filepath.name}. "
+            f"Only 8, 16, and 32-bit observations are supported."
+        )
+
+    nchans = int(h.get("nchans", 0))
+    if nchans <= 0:
+        raise ValueError(f"Invalid channel count nchans={nchans} in {filepath.name}")
+
+    foff = float(h.get("foff", 0.0))
+    if foff == 0.0:
+        raise ValueError(f"Invalid channel spacing foff=0.0 in {filepath.name}")
+
+    tsamp = float(h.get("tsamp", 0.0))
+    if tsamp <= 0.0:
+        raise ValueError(f"Invalid sampling interval tsamp={tsamp} in {filepath.name}")
+
+    fch1 = float(h.get("fch1", 0.0))
+    tel_id = int(h.get("telescope_id", -1))
+    tel_name = SIGPROC_TELESCOPES.get(tel_id, f"Telescope({tel_id})")
+    src_name = str(h.get("source_name", "unknown"))
+
+    n_ints = 0
+    if hasattr(wf, "n_ints_in_file") and wf.n_ints_in_file is not None:
+        n_ints = int(wf.n_ints_in_file)
+    elif hasattr(wf, "container") and hasattr(wf.container, "n_ints_in_file"):
+        n_ints = int(getattr(wf.container, "n_ints_in_file", 0))
+
+    if n_ints <= 0:
+        raise ValueError(f"Invalid integration count n_ints={n_ints} in {filepath.name}")
+
+    checksum = sha256_file(filepath)
+    identifier = obs_id or filepath.stem
+
+    return ObservationMetadata(
+        observation_id=identifier,
+        filepath=filepath,
+        telescope_id=tel_id,
+        telescope_name=tel_name,
+        source_name=src_name,
+        nchans=nchans,
+        nbits=nbits,
+        fch1_mhz=fch1,
+        foff_mhz=foff,
+        tsamp_s=tsamp,
+        n_ints=n_ints,
+        file_size_bytes=file_size,
+        sha256=checksum,
+        is_frequency_descending=(foff < 0.0),
+    )
+
+
+def load_observation_tiles(
+    filepath: Path,
+    obs_id: str | None = None,
+    tile_h: int = TILE_H,
+    tile_w: int = TILE_W,
+    max_tiles: int | None = None,
+    chunk_t_size: int = 256,
+    subband_f_range: tuple[int, int] | None = None,
+    apply_standardization: bool = True,
+) -> tuple[np.ndarray, list[dict[str, Any]]]:
+    """Load observation data in bounded chunks and extract canonical 2D spectrogram tiles.
+
+    Guarantees:
+        - Memory bounded: only bounded chunks of the raw file are loaded at any time.
+        - Canonical orientation: time increases along axis 0, frequency increases along axis 1.
+          If raw foff < 0, frequency axis is reversed so frequency strictly increases.
+        - Physical units preserved: frequencies in Hz, timestamps in seconds.
+        - Non-finite handling: NaNs/Infs imputed with median; invalid tiles dropped.
+        - Robust standardization: each chunk is standardized to (X - median) / (1.4826 * MAD).
+    """
+    meta = inspect_observation_file(filepath, obs_id)
+
+    from blimpy import Waterfall
+
+    wf = Waterfall(str(filepath.resolve()), load_data=False)
+    data_offset = int(getattr(wf.container, "idx_data", 0))
+    nifs = int(wf.header.get("nifs", 1))
+
+    dtype: Any
+    if meta.nbits == 32:
+        dtype = np.float32
+    elif meta.nbits == 16:
+        dtype = np.uint16
+    elif meta.nbits == 8:
+        dtype = np.uint8
+    else:
+        raise ValueError(f"Unsupported nbits={meta.nbits}")
+
+    f_start = 0
+    f_stop = meta.nchans
+    if subband_f_range is not None:
+        f_start = max(0, subband_f_range[0])
+        f_stop = min(meta.nchans, subband_f_range[1])
+
+    shape = (meta.n_ints, nifs, meta.nchans)
+    mm = np.memmap(
+        str(filepath.resolve()),
+        dtype=dtype,
+        mode="r",
+        offset=data_offset,
+        shape=shape,
+    )
+
+    tiles_list: list[np.ndarray] = []
+    prov_list: list[dict[str, Any]] = []
+
+    n_t_chunks = int(np.ceil(meta.n_ints / chunk_t_size))
+
+    for t_chunk_idx in range(n_t_chunks):
+        if max_tiles is not None and len(tiles_list) >= max_tiles:
+            break
+
+        t0 = t_chunk_idx * chunk_t_size
+        t1 = min(meta.n_ints, t0 + chunk_t_size)
+        if (t1 - t0) < tile_h:
+            continue
+
+        # Bounded slice from memmap: shape (chunk_t, n_subchans)
+        raw_slice = np.array(mm[t0:t1, 0, f_start:f_stop], dtype=np.float32, copy=True)
+
+        # Canonical orientation: frequency must increase along axis 1
+        if meta.is_frequency_descending:
+            raw_slice = np.flip(raw_slice, axis=1)
+
+        # Handle non-finite values
+        finite_mask = np.isfinite(raw_slice)
+        non_finite_count_total = int((~finite_mask).sum())
+        if non_finite_count_total > 0:
+            if finite_mask.any():
+                fill_val = float(np.nanmedian(raw_slice[finite_mask]))
+                raw_slice = np.where(finite_mask, raw_slice, fill_val)
+            else:
+                raw_slice = np.zeros_like(raw_slice, dtype=np.float32)
+
+        # Robust per-observation standardization: (X - median) / sigma_mad
+        if apply_standardization:
+            med = float(np.nanmedian(raw_slice))
+            mad = float(np.nanmedian(np.abs(raw_slice - med)))
+            sigma = max(1e-12, mad * 1.4826022)
+            raw_slice = (raw_slice - med) / sigma
+
+        # Tile chunk
+        chunk_nt, chunk_nf = raw_slice.shape
+        n_rows = chunk_nt // tile_h
+        n_cols = chunk_nf // tile_w
+
+        # Compute physical frequency base in Hz
+        if meta.is_frequency_descending:
+            # fch1 is highest frequency, channel (meta.nchans - 1) is lowest
+            # After flipping, channel 0 is lowest frequency
+            lowest_f_mhz = meta.fch1_mhz + (meta.nchans - 1) * meta.foff_mhz
+            subband_min_f_mhz = lowest_f_mhz + (meta.nchans - f_stop) * abs(meta.foff_mhz)
+        else:
+            subband_min_f_mhz = meta.fch1_mhz + f_start * meta.foff_mhz
+        chan_bw_hz = abs(meta.foff_mhz) * 1e6
+
+        for r in range(n_rows):
+            for c in range(n_cols):
+                if max_tiles is not None and len(tiles_list) >= max_tiles:
+                    break
+
+                tile = raw_slice[
+                    r * tile_h : (r + 1) * tile_h, c * tile_w : (c + 1) * tile_w
+                ].copy()
+                tile_t0 = t0 + r * tile_h
+                tile_t1 = tile_t0 + tile_h
+                tile_f0 = f_start + c * tile_w
+                tile_f1 = tile_f0 + tile_w
+
+                t_min_s = float(tile_t0 * meta.tsamp_s)
+                t_max_s = float(tile_t1 * meta.tsamp_s)
+                f_min_hz = float((subband_min_f_mhz * 1e6) + c * tile_w * chan_bw_hz)
+                f_max_hz = float(f_min_hz + tile_w * chan_bw_hz)
+
+                tiles_list.append(tile)
+                prov_list.append(
+                    {
+                        "observation_id": meta.observation_id,
+                        "telescope_id": meta.telescope_id,
+                        "telescope_name": meta.telescope_name,
+                        "source_name": meta.source_name,
+                        "time_start_idx": tile_t0,
+                        "time_stop_idx": tile_t1,
+                        "freq_start_idx": tile_f0,
+                        "freq_stop_idx": tile_f1,
+                        "t_min_s": t_min_s,
+                        "t_max_s": t_max_s,
+                        "f_min_hz": f_min_hz,
+                        "f_max_hz": f_max_hz,
+                        "tsamp_s": meta.tsamp_s,
+                        "channel_spacing_hz": chan_bw_hz,
+                        "non_finite_imputed": non_finite_count_total > 0,
+                    }
+                )
+
+    del mm
+    gc.collect()
+
+    if not tiles_list:
+        return np.empty((0, tile_h, tile_w), dtype=np.float32), []
+
+    return np.array(tiles_list, dtype=np.float32), prov_list
 
 
 @dataclass
@@ -182,7 +474,7 @@ class RadioAnomalyAutoencoder(nn.Module):
         h = self.enc_flatten(h)
         h = self.enc_dropout(h)
         z = self.enc_linear(h)
-        return z
+        return cast(torch.Tensor, z)
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         """Decode latent representation to reconstruction."""
@@ -190,7 +482,7 @@ class RadioAnomalyAutoencoder(nn.Module):
         h = self.dec_linear(z)
         h = h.view(-1, c3, 4, 4)
         out = self.decoder(h)
-        return out
+        return cast(torch.Tensor, out)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Full forward pass: encode then decode."""

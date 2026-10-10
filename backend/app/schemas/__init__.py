@@ -8,6 +8,13 @@ from app.schemas.observations import (
     Provenance,
     ScientificMetadata,
 )
+from app.schemas.public_datasets import (
+    PublicDatasetImportRequest,
+    PublicDatasetImportResponse,
+    PublicDatasetItem,
+    PublicDatasetQueryResponse,
+    PublicDatasetStatusResponse,
+)
 from app.schemas.slice import (
     DataQualityInfo,
     SliceIndexRange,
@@ -22,6 +29,11 @@ __all__ = [
     "ObservationListResponse",
     "ObservationRecordResponse",
     "Provenance",
+    "PublicDatasetImportRequest",
+    "PublicDatasetImportResponse",
+    "PublicDatasetItem",
+    "PublicDatasetQueryResponse",
+    "PublicDatasetStatusResponse",
     "ScientificMetadata",
     "SliceIndexRange",
     "SliceProvenance",

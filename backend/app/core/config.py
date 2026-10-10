@@ -119,12 +119,32 @@ class Settings(BaseSettings):
     )
     breakthrough_listen_archive_url: str | None = Field(
         default=None,
-        description="Optional remote URL for Breakthrough Listen public open-data repository",
+        description="Remote URL for Breakthrough Listen public open-data repository",
     )
     breakthrough_listen_api_key: str | None = Field(
         default=None,
         repr=False,
         description="Optional API access key for external astronomical archives",
+    )
+    breakthrough_listen_max_import_bytes: int = Field(
+        default=83886080,
+        ge=1048576,
+        le=104857600,
+        description="Maximum allowed byte size for remote dataset imports (default: 80 MiB)",
+    )
+    breakthrough_listen_timeout_seconds: float = Field(
+        default=20.0,
+        ge=1.0,
+        le=120.0,
+        description=(
+            "Timeout in seconds for external Breakthrough Listen HTTP operations (default: 20s)"
+        ),
+    )
+    breakthrough_listen_catalog_cache_seconds: int = Field(
+        default=300,
+        ge=0,
+        le=3600,
+        description="Cache TTL in seconds for public catalog metadata queries (default: 300s)",
     )
 
     @field_validator("cors_origins", mode="before")

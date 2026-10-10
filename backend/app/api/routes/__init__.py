@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import candidates, health, observations
+from app.api.routes import candidates, health, observations, public_datasets
 
 api_router = APIRouter()
 
@@ -14,3 +14,6 @@ api_router.include_router(observations.router)
 
 # Include scientific candidate routes (e.g. /api/candidates)
 api_router.include_router(candidates.router)
+
+# Include public astronomy dataset routes (e.g. /api/public-datasets)
+api_router.include_router(public_datasets.router)

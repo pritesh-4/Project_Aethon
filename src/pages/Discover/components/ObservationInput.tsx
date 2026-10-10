@@ -2,9 +2,19 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'motion/react';
 import type { DiscoveryObservationMeta } from '../types.ts';
-import { Upload, Check, AlertCircle, Radio, Sparkles, Loader2 } from 'lucide-react';
+import {
+  Upload,
+  Check,
+  AlertCircle,
+  Radio,
+  Sparkles,
+  Loader2,
+  Database,
+  Layers,
+} from 'lucide-react';
 import { api } from '@/lib/api.ts';
 import { toast } from 'sonner';
+import { PublicDatasetBrowser } from './PublicDatasetBrowser.tsx';
 
 export interface ObservationInputProps {
   selectedObservation: DiscoveryObservationMeta | null;
@@ -15,12 +25,15 @@ export interface ObservationInputProps {
 
 const MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB backend limit
 
+export type AcquisitionMode = 'public' | 'local' | 'upload';
+
 export function ObservationInput({
   selectedObservation,
   onSelectObservation,
   catalogObservations,
   disabled = false,
 }: ObservationInputProps) {
+  const [activeMode, setActiveMode] = useState<AcquisitionMode>('public');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -87,6 +100,7 @@ export function ObservationInput({
             ra: meta?.ra_str || (meta?.ra_deg != null ? `${meta.ra_deg.toFixed(4)}°` : null),
             dec: meta?.dec_str || (meta?.dec_deg != null ? `${meta.dec_deg.toFixed(4)}°` : null),
           },
+          provenanceSource: 'Local Manual Upload',
         };
 
         onSelectObservation(customMeta);
@@ -119,196 +133,263 @@ export function ObservationInput({
           Choose what AETHON should examine
         </h2>
         <p className="text-sm text-[#56616A] leading-relaxed">
-          Select a catalogued survey observation from the repository, or upload a raw radio
-          frequency data file.
+          Browse the public Breakthrough Listen open data archive, select from your ingested
+          repository observations, or upload a raw radio frequency data file.
         </p>
       </div>
 
-      {/* Two Visibly Separate Acquisition Modes */}
-      <div className="space-y-5">
+      {/* 3 Clearly Separated Acquisition Mode Tabs */}
+      <div className="flex flex-wrap items-center gap-2 p-1 rounded-[4px] border border-[#D6D2C9] bg-[#FAF8F5]">
+        <button
+          type="button"
+          onClick={() => setActiveMode('public')}
+          disabled={disabled || isUploading}
+          className={`flex-1 min-w-[170px] inline-flex items-center justify-center gap-2 py-2 px-3 rounded-[3px] text-xs font-mono font-medium transition-all cursor-pointer ${
+            activeMode === 'public'
+              ? 'bg-[#FFFFFF] text-[#376A9B] font-bold border border-[#B6CDE2] shadow-2xs'
+              : 'text-[#56616A] hover:text-[#17202A] hover:bg-[#FFFFFF]/60'
+          }`}
+        >
+          <Database className="h-3.5 w-3.5" />
+          <span>Public Dataset Library</span>
+          <span className="text-[10px] uppercase px-1 py-0.2 rounded bg-[#EAF1F8] text-[#376A9B] border border-[#B6CDE2]">
+            SETI Archive
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveMode('local')}
+          disabled={disabled || isUploading}
+          className={`flex-1 min-w-[160px] inline-flex items-center justify-center gap-2 py-2 px-3 rounded-[3px] text-xs font-mono font-medium transition-all cursor-pointer ${
+            activeMode === 'local'
+              ? 'bg-[#FFFFFF] text-[#376A9B] font-bold border border-[#B6CDE2] shadow-2xs'
+              : 'text-[#56616A] hover:text-[#17202A] hover:bg-[#FFFFFF]/60'
+          }`}
+        >
+          <Layers className="h-3.5 w-3.5" />
+          <span>My Observations</span>
+          <span className="text-[10px] px-1 py-0.2 rounded bg-[#FAF8F5] text-[#7E8B96] border border-[#D6D2C9]">
+            {displayList.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveMode('upload')}
+          disabled={disabled || isUploading}
+          className={`flex-1 min-w-[150px] inline-flex items-center justify-center gap-2 py-2 px-3 rounded-[3px] text-xs font-mono font-medium transition-all cursor-pointer ${
+            activeMode === 'upload'
+              ? 'bg-[#FFFFFF] text-[#376A9B] font-bold border border-[#B6CDE2] shadow-2xs'
+              : 'text-[#56616A] hover:text-[#17202A] hover:bg-[#FFFFFF]/60'
+          }`}
+        >
+          <Upload className="h-3.5 w-3.5" />
+          <span>Upload a File</span>
+          <span className="text-[10px] px-1 py-0.2 rounded bg-[#FAF8F5] text-[#7E8B96] border border-[#D6D2C9]">
+            .fil · .fits
+          </span>
+        </button>
+      </div>
+
+      {/* Mode Viewports */}
+      <div className="space-y-4">
         {/* ==================================================== */}
-        {/* PATH A: EXISTING CATALOGUED OBSERVATIONS */}
+        {/* CHOICE 1: PUBLIC BREAKTHROUGH LISTEN ARCHIVE */}
         {/* ==================================================== */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-[#7E8B96] uppercase tracking-wider font-semibold">
-              Select observation
-            </span>
-            <span className="text-[#7E8B96]">{displayList.length} survey pointings</span>
+        {activeMode === 'public' && (
+          <div className="space-y-3">
+            <PublicDatasetBrowser
+              selectedObservationId={selectedObservation?.id ?? null}
+              onObservationImported={(obs) => {
+                onSelectObservation(obs);
+              }}
+              disabled={disabled || isUploading}
+            />
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            {displayList.length === 0 ? (
-              <div className="sm:col-span-3 p-4 rounded-[4px] border border-[#D6D2C9] bg-[#FAF8F5] text-center text-xs text-[#56616A]">
-                No survey observations available in catalog. Ingest an observation file below.
-              </div>
-            ) : (
-              displayList.slice(0, 3).map((obs) => {
-                const isSelected = selectedObservation?.id === obs.id;
-
-                return (
-                  <button
-                    key={obs.id}
-                    type="button"
-                    aria-pressed={isSelected}
-                    disabled={disabled || isUploading}
-                    onClick={() => onSelectObservation(obs)}
-                    className={`relative flex flex-col items-start p-4 rounded-[4px] border text-left transition-all duration-180 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#376A9B] ${
-                      isSelected
-                        ? 'border-[#376A9B] bg-[#FFFFFF] text-[#17202A] shadow-md ring-1 ring-[#376A9B]/30 scale-[1.01]'
-                        : 'border-[#D6D2C9] bg-[#FAF8F5] text-[#56616A] hover:border-[#BCB6A8] hover:bg-[#FFFFFF] hover:shadow-2xs'
-                    } ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {/* Active selection bar indicator */}
-                    {isSelected && (
-                      <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#376A9B] rounded-t-[4px]" />
-                    )}
-
-                    {/* Header: Large ID + Selection State */}
-                    <div className="flex w-full items-center justify-between gap-2">
-                      <span
-                        className={`text-base font-bold font-mono tracking-tight ${
-                          isSelected ? 'text-[#376A9B]' : 'text-[#17202A]'
-                        }`}
-                      >
-                        {obs.id}
-                      </span>
-
-                      {isSelected ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-[#376A9B] bg-[#EAF1F8] px-2 py-0.5 rounded-[2px] border border-[#B6CDE2] font-semibold">
-                          <Check className="h-3 w-3" />
-                          Selected
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-mono text-[#7E8B96] uppercase px-1.5 py-0.5 rounded-[2px] border border-[#D6D2C9] bg-[#FAF8F5]">
-                          Select
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Target Name */}
-                    <span className="mt-2 text-sm font-semibold text-[#17202A] line-clamp-1">
-                      {obs.name}
-                    </span>
-
-                    {/* Machine Data */}
-                    <div className="mt-3 pt-2.5 border-t border-[#D6D2C9] w-full flex items-center justify-between text-xs text-[#56616A] font-mono">
-                      <span>
-                        {obs.frequencyMHz != null
-                          ? `${obs.frequencyMHz.toFixed(2)} MHz`
-                          : 'Unavailable'}
-                      </span>
-                      <span className="text-[#BCB6A8]">·</span>
-                      <span>{obs.durationString || '—'}</span>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Explicit Path Separator */}
-        <div className="relative flex items-center justify-center my-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[#D6D2C9]" />
-          </div>
-          <div className="relative px-3 bg-[#F4F1EA] text-[11px] font-mono uppercase tracking-widest text-[#7E8B96]">
-            OR
-          </div>
-        </div>
+        )}
 
         {/* ==================================================== */}
-        {/* PATH B: UPLOAD RAW OBSERVATION */}
+        {/* CHOICE 2: MY LOCAL INGESTED OBSERVATIONS */}
         {/* ==================================================== */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-[#7E8B96] uppercase tracking-wider font-semibold">
-              Upload observation file
-            </span>
-            <span className="text-[#7E8B96]">.fil · .fits · 100 MB max</span>
-          </div>
+        {activeMode === 'local' && (
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-[#7E8B96] uppercase tracking-wider font-semibold">
+                Select from local repository
+              </span>
+              <span className="text-[#7E8B96]">{displayList.length} stored pointings</span>
+            </div>
 
-          <div
-            {...getRootProps()}
-            className={`relative flex min-h-[110px] flex-col items-center justify-center rounded-[4px] border border-dashed transition-all duration-150 cursor-pointer p-6 text-center outline-none focus-visible:ring-2 focus-visible:ring-[#376A9B] ${
-              disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''
-            } ${
-              isDragActive
-                ? 'border-[#376A9B] bg-[#EAF1F8]'
-                : errorMsg
-                  ? 'border-[#B64B4B] bg-[#FDF0F0]'
-                  : 'border-[#D6D2C9] bg-[#FAF8F5] hover:border-[#376A9B] hover:bg-[#FFFFFF]'
-            }`}
-          >
-            <input {...getInputProps()} aria-label="Upload observation file" />
-
-            <AnimatePresence mode="wait">
-              {isUploading ? (
-                <motion.div
-                  key="uploading-state"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <div className="flex items-center gap-2 text-xs font-mono text-[#376A9B]">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Uploading and calibrating observation... {uploadProgress}%</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              {displayList.length === 0 ? (
+                <div className="sm:col-span-3 p-6 rounded-[4px] border border-[#D6D2C9] bg-[#FAF8F5] text-center space-y-2 text-xs text-[#56616A]">
+                  <div>No observations currently stored in local repository.</div>
+                  <div className="text-[11px] text-[#7E8B96]">
+                    Import an observation from the Public Dataset Library or upload a .fil/.fits
+                    file.
                   </div>
-                  <div className="w-48 h-1 bg-[#EAE7E0] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#376A9B] transition-all duration-150"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                </motion.div>
-              ) : isDragActive ? (
-                <motion.div
-                  key="drag-active"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-[#376A9B]"
-                >
-                  <Upload className="h-5 w-5 animate-bounce" />
-                  <span className="font-semibold">Drop observation file to ingest immediately</span>
-                </motion.div>
-              ) : errorMsg ? (
-                <motion.div
-                  key="error-state"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2 text-xs text-[#B64B4B]"
-                >
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{errorMsg}</span>
-                </motion.div>
+                </div>
               ) : (
-                <motion.div
-                  key="idle-state"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center gap-2"
-                >
-                  {/* Action First */}
-                  <div className="flex items-center gap-2 text-sm font-semibold text-[#17202A]">
-                    <Upload className="h-4 w-4 text-[#376A9B]" />
-                    <span>Upload an observation file</span>
-                  </div>
+                displayList.map((obs) => {
+                  const isSelected = selectedObservation?.id === obs.id;
 
-                  {/* Supporting text */}
-                  <div className="font-mono text-xs text-[#56616A]">
-                    Breakthrough Listen .fil · FITS
-                  </div>
-                  <div className="text-[11px] text-[#7E8B96]">100 MB maximum stream size</div>
-                </motion.div>
+                  return (
+                    <button
+                      key={obs.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      disabled={disabled || isUploading}
+                      onClick={() => onSelectObservation(obs)}
+                      className={`relative flex flex-col items-start p-4 rounded-[4px] border text-left transition-all duration-180 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#376A9B] ${
+                        isSelected
+                          ? 'border-[#376A9B] bg-[#FFFFFF] text-[#17202A] shadow-md ring-1 ring-[#376A9B]/30 scale-[1.01]'
+                          : 'border-[#D6D2C9] bg-[#FAF8F5] text-[#56616A] hover:border-[#BCB6A8] hover:bg-[#FFFFFF] hover:shadow-2xs'
+                      } ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {/* Active selection bar indicator */}
+                      {isSelected && (
+                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#376A9B] rounded-t-[4px]" />
+                      )}
+
+                      {/* Header: Large ID + Selection State */}
+                      <div className="flex w-full items-center justify-between gap-2">
+                        <span
+                          className={`text-base font-bold font-mono tracking-tight ${
+                            isSelected ? 'text-[#376A9B]' : 'text-[#17202A]'
+                          }`}
+                        >
+                          {obs.id}
+                        </span>
+
+                        {isSelected ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-[#376A9B] bg-[#EAF1F8] px-2 py-0.5 rounded-[2px] border border-[#B6CDE2] font-semibold">
+                            <Check className="h-3 w-3" />
+                            Selected
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono text-[#7E8B96] uppercase px-1.5 py-0.5 rounded-[2px] border border-[#D6D2C9] bg-[#FAF8F5]">
+                            Select
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Target Name */}
+                      <span className="mt-2 text-sm font-semibold text-[#17202A] line-clamp-1">
+                        {obs.name}
+                      </span>
+
+                      {/* Machine Data */}
+                      <div className="mt-3 pt-2.5 border-t border-[#D6D2C9] w-full flex items-center justify-between text-xs text-[#56616A] font-mono">
+                        <span>
+                          {obs.frequencyMHz != null
+                            ? `${obs.frequencyMHz.toFixed(2)} MHz`
+                            : 'Unavailable'}
+                        </span>
+                        <span className="text-[#BCB6A8]">·</span>
+                        <span>{obs.durationString || '—'}</span>
+                      </div>
+                    </button>
+                  );
+                })
               )}
-            </AnimatePresence>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* CHOICE 3: UPLOAD RAW OBSERVATION */}
+        {/* ==================================================== */}
+        {activeMode === 'upload' && (
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-[#7E8B96] uppercase tracking-wider font-semibold">
+                Upload observation file
+              </span>
+              <span className="text-[#7E8B96]">.fil · .fits · 100 MB max</span>
+            </div>
+
+            <div
+              {...getRootProps()}
+              className={`relative flex min-h-[140px] flex-col items-center justify-center rounded-[4px] border border-dashed transition-all duration-150 cursor-pointer p-6 text-center outline-none focus-visible:ring-2 focus-visible:ring-[#376A9B] ${
+                disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''
+              } ${
+                isDragActive
+                  ? 'border-[#376A9B] bg-[#EAF1F8]'
+                  : errorMsg
+                    ? 'border-[#B64B4B] bg-[#FDF0F0]'
+                    : 'border-[#D6D2C9] bg-[#FAF8F5] hover:border-[#376A9B] hover:bg-[#FFFFFF]'
+              }`}
+            >
+              <input {...getInputProps()} aria-label="Upload observation file" />
+
+              <AnimatePresence mode="wait">
+                {isUploading ? (
+                  <motion.div
+                    key="uploading-state"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className="flex items-center gap-2 text-xs font-mono text-[#376A9B]">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Uploading and ingesting observation... {uploadProgress}%</span>
+                    </div>
+                    <div className="w-48 h-1 bg-[#EAE7E0] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#376A9B] transition-all duration-150"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </motion.div>
+                ) : isDragActive ? (
+                  <motion.div
+                    key="drag-active"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center gap-1.5 text-xs text-[#376A9B]"
+                  >
+                    <Upload className="h-5 w-5 animate-bounce" />
+                    <span className="font-semibold">
+                      Drop observation file to ingest immediately
+                    </span>
+                  </motion.div>
+                ) : errorMsg ? (
+                  <motion.div
+                    key="error-state"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center gap-2 text-xs text-[#B64B4B]"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{errorMsg}</span>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="idle-state"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#17202A]">
+                      <Upload className="h-4 w-4 text-[#376A9B]" />
+                      <span>Drag and drop an observation file here, or click to browse</span>
+                    </div>
+
+                    <div className="font-mono text-xs text-[#56616A]">
+                      Breakthrough Listen Filterbank (.fil) or Radio FITS (.fits, .fit)
+                    </div>
+                    <div className="text-[11px] text-[#7E8B96]">100 MB maximum file size</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ==================================================== */}
@@ -324,10 +405,17 @@ export function ObservationInput({
               </span>
             </div>
 
-            <span className="inline-flex items-center gap-1.5 text-xs font-mono text-[#3D7D54] bg-[#EFF7F2] px-2 py-0.5 rounded-[2px] border border-[#B2D8C0] self-start sm:self-auto font-medium">
-              <Sparkles className="h-3 w-3" />
-              READY TO SCREEN
-            </span>
+            <div className="flex items-center gap-2">
+              {selectedObservation.provenanceSource && (
+                <span className="text-[10px] font-mono text-[#56616A] bg-[#FAF8F5] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
+                  {selectedObservation.provenanceSource}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 text-xs font-mono text-[#3D7D54] bg-[#EFF7F2] px-2 py-0.5 rounded-[2px] border border-[#B2D8C0] self-start sm:self-auto font-medium">
+                <Sparkles className="h-3 w-3" />
+                READY TO SCREEN
+              </span>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
@@ -341,7 +429,8 @@ export function ObservationInput({
             </div>
 
             <div className="text-xs text-[#7E8B96] font-mono">
-              {selectedObservation.telescope || 'Unspecified instrument'}
+              {selectedObservation.telescope || 'Unspecified instrument'} ·{' '}
+              {selectedObservation.format}
             </div>
           </div>
 

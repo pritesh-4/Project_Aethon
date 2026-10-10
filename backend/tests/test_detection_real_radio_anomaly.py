@@ -178,3 +178,132 @@ def test_anomaly_scoring_higher_for_outliers() -> None:
     median_bg_score = float(np.median(bg_scores))
     for o_score in outlier_scores:
         assert o_score > median_bg_score
+
+
+def test_inspect_observation_file_validation(tmp_path: Path) -> None:
+    """Validator must reject nonexistent, empty, and unsupported format files."""
+    from app.detection.real_radio_anomaly import inspect_observation_file
+
+    # Nonexistent file
+    with pytest.raises(FileNotFoundError):
+        inspect_observation_file(tmp_path / "does_not_exist.fil")
+
+    # Empty file
+    empty_file = tmp_path / "empty.fil"
+    empty_file.touch()
+    with pytest.raises(ValueError, match="empty"):
+        inspect_observation_file(empty_file)
+
+
+def test_bounded_loader_parkes_real_observation() -> None:
+    """Bounded observation loader must load and tile genuine filterbank files."""
+    from app.detection.real_radio_anomaly import (
+        inspect_observation_file,
+        load_observation_tiles,
+    )
+
+    p = Path("backend/data/real_radio_training/raw/parkes_8bit_1.fil")
+    if not p.exists():
+        pytest.skip("Raw observation parkes_8bit_1.fil not present in repository")
+
+    meta = inspect_observation_file(p)
+    assert meta.telescope_id == 4
+    assert meta.nbits == 8
+    assert meta.nchans == 832
+    assert meta.is_frequency_descending is True
+
+    # Load bounded slice of 20 tiles
+    tiles, prov = load_observation_tiles(p, max_tiles=20)
+    assert tiles.shape == (20, 32, 32)
+    assert len(prov) == 20
+    assert not np.isnan(tiles).any()
+    assert not np.isinf(tiles).any()
+
+    # Provenance fields must be populated with physical units
+    p0 = prov[0]
+    assert p0["observation_id"] == "parkes_8bit_1"
+    assert p0["f_min_hz"] > 0
+    assert p0["f_max_hz"] > p0["f_min_hz"]
+    assert p0["t_max_s"] > p0["t_min_s"]
+    assert p0["channel_spacing_hz"] > 0
+
+
+def test_bounded_loader_subband_partition() -> None:
+    """Subband range partitioning must correctly slice frequency channels."""
+    from app.detection.real_radio_anomaly import load_observation_tiles
+
+    p = Path("backend/data/real_radio_training/raw/parkes_8bit_1.fil")
+    if not p.exists():
+        pytest.skip("Raw observation parkes_8bit_1.fil not present in repository")
+
+    # Only load channels 0 to 128 (4 columns of 32)
+    tiles, prov = load_observation_tiles(p, subband_f_range=(0, 128), max_tiles=12)
+    assert tiles.shape == (12, 32, 32)
+    for pr in prov:
+        assert pr["freq_start_idx"] >= 0
+        assert pr["freq_stop_idx"] <= 128
+
+
+def test_detection_service_autoencoder_integration(tmp_path: Path) -> None:
+    """DetectionService must support learned autoencoder inference when enabled,
+    while leaving default baseline inference unchanged when disabled.
+    """
+    from app.detection.config import DetectionPipelineConfig, WindowConfig
+    from app.detection.service import DetectionService
+
+    # Create dummy matrix
+    data = np.random.randn(64, 64).astype(np.float32)
+    service = DetectionService()
+
+    # 1. Default (disabled)
+    cfg_default = DetectionPipelineConfig(
+        window=WindowConfig(time_size=32, freq_size=32, time_stride=32, freq_stride=32)
+    )
+    assert cfg_default.real_radio_autoencoder.enabled is False
+    res_default = service.analyze_array(data, observation_id="test_obs", config=cfg_default)
+    assert res_default.total_windows_evaluated > 0
+    assert res_default.provenance.get("real_radio_autoencoder_enabled") is False
+
+    # 2. Enabled with small test checkpoint
+    config_ae = AnomalyModelConfig(tile_h=32, tile_w=32, latent_dim=16, enc_channels=(8, 16, 16))
+    ae_model = RadioAnomalyAutoencoder(config_ae)
+    norm = NormalizationStats(train_min=-2.0, train_max=2.0)
+    ckpt_file = save_checkpoint(
+        model=ae_model,
+        config=config_ae,
+        norm_stats=norm,
+        threshold=0.05,
+        output_dir=tmp_path,
+    )
+
+    cfg_ae = DetectionPipelineConfig(
+        window=WindowConfig(time_size=32, freq_size=32, time_stride=32, freq_stride=32)
+    )
+    cfg_ae.real_radio_autoencoder.enabled = True
+    cfg_ae.real_radio_autoencoder.checkpoint_path = str(ckpt_file)
+
+    res_ae = service.analyze_array(data, observation_id="test_obs", config=cfg_ae)
+    assert res_ae.provenance.get("real_radio_autoencoder_enabled") is True
+    assert res_ae.provenance.get("real_radio_autoencoder_info", {}).get("status") == "active"
+
+    # Check evidence attached to anomalous regions if any were flagged
+    for r in res_ae.anomalous_regions:
+        assert hasattr(r, "autoencoder_evidence")
+
+
+def test_detection_service_missing_checkpoint_observable_state() -> None:
+    """Missing checkpoint must produce an observable error state in provenance rather than crash."""
+    from app.detection.config import DetectionPipelineConfig
+    from app.detection.service import DetectionService
+
+    data = np.random.randn(32, 32).astype(np.float32)
+    service = DetectionService()
+
+    cfg = DetectionPipelineConfig()
+    cfg.real_radio_autoencoder.enabled = True
+    cfg.real_radio_autoencoder.checkpoint_path = "nonexistent/path/model.pt"
+
+    res = service.analyze_array(data, observation_id="test_missing", config=cfg)
+    assert res.provenance.get("real_radio_autoencoder_enabled") is True
+    ae_info = res.provenance.get("real_radio_autoencoder_info", {})
+    assert "error" in ae_info

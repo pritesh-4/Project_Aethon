@@ -10,6 +10,10 @@ import type {
   HealthStatus,
   ObservationRecordResponse,
   ObservationListResponse,
+  PublicDatasetStatusResponse,
+  PublicDatasetQueryResponse,
+  PublicDatasetImportRequest,
+  PublicDatasetImportResponse,
   SpectralSliceResponse,
   ProcessedObservationResponse,
   DetectionResponse,
@@ -461,6 +465,80 @@ export async function reviewCandidate(
 }
 
 /**
+ * 17. Public Datasets - Provider Status (GET /api/public-datasets/status)
+ */
+export async function getPublicDatasetStatus(): Promise<PublicDatasetStatusResponse> {
+  const response = await apiClient.get<PublicDatasetStatusResponse>('/public-datasets/status');
+  return response.data;
+}
+
+/**
+ * 18. Public Datasets - Available Targets (GET /api/public-datasets/targets)
+ */
+export async function getPublicDatasetTargets(): Promise<{ targets: string[]; count: number }> {
+  const response = await apiClient.get<{ targets: string[]; count: number }>(
+    '/public-datasets/targets'
+  );
+  return response.data;
+}
+
+/**
+ * 19. Public Datasets - Available Telescopes (GET /api/public-datasets/telescopes)
+ */
+export async function getPublicDatasetTelescopes(): Promise<{
+  telescopes: string[];
+  count: number;
+}> {
+  const response = await apiClient.get<{ telescopes: string[]; count: number }>(
+    '/public-datasets/telescopes'
+  );
+  return response.data;
+}
+
+/**
+ * 20. Public Datasets - Available File Types (GET /api/public-datasets/file-types)
+ */
+export async function getPublicDatasetFileTypes(): Promise<{
+  file_types: string[];
+  count: number;
+}> {
+  const response = await apiClient.get<{ file_types: string[]; count: number }>(
+    '/public-datasets/file-types'
+  );
+  return response.data;
+}
+
+/**
+ * 21. Public Datasets - Query Catalogue (GET /api/public-datasets)
+ */
+export async function queryPublicDatasets(params: {
+  target?: string;
+  telescope?: string;
+  file_type?: string;
+  limit?: number;
+  offset?: number;
+  max_size_mb?: number;
+}): Promise<PublicDatasetQueryResponse> {
+  const response = await apiClient.get<PublicDatasetQueryResponse>('/public-datasets', {
+    params,
+  });
+  return response.data;
+}
+
+/**
+ * 22. Public Datasets - Safe Remote Import (POST /api/public-datasets/import)
+ */
+export async function importPublicDataset(
+  payload: PublicDatasetImportRequest
+): Promise<PublicDatasetImportResponse> {
+  const response = await apiClient.post<PublicDatasetImportResponse>(
+    '/public-datasets/import',
+    payload
+  );
+  return response.data;
+}
+
+/**
  * Generic REST helpers
  */
 export async function getTelemetry<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
@@ -501,6 +579,12 @@ export const api = {
   getCandidatePdfUrl,
   downloadCandidatePdf,
   reviewCandidate,
+  getPublicDatasetStatus,
+  getPublicDatasetTargets,
+  getPublicDatasetTelescopes,
+  getPublicDatasetFileTypes,
+  queryPublicDatasets,
+  importPublicDataset,
   getTelemetry,
   postTelemetry,
 };

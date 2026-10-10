@@ -18,6 +18,7 @@ export interface DiscoveryObservationMeta {
     ra: string | null;
     dec: string | null;
   };
+  provenanceSource?: string | null;
 }
 
 export interface SearchConfig {

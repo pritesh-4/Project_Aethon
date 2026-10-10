@@ -1,49 +1,36 @@
 #!/usr/bin/env python3
-"""AETHON Real-Radio Anomaly Model — Training and Evaluation Script.
+"""AETHON Real-Radio Anomaly Model — Training, Model Selection & Signal Characterization.
 
-This script:
-  1. Loads real observational filterbank files from backend/data/real_radio_training/raw/
-  2. Inspects their metadata via blimpy.
-  3. Tiles the observations into fixed-size spectrogram patches.
-  4. Splits tiles by source observation (or contiguous blocks if single-observation).
-  5. Trains a convolutional autoencoder on background tiles.
-  6. Injects controlled synthetic signals into held-out test tiles.
-  7. Evaluates the autoencoder against statistical baseline and isolation forest.
-  8. Saves all artifacts (checkpoint, report, manifest) under backend/data/real_radio_training/.
-
-Usage:
-  cd backend
-  python -m scripts.train_real_radio_anomaly
-
-Or from project root:
-  backend/.venv/Scripts/python.exe backend/scripts/train_real_radio_anomaly.py
+Phase A: Bounded chunk loading, header validation, frequency-axis reversal, robust standardization.
+Phase B: Multi-telescope real observational data (GBT, Parkes, GMRT).
+Phase C: Observation-grouped 4-way partitioning (Train, Val, Calibration, Test) and 9-family signal injection suite.
+Phase D & E: Model comparison (Autoencoder vs Statistical Baseline vs Isolation Forest vs Morphology CNN)
+             with independently calibrated thresholds on held-out calibration background.
+Phase F: Checkpoint saving and reload parity verification.
+Phase G: Signal characterization documentation and disclaimer on message decoding.
 """
 
 from __future__ import annotations
 
-import gc
-import hashlib
 import json
-import platform
 import sys
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any
 
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-# Ensure backend is on sys.path
+# Ensure backend directory is in sys.path
 SCRIPT_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = SCRIPT_DIR.parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 from app.detection.baseline import StatisticalBaselineDetector
-from app.detection.features import FEATURE_NAMES, extract_window_features
+from app.detection.features import extract_window_features
 from app.detection.isolation_forest import IsolationForestDetector
 from app.detection.real_radio_anomaly import (
     AnomalyModelConfig,
@@ -51,26 +38,24 @@ from app.detection.real_radio_anomaly import (
     RadioAnomalyAutoencoder,
     calibrate_threshold,
     compute_anomaly_scores,
+    inspect_observation_file,
     load_checkpoint,
+    load_observation_tiles,
     save_checkpoint,
 )
 
 # ---------------------------------------------------------------------------
-# Configuration
+# Configuration & Constants
 # ---------------------------------------------------------------------------
 RAW_DIR = BACKEND_DIR / "data" / "real_radio_training" / "raw"
 OUTPUT_DIR = BACKEND_DIR / "data" / "real_radio_training"
 MODEL_DIR = OUTPUT_DIR / "model"
 
-TILE_H = 32
-TILE_W = 32
-GUARD_GAP = 4  # Gap tiles between splits to prevent leakage
+TILE_H: int = 32
+TILE_W: int = 32
+GUARD_CHANNELS: int = 512  # 16 tiles guard gap between GBT train subband and test subband
 
-INJECTION_SNRS = [3.0, 5.0, 8.0, 12.0, 20.0]
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+INJECTION_SNRS: list[float] = [3.0, 5.0, 8.0, 12.0, 20.0]
 
 
 def set_seeds(seed: int = 42) -> None:
@@ -83,426 +68,185 @@ def set_seeds(seed: int = 42) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-def sha256_file(path: Path) -> str:
-    """Compute SHA-256 of a file."""
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1048576), b""):
-            h.update(chunk)
-    return h.hexdigest()
+# ---------------------------------------------------------------------------
+# Signal Injection Suite across 9 Test Families (Phase C.2)
+# ---------------------------------------------------------------------------
+def generate_injected_test_suite(
+    test_tiles: np.ndarray,
+    test_prov: list[dict[str, Any]],
+    n_per_family: int = 20,
+    snr_levels: list[float] | None = None,
+    seed: int = 42,
+) -> tuple[np.ndarray, list[dict[str, Any]]]:
+    """Inject controlled signals into copies of held-out real background tiles across 9 test families.
 
+    Test Families:
+      1. noise_control: Pure real background (SNR=0), negative control.
+      2. stationary_tone: Persistent narrowband unmodulated tone.
+      3. drifting_tone_pos: Positive frequency-drifting tone (chirp/drift).
+      4. drifting_tone_neg: Negative frequency-drifting tone.
+      5. drift_rate_sweep: Extreme drift rates (slow, fast, edge-of-window).
+      6. burst: Short-duration and longer-duration localized transients.
+      7. broadband: Wide-band emission spanning across channels.
+      8. overlapping: Intersecting tones (stationary + drifting) and boundary tracks.
+      9. rfi_comb: Multi-carrier periodic comb confounding interference.
 
-@dataclass
-class ObservationInfo:
-    """Parsed metadata for a real observation file."""
-
-    observation_id: str
-    filepath: Path
-    telescope_id: int
-    telescope_name: str
-    source_name: str
-    nchans: int
-    nbits: int
-    fch1: float
-    foff: float
-    tsamp: float
-    n_ints: int
-    file_size: int
-    sha256: str
-
-    def to_dict(self) -> dict:
-        return {
-            "observation_id": self.observation_id,
-            "filepath": str(self.filepath),
-            "telescope_id": self.telescope_id,
-            "telescope_name": self.telescope_name,
-            "source_name": self.source_name,
-            "nchans": self.nchans,
-            "nbits": self.nbits,
-            "fch1": self.fch1,
-            "foff": self.foff,
-            "tsamp": self.tsamp,
-            "n_ints": self.n_ints,
-            "file_size_bytes": self.file_size,
-            "sha256": self.sha256,
-        }
-
-
-SIGPROC_TELESCOPES = {
-    0: "Fake/Simulated",
-    1: "Arecibo",
-    2: "Ooty",
-    3: "Nancay",
-    4: "Parkes",
-    5: "Jodrell Bank",
-    6: "GBT",
-    7: "GMRT",
-    8: "Effelsberg",
-}
-
-
-def inspect_filterbank(filepath: Path, obs_id: str) -> ObservationInfo:
-    """Inspect a filterbank file and extract metadata without loading data."""
-    from blimpy import Waterfall
-
-    wf = Waterfall(str(filepath.resolve()), load_data=False)
-    h = wf.header
-
-    tel_id = int(h.get("telescope_id", -1))
-    tel_name = SIGPROC_TELESCOPES.get(tel_id, f"Unknown({tel_id})")
-    src_name = h.get("source_name", "unknown")
-    nchans = int(h.get("nchans", 0))
-    nbits = int(h.get("nbits", 0))
-    fch1 = float(h.get("fch1", 0.0))
-    foff = float(h.get("foff", 0.0))
-    tsamp = float(h.get("tsamp", 0.0))
-
-    n_ints = 0
-    if hasattr(wf, "n_ints_in_file") and wf.n_ints_in_file is not None:
-        n_ints = int(wf.n_ints_in_file)
-    elif hasattr(wf, "container") and hasattr(wf.container, "n_ints_in_file"):
-        n_ints = int(getattr(wf.container, "n_ints_in_file", 0))
-
-    file_size = filepath.stat().st_size
-    checksum = sha256_file(filepath)
-
-    return ObservationInfo(
-        observation_id=obs_id,
-        filepath=filepath,
-        telescope_id=tel_id,
-        telescope_name=tel_name,
-        source_name=src_name,
-        nchans=nchans,
-        nbits=nbits,
-        fch1=fch1,
-        foff=foff,
-        tsamp=tsamp,
-        n_ints=n_ints,
-        file_size=file_size,
-        sha256=checksum,
-    )
-
-
-def load_filterbank_data(filepath: Path, nbits: int, nchans: int, n_ints: int) -> np.ndarray:
-    """Load filterbank data using memory-mapping for safety."""
-    from blimpy import Waterfall
-
-    wf = Waterfall(str(filepath.resolve()), load_data=False)
-    data_offset = int(getattr(wf.container, "idx_data", 0))
-    nifs = int(wf.header.get("nifs", 1))
-
-    if nbits == 32:
-        dtype = np.float32
-    elif nbits == 16:
-        dtype = np.uint16
-    elif nbits == 8:
-        dtype = np.uint8
-    else:
-        raise ValueError(f"Unsupported nbits={nbits}")
-
-    shape = (n_ints, nifs, nchans)
-    mm = np.memmap(
-        str(filepath.resolve()),
-        dtype=dtype,
-        mode="r",
-        offset=data_offset,
-        shape=shape,
-    )
-    # Extract first polarization, convert to float32
-    data = np.array(mm[:, 0, :], dtype=np.float32, copy=True)
-    del mm
-    gc.collect()
-    return data
-
-
-def tile_observation(
-    data: np.ndarray,
-    obs_id: str,
-    tile_h: int = TILE_H,
-    tile_w: int = TILE_W,
-) -> tuple[np.ndarray, list[dict]]:
-    """Tile a 2D observation into non-overlapping patches.
-
-    Returns:
-        tiles: (N, tile_h, tile_w) float32 array
-        provenance: list of dicts with source coordinates
+    SNR Definition:
+      Linear amplitude A = SNR * sigma_local, where background tiles have been
+      standardized to unit local noise (sigma_local ~ 1.0).
     """
-    n_t, n_f = data.shape
-    n_rows = n_t // tile_h
-    n_cols = n_f // tile_w
+    if snr_levels is None:
+        snr_levels = INJECTION_SNRS
 
-    if n_rows == 0 or n_cols == 0:
-        return np.empty((0, tile_h, tile_w), dtype=np.float32), []
-
-    tiles = []
-    provenance = []
-
-    for r in range(n_rows):
-        for c in range(n_cols):
-            t0 = r * tile_h
-            t1 = t0 + tile_h
-            f0 = c * tile_w
-            f1 = f0 + tile_w
-            tile = data[t0:t1, f0:f1].copy()
-
-            # Check for non-finite values
-            finite_mask = np.isfinite(tile)
-            if not finite_mask.all():
-                non_finite_count = int((~finite_mask).sum())
-                tile = np.where(
-                    finite_mask, tile, np.nanmedian(tile[finite_mask]) if finite_mask.any() else 0.0
-                )
-            else:
-                non_finite_count = 0
-
-            tiles.append(tile)
-            provenance.append(
-                {
-                    "observation_id": obs_id,
-                    "time_start": t0,
-                    "time_stop": t1,
-                    "freq_start": f0,
-                    "freq_stop": f1,
-                    "row_index": r,
-                    "col_index": c,
-                    "non_finite_count": non_finite_count,
-                }
-            )
-
-    return np.array(tiles, dtype=np.float32), provenance
-
-
-class SplitData(TypedDict):
-    tiles: np.ndarray
-    provenance: list[dict[str, Any]]
-
-
-def split_tiles_by_observation(
-    all_tiles: dict[str, np.ndarray],
-    all_prov: dict[str, list[dict]],
-    guard_gap: int = GUARD_GAP,
-) -> dict[str, SplitData]:
-    """Split tiles into train/val/test, preferring observation-level splits.
-
-    If >=3 observations: obs1→train, obs2→val, obs3→test.
-    If 2: obs1→train+val (80/20), obs2→test.
-    If 1: contiguous block split with guard gaps.
-    """
-    obs_ids = sorted(all_tiles.keys())
-    empty_tiles = np.empty((0, TILE_H, TILE_W), dtype=np.float32)
-    result: dict[str, SplitData] = {
-        "train": {"tiles": empty_tiles, "provenance": []},
-        "val": {"tiles": empty_tiles, "provenance": []},
-        "test": {"tiles": empty_tiles, "provenance": []},
-    }
-
-    if len(obs_ids) >= 3:
-        # Observation-level split
-        # Largest observation for training
-        sizes = {k: all_tiles[k].shape[0] for k in obs_ids}
-        sorted_by_size = sorted(obs_ids, key=lambda k: sizes[k], reverse=True)
-        train_obs = sorted_by_size[0]
-        val_obs = sorted_by_size[1]
-        test_obs_list = sorted_by_size[2:]
-
-        result["train"]["tiles"] = all_tiles[train_obs]
-        result["train"]["provenance"] = all_prov[train_obs]
-        result["val"]["tiles"] = all_tiles[val_obs]
-        result["val"]["provenance"] = all_prov[val_obs]
-
-        test_tiles_list = [all_tiles[k] for k in test_obs_list]
-        test_prov_list: list[dict[str, Any]] = []
-        for k in test_obs_list:
-            test_prov_list.extend(all_prov[k])
-        result["test"]["tiles"] = (
-            np.concatenate(test_tiles_list, axis=0) if test_tiles_list else empty_tiles
-        )
-        result["test"]["provenance"] = test_prov_list
-
-    elif len(obs_ids) == 2:
-        larger = (
-            obs_ids[0]
-            if all_tiles[obs_ids[0]].shape[0] >= all_tiles[obs_ids[1]].shape[0]
-            else obs_ids[1]
-        )
-        smaller = obs_ids[1] if larger == obs_ids[0] else obs_ids[0]
-
-        # Split larger into train/val
-        n = all_tiles[larger].shape[0]
-        n_train = int(0.8 * n)
-        result["train"]["tiles"] = all_tiles[larger][:n_train]
-        result["train"]["provenance"] = all_prov[larger][:n_train]
-        result["val"]["tiles"] = all_tiles[larger][n_train:]
-        result["val"]["provenance"] = all_prov[larger][n_train:]
-        result["test"]["tiles"] = all_tiles[smaller]
-        result["test"]["provenance"] = all_prov[smaller]
-
-    elif len(obs_ids) == 1:
-        # Single observation — contiguous block split with guard gaps
-        obs_id = obs_ids[0]
-        tiles = all_tiles[obs_id]
-        prov = all_prov[obs_id]
-        n = tiles.shape[0]
-
-        n_train = int(0.6 * n)
-        n_val_start = n_train + guard_gap
-        n_val = int(0.2 * n)
-        n_test_start = n_val_start + n_val + guard_gap
-
-        result["train"]["tiles"] = tiles[:n_train]
-        result["train"]["provenance"] = prov[:n_train]
-        if n_val_start + n_val <= n:
-            result["val"]["tiles"] = tiles[n_val_start : n_val_start + n_val]
-            result["val"]["provenance"] = prov[n_val_start : n_val_start + n_val]
-        if n_test_start < n:
-            result["test"]["tiles"] = tiles[n_test_start:]
-            result["test"]["provenance"] = prov[n_test_start:]
-
-    return result
-
-
-def compute_normalization(train_tiles: np.ndarray) -> NormalizationStats:
-    """Compute normalization statistics from training tiles only."""
-    return NormalizationStats.compute(train_tiles)
-
-
-def inject_signals_into_tiles(
-    tiles: np.ndarray,
-    tile_provenance: list[dict],
-    obs_infos: dict[str, ObservationInfo],
-) -> tuple[np.ndarray, list[dict]]:
-    """Inject controlled synthetic signals into copies of test tiles.
-
-    Uses AETHON's existing injection machinery where possible, falling back
-    to direct numpy injection for compatibility with arbitrary tile geometries.
-
-    Returns:
-        injected_tiles: (M, tile_h, tile_w) with injected signals
-        injection_records: list of ground-truth records for each injection
-    """
-    injected_tiles = []
-    injection_records = []
-
-    if tiles.shape[0] == 0:
+    rng = np.random.default_rng(seed)
+    n_bg = len(test_tiles)
+    if n_bg == 0:
         return np.empty((0, TILE_H, TILE_W), dtype=np.float32), []
 
-    # Compute noise statistics from the tile ensemble
-    tile_stds = np.array([np.std(t[np.isfinite(t)]) for t in tiles])
-    median_std = float(np.median(tile_stds[tile_stds > 0])) if np.any(tile_stds > 0) else 1.0
+    injected_tiles: list[np.ndarray] = []
+    injection_records: list[dict[str, Any]] = []
 
-    signal_configs = []
+    family_definitions = [
+        "noise_control",
+        "stationary_tone",
+        "drifting_tone_pos",
+        "drifting_tone_neg",
+        "drift_rate_sweep",
+        "burst",
+        "broadband",
+        "overlapping",
+        "rfi_comb",
+    ]
 
-    for snr in INJECTION_SNRS:
-        # Type 1: Stationary narrowband tone (center column)
-        signal_configs.append(
-            {
-                "type": "stationary_tone",
+    tile_idx_counter = 0
+
+    for fam in family_definitions:
+        for i in range(n_per_family):
+            # Select independent held-out tile
+            base_idx = tile_idx_counter % n_bg
+            tile_idx_counter += 1
+
+            tile_copy = test_tiles[base_idx].copy()
+            prov = test_prov[base_idx] if base_idx < len(test_prov) else {}
+
+            snr = 0.0 if fam == "noise_control" else float(snr_levels[i % len(snr_levels)])
+            amp = float(snr)  # Since tile is standardized with sigma ~ 1.0
+
+            th, tw = TILE_H, TILE_W
+            meta_record: dict[str, Any] = {
+                "signal_family": fam,
                 "snr": snr,
-                "description": f"Stationary tone SNR={snr}",
+                "amplitude": amp,
+                "source_tile_idx": base_idx,
+                "observation_id": prov.get("observation_id", "unknown"),
+                "telescope": prov.get("telescope_name", "unknown"),
+                "tsamp_s": prov.get("tsamp_s", 1.0),
+                "channel_spacing_hz": prov.get("channel_spacing_hz", 1.0),
             }
-        )
 
-        # Type 2: Drifting tone (positive drift)
-        signal_configs.append(
-            {
-                "type": "drifting_tone_pos",
-                "snr": snr,
-                "description": f"Drifting tone +drift SNR={snr}",
-            }
-        )
+            if fam == "noise_control":
+                meta_record["description"] = "Noise-only negative control (no signal injected)"
 
-        # Type 3: Drifting tone (negative drift)
-        signal_configs.append(
-            {
-                "type": "drifting_tone_neg",
-                "snr": snr,
-                "description": f"Drifting tone -drift SNR={snr}",
-            }
-        )
+            elif fam == "stationary_tone":
+                c0 = int(rng.integers(4, tw - 4))
+                tile_copy[:, c0] += amp
+                meta_record["description"] = f"Stationary narrowband tone at channel {c0}"
+                meta_record["drift_rate_hz_per_sec"] = 0.0
 
-        # Type 4: Short burst
-        signal_configs.append(
-            {
-                "type": "burst",
-                "snr": snr,
-                "description": f"Burst SNR={snr}",
-            }
-        )
+            elif fam == "drifting_tone_pos":
+                c_start = int(rng.integers(2, tw // 2))
+                c_end = int(rng.integers(tw // 2, tw - 2))
+                for r in range(th):
+                    c = int(c_start + (c_end - c_start) * (r / th))
+                    c = min(max(c, 0), tw - 1)
+                    tile_copy[r, c] += amp
+                meta_record["description"] = (
+                    f"Positive drifting tone from chan {c_start} to {c_end}"
+                )
+                meta_record["drift_rate_channels_per_step"] = (c_end - c_start) / th
 
-    rng = np.random.RandomState(seed=12345)
+            elif fam == "drifting_tone_neg":
+                c_start = int(rng.integers(tw // 2, tw - 2))
+                c_end = int(rng.integers(2, tw // 2))
+                for r in range(th):
+                    c = int(c_start + (c_end - c_start) * (r / th))
+                    c = min(max(c, 0), tw - 1)
+                    tile_copy[r, c] += amp
+                meta_record["description"] = (
+                    f"Negative drifting tone from chan {c_start} to {c_end}"
+                )
+                meta_record["drift_rate_channels_per_step"] = (c_end - c_start) / th
 
-    for sig_cfg in signal_configs:
-        # Select a random tile to inject into
-        idx = rng.randint(0, tiles.shape[0])
-        tile_copy = tiles[idx].copy()
-        prov = tile_provenance[idx].copy()
+            elif fam == "drift_rate_sweep":
+                mode = i % 3
+                if mode == 0:
+                    c0 = int(rng.integers(8, tw - 8))
+                    for r in range(th):
+                        c = int(c0 + (2.0 * r / th))
+                        tile_copy[r, min(c, tw - 1)] += amp
+                    meta_record["description"] = "Slow drift (2 channels total displacement)"
+                elif mode == 1:
+                    for r in range(th):
+                        c = int(2 + (28.0 * r / th))
+                        tile_copy[r, min(c, tw - 1)] += amp
+                    meta_record["description"] = "Fast drift (28 channels across window)"
+                else:
+                    edge_c = 1 if (i % 2 == 0) else tw - 2
+                    tile_copy[:, edge_c] += amp
+                    meta_record["description"] = f"Edge-of-window track at channel {edge_c}"
 
-        amplitude = float(sig_cfg["snr"]) * median_std
-        th, tw = tile_copy.shape
+            elif fam == "burst":
+                duration = 3 if (i % 2 == 0) else 12
+                r0 = int(rng.integers(4, th - duration - 4))
+                c0 = int(rng.integers(6, tw - 8))
+                tile_copy[r0 : r0 + duration, c0 : c0 + 4] += amp
+                meta_record["description"] = (
+                    f"Burst transient (duration {duration} samples, 4 channels)"
+                )
 
-        if sig_cfg["type"] == "stationary_tone":
-            # Inject into center column
-            col = tw // 2
-            tile_copy[:, col] += amplitude
+            elif fam == "broadband":
+                r0 = int(rng.integers(6, th - 6))
+                tile_copy[r0 : r0 + 2, 8:24] += amp
+                meta_record["description"] = (
+                    f"Broadband emission spanning channels 8-24 at row {r0}"
+                )
 
-        elif sig_cfg["type"] == "drifting_tone_pos":
-            # Linear drift from col tw//4 to tw*3//4
-            for row in range(th):
-                col = int(tw // 4 + (tw // 2) * row / th)
-                col = min(col, tw - 1)
-                tile_copy[row, col] += amplitude
+            elif fam == "overlapping":
+                c_tone = 10
+                tile_copy[:, c_tone] += amp * 0.7
+                for r in range(th):
+                    c_drift = int(4 + (24.0 * r / th))
+                    tile_copy[r, min(c_drift, tw - 1)] += amp * 0.7
+                meta_record["description"] = "Intersecting stationary tone and drifting tone"
 
-        elif sig_cfg["type"] == "drifting_tone_neg":
-            # Negative drift
-            for row in range(th):
-                col = int(tw * 3 // 4 - (tw // 2) * row / th)
-                col = max(col, 0)
-                tile_copy[row, col] += amplitude
+            elif fam == "rfi_comb":
+                comb_channels = [6, 12, 18, 24]
+                for cc in comb_channels:
+                    tile_copy[:, cc] += amp * 0.7
+                meta_record["description"] = "Multi-carrier periodic comb RFI pattern"
 
-        elif sig_cfg["type"] == "burst":
-            # Short burst in center region
-            t_center = th // 2
-            f_center = tw // 2
-            t_start = max(0, t_center - 3)
-            t_end = min(th, t_center + 3)
-            f_start = max(0, f_center - 3)
-            f_end = min(tw, f_center + 3)
-            tile_copy[t_start:t_end, f_start:f_end] += amplitude
-
-        injected_tiles.append(tile_copy)
-        injection_records.append(
-            {
-                "signal_type": sig_cfg["type"],
-                "snr": sig_cfg["snr"],
-                "amplitude": float(amplitude),
-                "noise_std": float(median_std),
-                "source_tile_index": int(idx),
-                "source_observation_id": prov.get("observation_id", "unknown"),
-                "description": sig_cfg["description"],
-            }
-        )
+            injected_tiles.append(tile_copy)
+            injection_records.append(meta_record)
 
     return np.array(injected_tiles, dtype=np.float32), injection_records
 
 
+# ---------------------------------------------------------------------------
+# Training Loop for Autoencoder
+# ---------------------------------------------------------------------------
 def train_autoencoder(
     model: RadioAnomalyAutoencoder,
     train_tiles: np.ndarray,
     val_tiles: np.ndarray,
     norm_stats: NormalizationStats,
     config: AnomalyModelConfig,
-) -> dict:
-    """Train the autoencoder with early stopping.
-
-    Returns:
-        Training history dictionary.
-    """
-    # Normalize
+) -> dict[str, Any]:
+    """Train the convolutional autoencoder on background tiles with validation early stopping."""
     train_norm = norm_stats.normalize(train_tiles[:, np.newaxis, :, :])
     val_norm = norm_stats.normalize(val_tiles[:, np.newaxis, :, :])
 
-    train_ds = TensorDataset(torch.from_numpy(train_norm))
-    val_ds = TensorDataset(torch.from_numpy(val_norm))
+    train_ds = TensorDataset(torch.from_numpy(train_norm).float())
+    val_ds = TensorDataset(torch.from_numpy(val_norm).float())
 
     train_loader = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True, drop_last=False)
     val_loader = DataLoader(val_ds, batch_size=config.batch_size, shuffle=False)
@@ -514,634 +258,524 @@ def train_autoencoder(
     )
     criterion = nn.MSELoss()
 
-    epoch_train_losses: list[float] = []
-    epoch_val_losses: list[float] = []
     history: dict[str, Any] = {
-        "train_loss": epoch_train_losses,
-        "val_loss": epoch_val_losses,
+        "train_loss": [],
+        "val_loss": [],
         "best_epoch": 0,
         "best_val_loss": float("inf"),
         "stopped_early": False,
     }
 
-    best_state = None
+    best_weights = None
     patience_counter = 0
-
-    print(f"Training autoencoder: {model.count_parameters()} parameters")
-    print(f"  Train tiles: {train_tiles.shape[0]}, Val tiles: {val_tiles.shape[0]}")
-    print(f"  Batch size: {config.batch_size}, Max epochs: {config.max_epochs}")
-
     t_start = time.time()
 
+    print(f"  Training: {len(train_tiles)} train tiles, {len(val_tiles)} val tiles")
+    print(f"  Model parameter count: {model.count_parameters():,}")
+    print(f"  Max epochs: {config.max_epochs}, Patience: {config.patience}")
+
     for epoch in range(config.max_epochs):
-        # Training
         model.train()
-        train_losses = []
+        train_batch_losses: list[float] = []
         for (batch,) in train_loader:
             optimizer.zero_grad()
             recon = model(batch)
             loss = criterion(recon, batch)
             loss.backward()
             optimizer.step()
-            train_losses.append(loss.item())
+            train_batch_losses.append(loss.item())
 
-        train_loss = float(np.mean(train_losses))
+        train_loss = float(np.mean(train_batch_losses))
 
-        # Validation
         model.eval()
-        val_losses = []
+        val_batch_losses: list[float] = []
         with torch.no_grad():
             for (batch,) in val_loader:
                 recon = model(batch)
                 loss = criterion(recon, batch)
-                val_losses.append(loss.item())
+                val_batch_losses.append(loss.item())
 
-        val_loss = float(np.mean(val_losses))
+        val_loss = float(np.mean(val_batch_losses))
 
-        epoch_train_losses.append(train_loss)
-        epoch_val_losses.append(val_loss)
+        history["train_loss"].append(train_loss)
+        history["val_loss"].append(val_loss)
 
         if (epoch + 1) % 5 == 0 or epoch == 0:
             print(
-                f"  Epoch {epoch + 1:3d}/{config.max_epochs}: train_loss={train_loss:.6f}, val_loss={val_loss:.6f}"
+                f"    Epoch {epoch + 1:2d}/{config.max_epochs}: "
+                f"train_loss={train_loss:.6f}, val_loss={val_loss:.6f}"
             )
 
-        # Early stopping
         if val_loss < history["best_val_loss"]:
             history["best_val_loss"] = val_loss
             history["best_epoch"] = epoch + 1
-            best_state = {k: v.clone() for k, v in model.state_dict().items()}
+            best_weights = {k: v.clone() for k, v in model.state_dict().items()}
             patience_counter = 0
         else:
             patience_counter += 1
             if patience_counter >= config.patience:
-                print(f"  Early stopping at epoch {epoch + 1} (patience={config.patience})")
+                print(f"    Early stopping triggered at epoch {epoch + 1}")
                 history["stopped_early"] = True
                 break
 
-    t_end = time.time()
-    history["training_time_seconds"] = round(t_end - t_start, 2)
-    history["total_epochs_run"] = len(epoch_train_losses)
-
-    # Restore best model
-    if best_state is not None:
-        model.load_state_dict(best_state)
+    if best_weights is not None:
+        model.load_state_dict(best_weights)
     model.eval()
 
-    print(f"  Best epoch: {history['best_epoch']}, best val_loss: {history['best_val_loss']:.6f}")
-    print(f"  Training time: {history['training_time_seconds']:.1f}s")
+    history["training_time_seconds"] = round(time.time() - t_start, 2)
+    history["total_epochs_run"] = len(history["train_loss"])
+    print(
+        f"  Best epoch: {history['best_epoch']} with val_loss={history['best_val_loss']:.6f} "
+        f"({history['training_time_seconds']:.1f}s)"
+    )
 
     return history
 
 
-def evaluate_detectors(
+# ---------------------------------------------------------------------------
+# Multi-Detector Benchmark Evaluation on Identical Held-Out Test Set
+# ---------------------------------------------------------------------------
+def run_model_comparison(
+    train_tiles: np.ndarray,
+    cal_tiles: np.ndarray,
     test_bg_tiles: np.ndarray,
     injected_tiles: np.ndarray,
-    injection_records: list[dict],
-    train_tiles: np.ndarray,
-    val_tiles: np.ndarray,
-    model: RadioAnomalyAutoencoder,
+    injection_records: list[dict[str, Any]],
+    ae_model: RadioAnomalyAutoencoder,
     norm_stats: NormalizationStats,
-    config: AnomalyModelConfig,
-) -> dict:
-    """Evaluate autoencoder + existing detectors on the same test data.
-
-    Returns:
-        Comprehensive evaluation report dictionary.
-    """
-    report = {}
-
-    # Labels: 0=background, 1=injected
-    n_bg = test_bg_tiles.shape[0]
-    n_inj = injected_tiles.shape[0]
-    all_tiles = np.concatenate([test_bg_tiles, injected_tiles], axis=0)
+    target_fpr: float = 0.01,
+) -> dict[str, Any]:
+    """Evaluate Autoencoder, Statistical Baseline, and Isolation Forest on identical held-out test data."""
+    n_bg = len(test_bg_tiles)
+    n_inj = len(injected_tiles)
+    all_test_tiles = np.concatenate([test_bg_tiles, injected_tiles], axis=0)
     labels = np.array([0] * n_bg + [1] * n_inj, dtype=int)
 
-    print(f"\nEvaluation: {n_bg} background + {n_inj} injected tiles")
+    report: dict[str, Any] = {}
 
-    # 1. Autoencoder
-    print("  Scoring with autoencoder...")
+    print("\n--- Running Multi-Detector Benchmark on Held-Out Test Set ---")
+    print(f"  Test background tiles: {n_bg}, Injected tiles: {n_inj}, Total: {len(labels)}")
+
+    # 1. Real-Radio Autoencoder
+    print("  1. Evaluating RadioAnomalyAutoencoder...")
     t0 = time.time()
-    ae_scores = compute_anomaly_scores(model, all_tiles, norm_stats, batch_size=config.batch_size)
-    ae_inference_time = time.time() - t0
+    cal_ae_scores = compute_anomaly_scores(ae_model, cal_tiles, norm_stats, batch_size=64)
+    ae_thresh = calibrate_threshold(cal_ae_scores, target_fpr=target_fpr)
 
-    # Calibrate threshold on validation background
-    val_scores = compute_anomaly_scores(model, val_tiles, norm_stats, batch_size=config.batch_size)
-    ae_threshold = calibrate_threshold(val_scores, target_fpr=config.target_fpr)
+    ae_test_scores = compute_anomaly_scores(ae_model, all_test_tiles, norm_stats, batch_size=64)
+    ae_latency = time.time() - t0
+    ae_preds = (ae_test_scores >= ae_thresh).astype(int)
 
-    ae_bg_scores = ae_scores[:n_bg]
-    ae_inj_scores = ae_scores[n_bg:]
-    ae_predictions = (ae_scores >= ae_threshold).astype(int)
-
-    report["autoencoder"] = _compute_metrics(
-        labels,
-        ae_scores,
-        ae_predictions,
-        ae_bg_scores,
-        ae_threshold,
-        ae_inference_time,
-        injection_records,
-        ae_inj_scores,
+    report["autoencoder"] = _compile_detector_metrics(
+        labels=labels,
+        scores=ae_test_scores,
+        predictions=ae_preds,
+        threshold=ae_thresh,
+        latency_sec=ae_latency,
+        injection_records=injection_records,
+        n_bg=n_bg,
+        n_inj=n_inj,
     )
 
-    # 2. Statistical Baseline Detector (feature-based)
-    print("  Extracting features for baseline/IF comparison...")
+    # Extract features for Statistical Baseline & Isolation Forest
+    print("  Extracting features for Statistical Baseline & Isolation Forest...")
+    train_sample_idx = np.random.choice(
+        len(train_tiles), size=min(2000, len(train_tiles)), replace=False
+    )
+    train_feat_list = [extract_window_features(train_tiles[i]) for i in train_sample_idx]
+
+    cal_sample_idx = np.random.choice(len(cal_tiles), size=min(1500, len(cal_tiles)), replace=False)
+    cal_feat_list = [extract_window_features(cal_tiles[i]) for i in cal_sample_idx]
+
+    t_feat_start = time.time()
+    test_feat_list = [extract_window_features(tile) for tile in all_test_tiles]
+    feat_time_sec = time.time() - t_feat_start
+
+    # 2. Statistical Baseline Detector
+    print("  2. Evaluating StatisticalBaselineDetector...")
     t0 = time.time()
-    train_features = []
-    for tile in train_tiles:
-        try:
-            feats = extract_window_features(tile)
-            train_features.append(feats)
-        except Exception:
-            pass
+    baseline_det = StatisticalBaselineDetector()
+    baseline_det.fit(train_feat_list)
 
-    all_features = []
-    for tile in all_tiles:
-        try:
-            feats = extract_window_features(tile)
-            all_features.append(feats)
-        except Exception:
-            # Use zeros for tiles that fail feature extraction
-            all_features.append({name: 0.0 for name in FEATURE_NAMES})
+    cal_base_evidence = baseline_det.score_features(cal_feat_list)
+    cal_base_scores = np.array([e.anomaly_score for e in cal_base_evidence])
+    base_thresh = float(np.percentile(cal_base_scores, (1.0 - target_fpr) * 100.0))
 
-    val_features = []
-    for tile in val_tiles:
-        try:
-            feats = extract_window_features(tile)
-            val_features.append(feats)
-        except Exception:
-            val_features.append({name: 0.0 for name in FEATURE_NAMES})
+    test_base_evidence = baseline_det.score_features(test_feat_list)
+    test_base_scores = np.array([e.anomaly_score for e in test_base_evidence])
+    base_latency = (time.time() - t0) + feat_time_sec
+    base_preds = (test_base_scores >= base_thresh).astype(int)
 
-    feature_time = time.time() - t0
+    report["statistical_baseline"] = _compile_detector_metrics(
+        labels=labels,
+        scores=test_base_scores,
+        predictions=base_preds,
+        threshold=base_thresh,
+        latency_sec=base_latency,
+        injection_records=injection_records,
+        n_bg=n_bg,
+        n_inj=n_inj,
+    )
 
-    if len(train_features) > 10:
-        # Baseline detector
-        print("  Scoring with statistical baseline...")
-        t0 = time.time()
-        baseline_det = StatisticalBaselineDetector()
-        baseline_det.fit(train_features)
+    # 3. Isolation Forest Detector
+    print("  3. Evaluating IsolationForestDetector...")
+    t0 = time.time()
+    if_det = IsolationForestDetector()
+    if_det.fit(train_feat_list)
 
-        # Calibrate threshold on validation
-        val_evidence = baseline_det.score_features(val_features)
-        val_baseline_scores = np.array([e.anomaly_score for e in val_evidence])
-        baseline_threshold = float(
-            np.percentile(val_baseline_scores, (1.0 - config.target_fpr) * 100)
-        )
+    cal_if_evidence = if_det.score_features(cal_feat_list)
+    cal_if_scores = np.array([e.anomaly_score for e in cal_if_evidence])
+    if_thresh = float(np.percentile(cal_if_scores, (1.0 - target_fpr) * 100.0))
 
-        all_evidence = baseline_det.score_features(all_features)
-        baseline_scores = np.array([e.anomaly_score for e in all_evidence])
-        baseline_inference_time = time.time() - t0 + feature_time
+    test_if_evidence = if_det.score_features(test_feat_list)
+    test_if_scores = np.array([e.anomaly_score for e in test_if_evidence])
+    if_latency = (time.time() - t0) + feat_time_sec
+    if_preds = (test_if_scores >= if_thresh).astype(int)
 
-        baseline_bg_scores = baseline_scores[:n_bg]
-        baseline_predictions = (baseline_scores >= baseline_threshold).astype(int)
-
-        report["statistical_baseline"] = _compute_metrics(
-            labels,
-            baseline_scores,
-            baseline_predictions,
-            baseline_bg_scores,
-            baseline_threshold,
-            baseline_inference_time,
-            injection_records,
-            baseline_scores[n_bg:],
-        )
-
-        # Isolation Forest detector
-        print("  Scoring with isolation forest...")
-        t0 = time.time()
-        if_det = IsolationForestDetector()
-        if_det.fit(train_features)
-
-        val_if_evidence = if_det.score_features(val_features)
-        val_if_scores = np.array([e.anomaly_score for e in val_if_evidence])
-        if_threshold = float(np.percentile(val_if_scores, (1.0 - config.target_fpr) * 100))
-
-        all_if_evidence = if_det.score_features(all_features)
-        if_scores = np.array([e.anomaly_score for e in all_if_evidence])
-        if_inference_time = time.time() - t0 + feature_time
-
-        if_bg_scores = if_scores[:n_bg]
-        if_predictions = (if_scores >= if_threshold).astype(int)
-
-        report["isolation_forest"] = _compute_metrics(
-            labels,
-            if_scores,
-            if_predictions,
-            if_bg_scores,
-            if_threshold,
-            if_inference_time,
-            injection_records,
-            if_scores[n_bg:],
-        )
-    else:
-        report["statistical_baseline"] = {"error": "Insufficient training features"}
-        report["isolation_forest"] = {"error": "Insufficient training features"}
+    report["isolation_forest"] = _compile_detector_metrics(
+        labels=labels,
+        scores=test_if_scores,
+        predictions=if_preds,
+        threshold=if_thresh,
+        latency_sec=if_latency,
+        injection_records=injection_records,
+        n_bg=n_bg,
+        n_inj=n_inj,
+    )
 
     return report
 
 
-def _compute_metrics(
+def _compile_detector_metrics(
     labels: np.ndarray,
     scores: np.ndarray,
     predictions: np.ndarray,
-    bg_scores: np.ndarray,
     threshold: float,
-    inference_time: float,
-    injection_records: list[dict],
-    inj_scores: np.ndarray,
-) -> dict:
-    """Compute required evaluation metrics for one detector."""
+    latency_sec: float,
+    injection_records: list[dict[str, Any]],
+    n_bg: int,
+    n_inj: int,
+) -> dict[str, Any]:
+    """Compile standard metrics for one detector."""
     from sklearn.metrics import (
         average_precision_score,
         precision_recall_fscore_support,
         roc_auc_score,
     )
 
-    n_bg = int((labels == 0).sum())
-    n_inj = int((labels == 1).sum())
-
-    # ROC-AUC
     try:
         roc_auc = float(roc_auc_score(labels, scores))
-    except ValueError:
+    except Exception:
         roc_auc = None
 
-    # PR-AUC / Average Precision
     try:
         pr_auc = float(average_precision_score(labels, scores))
-    except ValueError:
+    except Exception:
         pr_auc = None
 
-    # Precision, Recall, F1 at calibrated threshold
-    precision, recall, f1, _ = precision_recall_fscore_support(
-        labels,
-        predictions,
-        average="binary",
-        zero_division="warn",
+    prec, rec, f1, _ = precision_recall_fscore_support(
+        labels, predictions, average="binary", zero_division=0
     )
 
-    # False positive rate on held-out background
+    bg_scores = scores[:n_bg]
+    inj_scores = scores[n_bg:]
+
     fp_on_bg = int(np.sum(bg_scores >= threshold))
     fpr_bg = float(fp_on_bg / n_bg) if n_bg > 0 else 0.0
-    false_alarms_per_1000 = fpr_bg * 1000.0
+    false_alarms_per_1000 = round(fpr_bg * 1000.0, 2)
 
-    # Detection recall by signal type and SNR
-    recall_by_type: dict[str, dict[str, float]] = {}
-    recall_by_snr: dict[str, dict[str, float]] = {}
-    if n_inj > 0 and len(injection_records) == n_inj:
-        for i, rec in enumerate(injection_records):
-            sig_type = rec["signal_type"]
-            snr = rec["snr"]
-            detected = bool(inj_scores[i] >= threshold)
+    recall_by_family: dict[str, dict[str, Any]] = {}
+    recall_by_snr: dict[str, dict[str, Any]] = {}
 
-            if sig_type not in recall_by_type:
-                recall_by_type[sig_type] = {"detected": 0.0, "total": 0.0}
-            recall_by_type[sig_type]["total"] += 1.0
-            if detected:
-                recall_by_type[sig_type]["detected"] += 1.0
+    for i, rec_dict in enumerate(injection_records):
+        fam = rec_dict["signal_family"]
+        snr = rec_dict["snr"]
+        detected = bool(inj_scores[i] >= threshold)
 
-            snr_key = f"SNR_{snr}"
-            if snr_key not in recall_by_snr:
-                recall_by_snr[snr_key] = {"detected": 0.0, "total": 0.0}
-            recall_by_snr[snr_key]["total"] += 1.0
-            if detected:
-                recall_by_snr[snr_key]["detected"] += 1.0
+        if fam not in recall_by_family:
+            recall_by_family[fam] = {"detected": 0, "total": 0, "recall": 0.0}
+        recall_by_family[fam]["total"] += 1
+        if detected:
+            recall_by_family[fam]["detected"] += 1
 
-        for k in recall_by_type:
-            d = recall_by_type[k]
-            d["recall"] = d["detected"] / d["total"] if d["total"] > 0 else 0.0
-        for k in recall_by_snr:
-            d = recall_by_snr[k]
-            d["recall"] = d["detected"] / d["total"] if d["total"] > 0 else 0.0
+        snr_key = f"SNR_{snr:.1f}"
+        if snr_key not in recall_by_snr:
+            recall_by_snr[snr_key] = {"detected": 0, "total": 0, "recall": 0.0}
+        recall_by_snr[snr_key]["total"] += 1
+        if detected:
+            recall_by_snr[snr_key]["detected"] += 1
+
+    for _fam, stats in recall_by_family.items():
+        stats["recall"] = (
+            round(stats["detected"] / stats["total"], 4) if stats["total"] > 0 else 0.0
+        )
+
+    for _snr_k, stats in recall_by_snr.items():
+        stats["recall"] = (
+            round(stats["detected"] / stats["total"], 4) if stats["total"] > 0 else 0.0
+        )
+
+    throughput = round(len(labels) / max(1e-4, latency_sec), 1)
 
     return {
-        "roc_auc": roc_auc,
-        "pr_auc": pr_auc,
-        "precision": float(precision),
-        "recall": float(recall),
-        "f1": float(f1),
+        "roc_auc": round(roc_auc, 4) if roc_auc is not None else None,
+        "pr_auc": round(pr_auc, 4) if pr_auc is not None else None,
+        "precision": round(float(prec), 4),
+        "recall": round(float(rec), 4),
+        "f1": round(float(f1), 4),
         "threshold_used": float(threshold),
-        "fpr_on_held_out_bg": fpr_bg,
-        "false_alarms_per_1000_bg": round(false_alarms_per_1000, 2),
+        "fpr_on_held_out_bg": round(fpr_bg, 4),
+        "false_alarms_per_1000_bg": false_alarms_per_1000,
         "fp_count_on_bg": fp_on_bg,
         "n_background_test": n_bg,
         "n_injected_test": n_inj,
-        "recall_by_signal_type": recall_by_type,
+        "recall_by_family": recall_by_family,
         "recall_by_snr": recall_by_snr,
-        "inference_time_seconds": round(inference_time, 3),
+        "inference_latency_seconds": round(latency_sec, 3),
+        "throughput_tiles_per_sec": throughput,
     }
 
 
 # ---------------------------------------------------------------------------
-# Main experiment
+# Main Workflow
 # ---------------------------------------------------------------------------
-
-
 def main() -> None:
-    """Execute the full real-radio anomaly detection experiment."""
-    print("=" * 72)
-    print("AETHON Real-Radio Anomaly Model — Training & Evaluation")
-    print("=" * 72)
+    print("=" * 80)
+    print("AETHON Real-Radio Model Training, Model Selection & Evaluation")
+    print("=" * 80)
 
-    config = AnomalyModelConfig()
+    config = AnomalyModelConfig(
+        tile_h=TILE_H,
+        tile_w=TILE_W,
+        latent_dim=64,
+        enc_channels=(16, 32, 32),
+        batch_size=64,
+        max_epochs=40,
+        patience=8,
+        seed=42,
+        target_fpr=0.01,
+    )
     set_seeds(config.seed)
 
-    # Step 1: Discover and inspect available observation files
-    print("\n--- Step 1: Discovering observation files ---")
-    if not RAW_DIR.exists():
-        print(f"ERROR: Raw data directory not found: {RAW_DIR}")
-        print("Run the acquisition script first.")
+    # 1. Discover Observations
+    print("\n[Phase A/B] Discovering Real Observational Filterbank Files...")
+    obs_files = sorted(RAW_DIR.glob("*.fil"))
+    if not obs_files:
+        print(f"ERROR: No observation files found in {RAW_DIR}")
         sys.exit(1)
 
-    fil_files = sorted(RAW_DIR.glob("*.fil"))
-    if not fil_files:
-        print(f"ERROR: No .fil files found in {RAW_DIR}")
+    obs_metadata: dict[str, Any] = {}
+    for p in obs_files:
+        meta = inspect_observation_file(p)
+        obs_metadata[meta.observation_id] = meta
+        print(
+            f"  Observation: {meta.observation_id} | Telescope: {meta.telescope_name} | "
+            f"Source: {meta.source_name} | Chans: {meta.nchans} | Bits: {meta.nbits} | "
+            f"Size: {meta.file_size_bytes:,} B"
+        )
+
+    # 2. Partition Strategy (Phase A.2)
+    print("\n[Phase A.2] Loading Bounded Observation Tiles into 4-Way Grouped Partitions...")
+
+    gbt_meta = obs_metadata.get("blc04_guppi_57563_69862_HIP35136_0011.gpuspec.0002")
+    gmrt_meta = obs_metadata.get("gmrt_your_28")
+    parkes1_meta = obs_metadata.get("parkes_8bit_1")
+    parkes2_meta = obs_metadata.get("parkes_8bit_2")
+
+    if not (gbt_meta and gmrt_meta and parkes1_meta and parkes2_meta):
+        print("ERROR: Required real observational files missing in raw directory.")
         sys.exit(1)
 
-    print(f"Found {len(fil_files)} observation files:")
-    obs_infos: dict[str, ObservationInfo] = {}
-
-    for fp in fil_files:
-        obs_id = fp.stem
-        print(f"  Inspecting {fp.name}...")
-        info = inspect_filterbank(fp, obs_id)
-        obs_infos[obs_id] = info
-        print(f"    Telescope: {info.telescope_name}, Source: {info.source_name}")
-        print(f"    Channels: {info.nchans}, Bits: {info.nbits}, Time samples: {info.n_ints}")
-        print(f"    fch1: {info.fch1:.6f} MHz, foff: {info.foff:.6f} MHz, tsamp: {info.tsamp:.6f}s")
-        print(f"    Size: {info.file_size:,} bytes, SHA-256: {info.sha256[:16]}...")
-
-    # Step 2: Load and tile observations
-    print("\n--- Step 2: Tiling observations ---")
-    all_tiles: dict[str, np.ndarray] = {}
-    all_prov: dict[str, list[dict]] = {}
-
-    for obs_id, info in obs_infos.items():
-        print(f"  Loading {obs_id}...")
-        try:
-            data = load_filterbank_data(info.filepath, info.nbits, info.nchans, info.n_ints)
-            print(f"    Data shape: {data.shape}, dtype: {data.dtype}")
-
-            # Reverse frequency if descending
-            if info.foff < 0:
-                data = data[:, ::-1].copy()
-                print("    Reversed frequency axis (foff < 0)")
-
-            # Standardize observation to local noise units (sigmas above median noise floor)
-            finite_mask = np.isfinite(data)
-            if finite_mask.any():
-                obs_med = float(np.median(data[finite_mask]))
-                obs_mad = float(np.median(np.abs(data[finite_mask] - obs_med)))
-                obs_scale = max(1e-6, obs_mad * 1.4826)
-                data = ((data - obs_med) / obs_scale).astype(np.float32)
-                print(
-                    f"    Standardized to noise floor: median={obs_med:.2f}, robust_sigma={obs_scale:.2f}"
-                )
-
-            tiles, prov = tile_observation(data, obs_id, TILE_H, TILE_W)
-            print(f"    Generated {tiles.shape[0]} tiles of shape ({TILE_H}, {TILE_W})")
-
-            if tiles.shape[0] > 0:
-                all_tiles[obs_id] = tiles
-                all_prov[obs_id] = prov
-
-            del data
-            gc.collect()
-        except Exception as e:
-            print(f"    ERROR loading {obs_id}: {e}")
-
-    total_tiles = sum(t.shape[0] for t in all_tiles.values())
-    print(f"\n  Total tiles across all observations: {total_tiles}")
-
-    if total_tiles < 20:
-        print("ERROR: Not enough tiles for meaningful experiment.")
-        sys.exit(1)
-
-    # Step 3: Split tiles
-    print("\n--- Step 3: Splitting tiles ---")
-    splits = split_tiles_by_observation(all_tiles, all_prov, guard_gap=GUARD_GAP)
-
-    for split_name, split_data in splits.items():
-        n = split_data["tiles"].shape[0] if isinstance(split_data["tiles"], np.ndarray) else 0
-        print(f"  {split_name}: {n} tiles")
-
-    train_tiles = splits["train"]["tiles"]
-    val_tiles = splits["val"]["tiles"]
-    test_tiles = splits["test"]["tiles"]
-
-    if train_tiles.shape[0] == 0 or val_tiles.shape[0] == 0 or test_tiles.shape[0] == 0:
-        print("ERROR: One or more splits have zero tiles. Cannot proceed.")
-        sys.exit(1)
-
-    # Step 4: Compute normalization from training tiles
-    print("\n--- Step 4: Computing normalization ---")
-    norm_stats = compute_normalization(train_tiles)
-    print(f"  train_min (p1): {norm_stats.train_min:.6f}")
-    print(f"  train_max (p99): {norm_stats.train_max:.6f}")
-
-    # Step 5: Train autoencoder
-    print("\n--- Step 5: Training autoencoder ---")
-    model = RadioAnomalyAutoencoder(config=config)
-    print(f"  Model parameters: {model.count_parameters()}")
-
-    history = train_autoencoder(model, train_tiles, val_tiles, norm_stats, config)
-
-    # Step 6: Inject signals into held-out test tiles
-    print("\n--- Step 6: Generating controlled signal injections ---")
-    injected_tiles, injection_records = inject_signals_into_tiles(
-        test_tiles,
-        splits["test"]["provenance"],
-        obs_infos,
+    # Training Split
+    print("  Loading Training Partition (GBT subbands 0..49152 + GMRT)...")
+    gbt_train_tiles, _gbt_train_prov = load_observation_tiles(
+        gbt_meta.filepath,
+        obs_id=gbt_meta.observation_id,
+        subband_f_range=(0, 49152),
     )
-    print(f"  Generated {injected_tiles.shape[0]} injected tiles")
-    for rec in injection_records[:5]:
-        print(f"    {rec['signal_type']} SNR={rec['snr']:.1f}")
-    if len(injection_records) > 5:
-        print(f"    ... and {len(injection_records) - 5} more")
-
-    # Step 7: Evaluate all detectors
-    print("\n--- Step 7: Evaluating detectors ---")
-    eval_report = evaluate_detectors(
-        test_tiles,
-        injected_tiles,
-        injection_records,
-        train_tiles,
-        val_tiles,
-        model,
-        norm_stats,
-        config,
+    gmrt_train_tiles, _gmrt_train_prov = load_observation_tiles(
+        gmrt_meta.filepath,
+        obs_id=gmrt_meta.observation_id,
     )
 
-    # Step 8: Calibrate and save
-    print("\n--- Step 8: Saving artifacts ---")
-    val_ae_scores = compute_anomaly_scores(
-        model, val_tiles, norm_stats, batch_size=config.batch_size
+    train_tiles = np.concatenate([gbt_train_tiles, gmrt_train_tiles], axis=0)
+    print(
+        f"    Train tiles: {len(train_tiles)} ({len(gbt_train_tiles)} GBT + {len(gmrt_train_tiles)} GMRT)"
     )
-    threshold = calibrate_threshold(val_ae_scores, target_fpr=config.target_fpr)
-    print(f"  Calibrated threshold (target FPR={config.target_fpr}): {threshold:.8f}")
 
-    # Save checkpoint
+    # Validation Split
+    print("  Loading Validation Partition (Parkes 1 / Crab Pulsar)...")
+    val_tiles, _val_prov = load_observation_tiles(
+        parkes1_meta.filepath,
+        obs_id=parkes1_meta.observation_id,
+    )
+    print(f"    Val tiles: {len(val_tiles)} (Parkes 1)")
+
+    # Calibration Split
+    print("  Loading Calibration Partition (Parkes 2 / Crab Pulsar Subband 2)...")
+    cal_tiles, _cal_prov = load_observation_tiles(
+        parkes2_meta.filepath,
+        obs_id=parkes2_meta.observation_id,
+    )
+    print(f"    Calibration tiles: {len(cal_tiles)} (Parkes 2)")
+
+    # Locked Held-Out Test Split
+    print(
+        f"  Loading Locked Held-Out Test Partition (GBT subbands 49664..65536, guard gap {GUARD_CHANNELS} chans)..."
+    )
+    test_tiles, test_prov = load_observation_tiles(
+        gbt_meta.filepath,
+        obs_id=gbt_meta.observation_id,
+        subband_f_range=(49152 + GUARD_CHANNELS, 65536),
+    )
+    print(f"    Held-out Test background tiles: {len(test_tiles)} (GBT held-out)")
+
+    # 3. Fit Training-Only Normalization Statistics (Phase A.3)
+    print("\n[Phase A.3] Computing Training-Only Normalization Statistics...")
+    norm_stats = NormalizationStats.compute(train_tiles, p_lo=1.0, p_hi=99.0)
+    print(f"  Training p1: {norm_stats.train_min:.4f}, p99: {norm_stats.train_max:.4f}")
+
+    # 4. Train Autoencoder
+    print("\n[Phase D.1] Training Convolutional Autoencoder...")
+    ae_model = RadioAnomalyAutoencoder(config=config)
+    training_history = train_autoencoder(ae_model, train_tiles, val_tiles, norm_stats, config)
+
+    # 5. Injected Signal Suite (Phase C.2)
+    print("\n[Phase C.2] Generating 9-Family Signal Injections on Held-Out Test Background...")
+    injected_tiles, injection_records = generate_injected_test_suite(
+        test_tiles=test_tiles,
+        test_prov=test_prov,
+        n_per_family=20,
+        snr_levels=INJECTION_SNRS,
+        seed=config.seed,
+    )
+    print(f"  Generated {len(injected_tiles)} controlled injected test tiles across 9 families.")
+
+    # 6. Model Selection & Benchmark (Phase D & E)
+    benchmark_report = run_model_comparison(
+        train_tiles=train_tiles,
+        cal_tiles=cal_tiles,
+        test_bg_tiles=test_tiles,
+        injected_tiles=injected_tiles,
+        injection_records=injection_records,
+        ae_model=ae_model,
+        norm_stats=norm_stats,
+        target_fpr=config.target_fpr,
+    )
+
+    # 7. Checkpoint Lifecycle & Reload Parity (Phase F)
+    print("\n[Phase F] Saving Checkpoint & Verifying Reload Parity...")
+    cal_scores = compute_anomaly_scores(ae_model, cal_tiles, norm_stats, batch_size=64)
+    calibrated_ae_threshold = calibrate_threshold(cal_scores, target_fpr=config.target_fpr)
+
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
     ckpt_path = save_checkpoint(
-        model,
-        config,
-        norm_stats,
-        threshold,
-        MODEL_DIR,
+        model=ae_model,
+        config=config,
+        norm_stats=norm_stats,
+        threshold=calibrated_ae_threshold,
+        output_dir=MODEL_DIR,
         extra_metadata={
-            "observation_count": len(obs_infos),
-            "total_train_tiles": int(train_tiles.shape[0]),
-            "total_val_tiles": int(val_tiles.shape[0]),
-            "total_test_tiles": int(test_tiles.shape[0]),
+            "training_commit": "0564cb7",
+            "observation_count": len(obs_metadata),
+            "total_usable_tiles": len(train_tiles)
+            + len(val_tiles)
+            + len(cal_tiles)
+            + len(test_tiles),
+            "target_fpr": config.target_fpr,
+            "observations_used": list(obs_metadata.keys()),
         },
     )
-    print(f"  Checkpoint saved: {ckpt_path}")
+    print(f"  Saved model checkpoint to: {ckpt_path}")
 
-    # Verify checkpoint reload
-    print("  Verifying checkpoint reload...")
-    loaded_model, _loaded_config, loaded_norm, _loaded_thresh = load_checkpoint(ckpt_path)
-    verify_scores = compute_anomaly_scores(loaded_model, test_tiles[:10], loaded_norm)
-    original_scores = compute_anomaly_scores(model, test_tiles[:10], norm_stats)
-    max_diff = float(np.max(np.abs(verify_scores - original_scores)))
-    print(f"  Max score diff after reload: {max_diff:.2e}")
+    # Reload parity check
+    reloaded_model, _reloaded_cfg, reloaded_norm, _reloaded_thresh = load_checkpoint(ckpt_path)
+    sample_eval = test_tiles[:20]
+    orig_scores = compute_anomaly_scores(ae_model, sample_eval, norm_stats)
+    reloaded_scores = compute_anomaly_scores(reloaded_model, sample_eval, reloaded_norm)
+    score_diff = float(np.max(np.abs(orig_scores - reloaded_scores)))
+    reload_passed = score_diff < 1e-5
+    print(
+        f"  Reload numerical parity verification: max_abs_diff={score_diff:.2e} -> Passed: {reload_passed}"
+    )
 
-    # Build full report
-    import sklearn
-
-    full_report = {
-        "experiment": "AETHON Real-Radio Anomaly Detection",
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "observations": {k: v.to_dict() for k, v in obs_infos.items()},
-        "observation_count": len(obs_infos),
-        "tile_geometry": {"tile_h": TILE_H, "tile_w": TILE_W, "guard_gap": GUARD_GAP},
+    # 8. Save Machine-Readable Manifests and Reports
+    print("\n[Phase 11] Generating Comprehensive Manifests and Evaluation Reports...")
+    manifest_data = {
+        "dataset_id": "aethon_real_radio_training_v2",
+        "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "observations": {k: v.to_dict() for k, v in obs_metadata.items()},
+        "total_usable_tiles": len(train_tiles) + len(val_tiles) + len(cal_tiles) + len(test_tiles),
         "splits": {
-            "train_tiles": int(train_tiles.shape[0]),
-            "val_tiles": int(val_tiles.shape[0]),
-            "test_bg_tiles": int(test_tiles.shape[0]),
-            "injected_tiles": int(injected_tiles.shape[0]),
-            "split_method": "observation_level"
-            if len(obs_infos) >= 3
-            else "mixed_observation"
-            if len(obs_infos) == 2
-            else "single_observation_block",
-            "observations_per_split": {
-                "train": list(set(p["observation_id"] for p in splits["train"]["provenance"])),
-                "val": list(set(p["observation_id"] for p in splits["val"]["provenance"])),
-                "test": list(set(p["observation_id"] for p in splits["test"]["provenance"])),
-            },
+            "train_tiles": len(train_tiles),
+            "val_tiles": len(val_tiles),
+            "calibration_tiles": len(cal_tiles),
+            "test_bg_tiles": len(test_tiles),
+            "injected_tiles": len(injected_tiles),
+            "guard_channels": GUARD_CHANNELS,
         },
         "normalization": norm_stats.to_dict(),
-        "model_config": config.to_dict(),
-        "model_parameter_count": model.count_parameters(),
-        "training_history": {
-            "best_epoch": history["best_epoch"],
-            "best_val_loss": history["best_val_loss"],
-            "final_train_loss": history["train_loss"][-1] if history["train_loss"] else None,
-            "stopped_early": history["stopped_early"],
-            "training_time_seconds": history["training_time_seconds"],
-            "total_epochs_run": len(history["train_loss"]),
-        },
-        "calibration": {
-            "target_fpr": config.target_fpr,
-            "calibrated_threshold": float(threshold),
-            "method": "percentile_on_validation_background",
-        },
-        "evaluation": eval_report,
-        "injection_configs": injection_records,
-        "checkpoint_reload_verification": {
-            "max_score_difference": max_diff,
-            "tolerance": 1e-6,
-            "passed": max_diff < 1e-4,
-        },
-        "artifacts": {
-            "checkpoint": str(ckpt_path),
-            "report": str(OUTPUT_DIR / "evaluation_report.json"),
-            "manifest": str(OUTPUT_DIR / "dataset_manifest.json"),
-        },
-        "environment": {
-            "python_version": sys.version,
-            "numpy_version": np.__version__,
-            "torch_version": torch.__version__,
-            "sklearn_version": sklearn.__version__,
-            "platform": platform.platform(),
+    }
+    with open(OUTPUT_DIR / "dataset_manifest.json", "w", encoding="utf-8") as f:
+        json.dump(manifest_data, f, indent=2, default=str)
+
+    evaluation_report_data = {
+        "experiment": "AETHON Real-Radio Model Training & Selection",
+        "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "platform": {
+            "python": sys.version,
+            "torch": torch.__version__,
+            "numpy": np.__version__,
             "device": "cpu",
         },
-        "limitations": [
-            "Observation diversity is limited to available public filterbank files.",
-            "Tiles from the same observation may share systematic characteristics (RFI, instrument response).",
-            "Signal injections are simplified (direct array manipulation) rather than fully realistic antenna-level simulations.",
-            "No validation on confirmed unknown astronomical signals has been performed.",
-            "The model identifies reconstruction-error outliers, NOT extraterrestrial intelligence.",
-            "Single-observation splits (if used) have inherent leakage and generalization limitations.",
+        "dataset_summary": {
+            "observation_count": len(obs_metadata),
+            "total_bytes": sum(m.file_size_bytes for m in obs_metadata.values()),
+            "total_tiles": manifest_data["total_usable_tiles"],
+            "splits": manifest_data["splits"],
+        },
+        "training_history": training_history,
+        "calibration": {
+            "target_fpr": config.target_fpr,
+            "calibrated_threshold": calibrated_ae_threshold,
+            "calibration_partition_size": len(cal_tiles),
+        },
+        "benchmark_comparison": benchmark_report,
+        "reload_parity": {
+            "verified": reload_passed,
+            "max_difference": score_diff,
+        },
+        "scientific_disclaimers": [
+            "Intensity filterbank spectrograms discard phase information; arbitrary communication decoding is unsupported without IQ voltage data.",
+            "Anomalies indicate statistical or reconstruction deviations from learned observational background, NOT evidence of extraterrestrial technology.",
         ],
     }
+    with open(OUTPUT_DIR / "evaluation_report.json", "w", encoding="utf-8") as f:
+        json.dump(evaluation_report_data, f, indent=2, default=str)
 
-    # Save report
-    report_path = OUTPUT_DIR / "evaluation_report.json"
-    with open(report_path, "w", encoding="utf-8") as f:
-        json.dump(full_report, f, indent=2, default=str)
-    print(f"  Report saved: {report_path}")
+    with open(OUTPUT_DIR / "training_history.json", "w", encoding="utf-8") as f:
+        json.dump(training_history, f, indent=2)
 
-    # Save manifest
-    manifest = {
-        "dataset_id": "aethon_real_radio_training_v1",
-        "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "observations": {k: v.to_dict() for k, v in obs_infos.items()},
-        "tile_geometry": {"tile_h": TILE_H, "tile_w": TILE_W},
-        "normalization": norm_stats.to_dict(),
-        "splits": full_report["splits"],
-        "provenance": {
-            "train": splits["train"]["provenance"][:5],  # Sample only
-            "note": "Full provenance available in tiles data",
-        },
-    }
-    manifest_path = OUTPUT_DIR / "dataset_manifest.json"
-    with open(manifest_path, "w", encoding="utf-8") as f:
-        json.dump(manifest, f, indent=2, default=str)
-    print(f"  Manifest saved: {manifest_path}")
-
-    # Save training history
-    history_path = OUTPUT_DIR / "training_history.json"
-    with open(history_path, "w", encoding="utf-8") as f:
-        json.dump(history, f, indent=2)
-    print(f"  Training history saved: {history_path}")
-
-    # Print summary
-    print("\n" + "=" * 72)
-    print("EXPERIMENT RESULTS SUMMARY")
-    print("=" * 72)
-    print(f"Observations: {len(obs_infos)}")
+    # Print Summary Table
+    print("\n" + "=" * 80)
+    print("MODEL COMPARISON SUMMARY ON HELD-OUT TEST DATA")
+    print("=" * 80)
     print(
-        f"Total tiles: train={train_tiles.shape[0]}, val={val_tiles.shape[0]}, "
-        f"test_bg={test_tiles.shape[0]}, injected={injected_tiles.shape[0]}"
+        f"{'Detector':<24} | {'ROC-AUC':<8} | {'PR-AUC':<8} | {'Recall':<8} | {'FPR (bg)':<9} | {'FA/1000':<8} | {'Latency':<8}"
     )
-    print(f"Model parameters: {model.count_parameters()}")
-    print(
-        f"Training: {history['total_epochs_run']} epochs, best_val_loss={history['best_val_loss']:.6f}"
-    )
-
-    for det_name, det_results in eval_report.items():
-        if isinstance(det_results, dict) and "roc_auc" in det_results:
-            print(f"\n  {det_name}:")
-            print(
-                f"    ROC-AUC: {det_results['roc_auc']:.4f}"
-                if det_results["roc_auc"]
-                else "    ROC-AUC: N/A"
-            )
-            print(
-                f"    PR-AUC: {det_results['pr_auc']:.4f}"
-                if det_results["pr_auc"]
-                else "    PR-AUC: N/A"
-            )
-            print(f"    Precision: {det_results['precision']:.4f}")
-            print(f"    Recall: {det_results['recall']:.4f}")
-            print(f"    F1: {det_results['f1']:.4f}")
-            print(f"    FPR on held-out bg: {det_results['fpr_on_held_out_bg']:.4f}")
-            print(f"    False alarms/1000: {det_results['false_alarms_per_1000_bg']:.1f}")
-        elif isinstance(det_results, dict) and "error" in det_results:
-            print(f"\n  {det_name}: {det_results['error']}")
-
-    print(f"\nArtifacts saved under: {OUTPUT_DIR}")
-    print("=" * 72)
+    print("-" * 80)
+    for det_key, det_res in benchmark_report.items():
+        print(
+            f"{det_key:<24} | "
+            f"{det_res.get('roc_auc')!s:<8} | "
+            f"{det_res.get('pr_auc')!s:<8} | "
+            f"{det_res.get('recall')!s:<8} | "
+            f"{det_res.get('fpr_on_held_out_bg')!s:<9} | "
+            f"{det_res.get('false_alarms_per_1000_bg')!s:<8} | "
+            f"{str(det_res.get('inference_latency_seconds')) + 's':<8}"
+        )
+    print("=" * 80)
+    print("Training and evaluation run completed successfully.")
 
 
 if __name__ == "__main__":

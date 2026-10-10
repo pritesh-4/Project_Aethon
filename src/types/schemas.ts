@@ -93,6 +93,73 @@ export type ObservationListResponse = z.infer<typeof ObservationListResponseSche
 
 /**
  * ============================================================================
+ * 3b. PUBLIC DATASETS CATALOGUE & IMPORT SCHEMAS (Breakthrough Listen Open Data)
+ * ============================================================================
+ */
+export const PublicDatasetStatusResponseSchema = z.object({
+  configured: z.boolean(),
+  archive_url: z.string(),
+  available: z.boolean(),
+  max_import_bytes: z.number().int(),
+  supported_file_types: z.array(z.string()).default(['filterbank', '.fil', 'FITS', '.fits']),
+  message: z.string().nullable().optional(),
+});
+export type PublicDatasetStatusResponse = z.infer<typeof PublicDatasetStatusResponseSchema>;
+
+export const PublicDatasetItemSchema = z.object({
+  id: z.string(),
+  target: z.string(),
+  telescope: z.string(),
+  utc: z.string().nullable().optional(),
+  mjd: z.number().nullable().optional(),
+  ra_deg: z.number().nullable().optional(),
+  dec_deg: z.number().nullable().optional(),
+  center_freq_mhz: z.number().nullable().optional(),
+  file_type: z.string(),
+  size_bytes: z.number().int(),
+  quality: z.string().nullable().optional(),
+  md5sum: z.string().nullable().optional(),
+  url: z.string(),
+  is_compatible: z.boolean(),
+  compatibility_reason: z.string().nullable().optional(),
+  is_within_size_limit: z.boolean(),
+  size_reason: z.string().nullable().optional(),
+});
+export type PublicDatasetItem = z.infer<typeof PublicDatasetItemSchema>;
+
+export const PublicDatasetQueryResponseSchema = z.object({
+  items: z.array(PublicDatasetItemSchema),
+  total: z.number().int(),
+  limit: z.number().int(),
+  offset: z.number().int(),
+  has_more: z.boolean(),
+  provider_status: z.string(),
+  cached: z.boolean().default(false),
+  query_target: z.string().nullable().optional(),
+});
+export type PublicDatasetQueryResponse = z.infer<typeof PublicDatasetQueryResponseSchema>;
+
+export const PublicDatasetImportRequestSchema = z.object({
+  url: z.string(),
+  target: z.string().nullable().optional(),
+  telescope: z.string().nullable().optional(),
+  expected_md5sum: z.string().nullable().optional(),
+  expected_size_bytes: z.number().int().nullable().optional(),
+});
+export type PublicDatasetImportRequest = z.infer<typeof PublicDatasetImportRequestSchema>;
+
+export const PublicDatasetImportResponseSchema = z.object({
+  observation: ObservationRecordResponseSchema,
+  import_source_url: z.string(),
+  bytes_downloaded: z.number().int(),
+  is_duplicate: z.boolean(),
+  duration_seconds: z.number(),
+  message: z.string(),
+});
+export type PublicDatasetImportResponse = z.infer<typeof PublicDatasetImportResponseSchema>;
+
+/**
+ * ============================================================================
  * 4. CANONICAL SPECTRAL SLICE SCHEMAS
  * ============================================================================
  */

@@ -33,7 +33,7 @@ Build a reproducible, scientifically defensible system that discovers unusual ra
 - **Phase 9:** BLC1 Case Study (P1) — ⬜ Planned
 - **Phase 10:** Candidate & Dossier Audit (P1) — ⬜ Planned
 - **Phase 11:** Operational & Browser Hardening (P2) — ⬜ Planned
-- **Phase 12:** Deep-Learning Go/No-Go Decision (P2) — ⬜ Planned
+- **Phase 12:** Deep-Learning Go/No-Go Decision (P2) — 🔬 Evaluated (Isolation Forest retained as production default; Autoencoder integrated as opt-in experimental engine)
 - **Phase 13:** Release & Demonstration Freeze (Release) — ⬜ Planned
 
 ## Verification Evidence (Commit `f0d35ec4`)

@@ -169,6 +169,72 @@ class DetectionService:
                 # Insufficient windows (<10) to train Isolation Forest; skip scoring
                 iforest_evidences = [None] * evaluated_count
 
+        # 4b. Optional Real-Radio Autoencoder Scoring (Phase H)
+        autoencoder_evidences: list[DetectionEvidence | None] = [None] * evaluated_count
+        ae_model_info: dict[str, Any] = {}
+        if cfg.real_radio_autoencoder.enabled:
+            from pathlib import Path
+
+            from app.detection.real_radio_anomaly import compute_anomaly_scores, load_checkpoint
+
+            if cfg.real_radio_autoencoder.checkpoint_path:
+                ckpt_p = Path(cfg.real_radio_autoencoder.checkpoint_path)
+            else:
+                ckpt_p = Path(
+                    "backend/data/real_radio_training/model/real_radio_anomaly_checkpoint.pt"
+                )
+                if not ckpt_p.exists():
+                    alt_p = (
+                        Path(__file__).resolve().parent.parent.parent
+                        / "data"
+                        / "real_radio_training"
+                        / "model"
+                        / "real_radio_anomaly_checkpoint.pt"
+                    )
+                    if alt_p.exists():
+                        ckpt_p = alt_p
+
+            if ckpt_p.exists():
+                try:
+                    ae_model, _ae_cfg, ae_norm, ae_thresh = load_checkpoint(ckpt_p)
+                    eff_thresh = (
+                        cfg.real_radio_autoencoder.score_threshold
+                        if cfg.real_radio_autoencoder.score_threshold is not None
+                        else ae_thresh
+                    )
+                    ae_tiles: list[np.ndarray] = []
+                    for win_meta, w_vals, _ in window_tuples:
+                        if win_meta.valid_sample_count == 0:
+                            continue
+                        tile_32 = np.zeros((32, 32), dtype=np.float32)
+                        h = min(32, w_vals.shape[0])
+                        w = min(32, w_vals.shape[1])
+                        tile_32[:h, :w] = w_vals[:h, :w]
+                        ae_tiles.append(tile_32)
+
+                    if ae_tiles:
+                        tile_arr = np.array(ae_tiles, dtype=np.float32)
+                        scores = compute_anomaly_scores(ae_model, tile_arr, ae_norm)
+                        for idx, sc in enumerate(scores):
+                            is_anom = bool(sc >= eff_thresh)
+                            autoencoder_evidences[idx] = DetectionEvidence(
+                                detector_name="real_radio_autoencoder",
+                                anomaly_score=round(float(sc), 6),
+                                threshold_used=round(float(eff_thresh), 6),
+                                is_anomalous=is_anom,
+                                score_semantics="higher_indicates_higher_reconstruction_error",
+                                decision_rationale=(
+                                    f"MSE {sc:.6f} "
+                                    f"{'>=' if is_anom else '<'} threshold {eff_thresh:.6f}"
+                                ),
+                                parameters={"checkpoint": str(ckpt_p)},
+                            )
+                    ae_model_info = {"checkpoint": str(ckpt_p), "status": "active"}
+                except Exception as exc:
+                    ae_model_info = {"checkpoint": str(ckpt_p), "error": str(exc)}
+            else:
+                ae_model_info = {"checkpoint": str(ckpt_p), "error": "checkpoint_not_found"}
+
         # 5. Assemble Anomalous Regions
         anomalous_regions: list[AnomalousRegion] = []
         for idx in range(evaluated_count):
@@ -176,11 +242,13 @@ class DetectionService:
             feats = feature_dicts[idx]
             b_ev = baseline_evidences[idx]
             if_ev = iforest_evidences[idx]
+            ae_ev = autoencoder_evidences[idx]
 
             is_b_anom = b_ev.is_anomalous if b_ev is not None else False
             is_if_anom = if_ev.is_anomalous if if_ev is not None else False
+            is_ae_anom = ae_ev.is_anomalous if ae_ev is not None else False
 
-            if is_b_anom or is_if_anom:
+            if is_b_anom or is_if_anom or is_ae_anom:
                 det_id = f"det_{analysis_run_id[:8]}_{win.window_id}"
                 region = AnomalousRegion(
                     detection_id=det_id,
@@ -188,6 +256,7 @@ class DetectionService:
                     features=feats,
                     baseline_evidence=b_ev,
                     isolation_forest_evidence=if_ev,
+                    autoencoder_evidence=ae_ev,
                     is_anomalous=True,
                 )
                 anomalous_regions.append(region)
@@ -211,6 +280,8 @@ class DetectionService:
             "sklearn_version": sklearn.__version__,
             "baseline_enabled": cfg.baseline.enabled,
             "isolation_forest_enabled": cfg.isolation_forest.enabled,
+            "real_radio_autoencoder_enabled": cfg.real_radio_autoencoder.enabled,
+            "real_radio_autoencoder_info": ae_model_info,
             "merged_regions_generated": merged_regions is not None,
         }
 

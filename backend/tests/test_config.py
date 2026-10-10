@@ -71,7 +71,7 @@ def test_sensitive_fields_excluded_from_repr() -> None:
 
 def test_optional_roadmap_placeholders_default_none() -> None:
     """Verify that optional integration placeholders default to None and do not impede startup."""
-    cfg = Settings()
+    cfg = Settings(_env_file=None)
     assert cfg.secret_key is None
     assert cfg.astropy_cache_dir is None
     assert cfg.breakthrough_listen_archive_url is None

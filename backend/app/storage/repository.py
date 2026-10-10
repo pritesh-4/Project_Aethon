@@ -150,6 +150,29 @@ class ObservationRepository:
 
         return self._row_to_response(row)
 
+    def get_observation_by_sha256(self, sha256_hash: str) -> ObservationRecordResponse | None:
+        """Retrieve existing observation by SHA-256 digest for deduplication."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                """
+                SELECT
+                    id, original_filename, format, file_size_bytes, sha256,
+                    ingested_at, status, file_rel_path, metadata_json,
+                    provenance_json, warnings_json
+                FROM observations
+                WHERE sha256 = ?
+                ORDER BY ingested_at DESC
+                LIMIT 1
+                """,
+                (sha256_hash,),
+            )
+            row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return self._row_to_response(row)
+
     def get_internal_record(self, observation_id: str) -> ObservationRecordInternal | None:
         """Retrieve internal record including internal server file path."""
         with self._get_connection() as conn:

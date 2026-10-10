@@ -153,9 +153,15 @@ export default function DiscoverPage() {
     };
   }, []);
 
-  // Handle Observation Selection (clicking selected item again toggles off to idle state)
+  // Handle Observation Selection and Ingestion
   const handleSelectObservation = (obs: DiscoveryObservationMeta) => {
-    setObservation((prev) => (prev?.id === obs.id ? null : obs));
+    setObservation(obs);
+    setCatalogObservations((prev) => {
+      if (prev.some((item) => item.id === obs.id)) {
+        return prev;
+      }
+      return [obs, ...prev];
+    });
     setPipelineError(null);
     setPartialWarning(null);
     setDiscoveredCandidates([]);

@@ -134,14 +134,17 @@ Install using `requirements.txt` or standard `pyproject.toml`:
 
 ```powershell
 # Windows / Unix (with activated venv)
-# Option A: Using requirements files
+# Option A: Core production dependencies only (PyTorch not required)
+pip install -r requirements.txt
+
+# Option B: Development and testing dependencies
 pip install -r requirements-dev.txt
 
-# Option B: Editable package install with dev dependencies
-pip install -e ".[dev]"
-
-# Or core dependencies only
-pip install -r requirements.txt
+# Option C: Complete development suite including optional CNN/PyTorch models:
+# CPU-only (recommended for local development and CI runners):
+pip install --extra-index-url https://download.pytorch.org/whl/cpu -e ".[cnn]"
+# Or full PyTorch with CUDA (for GPU workstations):
+pip install -e ".[cnn]"
 ```
 
 ---
@@ -182,34 +185,37 @@ cp backend/.env.example backend/.env
 
 ### 3. Active Configuration Variables
 
-| Variable                | Type          | Default                                              | Sensitivity | Description                                         |
-| :---------------------- | :------------ | :--------------------------------------------------- | :---------- | :-------------------------------------------------- |
-| `APP_NAME`              | string        | `"AETHON Radio Signal Discovery API"`                | Public      | Application title for documentation                 |
-| `APP_VERSION`           | string        | `"0.1.0"`                                            | Public      | Semantic service version                            |
-| `ENVIRONMENT`           | string        | `"development"`                                      | Public      | Environment (`development`, `test`, `production`)   |
-| `DEBUG`                 | boolean       | `true`                                               | Internal    | Enables detailed debug traces                       |
-| `HOST`                  | string        | `"127.0.0.1"`                                        | Internal    | Server interface binding                            |
-| `PORT`                  | integer       | `8000`                                               | Internal    | Server listening port                               |
-| `API_PREFIX`            | string        | `"/api"`                                             | Public      | Base route prefix for all endpoints                 |
-| `CORS_ORIGINS`          | list / string | `["http://localhost:5173", "http://127.0.0.1:5173"]` | Internal    | Allowed web frontend client origins                 |
-| `LOG_LEVEL`             | string        | `"INFO"`                                             | Internal    | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `DATA_DIR`              | string        | `"data"`                                             | Internal    | Root directory for application storage              |
-| `OBSERVATIONS_DIR`      | string        | `"data/observations"`                                | Internal    | Preserved raw astronomical files directory          |
-| `TEMP_UPLOAD_DIR`       | string        | `"data/tmp"`                                         | Internal    | Staging directory for in-flight uploads             |
-| `DB_PATH`               | string        | `"data/aethon.db"`                                   | Internal    | SQLite metadata database path                       |
-| `MAX_UPLOAD_SIZE_BYTES` | integer       | `104857600` (100MB)                                  | Internal    | Upload size limit enforced on stream chunks         |
-| `MAX_SLICE_CELLS`       | integer       | `250000`                                             | Internal    | Max matrix cells per slice query                    |
+| Variable                                 | Type          | Default                                              | Sensitivity | Description                                           |
+| :--------------------------------------- | :------------ | :--------------------------------------------------- | :---------- | :---------------------------------------------------- |
+| `APP_NAME`                               | string        | `"AETHON Radio Signal Discovery API"`                | Public      | Application title for documentation                   |
+| `APP_VERSION`                            | string        | `"0.1.0"`                                            | Public      | Semantic service version                              |
+| `ENVIRONMENT`                            | string        | `"development"`                                      | Public      | Environment (`development`, `test`, `production`)     |
+| `DEBUG`                                  | boolean       | `true`                                               | Internal    | Enables detailed debug traces                         |
+| `HOST`                                   | string        | `"127.0.0.1"`                                        | Internal    | Server interface binding                              |
+| `PORT`                                   | integer       | `8000`                                               | Internal    | Server listening port                                 |
+| `API_PREFIX`                             | string        | `"/api"`                                             | Public      | Base route prefix for all endpoints                   |
+| `CORS_ORIGINS`                           | list / string | `["http://localhost:5173", "http://127.0.0.1:5173"]` | Internal    | Allowed web frontend client origins                   |
+| `LOG_LEVEL`                              | string        | `"INFO"`                                             | Internal    | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`)   |
+| `DATA_DIR`                               | string        | `"data"`                                             | Internal    | Root directory for application storage                |
+| `OBSERVATIONS_DIR`                       | string        | `"data/observations"`                                | Internal    | Preserved raw astronomical files directory            |
+| `TEMP_UPLOAD_DIR`                        | string        | `"data/tmp"`                                         | Internal    | Staging directory for in-flight uploads               |
+| `DB_PATH`                                | string        | `"data/aethon.db"`                                   | Internal    | SQLite metadata database path                         |
+| `MAX_UPLOAD_SIZE_BYTES`                  | integer       | `104857600` (100MB)                                  | Internal    | Upload size limit enforced on stream chunks           |
+| `MAX_SLICE_CELLS`                        | integer       | `250000`                                             | Internal    | Max matrix cells per slice query                      |
+| `BREAKTHROUGH_LISTEN_ARCHIVE_URL`        | string / null | `None` (or `https://seti.berkeley.edu/opendata`)     | Public      | Public Breakthrough Listen Open Data archive endpoint |
+| `BREAKTHROUGH_LISTEN_MAX_IMPORT_BYTES`   | integer       | `83886080` (80 MiB)                                  | Internal    | Maximum permitted remote import download size         |
+| `BREAKTHROUGH_LISTEN_TIMEOUT_SECONDS`    | float         | `20.0`                                               | Internal    | Upstream HTTP request timeout in seconds              |
+| `BREAKTHROUGH_LISTEN_CATALOG_CACHE_SECS` | integer       | `300`                                                | Internal    | In-memory TTL cache duration for catalogue queries    |
 
 ### 4. Roadmap Integration Placeholders (Optional / Unused)
 
 These variables represent future architectural integrations documented in `.gsd/ROADMAP.md`. They default to `None` and do not prevent application startup:
 
-| Placeholder Variable              | Type   | Default | Sensitivity      | Roadmap Purpose                                                            |
-| :-------------------------------- | :----- | :------ | :--------------- | :------------------------------------------------------------------------- |
-| `SECRET_KEY`                      | string | `None`  | **Confidential** | Future cryptographic key for signed PDF verification and session security. |
-| `ASTROPY_CACHE_DIR`               | string | `None`  | Internal         | Future directory for caching Astropy catalog data (SIMBAD/Gaia).           |
-| `BREAKTHROUGH_LISTEN_ARCHIVE_URL` | string | `None`  | Public           | Future URL for remote Breakthrough Listen public data archive.             |
-| `BREAKTHROUGH_LISTEN_API_KEY`     | string | `None`  | **Confidential** | Future API key for remote astronomical service access.                     |
+| Placeholder Variable          | Type   | Default | Sensitivity      | Roadmap Purpose                                                            |
+| :---------------------------- | :----- | :------ | :--------------- | :------------------------------------------------------------------------- |
+| `SECRET_KEY`                  | string | `None`  | **Confidential** | Future cryptographic key for signed PDF verification and session security. |
+| `ASTROPY_CACHE_DIR`           | string | `None`  | Internal         | Future directory for caching Astropy catalog data (SIMBAD/Gaia).           |
+| `BREAKTHROUGH_LISTEN_API_KEY` | string | `None`  | **Confidential** | Optional API key for remote astronomical service access (if required).     |
 
 ---
 
@@ -354,6 +360,55 @@ curl -G "http://localhost:8000/api/observations/550e8400-e29b-41d4-a716-44665544
   "warnings": []
 }
 ```
+
+---
+
+## Breakthrough Listen Open Data Archive Integration
+
+AETHON integrates directly with the official Breakthrough Listen Open Data Archive hosted by the UC Berkeley SETI Research Center ([https://seti.berkeley.edu/opendata](https://seti.berkeley.edu/opendata)), enabling users to browse real radio-astronomy observations, inspect technical metadata, safely stream compatible datasets into local storage, and run them through AETHON's scientific detection and Doppler drift analysis pipeline.
+
+### 1. Upstream Provider Attribution & Realities
+
+- **Primary Provider:** Breakthrough Listen Open Data Archive, UC Berkeley SETI Research Center & Breakthrough Initiatives.
+- **Provider Reference:** [https://seti.berkeley.edu/opendata](https://seti.berkeley.edu/opendata) and [https://github.com/ggroode/bl-opendata](https://github.com/ggroode/bl-opendata).
+- **Public Endpoints Used:**
+  - `GET /api/list-targets`
+  - `GET /api/list-telescopes`
+  - `GET /api/list-file-types`
+  - `GET /api/query-files?target={target}`
+- **Operational Reality:** Upstream server availability, network routing, and file sizes are entirely controlled by the public archive. The endpoint `query-files` requires the `target` parameter. AETHON caches catalogue responses for 300 seconds (`BREAKTHROUGH_LISTEN_CATALOG_CACHE_SECONDS`) to minimize remote load. When the upstream provider is unreachable or times out, AETHON reports a clean unavailable status and never fabricates mock or synthetic replacement records.
+
+### 2. Supported Formats & Download Ceiling
+
+- **Directly Analyzable Formats:**
+  - **SIGPROC Filterbank (`.fil` / `filterbank`):** Ingested via `blimpy` header parser and memory-mapped bounded slicing.
+  - **Radio FITS (`.fits` / `.fit` / `FITS`):** Ingested via `astropy.io.fits` with spectral WCS axes.
+- **Catalogued but Non-Analyzable Formats:**
+  - **HDF5 (`.h5` / `HDF5`):** Retained in catalogue search for metadata inspection, but disabled for direct download and ingestion with clear human-readable guidance.
+  - **Baseband Data (`.raw` / `baseband data`):** Raw unchannelized voltage data (typically tens to hundreds of gigabytes); excluded from direct automated analysis.
+- **Download Ceiling:** Enforced via `BREAKTHROUGH_LISTEN_MAX_IMPORT_BYTES=83886080` (80 MiB), leaving safe headroom below the 100 MiB manual upload ceiling. Files exceeding 80 MiB are flagged and rejected before download begins.
+
+### 3. Security, SSRF Prevention & Bounded Streaming
+
+- **SSRF Defense:** Remote URLs are strictly validated:
+  - Allowed download domains: `seti.berkeley.edu`, `*.berkeley.edu` (`bldata.berkeley.edu`, `*.ssl.berkeley.edu`), and Google Cloud Storage bucket endpoints (`storage.googleapis.com`).
+  - Blocked destinations: loopback (`127.0.0.1`, `::1`, `localhost`), link-local (`169.254.0.0/16`), and private RFC1918 networks (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`).
+- **Bounded Streaming:** Files are streamed in 64 KB chunks directly to a temporary staging file on disk. An in-stream byte counter aborts the connection immediately if the 80 MiB ceiling is exceeded, preventing memory exhaustion or buffer bloat.
+- **Integrity & Provenance:**
+  - Stream computes SHA-256 and MD5 on the fly.
+  - MD5 is verified against the upstream checksum if supplied by the archive.
+  - Deduplication: If the computed SHA-256 already exists in AETHON's local repository, the existing record is reused idempotently without duplicating disk storage.
+  - Temporary files are guaranteed to be cleaned up on success, failure, or cancellation.
+
+### 4. Pipeline Distinction
+
+- **Catalogue Browsing:** Queries the public archive API and renders normalized metadata (target, telescope, frequency, coordinates, file size, format compatibility).
+- **Local Ingestion:** Streams the compatible observation into AETHON's internal storage (`data/observations/`), parses its scientific header, and records it in `aethon.db` with a unique persistent observation ID (`OBS_...`).
+- **Scientific Analysis:** Runs the ingested observation through AETHON's full scientific pipeline:
+  - `GET /api/observations/{id}/slice`: 2D Waterfall Spectrogram, 1D Frequency Spectrum, and 1D Time Profile.
+  - `POST /api/observations/{id}/process`: Distribution-free statistical preprocessing and RFI flagging.
+  - `POST /api/observations/{id}/detect`: Baseline and Isolation Forest anomaly detection.
+  - `POST /api/observations/{id}/analyze-drift`: Doppler drift rate fitting and temporal characterization.
 
 ---
 
@@ -819,6 +874,34 @@ Output: `reports/overall_verification_report.json`
 
 ---
 
+## Real-Radio Model Training, Model Selection & Evaluation (Task 22)
+
+AETHON includes a dedicated real-observational ML training and multi-detector benchmark framework for discovering anomalous radio signals without relying purely on synthetic spectrograms:
+
+- **Observational Corpus:** 4 verified genuine multi-telescope observations across Green Bank Telescope (GBT), Parkes Observatory (Murriyang), and Giant Metrewave Radio Telescope (GMRT), yielding 24,512 usable 32×32 tiles.
+- **Bounded Loading & Standardization:** Bounded chunk loading, strict frequency-axis reversal (`foff < 0`), non-finite sample imputation, and per-observation robust standardization ($(X - \text{median}) / \sigma_{\text{MAD}}$).
+- **Grouped Partitions:** 4-way observation-grouped split (Train: GBT + GMRT, Val: Parkes 1, Calibration: Parkes 2, Locked Held-Out Test: GBT held-out subband with 512-channel guard gap).
+- **Injection Suite:** 180 controlled test injections across 9 signal families and 5 SNR levels (3, 5, 8, 12, 20).
+- **Empirical Model Comparison:**
+  - `IsolationForestDetector`: ROC-AUC **0.9624**, Recall **0.2500** at 1.06% background false alarm rate (selected primary detector).
+  - `StatisticalBaselineDetector`: ROC-AUC **0.9652**, 0.00% background false alarms.
+  - `RadioAnomalyAutoencoder`: ROC-AUC **0.9001**, PR-AUC **0.8947**, throughput **2,421 tiles/s** (experimental detector; opt-in).
+- **Signal Characterization vs. Message Decoding:** Filterbank intensity spectrograms discard phase information; arbitrary communication decoding is physically unsupported without complex IQ baseband voltages.
+
+### Running the Real-Data Training and Benchmark Script
+
+```powershell
+.\.venv\Scripts\python.exe scripts\train_real_radio_anomaly.py
+```
+
+### Running Unit & Integration Tests
+
+```powershell
+.\.venv\Scripts\pytest.exe tests\test_detection_real_radio_anomaly.py -v
+```
+
+---
+
 ## Code Quality & Linting
 
 ```powershell
@@ -829,5 +912,5 @@ ruff format --check .
 ruff check .
 
 # Static type verification
-mypy app
+mypy --ignore-missing-imports app
 ```

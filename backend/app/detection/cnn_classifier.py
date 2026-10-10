@@ -21,7 +21,7 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -90,7 +90,7 @@ class SpectrogramCNN(nn.Module):
 
         feats = self.features(x)
         logits = self.classifier(feats)
-        return logits
+        return cast(torch.Tensor, logits)
 
 
 def count_parameters(model: nn.Module) -> int:

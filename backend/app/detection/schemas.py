@@ -73,6 +73,9 @@ class AnomalousRegion(BaseModel):
     isolation_forest_evidence: DetectionEvidence | None = Field(
         default=None, description="Isolation Forest evidence if enabled and fitted"
     )
+    autoencoder_evidence: DetectionEvidence | None = Field(
+        default=None, description="Real-radio autoencoder evidence if enabled"
+    )
     is_anomalous: bool = Field(
         default=True, description="True if flagged by any active detector in pipeline"
     )

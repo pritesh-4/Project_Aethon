@@ -87,12 +87,33 @@ class IsolationForestConfig(BaseModel):
     )
 
 
+class RealRadioAutoencoderConfig(BaseModel):
+    """Configuration for learned real-radio autoencoder anomaly detection."""
+
+    enabled: bool = Field(
+        default=False,
+        description="Enable trained real-radio autoencoder detector (defaults to False; opt-in)",
+    )
+    checkpoint_path: str | None = Field(
+        default=None,
+        description="Path to checkpoint; if None, uses default training artifact",
+    )
+
+    score_threshold: float | None = Field(
+        default=None,
+        description="Optional override for calibrated MSE reconstruction error threshold",
+    )
+
+
 class DetectionPipelineConfig(BaseModel):
     """Unified configuration orchestrating windowing, baseline, and Isolation Forest."""
 
     window: WindowConfig = Field(default_factory=WindowConfig)
     baseline: StatisticalBaselineConfig = Field(default_factory=StatisticalBaselineConfig)
     isolation_forest: IsolationForestConfig = Field(default_factory=IsolationForestConfig)
+    real_radio_autoencoder: RealRadioAutoencoderConfig = Field(
+        default_factory=RealRadioAutoencoderConfig
+    )
     max_windows: int = Field(
         default=20_000,
         ge=1,
