@@ -68,11 +68,20 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
       setSliceError(null);
 
       try {
+        const reqTimeStop =
+          observation.timeSampleCount && observation.timeSampleCount > 0
+            ? Math.min(bounds.timeStop, observation.timeSampleCount)
+            : undefined;
+        const reqFreqStop =
+          observation.channelCount && observation.channelCount > 0
+            ? Math.min(bounds.freqStop, observation.channelCount)
+            : undefined;
+
         const res = await api.getObservationSlice(observation.id, {
           time_start: bounds.timeStart,
-          time_stop: bounds.timeStop,
+          time_stop: reqTimeStop,
           frequency_start: bounds.freqStart,
-          frequency_stop: bounds.freqStop,
+          frequency_stop: reqFreqStop,
         });
 
         if (!isCancelled) {
@@ -105,6 +114,8 @@ export function SignalAnalysisViewport({ stage, observation }: SignalAnalysisVie
     };
   }, [
     observation.id,
+    observation.channelCount,
+    observation.timeSampleCount,
     bounds.timeStart,
     bounds.timeStop,
     bounds.freqStart,

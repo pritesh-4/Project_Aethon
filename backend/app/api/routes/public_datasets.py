@@ -5,9 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
+from fastapi import Path as PathParam
 
 from app.core.config import settings as default_settings
 from app.datasets.archive_client import ArchiveClient
+from app.datasets.demo import DemoService
 from app.datasets.import_service import DatasetImportService
 from app.ingestion.exceptions import (
     FileSizeExceededError,
@@ -16,6 +18,8 @@ from app.ingestion.exceptions import (
 )
 from app.schemas.error import ApiErrorResponse
 from app.schemas.public_datasets import (
+    DemoLoadResponse,
+    DemoSampleInfo,
     PublicDatasetImportRequest,
     PublicDatasetImportResponse,
     PublicDatasetQueryResponse,
@@ -44,6 +48,16 @@ def _get_import_service(request: Request) -> DatasetImportService:
         observations_dir=Path(app_settings.observations_dir),
     )
     return DatasetImportService(settings=app_settings, repository=repo)
+
+
+def _get_demo_service(request: Request) -> DemoService:
+    """Retrieve DemoService initialized with repository and settings."""
+    app_settings = getattr(request.app.state, "settings", default_settings)
+    repo = ObservationRepository(
+        db_path=Path(app_settings.db_path),
+        observations_dir=Path(app_settings.observations_dir),
+    )
+    return DemoService(settings=app_settings, repository=repo)
 
 
 @router.get(
@@ -214,4 +228,65 @@ async def import_public_dataset(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=e.message,
+        ) from e
+
+
+@router.get(
+    "/demo-samples",
+    status_code=status.HTTP_200_OK,
+    response_model=list[DemoSampleInfo],
+    summary="List available guaranteed offline demo observation presets",
+    description=(
+        "Fetch catalogue of verified demo datasets available offline without external dependencies "
+        "(synthetic drifting beacon and real GBT observation sample)."
+    ),
+)
+def list_demo_samples(request: Request) -> list[DemoSampleInfo]:
+    """Retrieve metadata about available ready-to-use demo datasets."""
+    service = _get_demo_service(request)
+    return service.list_samples()
+
+
+@router.post(
+    "/demo-samples/{sample_id}/load",
+    status_code=status.HTTP_201_CREATED,
+    response_model=DemoLoadResponse,
+    summary="Load and ingest a guaranteed demo observation preset into AETHON",
+    description=(
+        "Deterministically load or generate a supported demo dataset (synthetic drifting beacon "
+        "or real GBT observation), validate it with the production Filterbank adapter, "
+        "deduplicate it safely by SHA-256, and persist it into the observation repository "
+        "for immediate screening."
+    ),
+    responses={
+        201: {
+            "description": "Demo observation successfully loaded and indexed",
+            "model": DemoLoadResponse,
+        },
+        400: {"description": "Invalid demo sample ID or preset error", "model": ApiErrorResponse},
+        404: {"description": "Requested demo preset not found", "model": ApiErrorResponse},
+    },
+)
+def load_demo_sample(
+    request: Request,
+    sample_id: str = PathParam(
+        ...,
+        description=(
+            "Demo sample preset identifier ('synthetic-drifting-beacon' or 'real-gbt-hip35136')"
+        ),
+    ),
+) -> DemoLoadResponse:
+    """Load and persist a selected demo observation preset."""
+    service = _get_demo_service(request)
+    try:
+        return service.load_sample(sample_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from e
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
         ) from e

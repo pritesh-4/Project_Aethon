@@ -129,3 +129,56 @@ class PublicDatasetImportResponse(BaseModel):
     )
     duration_seconds: float = Field(..., description="Time taken to stream and ingest the file")
     message: str = Field(..., description="User-facing summary message")
+
+
+class DemoSampleInfo(BaseModel):
+    """Metadata describing a ready-to-use demo observation preset."""
+
+    id: str = Field(..., description="Unique demo sample preset identifier")
+    name: str = Field(..., description="User-friendly title of the demo sample")
+    label: str = Field(..., description="Badge label (e.g. SYNTHETIC DEMO, REAL GBT DATA)")
+    format: str = Field(..., description="File format (e.g. .fil)")
+    target: str = Field(..., description="Target source identifier")
+    telescope: str = Field(..., description="Observing instrument facility")
+    description: str = Field(..., description="Scientific description and contextual notes")
+    is_synthetic: bool = Field(
+        ..., description="True if artificially generated for pipeline demonstration"
+    )
+    seed: int | None = Field(
+        default=None, description="Reproducible random generator seed if synthetic"
+    )
+    file_size_bytes: int = Field(..., description="Preset observation file size in bytes")
+    channel_count: int = Field(..., description="Frequency channel resolution")
+    time_sample_count: int = Field(..., description="Time integration steps")
+    frequency_mhz: float = Field(..., description="Reference center frequency in MHz")
+    bandwidth_mhz: float = Field(..., description="Observational bandwidth in MHz")
+    source_url: str | None = Field(
+        default=None, description="Official upstream repository URL if real data"
+    )
+    provenance_note: str = Field(..., description="Data provenance and attribution statement")
+
+
+class DemoLoadRequest(BaseModel):
+    """Payload to request loading a bundled or synthetic demo preset."""
+
+    sample_id: str = Field(
+        default="synthetic-drifting-beacon",
+        description="Demo sample preset ID ('synthetic-drifting-beacon' or 'real-gbt-hip35136')",
+    )
+
+
+class DemoLoadResponse(BaseModel):
+    """Response returned upon loading and ingesting a demo observation sample."""
+
+    sample_id: str = Field(..., description="Loaded demo sample preset identifier")
+    observation: ObservationRecordResponse = Field(
+        ...,
+        description="Persisted observation record created by the production ingestion pathway",
+    )
+    is_duplicate: bool = Field(
+        ...,
+        description="True if matching observation already existed in repository (reused safely)",
+    )
+    is_synthetic: bool = Field(..., description="Whether observation data is synthetic")
+    duration_seconds: float = Field(..., description="Elapsed time to generate/load and persist")
+    message: str = Field(..., description="Human-readable result summary")

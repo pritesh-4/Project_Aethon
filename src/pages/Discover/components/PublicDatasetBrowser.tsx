@@ -13,13 +13,11 @@ import {
   Radio,
 } from 'lucide-react';
 import { api } from '@/lib/api.ts';
-import type {
-  PublicDatasetItem,
-  PublicDatasetStatusResponse,
-  ObservationRecordResponse,
-} from '@/types/schemas.ts';
+import type { PublicDatasetItem, PublicDatasetStatusResponse } from '@/types/schemas.ts';
 import type { DiscoveryObservationMeta } from '../types.ts';
 import { toast } from 'sonner';
+import { DemoSamplesSection } from './DemoSamplesSection.tsx';
+import { mapObservationToDiscoveryMeta } from '../utils.ts';
 
 export interface PublicDatasetBrowserProps {
   selectedObservationId: string | null;
@@ -48,7 +46,7 @@ export function PublicDatasetBrowser({
   // Search & Filter State
   const [targetQuery, setTargetQuery] = useState('VOYAGER1');
   const [telescopeFilter, setTelescopeFilter] = useState('');
-  const [formatFilter, setFormatFilter] = useState('');
+  const [formatFilter, setFormatFilter] = useState('filterbank');
   const [maxSizeMb, setMaxSizeMb] = useState<number>(80);
 
   // Available metadata options from upstream
@@ -123,11 +121,11 @@ export function PublicDatasetBrowser({
           setItems((prev) => [...prev, ...res.items]);
         } else {
           setItems(res.items);
-          // Auto-select first compatible item if none selected
+          // Auto-select only records that are both compatible and within size limit
           const firstCompatible = res.items.find(
             (it) => it.is_compatible && it.is_within_size_limit
           );
-          setSelectedItem(firstCompatible || res.items[0] || null);
+          setSelectedItem(firstCompatible || null);
         }
         setTotalResults(res.total);
         setHasMore(res.has_more);
@@ -209,6 +207,7 @@ export function PublicDatasetBrowser({
           try {
             const res = await api.queryPublicDatasets({
               target: 'VOYAGER1',
+              file_type: 'filterbank',
               limit: 25,
               offset: 0,
               max_size_mb: 80,
@@ -218,7 +217,7 @@ export function PublicDatasetBrowser({
               const firstCompat = res.items.find(
                 (it) => it.is_compatible && it.is_within_size_limit
               );
-              setSelectedItem(firstCompat || res.items[0] || null);
+              setSelectedItem(firstCompat || null);
               setTotalResults(res.total);
               setHasMore(res.has_more);
             }
@@ -286,52 +285,11 @@ export function PublicDatasetBrowser({
         expected_size_bytes: item.size_bytes,
       });
 
-      const record: ObservationRecordResponse = importRes.observation;
-      const meta = record.metadata;
-      const durSec =
-        meta?.time_sample_count != null && meta?.time_step_seconds != null
-          ? meta.time_sample_count * meta.time_step_seconds
-          : null;
-      const durStr =
-        durSec != null
-          ? `${Math.floor(durSec / 60)
-              .toString()
-              .padStart(2, '0')}:${Math.floor(durSec % 60)
-              .toString()
-              .padStart(2, '0')}`
-          : null;
-
-      const customMeta: DiscoveryObservationMeta = {
-        id: record.id,
-        name: meta?.source_name || item.target || record.original_filename,
-        format: record.format.toUpperCase(),
-        samplesCount:
-          meta?.time_sample_count != null && meta?.channel_count != null
-            ? meta.time_sample_count * meta.channel_count
-            : null,
-        durationString: durStr,
-        bandwidthMHz: meta?.bandwidth_mhz ?? null,
-        frequencyMHz: meta?.frequency_reference_mhz ?? item.center_freq_mhz ?? null,
-        telescope: meta?.telescope_name || item.telescope || null,
-        fileSizeBytes: record.file_size_bytes,
-        coordinates: {
-          ra:
-            meta?.ra_str ||
-            (meta?.ra_deg != null
-              ? `${meta.ra_deg.toFixed(4)}°`
-              : item.ra_deg != null
-                ? `${item.ra_deg.toFixed(4)}°`
-                : null),
-          dec:
-            meta?.dec_str ||
-            (meta?.dec_deg != null
-              ? `${meta.dec_deg.toFixed(4)}°`
-              : item.dec_deg != null
-                ? `${item.dec_deg.toFixed(4)}°`
-                : null),
-        },
-        provenanceSource: 'Breakthrough Listen Open Data Archive',
-      };
+      const record = importRes.observation;
+      const customMeta = mapObservationToDiscoveryMeta(
+        record,
+        'Breakthrough Listen Open Data Archive'
+      );
 
       onObservationImported(customMeta);
 
@@ -360,6 +318,13 @@ export function PublicDatasetBrowser({
 
   return (
     <div className="space-y-4 font-sans select-none">
+      {/* 0. First-Class Guaranteed Offline Demo Samples */}
+      <DemoSamplesSection
+        selectedObservationId={selectedObservationId}
+        onObservationSelected={onObservationImported}
+        disabled={disabled || isImporting}
+      />
+
       {/* 1. Archive Status & Provenance Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-[4px] border border-[#D6D2C9] bg-[#FAF8F5]">
         <div className="flex items-center gap-2.5">
@@ -884,6 +849,22 @@ export function PublicDatasetBrowser({
                     links directly to spectral analysis.
                   </p>
                 </div>
+              </div>
+            ) : items.length > 0 ? (
+              <div className="p-6 rounded-[4px] border border-[#EAE7E0] bg-[#FAF8F5] text-center space-y-2 text-xs text-[#56616A]">
+                <AlertCircle className="h-5 w-5 text-[#D97706] mx-auto" />
+                <div className="font-semibold text-[#17202A]">
+                  No compatible import-ready datasets in results
+                </div>
+                <p className="text-[11px] text-[#56616A] max-w-xs mx-auto">
+                  None of the {items.length} records returned for &ldquo;{targetQuery}&rdquo; match
+                  AETHON&apos;s direct ingestion formats (Filterbank .fil or Radio FITS under 80
+                  MiB).
+                </p>
+                <p className="text-[10px] text-[#7E8B96]">
+                  Select an observation card to inspect its parameters and incompatibility reason,
+                  or load a guaranteed offline demo sample above.
+                </p>
               </div>
             ) : (
               <div className="p-8 rounded-[4px] border border-[#D6D2C9] bg-[#FAF8F5] text-center text-xs text-[#56616A]">

@@ -72,4 +72,6 @@ filterwarnings = [
     "ignore::DeprecationWarning:blimpy.*",
     "ignore::DeprecationWarning:pkg_resources.*",
     "ignore:.*httpx.*:Warning",
+    "ignore:.*httpx.*:DeprecationWarning:starlette.*",
+    "ignore:.*sre_constants.*:DeprecationWarning",
 ]

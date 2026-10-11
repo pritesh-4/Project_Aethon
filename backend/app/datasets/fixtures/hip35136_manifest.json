@@ -1,0 +1,30 @@
+{
+  "target": "HIP35136",
+  "telescope": "Green Bank Telescope (GBT)",
+  "format": "SIGPROC filterbank (.fil)",
+  "source_repository": "https://github.com/UCBerkeleySETI/breakthrough",
+  "pinned_commit": "9fbb457da1c1404495927c2527542b25d788a616",
+  "source_path": "GBT/filterbank_tutorial/blc04_guppi_57563_69862_HIP35136_0011.gpuspec.0002.fil",
+  "source_size_bytes": 71565694,
+  "source_sha256": "d0b41cf5d38b4128cf569f8c3d7d053ca923c7f5a1537a534b4a475e348dc688",
+  "local_fixture_filename": "hip35136_gbt_cropped.fil",
+  "local_fixture_size_bytes": 9342,
+  "local_fixture_sha256": "904d77dca37c597c12ebfebdb21edd39da5da19852602dd2d75a1ea02a16af93",
+  "crop_parameters": {
+    "f_start_mhz": 1340.0,
+    "f_stop_mhz": 1340.2,
+    "t_start_step": 0,
+    "t_stop_step": 32,
+    "time_samples": 32,
+    "channels": 70
+  },
+  "coordinates": {
+    "ra_deg": 108.9586,
+    "dec_deg": 47.2389,
+    "ra_str": "07:15:50.064",
+    "dec_str": "47:14:20.04"
+  },
+  "license": "GPL-3.0",
+  "attribution": "Breakthrough Listen / UC Berkeley SETI Research Center (GBT filterbank tutorial observation).",
+  "is_synthetic": false
+}

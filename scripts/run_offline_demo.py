@@ -26,8 +26,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-from blimpy import Waterfall
 from fastapi.testclient import TestClient
 
 # Ensure backend root is on sys.path
@@ -37,59 +35,9 @@ backend_root = repo_root / "backend"
 if str(backend_root) not in sys.path:
     sys.path.insert(0, str(backend_root))
 
-from app.core.config import Settings
-from app.main import create_app
-
-
-def generate_demo_filterbank_fixture(file_path: Path, seed: int = 42) -> dict[str, Any]:
-    """Generate a genuine SIGPROC .fil file with a synthetic drifting beacon in Gaussian noise."""
-    rng = np.random.default_rng(seed)
-    n_ints = 32
-    nchans = 64
-    fch1 = 1420.0  # MHz
-    foff = -0.05   # MHz per channel (descending in raw file)
-    tsamp = 0.5    # seconds per integration
-    tstart = 59000.0
-
-    # Background standard Gaussian noise
-    data = rng.standard_normal(size=(n_ints, 1, nchans)).astype(np.float32)
-
-    # Inject a known drifting tone beacon:
-    # Starts at raw channel 40 and drifts by -10 channels over 32 time steps
-    # Peak SNR ~ 15.0
-    for t_idx in range(n_ints):
-        f_idx = int(round(40 - (t_idx / n_ints) * 10))
-        if 0 <= f_idx < nchans:
-            data[t_idx, 0, f_idx] += 15.0
-
-    header: dict[str, Any] = {
-        "fch1": fch1,
-        "foff": foff,
-        "nchans": nchans,
-        "tsamp": tsamp,
-        "nbits": 32,
-        "nifs": 1,
-        "tstart": tstart,
-        "source_name": "SYNTH-BEACON-01",
-        "telescope_id": 6,  # Green Bank Telescope
-    }
-
-    wf = Waterfall(header_dict=header, data_array=data)
-    wf.write_to_fil(str(file_path))
-
-    return {
-        "file_path": str(file_path),
-        "source_name": header["source_name"],
-        "nchans": nchans,
-        "n_ints": n_ints,
-        "seed": seed,
-        "injected_signal": {
-            "type": "drifting_tone",
-            "start_channel": 40,
-            "drift_channels": -10,
-            "snr": 15.0,
-        },
-    }
+from app.core.config import Settings  # type: ignore
+from app.datasets.demo import generate_demo_filterbank_fixture  # type: ignore
+from app.main import create_app  # type: ignore
 
 
 def run_offline_demo(output_dir: Path, seed: int = 42) -> dict[str, Any]:

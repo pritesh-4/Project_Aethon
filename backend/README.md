@@ -756,9 +756,24 @@ Interactive documentation:
 
 ---
 
+## Guaranteed Offline Demo Datasets & Public Dataset Ingestion (Task 26)
+
+AETHON provides guaranteed, ready-to-use demo datasets that allow immediate exploration of the scientific analysis pipeline without requiring an active connection to external Breakthrough Listen public archives:
+
+- **Presets Available:**
+  1. `synthetic-drifting-beacon`: Deterministic synthetic filterbank with an injected Doppler-drifting narrowband carrier (seed 42), SNR = 15.0, 32 time steps × 64 channels.
+  2. `real-gbt-hip35136`: Authentic astronomical recording from the Green Bank Telescope (GBT) targeting HIP 35136 (`blc04_guppi_57563_69862_HIP35136_0011.gpuspec.0002.fil`), cropped to a compact, format-valid 9,342-byte fixture (32 time steps × 70 channels, 1340.0–1340.2 MHz).
+- **Provenance Manifest:** Accompanied by machine-readable JSON provenance metadata (`app/datasets/fixtures/hip35136_manifest.json`) verifying upstream source commit hash, source and cropped SHA-256 checksums, and astronomical coordinates.
+- **Deduplication & Safety:** Loading demo samples ingests them through the standard production ingestion service into the SQLite repository, deduplicating identical SHA-256 hashes to prevent redundant storage.
+- **REST Endpoints:**
+  - `GET /api/public-datasets/demo-samples`: Returns metadata and technical specifications for all available demo presets.
+  - `POST /api/public-datasets/demo-samples/{sample_id}/load`: Ingests or retrieves the selected demo preset into the observation repository.
+
+---
+
 ## Running Automated Tests
 
-Run the full automated test suite (193 tests):
+Run the full automated test suite (230 tests):
 
 ```powershell
 # Windows (PowerShell)
@@ -771,6 +786,8 @@ pytest -v
 ```
 
 Tests run offline without requiring external network access or telemetry downloads:
+
+- `test_demo.py`: Demo fixture header validity, provenance manifest verification, demo sample API listing and ingestion, deduplication, invalid preset rejection, and end-to-end scientific pipeline execution.
 
 - `test_candidates_eligibility_and_grouping.py`: Region bounds validation, sample count limits, flagged fraction thresholds, 2D IoU calculation, candidate merge.
 - `test_candidates_scoring_and_evidence.py`: Evidence extraction normalization, deterministic component weights, missing drift handling, detector disagreement flag.

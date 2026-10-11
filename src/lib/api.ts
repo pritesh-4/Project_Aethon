@@ -14,6 +14,8 @@ import type {
   PublicDatasetQueryResponse,
   PublicDatasetImportRequest,
   PublicDatasetImportResponse,
+  DemoSampleInfo,
+  DemoLoadResponse,
   SpectralSliceResponse,
   ProcessedObservationResponse,
   DetectionResponse,
@@ -527,6 +529,24 @@ export async function importPublicDataset(
 }
 
 /**
+ * 23. Public Datasets - Available Demo Presets (GET /api/public-datasets/demo-samples)
+ */
+export async function getDemoSamples(): Promise<DemoSampleInfo[]> {
+  const response = await apiClient.get<DemoSampleInfo[]>('/public-datasets/demo-samples');
+  return response.data;
+}
+
+/**
+ * 24. Public Datasets - Load Demo Sample Preset (POST /api/public-datasets/demo-samples/:sample_id/load)
+ */
+export async function loadDemoSample(sampleId: string): Promise<DemoLoadResponse> {
+  const response = await apiClient.post<DemoLoadResponse>(
+    `/public-datasets/demo-samples/${encodeURIComponent(sampleId)}/load`
+  );
+  return response.data;
+}
+
+/**
  * Generic REST helpers
  */
 export async function getTelemetry<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
@@ -573,6 +593,8 @@ export const api = {
   getPublicDatasetFileTypes,
   queryPublicDatasets,
   importPublicDataset,
+  getDemoSamples,
+  loadDemoSample,
   getTelemetry,
   postTelemetry,
 };

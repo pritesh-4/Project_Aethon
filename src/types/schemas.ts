@@ -158,6 +158,36 @@ export const PublicDatasetImportResponseSchema = z.object({
 });
 export type PublicDatasetImportResponse = z.infer<typeof PublicDatasetImportResponseSchema>;
 
+export const DemoSampleInfoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  label: z.string(),
+  format: z.string(),
+  target: z.string(),
+  telescope: z.string(),
+  description: z.string(),
+  is_synthetic: z.boolean(),
+  seed: z.number().int().nullable().optional(),
+  file_size_bytes: z.number().int(),
+  channel_count: z.number().int(),
+  time_sample_count: z.number().int(),
+  frequency_mhz: z.number(),
+  bandwidth_mhz: z.number(),
+  source_url: z.string().nullable().optional(),
+  provenance_note: z.string(),
+});
+export type DemoSampleInfo = z.infer<typeof DemoSampleInfoSchema>;
+
+export const DemoLoadResponseSchema = z.object({
+  sample_id: z.string(),
+  observation: ObservationRecordResponseSchema,
+  is_duplicate: z.boolean(),
+  is_synthetic: z.boolean(),
+  duration_seconds: z.number(),
+  message: z.string(),
+});
+export type DemoLoadResponse = z.infer<typeof DemoLoadResponseSchema>;
+
 /**
  * ============================================================================
  * 4. CANONICAL SPECTRAL SLICE SCHEMAS

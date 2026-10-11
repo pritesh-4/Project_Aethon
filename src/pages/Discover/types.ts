@@ -9,6 +9,8 @@ export interface DiscoveryObservationMeta {
   name: string;
   format: 'FITS' | 'FIL' | 'SYNTHETIC' | string;
   samplesCount: number | null;
+  timeSampleCount?: number | null;
+  channelCount?: number | null;
   durationString: string | null;
   bandwidthMHz: number | null;
   frequencyMHz: number | null;
@@ -19,6 +21,7 @@ export interface DiscoveryObservationMeta {
     dec: string | null;
   };
   provenanceSource?: string | null;
+  isSynthetic?: boolean;
 }
 
 export interface SearchConfig {

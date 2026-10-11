@@ -2,6 +2,8 @@
 
 import json
 import sqlite3
+from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -23,8 +25,13 @@ class CandidateRepository:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.init_db()
 
-    def _get_connection(self) -> sqlite3.Connection:
-        """Create a configured SQLite connection with row factory and pragmas."""
+    @contextmanager
+    def _get_connection(self) -> Generator[sqlite3.Connection, None, None]:
+        """Create a configured SQLite connection with row factory and pragmas.
+
+        Yields the connection inside a context that commits on success,
+        rolls back on exception, and always closes the connection on exit.
+        """
         conn = sqlite3.connect(
             str(self.db_path),
             timeout=30.0,
@@ -34,7 +41,14 @@ class CandidateRepository:
         conn.execute("PRAGMA journal_mode=WAL;")
         conn.execute("PRAGMA synchronous=NORMAL;")
         conn.execute("PRAGMA foreign_keys=ON;")
-        return conn
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
     def init_db(self) -> None:
         """Initialize database tables and indices idempotently."""

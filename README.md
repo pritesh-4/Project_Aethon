@@ -586,6 +586,15 @@ npm run dev
 - **Health Check Endpoint:** http://localhost:8000/api/health
 - **Demo Mode:** By default, AETHON connects to the real authoritative backend. To force explicit demonstration mode without backend connectivity, set `VITE_DEMO_MODE=true` in `.env.local`.
 
+### Quick Demo & Guaranteed Offline Datasets (Task 26)
+
+In the Discovery portal (`/discover`), users can immediately explore end-to-end signal processing and anomaly analysis using built-in Guaranteed Demo presets without requiring Breakthrough Listen public archive availability or external internet access:
+
+1. **Synthetic Drifting Beacon:** Deterministic narrowband signal with injected Doppler drift (seed 42), SNR = 15.0, 32 time steps × 64 channels.
+2. **Green Bank Telescope (GBT HIP 35136):** Authentic primary filterbank recording from GBT (`blc04_guppi_57563_69862_HIP35136_0011.gpuspec.0002.fil`), cropped to a compact, format-valid fixture with machine-readable provenance manifest (`backend/app/datasets/fixtures/hip35136_manifest.json`).
+
+Clicking **"Load Demo & Analyse"** on either preset ingests the sample into the real backend repository, displays the real numerical spectral slice in the Waterfall viewer, and unlocks the scientific analysis pipeline (Processing → Anomaly Detection → Doppler Drift → Candidate Triage).
+
 ---
 
 ## 17. Scientific Rigor & Operational Disclaimers

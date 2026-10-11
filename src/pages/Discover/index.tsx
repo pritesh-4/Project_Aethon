@@ -106,6 +106,8 @@ export default function DiscoverPage() {
                   meta?.time_sample_count != null && meta?.channel_count != null
                     ? meta.time_sample_count * meta.channel_count
                     : null,
+                timeSampleCount: meta?.time_sample_count ?? null,
+                channelCount: meta?.channel_count ?? null,
                 durationString: durStr,
                 bandwidthMHz: meta?.bandwidth_mhz ?? null,
                 frequencyMHz: meta?.frequency_reference_mhz ?? null,
@@ -116,6 +118,15 @@ export default function DiscoverPage() {
                   dec:
                     meta?.dec_str || (meta?.dec_deg != null ? `${meta.dec_deg.toFixed(4)}°` : null),
                 },
+                provenanceSource: item.provenance?.notes?.includes('Synthetic')
+                  ? 'AETHON Signal Lab (Synthetic Demo)'
+                  : item.provenance?.notes?.includes('Breakthrough')
+                    ? 'Breakthrough Listen Archive'
+                    : 'Local Ingested',
+                isSynthetic:
+                  meta?.source_name?.includes('SYNTH') ||
+                  (item.provenance?.notes?.toLowerCase().includes('synthetic') ?? false) ||
+                  false,
               };
             }
           );

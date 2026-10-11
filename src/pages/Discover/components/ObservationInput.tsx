@@ -15,6 +15,8 @@ import {
 import { api } from '@/lib/api.ts';
 import { toast } from 'sonner';
 import { PublicDatasetBrowser } from './PublicDatasetBrowser.tsx';
+import { DemoSamplesSection } from './DemoSamplesSection.tsx';
+import { mapObservationToDiscoveryMeta } from '../utils.ts';
 
 export interface ObservationInputProps {
   selectedObservation: DiscoveryObservationMeta | null;
@@ -25,7 +27,7 @@ export interface ObservationInputProps {
 
 const MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB backend limit
 
-export type AcquisitionMode = 'public' | 'local' | 'upload';
+export type AcquisitionMode = 'demo' | 'public' | 'local' | 'upload';
 
 export function ObservationInput({
   selectedObservation,
@@ -69,39 +71,7 @@ export function ObservationInput({
           setUploadProgress(pct);
         });
 
-        const meta = record.metadata;
-        const durSec =
-          meta?.time_sample_count != null && meta?.time_step_seconds != null
-            ? meta.time_sample_count * meta.time_step_seconds
-            : null;
-        const durStr =
-          durSec != null
-            ? `${Math.floor(durSec / 60)
-                .toString()
-                .padStart(2, '0')}:${Math.floor(durSec % 60)
-                .toString()
-                .padStart(2, '0')}`
-            : null;
-
-        const customMeta: DiscoveryObservationMeta = {
-          id: record.id,
-          name: meta?.source_name || record.original_filename,
-          format: record.format.toUpperCase(),
-          samplesCount:
-            meta?.time_sample_count != null && meta?.channel_count != null
-              ? meta.time_sample_count * meta.channel_count
-              : null,
-          durationString: durStr,
-          bandwidthMHz: meta?.bandwidth_mhz ?? null,
-          frequencyMHz: meta?.frequency_reference_mhz ?? null,
-          telescope: meta?.telescope_name || null,
-          fileSizeBytes: record.file_size_bytes,
-          coordinates: {
-            ra: meta?.ra_str || (meta?.ra_deg != null ? `${meta.ra_deg.toFixed(4)}°` : null),
-            dec: meta?.dec_str || (meta?.dec_deg != null ? `${meta.dec_deg.toFixed(4)}°` : null),
-          },
-          provenanceSource: 'Local Manual Upload',
-        };
+        const customMeta = mapObservationToDiscoveryMeta(record, 'Local Manual Upload');
 
         onSelectObservation(customMeta);
         toast.success(`Observation ${record.id} uploaded and ready for screening!`);
@@ -138,8 +108,25 @@ export function ObservationInput({
         </p>
       </div>
 
-      {/* 3 Clearly Separated Acquisition Mode Tabs */}
+      {/* 4 Clearly Separated Acquisition Mode Tabs */}
       <div className="flex flex-wrap items-center gap-2 p-1 rounded-[4px] border border-[#D6D2C9] bg-[#FAF8F5]">
+        <button
+          type="button"
+          onClick={() => setActiveMode('demo')}
+          disabled={disabled || isUploading}
+          className={`flex-1 min-w-[150px] inline-flex items-center justify-center gap-2 py-2 px-3 rounded-[3px] text-xs font-mono font-medium transition-all cursor-pointer ${
+            activeMode === 'demo'
+              ? 'bg-[#FFFFFF] text-[#376A9B] font-bold border border-[#B6CDE2] shadow-2xs'
+              : 'text-[#56616A] hover:text-[#17202A] hover:bg-[#FFFFFF]/60'
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>Quick Demo</span>
+          <span className="text-[10px] uppercase px-1 py-0.2 rounded bg-[#EFF7F2] text-[#3D7D54] border border-[#B2D8C0]">
+            Offline
+          </span>
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveMode('public')}
@@ -194,6 +181,21 @@ export function ObservationInput({
 
       {/* Mode Viewports */}
       <div className="space-y-4">
+        {/* ==================================================== */}
+        {/* CHOICE 0: GUARANTEED OFFLINE QUICK DEMO */}
+        {/* ==================================================== */}
+        {activeMode === 'demo' && (
+          <div className="space-y-3">
+            <DemoSamplesSection
+              selectedObservationId={selectedObservation?.id ?? null}
+              onObservationSelected={(obs) => {
+                onSelectObservation(obs);
+              }}
+              disabled={disabled || isUploading}
+            />
+          </div>
+        )}
+
         {/* ==================================================== */}
         {/* CHOICE 1: PUBLIC BREAKTHROUGH LISTEN ARCHIVE */}
         {/* ==================================================== */}
