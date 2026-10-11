@@ -93,7 +93,7 @@ class ArchiveClient:
         self._client = client
         self._cache: dict[str, tuple[float, Any]] = {}
 
-    def _get_cached(self, key: str) -> Any | None:
+    def _get_cached(self, key: str) -> Any:
         """Retrieve entry from in-memory cache if TTL has not expired."""
         if self.cache_ttl <= 0:
             return None
@@ -113,6 +113,8 @@ class ArchiveClient:
 
     async def _request(self, endpoint: str, params: dict[str, Any] | None = None) -> Any:
         """Perform an HTTP GET request to the configured archive endpoint."""
+        if not self.base_url:
+            raise ValueError("Archive URL is not configured")
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         headers = {
             "User-Agent": "AETHON-Radio-Discovery/1.0",
@@ -152,36 +154,50 @@ class ArchiveClient:
                 message="BREAKTHROUGH_LISTEN_ARCHIVE_URL is not configured",
             )
 
+        cache_key = "check-status"
+        cached = self._get_cached(cache_key)
+        if isinstance(cached, PublicDatasetStatusResponse):
+            return cached
+
         try:
             # Probe lightweight file-types endpoint
             data = await self._request("api/list-file-types")
+            res: PublicDatasetStatusResponse
             if isinstance(data, list):
-                return PublicDatasetStatusResponse(
+                res = PublicDatasetStatusResponse(
                     configured=True,
                     archive_url=self.base_url,
                     available=True,
                     max_import_bytes=self.max_import_bytes,
                     message="Connected to Breakthrough Listen Open Data archive successfully",
                 )
-            return PublicDatasetStatusResponse(
-                configured=True,
-                archive_url=self.base_url,
-                available=True,
-                max_import_bytes=self.max_import_bytes,
-                message="Archive responded with valid data",
-            )
+            else:
+                res = PublicDatasetStatusResponse(
+                    configured=True,
+                    archive_url=self.base_url,
+                    available=True,
+                    max_import_bytes=self.max_import_bytes,
+                    message="Archive responded with valid data",
+                )
+            self._set_cached(cache_key, res)
+            return res
         except Exception as e:
             logger.warning("Breakthrough Listen archive health probe failed: %s", e)
-            return PublicDatasetStatusResponse(
+            res = PublicDatasetStatusResponse(
                 configured=True,
                 archive_url=self.base_url,
                 available=False,
                 max_import_bytes=self.max_import_bytes,
                 message=f"Archive unavailable or unreachable: {e}",
             )
+            self._set_cached(cache_key, res)
+            return res
 
     async def get_targets(self) -> list[str]:
         """Fetch list of available target names from the archive with caching."""
+        if not self.base_url:
+            return []
+
         cache_key = "list-targets"
         cached = self._get_cached(cache_key)
         if isinstance(cached, list):
@@ -200,10 +216,14 @@ class ArchiveClient:
             return targets
         except Exception as e:
             logger.warning("Failed to retrieve targets from archive: %s", e)
+            self._set_cached(cache_key, [])
             return []
 
     async def get_telescopes(self) -> list[str]:
         """Fetch list of supported telescope names with caching."""
+        if not self.base_url:
+            return []
+
         cache_key = "list-telescopes"
         cached = self._get_cached(cache_key)
         if isinstance(cached, list):
@@ -222,10 +242,14 @@ class ArchiveClient:
             return telescopes
         except Exception as e:
             logger.warning("Failed to retrieve telescopes from archive: %s", e)
+            self._set_cached(cache_key, [])
             return []
 
     async def get_file_types(self) -> list[str]:
         """Fetch list of available file types with caching."""
+        if not self.base_url:
+            return []
+
         cache_key = "list-file-types"
         cached = self._get_cached(cache_key)
         if isinstance(cached, list):
@@ -244,6 +268,7 @@ class ArchiveClient:
             return file_types
         except Exception as e:
             logger.warning("Failed to retrieve file types from archive: %s", e)
+            self._set_cached(cache_key, [])
             return []
 
     async def query_files(
@@ -261,6 +286,18 @@ class ArchiveClient:
         query_target = target.strip() if target and target.strip() else ""
         if not query_target:
             query_target = "3C123"  # Default canonical target with filterbank observations
+
+        if not self.base_url:
+            return PublicDatasetQueryResponse(
+                items=[],
+                total=0,
+                limit=limit,
+                offset=offset,
+                has_more=False,
+                provider_status="unconfigured",
+                cached=False,
+                query_target=query_target,
+            )
 
         cache_key = (
             f"query:{query_target}:{telescopes}:{file_types}:{quality}:"
@@ -284,7 +321,7 @@ class ArchiveClient:
             raw_data = await self._request("api/query-files", params=params)
         except Exception as e:
             logger.error("Failed to query files from archive: %s", e)
-            return PublicDatasetQueryResponse(
+            err_resp = PublicDatasetQueryResponse(
                 items=[],
                 total=0,
                 limit=limit,
@@ -294,6 +331,8 @@ class ArchiveClient:
                 cached=False,
                 query_target=query_target,
             )
+            self._set_cached(cache_key, err_resp)
+            return err_resp
 
         raw_items: list[dict[str, Any]] = []
         if isinstance(raw_data, dict):

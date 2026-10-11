@@ -202,7 +202,15 @@ def test_bounded_loader_parkes_real_observation() -> None:
         load_observation_tiles,
     )
 
-    p = Path("backend/data/real_radio_training/raw/parkes_8bit_1.fil")
+    p = (
+        Path(__file__).resolve().parent.parent
+        / "data"
+        / "real_radio_training"
+        / "raw"
+        / "parkes_8bit_1.fil"
+    )
+    if not p.exists():
+        p = Path("backend/data/real_radio_training/raw/parkes_8bit_1.fil")
     if not p.exists():
         pytest.skip("Raw observation parkes_8bit_1.fil not present in repository")
 
@@ -232,7 +240,15 @@ def test_bounded_loader_subband_partition() -> None:
     """Subband range partitioning must correctly slice frequency channels."""
     from app.detection.real_radio_anomaly import load_observation_tiles
 
-    p = Path("backend/data/real_radio_training/raw/parkes_8bit_1.fil")
+    p = (
+        Path(__file__).resolve().parent.parent
+        / "data"
+        / "real_radio_training"
+        / "raw"
+        / "parkes_8bit_1.fil"
+    )
+    if not p.exists():
+        p = Path("backend/data/real_radio_training/raw/parkes_8bit_1.fil")
     if not p.exists():
         pytest.skip("Raw observation parkes_8bit_1.fil not present in repository")
 

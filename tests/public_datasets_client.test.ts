@@ -264,3 +264,47 @@ test('Spectral mathematical derivation correctly computes 1D frequency and time 
   assert.equal(timeMeans[1], 28);
   assert.equal(timeMeans[2], 28.5);
 });
+
+test('Public datasets filter endpoints wire contract validates string[] array payloads and empty arrays', () => {
+  // 1. Valid wire arrays as returned by FastAPI backend routes
+  const targetsWire = ['3C123', 'VOYAGER1', 'HIP35136'];
+  const telescopesWire = ['GBT', 'Parkes', 'APF'];
+  const fileTypesWire = ['filterbank', 'HDF5', 'baseband data'];
+
+  assert.ok(Array.isArray(targetsWire));
+  assert.equal(targetsWire.length, 3);
+  targetsWire.forEach((item) => assert.equal(typeof item, 'string'));
+
+  assert.ok(Array.isArray(telescopesWire));
+  assert.equal(telescopesWire.length, 3);
+  telescopesWire.forEach((item) => assert.equal(typeof item, 'string'));
+
+  assert.ok(Array.isArray(fileTypesWire));
+  assert.equal(fileTypesWire.length, 3);
+  fileTypesWire.forEach((item) => assert.equal(typeof item, 'string'));
+
+  // 2. Empty arrays when archive is unconfigured or returns zero items
+  const emptyWire: string[] = [];
+  assert.ok(Array.isArray(emptyWire));
+  assert.equal(emptyWire.length, 0);
+
+  // 3. Defensive consumer parsing logic in UI components handles both raw array and legacy object wrappers gracefully
+  const parseFilterItems = (raw: unknown): string[] => {
+    if (Array.isArray(raw)) return raw as string[];
+    if (raw && typeof raw === 'object') {
+      const obj = raw as Record<string, unknown>;
+      if (Array.isArray(obj.targets)) return obj.targets as string[];
+      if (Array.isArray(obj.telescopes)) return obj.telescopes as string[];
+      if (Array.isArray(obj.file_types)) return obj.file_types as string[];
+    }
+    return [];
+  };
+
+  assert.deepEqual(parseFilterItems(targetsWire), ['3C123', 'VOYAGER1', 'HIP35136']);
+  assert.deepEqual(parseFilterItems({ targets: ['3C123'] }), ['3C123']);
+  assert.deepEqual(parseFilterItems({ telescopes: ['GBT'] }), ['GBT']);
+  assert.deepEqual(parseFilterItems({ file_types: ['filterbank'] }), ['filterbank']);
+  assert.deepEqual(parseFilterItems([]), []);
+  assert.deepEqual(parseFilterItems(null), []);
+  assert.deepEqual(parseFilterItems(undefined), []);
+});

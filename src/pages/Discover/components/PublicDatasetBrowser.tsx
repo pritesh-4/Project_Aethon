@@ -185,11 +185,21 @@ export function PublicDatasetBrowser({
           setProviderStatus(null);
         }
 
-        if (telRes.status === 'fulfilled' && telRes.value.telescopes) {
-          setAvailableTelescopes(telRes.value.telescopes);
+        if (telRes.status === 'fulfilled') {
+          const telescopes = Array.isArray(telRes.value)
+            ? telRes.value
+            : (telRes.value as unknown as { telescopes?: string[] })?.telescopes;
+          if (Array.isArray(telescopes)) {
+            setAvailableTelescopes(telescopes);
+          }
         }
-        if (ftRes.status === 'fulfilled' && ftRes.value.file_types) {
-          setAvailableFormats(ftRes.value.file_types);
+        if (ftRes.status === 'fulfilled') {
+          const formats = Array.isArray(ftRes.value)
+            ? ftRes.value
+            : (ftRes.value as unknown as { file_types?: string[] })?.file_types;
+          if (Array.isArray(formats)) {
+            setAvailableFormats(formats);
+          }
         }
 
         // Auto-run initial query if provider is active

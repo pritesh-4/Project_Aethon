@@ -19,7 +19,7 @@ from app.ingestion.exceptions import (
     InvalidFileContentError,
     UnsupportedFormatError,
 )
-from app.main import app
+from app.main import create_app
 from app.schemas.public_datasets import PublicDatasetImportRequest
 from app.storage.repository import ObservationRepository
 from tests.helpers import create_synthetic_filterbank
@@ -304,12 +304,25 @@ def test_dataset_import_service_rejects_checksum_mismatch(tmp_path: Path) -> Non
     anyio.run(_test)
 
 
-def test_public_datasets_api_endpoints(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test HTTP endpoints for public-datasets using TestClient with mocked upstream."""
+def test_public_datasets_api_endpoints(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Test HTTP endpoints for public-datasets using isolated TestClient with mocked upstream."""
+    test_settings = Settings(
+        _env_file=None,
+        db_path=str(tmp_path / "test.db"),
+        observations_dir=str(tmp_path / "observations"),
+        temp_upload_dir=str(tmp_path / "tmp"),
+        breakthrough_listen_archive_url="https://seti.berkeley.edu/opendata",
+        breakthrough_listen_max_import_bytes=83886080,
+    )
+    test_app = create_app(custom_settings=test_settings)
 
     async def mock_request(self: ArchiveClient, endpoint: str, params: dict | None = None) -> Any:
         if "list-file-types" in endpoint:
             return [["filterbank"], ["HDF5"], ["baseband data"]]
+        if "list-targets" in endpoint:
+            return [["3C123"], ["VOYAGER1"]]
+        if "list-telescopes" in endpoint:
+            return [["GBT"], ["Parkes"]]
         if "query-files" in endpoint:
             return {
                 "result": "success",
@@ -328,7 +341,7 @@ def test_public_datasets_api_endpoints(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(ArchiveClient, "_request", mock_request)
 
-    with TestClient(app) as client:
+    with TestClient(test_app) as client:
         # 1. Status endpoint
         resp = client.get("/api/public-datasets/status")
         assert resp.status_code == 200
@@ -337,7 +350,26 @@ def test_public_datasets_api_endpoints(monkeypatch: pytest.MonkeyPatch) -> None:
         assert data["available"] is True
         assert "max_import_bytes" in data
 
-        # 2. Query endpoint validation
+        # 2. Wire contracts for filter endpoints
+        resp_targets = client.get("/api/public-datasets/targets")
+        assert resp_targets.status_code == 200
+        targets = resp_targets.json()
+        assert isinstance(targets, list)
+        assert targets == ["3C123", "VOYAGER1"]
+
+        resp_telescopes = client.get("/api/public-datasets/telescopes")
+        assert resp_telescopes.status_code == 200
+        telescopes = resp_telescopes.json()
+        assert isinstance(telescopes, list)
+        assert telescopes == ["GBT", "Parkes"]
+
+        resp_file_types = client.get("/api/public-datasets/file-types")
+        assert resp_file_types.status_code == 200
+        file_types = resp_file_types.json()
+        assert isinstance(file_types, list)
+        assert file_types == ["filterbank", "HDF5", "baseband data"]
+
+        # 3. Query endpoint validation
         query_resp = client.get("/api/public-datasets?limit=10&offset=0")
         assert query_resp.status_code == 200
         q_data = query_resp.json()
@@ -345,10 +377,59 @@ def test_public_datasets_api_endpoints(monkeypatch: pytest.MonkeyPatch) -> None:
         assert q_data["items"][0]["target"] == "3C123"
         assert q_data["provider_status"] == "ok"
 
-        # 3. Reject SSRF in import endpoint
+        # 4. Reject SSRF in import endpoint
         bad_import = client.post(
             "/api/public-datasets/import",
             json={"url": "http://127.0.0.1:8000/internal.fil"},
         )
         assert bad_import.status_code == 400
         assert "security" in bad_import.json()["message"].lower()
+
+
+def test_public_datasets_api_endpoints_unconfigured(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Intentionally unconfigured archive URL must return configured=False and available=False
+    without HTTP requests.
+    """
+    network_called = False
+
+    async def fail_if_called(self: ArchiveClient, endpoint: str, params: dict | None = None) -> Any:
+        nonlocal network_called
+        network_called = True
+        raise AssertionError("Network request should not be attempted when unconfigured")
+
+    monkeypatch.setattr(ArchiveClient, "_request", fail_if_called)
+
+    unconfigured_settings = Settings(
+        _env_file=None,
+        db_path=str(tmp_path / "test.db"),
+        observations_dir=str(tmp_path / "observations"),
+        temp_upload_dir=str(tmp_path / "tmp"),
+        breakthrough_listen_archive_url=None,
+    )
+    test_app = create_app(custom_settings=unconfigured_settings)
+
+    with TestClient(test_app) as client:
+        resp = client.get("/api/public-datasets/status")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["configured"] is False
+        assert data["available"] is False
+        assert "not configured" in data.get("message", "").lower()
+        assert not network_called
+
+        # Filter endpoints return empty lists gracefully when unconfigured
+        resp_targets = client.get("/api/public-datasets/targets")
+        assert resp_targets.status_code == 200
+        assert resp_targets.json() == []
+
+        resp_telescopes = client.get("/api/public-datasets/telescopes")
+        assert resp_telescopes.status_code == 200
+        assert resp_telescopes.json() == []
+
+        resp_file_types = client.get("/api/public-datasets/file-types")
+        assert resp_file_types.status_code == 200
+        assert resp_file_types.json() == []
+
+        assert not network_called

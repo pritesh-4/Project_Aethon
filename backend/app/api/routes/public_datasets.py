@@ -29,7 +29,11 @@ router = APIRouter(prefix="/public-datasets", tags=["Public Datasets"])
 def _get_archive_client(request: Request) -> ArchiveClient:
     """Retrieve ArchiveClient configured with current application settings."""
     app_settings = getattr(request.app.state, "settings", default_settings)
-    return ArchiveClient(settings=app_settings)
+    client: ArchiveClient | None = getattr(request.app.state, "archive_client", None)
+    if client is None or getattr(client, "settings", None) != app_settings:
+        client = ArchiveClient(settings=app_settings)
+        request.app.state.archive_client = client
+    return client
 
 
 def _get_import_service(request: Request) -> DatasetImportService:

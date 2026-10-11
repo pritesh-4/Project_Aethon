@@ -228,3 +228,46 @@ test('Live Connectivity: Ingestion upload validation and failure cases', async (
   const res3 = await fetch(`${BASE_URL}/observations`, { method: 'POST', body: form3 });
   assert.equal(res3.status, 422);
 });
+
+test('Live Connectivity: Public dataset provider status and filter contracts', async (t) => {
+  const reachable = await isBackendReachable();
+  if (!reachable) {
+    t.skip('FastAPI backend not running at ' + BASE_URL);
+    return;
+  }
+
+  // 1. Status endpoint wire response
+  const statusRes = await fetch(`${BASE_URL}/public-datasets/status`);
+  assert.equal(statusRes.status, 200);
+  const statusData = await statusRes.json();
+  assert.equal(typeof statusData.configured, 'boolean');
+  assert.equal(typeof statusData.available, 'boolean');
+  assert.equal(typeof statusData.max_import_bytes, 'number');
+
+  // 2. Filter endpoints wire contracts (must return arrays of strings, not objects)
+  const targetsRes = await fetch(`${BASE_URL}/public-datasets/targets`);
+  assert.equal(targetsRes.status, 200);
+  const targetsData = await targetsRes.json();
+  assert.ok(Array.isArray(targetsData), 'Targets response must be an array');
+  targetsData.forEach((item: unknown) => assert.equal(typeof item, 'string'));
+
+  const telescopesRes = await fetch(`${BASE_URL}/public-datasets/telescopes`);
+  assert.equal(telescopesRes.status, 200);
+  const telescopesData = await telescopesRes.json();
+  assert.ok(Array.isArray(telescopesData), 'Telescopes response must be an array');
+  telescopesData.forEach((item: unknown) => assert.equal(typeof item, 'string'));
+
+  const fileTypesRes = await fetch(`${BASE_URL}/public-datasets/file-types`);
+  assert.equal(fileTypesRes.status, 200);
+  const fileTypesData = await fileTypesRes.json();
+  assert.ok(Array.isArray(fileTypesData), 'File types response must be an array');
+  fileTypesData.forEach((item: unknown) => assert.equal(typeof item, 'string'));
+
+  // 3. Query endpoint wire structure
+  const queryRes = await fetch(`${BASE_URL}/public-datasets?limit=5&offset=0`);
+  assert.equal(queryRes.status, 200);
+  const queryData = await queryRes.json();
+  assert.ok(Array.isArray(queryData.items), 'Query items must be an array');
+  assert.equal(typeof queryData.total, 'number');
+  assert.equal(typeof queryData.provider_status, 'string');
+});

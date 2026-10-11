@@ -475,36 +475,24 @@ export async function getPublicDatasetStatus(): Promise<PublicDatasetStatusRespo
 /**
  * 18. Public Datasets - Available Targets (GET /api/public-datasets/targets)
  */
-export async function getPublicDatasetTargets(): Promise<{ targets: string[]; count: number }> {
-  const response = await apiClient.get<{ targets: string[]; count: number }>(
-    '/public-datasets/targets'
-  );
+export async function getPublicDatasetTargets(): Promise<string[]> {
+  const response = await apiClient.get<string[]>('/public-datasets/targets');
   return response.data;
 }
 
 /**
  * 19. Public Datasets - Available Telescopes (GET /api/public-datasets/telescopes)
  */
-export async function getPublicDatasetTelescopes(): Promise<{
-  telescopes: string[];
-  count: number;
-}> {
-  const response = await apiClient.get<{ telescopes: string[]; count: number }>(
-    '/public-datasets/telescopes'
-  );
+export async function getPublicDatasetTelescopes(): Promise<string[]> {
+  const response = await apiClient.get<string[]>('/public-datasets/telescopes');
   return response.data;
 }
 
 /**
  * 20. Public Datasets - Available File Types (GET /api/public-datasets/file-types)
  */
-export async function getPublicDatasetFileTypes(): Promise<{
-  file_types: string[];
-  count: number;
-}> {
-  const response = await apiClient.get<{ file_types: string[]; count: number }>(
-    '/public-datasets/file-types'
-  );
+export async function getPublicDatasetFileTypes(): Promise<string[]> {
+  const response = await apiClient.get<string[]>('/public-datasets/file-types');
   return response.data;
 }
 
