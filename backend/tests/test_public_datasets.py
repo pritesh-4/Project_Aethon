@@ -19,7 +19,7 @@ from app.ingestion.exceptions import (
     InvalidFileContentError,
     UnsupportedFormatError,
 )
-from app.main import app
+from app.main import create_app
 from app.schemas.public_datasets import PublicDatasetImportRequest
 from app.storage.repository import ObservationRepository
 from tests.helpers import create_synthetic_filterbank
@@ -328,7 +328,12 @@ def test_public_datasets_api_endpoints(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(ArchiveClient, "_request", mock_request)
 
-    with TestClient(app) as client:
+    test_app = create_app(
+        custom_settings=Settings(
+            breakthrough_listen_archive_url="https://seti.berkeley.edu/opendata"
+        )
+    )
+    with TestClient(test_app) as client:
         # 1. Status endpoint
         resp = client.get("/api/public-datasets/status")
         assert resp.status_code == 200
