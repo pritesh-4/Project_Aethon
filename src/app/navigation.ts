@@ -12,7 +12,7 @@ export const MAIN_NAV: NavItem[] = [
   { id: 'observatory', label: 'Observe', path: '/observatory', icon: Radar },
   { id: 'discovery', label: 'Discover', path: '/discover', icon: Search },
   { id: 'candidates', label: 'Candidates', path: '/candidates', icon: Crosshair },
-  { id: 'analysis', label: 'Analysis', path: '/analysis/AET-04721', icon: BarChart2 },
+  { id: 'analysis', label: 'Analysis', path: '/analysis', icon: BarChart2 },
   { id: 'archive', label: 'Archive', path: '/archive', icon: Archive },
 ];
 

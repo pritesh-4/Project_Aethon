@@ -104,15 +104,27 @@ class DetectionBenchmarkEvaluator:
         reference_features: list[dict[str, float]] = []
 
         if detector_name in ("statistical_baseline", "isolation_forest"):
-            # Extract features from reference samples to form reference distribution
+            # Extract features across all background windows in reference split
+            # to form reference distribution
+            from app.detection.features import extract_window_features
+            from app.detection.windows import generate_analysis_windows
+            from app.processing.models import QualityMask
+
             for ref_samp in reference_samples:
-                ref_res = self.service.analyze_array(
+                q_mask = QualityMask(primary_mask=~np.isfinite(ref_samp.values))
+                win_tuples = generate_analysis_windows(
                     values=ref_samp.values,
-                    observation_id=ref_samp.observation_id,
-                    config=cfg,
+                    quality_mask=q_mask,
+                    config=cfg.window,
+                    max_windows_limit=cfg.max_windows,
                 )
-                for reg in ref_res.anomalous_regions:
-                    reference_features.append(reg.features)
+                for win_meta, w_vals, w_mask in win_tuples:
+                    if win_meta.valid_sample_count > 0:
+                        try:
+                            f_dict = extract_window_features(window_data=w_vals, window_mask=w_mask)
+                            reference_features.append(f_dict)
+                        except Exception:
+                            pass
 
             if detector_name == "isolation_forest" and len(reference_features) >= 10:
                 trained_iforest = IsolationForestDetector(config=cfg.isolation_forest)
@@ -167,9 +179,15 @@ class DetectionBenchmarkEvaluator:
                 if detector_name == "statistical_baseline":
                     run_cfg.baseline.enabled = True
                     run_cfg.isolation_forest.enabled = False
+                    run_cfg.real_radio_autoencoder.enabled = False
                 elif detector_name == "isolation_forest":
                     run_cfg.baseline.enabled = False
                     run_cfg.isolation_forest.enabled = True
+                    run_cfg.real_radio_autoencoder.enabled = False
+                elif detector_name == "real_radio_autoencoder":
+                    run_cfg.baseline.enabled = False
+                    run_cfg.isolation_forest.enabled = False
+                    run_cfg.real_radio_autoencoder.enabled = True
 
                 det_result = self.service.analyze_array(
                     values=sample.values,
@@ -193,23 +211,34 @@ class DetectionBenchmarkEvaluator:
             total_targets += len(obs_targets)
             target_matched = [False] * len(obs_targets)
 
-            for det in detected_regions:
+            # Greedily match detected windows to ground truth targets based on IoU
+            candidate_pairs: list[tuple[float, int, int]] = []
+            for d_idx, det in enumerate(detected_regions):
                 det_box = (
                     det.window.time_start,
                     det.window.time_stop,
                     det.window.freq_start,
                     det.window.freq_stop,
                 )
-                hit_target = False
-
                 for t_idx, tgt in enumerate(obs_targets):
                     iou = compute_box_iou(det_box, tgt.bounding_box)
                     if iou >= self.min_overlap_iou:
-                        hit_target = True
-                        target_matched[t_idx] = True
-                        matched_ious.append(iou)
+                        candidate_pairs.append((iou, d_idx, t_idx))
 
-                if hit_target:
+            candidate_pairs.sort(key=lambda x: x[0], reverse=True)
+
+            matched_det_indices: set[int] = set()
+            matched_tgt_indices: set[int] = set()
+
+            for iou, d_idx, t_idx in candidate_pairs:
+                if t_idx not in matched_tgt_indices:
+                    matched_tgt_indices.add(t_idx)
+                    target_matched[t_idx] = True
+                    matched_ious.append(iou)
+                matched_det_indices.add(d_idx)
+
+            for d_idx in range(len(detected_regions)):
+                if d_idx in matched_det_indices:
                     tp_windows += 1
                 else:
                     fp_windows += 1

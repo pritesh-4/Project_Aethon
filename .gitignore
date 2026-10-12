@@ -58,3 +58,12 @@ backend/data/tmp/
 /data/*.sqlite
 /data/*.sqlite3
 /data/observations/
+backend/data/
+backend/scratch/
+
+# Test reports and CI execution artifacts
+junit.xml
+backend/junit.xml
+
+# Redundant report directories (canonical reports reside in top-level reports/)
+backend/reports/

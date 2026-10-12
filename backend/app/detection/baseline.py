@@ -108,13 +108,10 @@ class StatisticalBaselineDetector:
                 ref_med = self.reference_medians[feat_name]
                 ref_sigma = self.reference_sigmas[feat_name]
 
-                denom = max(1e-12, ref_sigma)
                 if abs(val - ref_med) < 1e-12:
                     z = 0.0
-                elif ref_sigma < 1e-12:
-                    # Non-zero deviation in a feature with zero dispersion in reference
-                    z = float(abs(val - ref_med) / 1e-12)
                 else:
+                    denom = max(1e-3, ref_sigma)
                     z = float(abs(val - ref_med) / denom)
 
                 z_scores[feat_name] = z

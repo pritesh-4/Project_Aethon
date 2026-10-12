@@ -67,7 +67,7 @@ The following diagram illustrates the complete end-to-end data lifecycle, from r
 flowchart TD
     subgraph Observational_Input["Observational Input & Ingestion"]
         TEL["Radio Telescope Array\n(e.g., GBT 100m, MeerKAT, Parkes)"] --> RAW["Raw Baseband I/Q Telemetry\n(Gigabit Stream)"]
-        FILE["Astronomical Data Files\n(.fil, .h5, .fits, .csv)"] --> RAW
+        FILE["Astronomical Data Files\n(.fil, .fits, .fit)"] --> RAW
     end
 
     subgraph Signal_Processing["Signal Processing & Spectrotemporal Domain"]
@@ -145,7 +145,7 @@ AETHON adopts self-supervised and unsupervised representation learning:
 | :--------------------------------------- | :--------------------- | :-------------------------------------------------------------------------------------------- |
 | **Zod Schema Contracts & Validation**    | **Implemented**        | Type-safe candidate signal data model, observation records, and inference predictions         |
 | **Interactive FFT & Drift Visualizer**   | **Implemented**        | High-precision Recharts spectral power distribution & topocentric drift visualization         |
-| **Filterbank Upload & Intake Flow**      | **Implemented**        | Client-side intake buffer supporting `.fil`, `.h5`, `.fits`, `.csv` with simulated inference  |
+| **Filterbank & FITS Intake Flow**        | **Implemented**        | Backend-validated stream ingestion supporting `.fil` and radio `.fits`/`.fit` files           |
 | **Candidate Prioritization & Filtering** | **Implemented**        | Dynamic sorting by anomaly score, SNR, frequency band, and verification state                 |
 | **Self-Supervised Transformer Backbone** | _Architected (Target)_ | 12-layer spectral vision transformer for spectrotemporal patch encoding                       |
 | **Taylor-Tree Doppler De-drifting**      | _Architected (Target)_ | Accelerated de-dispersion and Doppler search over acceleration space $[-20, +20]\text{ Hz/s}$ |
@@ -222,7 +222,7 @@ The AETHON frontend is designed with the aesthetic and functional rigor of **aer
 | :-------------------- | :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/`                   | **Landing / Mission**   | Mission briefing, active aperture frequency status, primary architectural pillars                                                                                 |
 | `/observatory`        | **Observatory Console** | Live dual telemetry: FFT Spectral Power Distribution (1420.405 MHz HI reference) and Doppler Drift Cadence ($\Delta f / \Delta t$) with real-time stream controls |
-| `/discover`           | **Discovery Feed**      | Ingestion portal for `.fil`, `.h5`, `.fits`, `.csv` data files; priority-ranked candidate discovery queue                                                         |
+| `/discover`           | **Discovery Feed**      | Ingestion portal for `.fil` and radio `.fits` data files; priority-ranked candidate discovery queue                                                               |
 | `/analysis/:signalId` | **Signal Dossier**      | Full deep-dive analytical view: celestial coordinates (RA/DEC), model classification probabilities, signal export (JSON), and verification controls               |
 | `/model`              | **ML Architecture**     | Technical breakdown of the 4-stage neural pipeline, attention encoders, and synthetic benchmark matrix                                                            |
 | `/about`              | **Scientific Context**  | Theoretical foundations: the Hydrogen line, Doppler drift kinematics, and terrestrial RFI mitigation                                                              |
@@ -287,7 +287,6 @@ Default environment parameters:
 ```env
 # AETHON Radio Signal Observatory Environment Configuration
 VITE_API_BASE_URL=http://localhost:8000/api
-VITE_TELEMETRY_WS_URL=ws://localhost:8000/ws/telemetry
 ```
 
 ### 3. Install Dependencies
@@ -462,13 +461,15 @@ npm run format:check    # Verify compliance with Prettier formatting rules
 npm run lint            # Run ESLint across codebase
 npm run typecheck       # Perform strict TypeScript typecheck
 npm run build           # Verify production build compilation
+npm run test:unit       # Run unit and contract test suite
+npm run test:e2e        # Run Playwright browser end-to-end acceptance suite (6 journeys)
 npm run check           # Run complete multi-step quality gate locally
 
 # Backend Quality Gate (from backend/ directory with .venv active)
 ruff check .            # Check Python code style and errors
 ruff format --check .   # Verify Python code formatting
 mypy app                # Strict static type check
-pytest -v               # Run complete automated test suite (193 tests)
+pytest -v               # Run complete automated test suite (260 tests)
 ```
 
 ---

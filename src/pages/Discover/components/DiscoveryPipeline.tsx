@@ -1,11 +1,12 @@
 import type { DiscoveryStage } from '../types.ts';
-import { Check, Loader2, Circle } from 'lucide-react';
+import { Check, Loader2, Circle, AlertCircle } from 'lucide-react';
 
 export interface DiscoveryPipelineProps {
   stage: DiscoveryStage;
+  failedStage?: DiscoveryStage | null;
 }
 
-export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
+export function DiscoveryPipeline({ stage, failedStage }: DiscoveryPipelineProps) {
   const steps = [
     {
       id: 'prepare',
@@ -30,13 +31,18 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
   ];
 
   const getStepStatus = (stepId: string) => {
+    if (failedStage === stepId) return 'failed';
+
     const stageOrder = ['prepare', 'represent', 'search', 'rank', 'complete'];
     const currentIdx = stageOrder.indexOf(stage);
     const stepIdx = stageOrder.indexOf(stepId);
+    const failedIdx = failedStage ? stageOrder.indexOf(failedStage) : 999;
 
+    if (failedStage && stepIdx > failedIdx) return 'skipped';
     if (currentIdx === -1) return 'pending';
-    if (stage === 'complete' || currentIdx > stepIdx) return 'complete';
-    if (currentIdx === stepIdx) return 'active';
+    if (stage === 'complete' || (currentIdx > stepIdx && (!failedStage || stepIdx < failedIdx)))
+      return 'complete';
+    if (currentIdx === stepIdx && !failedStage) return 'active';
     return 'pending';
   };
 
@@ -47,11 +53,13 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
           Execution Pipeline
         </span>
         <span className="text-[11px] font-mono text-[#56616A]">
-          {stage === 'complete'
-            ? 'Execution completed'
-            : stage === 'idle'
-              ? 'Standby'
-              : 'Pipeline active'}
+          {failedStage
+            ? `Execution halted at stage ${failedStage.toUpperCase()}`
+            : stage === 'complete'
+              ? 'Execution completed'
+              : stage === 'idle'
+                ? 'Standby'
+                : 'Pipeline active'}
         </span>
       </div>
 
@@ -60,6 +68,7 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
           const status = getStepStatus(step.id);
           const isComplete = status === 'complete';
           const isActive = status === 'active';
+          const isFailed = status === 'failed';
 
           return (
             <div
@@ -69,7 +78,12 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] text-[#76828D] font-mono">0{idx + 1}</span>
-                  {isComplete ? (
+                  {isFailed ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#C93B2B] font-mono">
+                      <AlertCircle className="h-3 w-3" />
+                      FAIL
+                    </span>
+                  ) : isComplete ? (
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#3D7D54] font-mono">
                       <Check className="h-3 w-3" />
                       OK
@@ -89,7 +103,13 @@ export function DiscoveryPipeline({ stage }: DiscoveryPipelineProps) {
 
                 <div
                   className={`text-xs font-semibold tracking-normal ${
-                    isActive ? 'text-[#376A9B]' : isComplete ? 'text-[#17202A]' : 'text-[#76828D]'
+                    isFailed
+                      ? 'text-[#C93B2B]'
+                      : isActive
+                        ? 'text-[#376A9B]'
+                        : isComplete
+                          ? 'text-[#17202A]'
+                          : 'text-[#76828D]'
                   }`}
                 >
                   {step.name}

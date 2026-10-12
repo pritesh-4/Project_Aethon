@@ -13,7 +13,7 @@ export function RoadmapSection() {
     {
       num: 'PHASE 02',
       title: 'Native Astronomical File Ingestion Stack',
-      desc: 'High-throughput Rust / Python I/O parser for native multi-gigabyte SIGPROC (.fil) and Breakthrough Listen HDF5 (.h5) files.',
+      desc: 'High-throughput I/O parsers for native SIGPROC (.fil) and radio FITS (.fits) observations; HDF5 (.h5) targeted for future releases.',
       status: 'IN PROGRESS',
       statusClass: 'bg-[#376A9B]/15 text-[#2B547C] border-[#376A9B]/30',
       isDone: false,

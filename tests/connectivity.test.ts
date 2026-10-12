@@ -3,20 +3,116 @@ import assert from 'node:assert/strict';
 
 const BASE_URL = process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 const ROOT_URL = BASE_URL.replace(/\/api\/?$/, '');
+const REQUIRE_BACKEND = process.env.REQUIRE_BACKEND === 'true';
 
-async function isBackendReachable(): Promise<boolean> {
+let backendReachableCached: boolean | null = null;
+let seededObservationId: string | null = null;
+let seededCandidateId: string | null = null;
+
+async function checkBackendReachable(): Promise<boolean> {
+  if (backendReachableCached !== null) {
+    return backendReachableCached;
+  }
   try {
     const res = await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(2000) });
-    return res.ok;
+    backendReachableCached = res.ok;
   } catch {
-    return false;
+    backendReachableCached = false;
   }
+
+  if (!backendReachableCached && REQUIRE_BACKEND) {
+    assert.fail(
+      `FastAPI backend is required at ${BASE_URL} (REQUIRE_BACKEND=true) but is not reachable.`
+    );
+  }
+
+  return backendReachableCached;
+}
+
+/**
+ * Guarantee a valid, deterministic observation exists.
+ * If the database already contains observations, returns the first one.
+ * Otherwise, loads the guaranteed offline synthetic demo sample via the REST endpoint.
+ */
+async function getOrSeedObservationId(): Promise<string> {
+  if (seededObservationId) {
+    return seededObservationId;
+  }
+
+  const listRes = await fetch(`${BASE_URL}/observations?limit=1`);
+  assert.equal(listRes.status, 200, 'Observation list must return 200 OK');
+  const listData = await listRes.json();
+
+  if (Array.isArray(listData.items) && listData.items.length > 0) {
+    seededObservationId = listData.items[0].id;
+    return seededObservationId!;
+  }
+
+  // Seed deterministic demo observation via REST endpoint
+  const seedRes = await fetch(
+    `${BASE_URL}/public-datasets/demo-samples/synthetic-drifting-beacon/load`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+  assert.equal(seedRes.status, 201, 'Failed to seed deterministic demo sample for integration');
+  const seedData = await seedRes.json();
+  assert.ok(seedData.observation?.id, 'Seeded observation must contain valid id');
+  seededObservationId = seedData.observation.id;
+  return seededObservationId!;
+}
+
+/**
+ * Guarantee a valid scientific candidate exists for integration assertions.
+ * If none exists, creates one linked to the deterministic observation.
+ */
+async function getOrSeedCandidateId(): Promise<string> {
+  if (seededCandidateId) {
+    return seededCandidateId;
+  }
+
+  const listRes = await fetch(`${BASE_URL}/candidates?limit=1`);
+  assert.equal(listRes.status, 200, 'Candidate listing must return 200 OK');
+  const listData = await listRes.json();
+
+  if (Array.isArray(listData.items) && listData.items.length > 0) {
+    seededCandidateId = listData.items[0].candidate_id;
+    return seededCandidateId!;
+  }
+
+  const obsId = await getOrSeedObservationId();
+  const createPayload = {
+    observation_id: obsId,
+    target_region: {
+      time_start: 0,
+      time_stop: 4,
+      freq_start: 0,
+      freq_stop: 8,
+    },
+    physical_coordinates: {
+      center_frequency_hz: 1420405750.0,
+      bandwidth_hz: 2500.0,
+      duration_seconds: 4.0,
+    },
+    is_synthetic: true,
+  };
+
+  const createRes = await fetch(`${BASE_URL}/candidates`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(createPayload),
+  });
+  assert.equal(createRes.status, 201, 'Failed to create integration candidate fixture');
+  const candData = await createRes.json();
+  assert.ok(candData.candidate_id, 'Created candidate must have candidate_id');
+  seededCandidateId = candData.candidate_id;
+  return seededCandidateId!;
 }
 
 test('Live Connectivity: Health probe semantics', async (t) => {
-  const reachable = await isBackendReachable();
-  if (!reachable) {
-    t.skip('FastAPI backend not running at ' + BASE_URL);
+  if (!(await checkBackendReachable())) {
+    t.skip(`FastAPI backend not running at ${BASE_URL}`);
     return;
   }
 
@@ -35,9 +131,8 @@ test('Live Connectivity: Health probe semantics', async (t) => {
 });
 
 test('Live Connectivity: CORS preflight header verification', async (t) => {
-  const reachable = await isBackendReachable();
-  if (!reachable) {
-    t.skip('FastAPI backend not running at ' + BASE_URL);
+  if (!(await checkBackendReachable())) {
+    t.skip(`FastAPI backend not running at ${BASE_URL}`);
     return;
   }
 
@@ -57,38 +152,57 @@ test('Live Connectivity: CORS preflight header verification', async (t) => {
   assert.ok(allowMethods.includes('POST'));
 });
 
-test('Live Connectivity: Observation listing and pagination', async (t) => {
-  const reachable = await isBackendReachable();
-  if (!reachable) {
-    t.skip('FastAPI backend not running at ' + BASE_URL);
+test('Live Connectivity: Guaranteed demo observation loading and ingestion', async (t) => {
+  if (!(await checkBackendReachable())) {
+    t.skip(`FastAPI backend not running at ${BASE_URL}`);
     return;
   }
+
+  const res = await fetch(
+    `${BASE_URL}/public-datasets/demo-samples/synthetic-drifting-beacon/load`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+  assert.equal(res.status, 201);
+  const data = await res.json();
+  assert.equal(data.sample_id, 'synthetic-drifting-beacon');
+  assert.equal(data.is_synthetic, true);
+  assert.ok(data.observation);
+  assert.equal(data.observation.status, 'ingested');
+  assert.equal(data.observation.format, 'fil');
+});
+
+test('Live Connectivity: Observation listing and pagination', async (t) => {
+  if (!(await checkBackendReachable())) {
+    t.skip(`FastAPI backend not running at ${BASE_URL}`);
+    return;
+  }
+
+  // Ensure an observation exists
+  await getOrSeedObservationId();
 
   const res = await fetch(`${BASE_URL}/observations?limit=5&offset=0`);
   assert.equal(res.status, 200);
   const data = await res.json();
   assert.ok(Array.isArray(data.items));
   assert.ok(typeof data.total === 'number');
+  assert.ok(data.total >= 1, 'Total observations must be at least 1 after seeding');
   assert.equal(data.limit, 5);
   assert.equal(data.offset, 0);
-  assert.ok(data.items.length <= 5);
+  assert.ok(data.items.length >= 1);
 });
 
 test('Live Connectivity: Observation bounded slice retrieval', async (t) => {
-  const reachable = await isBackendReachable();
-  if (!reachable) {
-    t.skip('FastAPI backend not running at ' + BASE_URL);
+  if (!(await checkBackendReachable())) {
+    t.skip(`FastAPI backend not running at ${BASE_URL}`);
     return;
   }
 
-  const listRes = await fetch(`${BASE_URL}/observations?limit=1`);
-  const listData = await listRes.json();
-  if (!listData.items.length) {
-    t.skip('No observations available to slice');
-    return;
-  }
+  // Guarantee observation is present - never skip silently
+  const obsId = await getOrSeedObservationId();
 
-  const obsId = listData.items[0].id;
   const sliceRes = await fetch(
     `${BASE_URL}/observations/${obsId}/slice?time_start=0&time_stop=4&frequency_start=0&frequency_stop=8`
   );
@@ -103,22 +217,15 @@ test('Live Connectivity: Observation bounded slice retrieval', async (t) => {
 });
 
 test('Live Connectivity: Observation scientific analysis path', async (t) => {
-  const reachable = await isBackendReachable();
-  if (!reachable) {
-    t.skip('FastAPI backend not running at ' + BASE_URL);
+  if (!(await checkBackendReachable())) {
+    t.skip(`FastAPI backend not running at ${BASE_URL}`);
     return;
   }
 
-  const listRes = await fetch(`${BASE_URL}/observations?limit=1`);
-  const listData = await listRes.json();
-  if (!listData.items.length) {
-    t.skip('No observations available for processing');
-    return;
-  }
+  // Guarantee observation is present - never skip silently
+  const obsId = await getOrSeedObservationId();
 
-  const obsId = listData.items[0].id;
-
-  // Process / RFI assessment
+  // 1. Process / RFI assessment
   const procRes = await fetch(`${BASE_URL}/observations/${obsId}/process`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -130,7 +237,7 @@ test('Live Connectivity: Observation scientific analysis path', async (t) => {
   assert.ok(procData.rfi_report);
   assert.ok(typeof procData.primary_mask_flagged_fraction === 'number');
 
-  // Anomaly detection
+  // 2. Anomaly detection
   const detRes = await fetch(`${BASE_URL}/observations/${obsId}/detect`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -142,7 +249,7 @@ test('Live Connectivity: Observation scientific analysis path', async (t) => {
   assert.ok(typeof detData.total_windows_evaluated === 'number');
   assert.ok(Array.isArray(detData.anomalous_regions));
 
-  // Doppler Drift analysis
+  // 3. Doppler Drift analysis
   const driftRes = await fetch(`${BASE_URL}/observations/${obsId}/analyze-drift`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -156,49 +263,51 @@ test('Live Connectivity: Observation scientific analysis path', async (t) => {
 });
 
 test('Live Connectivity: Candidates and Dossier retrieval', async (t) => {
-  const reachable = await isBackendReachable();
-  if (!reachable) {
-    t.skip('FastAPI backend not running at ' + BASE_URL);
+  if (!(await checkBackendReachable())) {
+    t.skip(`FastAPI backend not running at ${BASE_URL}`);
     return;
   }
 
+  // Guarantee candidate is present - never skip assertions silently
+  const candId = await getOrSeedCandidateId();
+
+  // 1. Listing
   const res = await fetch(`${BASE_URL}/candidates`);
   assert.equal(res.status, 200);
   const candidatesData = await res.json();
   assert.ok(Array.isArray(candidatesData.items));
+  assert.ok(candidatesData.total >= 1);
 
-  if (candidatesData.items.length > 0) {
-    const candId = candidatesData.items[0].candidate_id;
+  // 2. Detail
+  const detailRes = await fetch(`${BASE_URL}/candidates/${candId}`);
+  assert.equal(detailRes.status, 200);
+  const detail = await detailRes.json();
+  assert.equal(detail.candidate_id, candId);
+  assert.ok(detail.current_assessment);
 
-    // Detail
-    const detailRes = await fetch(`${BASE_URL}/candidates/${candId}`);
-    assert.equal(detailRes.status, 200);
-    const detail = await detailRes.json();
-    assert.equal(detail.candidate_id, candId);
-    assert.ok(detail.current_assessment);
+  // 3. Dossier JSON
+  const dossierRes = await fetch(`${BASE_URL}/candidates/${candId}/dossier`);
+  assert.equal(dossierRes.status, 200);
+  const dossier = await dossierRes.json();
+  assert.equal(dossier.candidate_id, candId);
+  assert.ok(dossier.executive_summary);
 
-    // Dossier JSON
-    const dossierRes = await fetch(`${BASE_URL}/candidates/${candId}/dossier`);
-    assert.equal(dossierRes.status, 200);
-    const dossier = await dossierRes.json();
-    assert.equal(dossier.candidate_id, candId);
-    assert.ok(dossier.executive_summary);
-
-    // Dossier PDF
-    const pdfRes = await fetch(`${BASE_URL}/candidates/${candId}/dossier.pdf`);
-    assert.equal(pdfRes.status, 200);
-    const contentType = pdfRes.headers.get('content-type') || '';
-    assert.ok(contentType.includes('application/pdf'));
-    const pdfBytes = await pdfRes.arrayBuffer();
-    const pdfHeader = Buffer.from(pdfBytes.slice(0, 5)).toString('utf-8');
-    assert.equal(pdfHeader, '%PDF-');
-  }
+  // 4. Dossier Vector PDF
+  const pdfRes = await fetch(`${BASE_URL}/candidates/${candId}/dossier.pdf`);
+  assert.equal(pdfRes.status, 200);
+  const contentType = pdfRes.headers.get('content-type') || '';
+  assert.ok(
+    contentType.includes('application/pdf'),
+    `Expected application/pdf, got ${contentType}`
+  );
+  const pdfBytes = await pdfRes.arrayBuffer();
+  const pdfHeader = Buffer.from(pdfBytes.slice(0, 5)).toString('utf-8');
+  assert.equal(pdfHeader, '%PDF-', 'PDF file must start with %PDF- header');
 });
 
 test('Live Connectivity: Ingestion upload validation and failure cases', async (t) => {
-  const reachable = await isBackendReachable();
-  if (!reachable) {
-    t.skip('FastAPI backend not running at ' + BASE_URL);
+  if (!(await checkBackendReachable())) {
+    t.skip(`FastAPI backend not running at ${BASE_URL}`);
     return;
   }
 
@@ -230,9 +339,8 @@ test('Live Connectivity: Ingestion upload validation and failure cases', async (
 });
 
 test('Live Connectivity: Public dataset provider status and filter contracts', async (t) => {
-  const reachable = await isBackendReachable();
-  if (!reachable) {
-    t.skip('FastAPI backend not running at ' + BASE_URL);
+  if (!(await checkBackendReachable())) {
+    t.skip(`FastAPI backend not running at ${BASE_URL}`);
     return;
   }
 

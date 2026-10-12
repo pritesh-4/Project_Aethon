@@ -41,6 +41,8 @@ class EvidenceType(StrEnum):
     DRIFT = "drift"
     TEMPORAL = "temporal"
     RECURRENCE = "recurrence"
+    CADENCE = "cadence"
+    RFI_RULE = "rfi_rule"
 
 
 class EvidenceItem(BaseModel):
@@ -103,6 +105,12 @@ class CandidateAssessment(BaseModel):
         default=False, description="True if baseline and Isolation Forest detectors diverged"
     )
     explanation: str = Field(..., description="Human-readable rationale for assigned score")
+    disposition_rationale: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Structured plain-language statements explaining candidate disposition (REQ-RFI-03)"
+        ),
+    )
     warnings: list[str] = Field(default_factory=list, description="Scientific and quality warnings")
 
 

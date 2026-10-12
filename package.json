@@ -10,7 +10,9 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "typecheck": "tsc -b",
-    "test": "node --experimental-strip-types --test tests/**/*.test.ts",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --experimental-strip-types --test tests/connectivity.test.ts tests/functional_correctness_and_ui_truthfulness.test.ts",
+    "test:e2e": "node --experimental-strip-types --test tests/browser_e2e_acceptance.test.ts",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "preview": "vite preview",
     "prepare": "husky"
@@ -47,6 +49,7 @@
     "globals": "^17.12.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
+    "playwright": "^1.64.0",
     "prettier": "3.9.9",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.69.0",

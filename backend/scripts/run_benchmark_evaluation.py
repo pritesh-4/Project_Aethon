@@ -51,7 +51,7 @@ from app.synthetic.injection import inject_signals
 
 
 def generate_reference_background_samples(
-    n_samples: int = 10,
+    n_samples: int = 20,
     base_seed: int = 1000,
 ) -> list[EvaluationSample]:
     """Generate pure background observations strictly for reference feature fitting.
@@ -98,10 +98,14 @@ def generate_reference_background_samples(
 
 def generate_evaluation_samples(
     base_seed: int = 42,
+    use_comprehensive: bool = True,
 ) -> tuple[list[EvaluationSample], ObservationGeometryConfig]:
-    """Generate standard benchmark evaluation suite (2 negative controls, 7 positive configs)."""
+    """Generate benchmark evaluation suite (10 negative controls, 15 positive configs if comprehensive)."""
     generator = BenchmarkDatasetGenerator(base_seed=base_seed)
-    configs = generator.create_standard_suite_configs("benchmark_eval")
+    if use_comprehensive:
+        configs = generator.create_comprehensive_suite_configs("benchmark_eval")
+    else:
+        configs = generator.create_standard_suite_configs("benchmark_eval")
     samples: list[EvaluationSample] = []
 
     for cfg in configs:
@@ -306,11 +310,11 @@ def main() -> None:
 
     # Step 1: Generate reference and evaluation splits
     print("\n[1/5] Generating independent reference background split...")
-    ref_samples = generate_reference_background_samples(n_samples=10, base_seed=args.ref_seed)
+    ref_samples = generate_reference_background_samples(n_samples=20, base_seed=args.ref_seed)
     print(f"  Generated {len(ref_samples)} reference background observations.")
 
     print("\n[2/5] Generating held-out evaluation benchmark suite...")
-    eval_samples, geom = generate_evaluation_samples(base_seed=args.seed)
+    eval_samples, geom = generate_evaluation_samples(base_seed=args.seed, use_comprehensive=True)
     pos_samples = [s for s in eval_samples if not s.ground_truth.is_negative_control]
     neg_samples = [s for s in eval_samples if s.ground_truth.is_negative_control]
     total_targets = sum(len(s.ground_truth.signals) for s in pos_samples)
@@ -324,6 +328,12 @@ def main() -> None:
     detector_evaluator = DetectionBenchmarkEvaluator(min_overlap_iou=0.01)
 
     detectors = ["trivial_control", "statistical_baseline", "isolation_forest"]
+    ae_ckpt = (
+        backend_root / "data" / "real_radio_training" / "model" / "real_radio_anomaly_checkpoint.pt"
+    )
+    if ae_ckpt.exists():
+        detectors.append("real_radio_autoencoder")
+
     detector_reports: dict[str, DetectionBenchmarkReport] = {}
 
     for det_name in detectors:
@@ -360,6 +370,36 @@ def main() -> None:
     print(f"  Target signal retention rate:    {proc_res['target_signal_retention_rate']:.2%}")
 
     # Step 5: Compile Unified JSON Report
+    conclusions: dict[str, Any] = {
+        "isolation_forest_target_recall": detector_reports[
+            "isolation_forest"
+        ].metrics.target_recall,
+        "statistical_baseline_target_recall": detector_reports[
+            "statistical_baseline"
+        ].metrics.target_recall,
+        "trivial_control_target_recall": detector_reports["trivial_control"].metrics.target_recall,
+        "noise_false_alarm_rate_iforest": detector_reports[
+            "isolation_forest"
+        ].metrics.noise_false_positive_rate,
+        "noise_false_alarm_rate_baseline": detector_reports[
+            "statistical_baseline"
+        ].metrics.noise_false_positive_rate,
+        "drift_mean_abs_error_hz_s": drift_res["mean_absolute_drift_error_hz_per_s"],
+        "target_signal_retention_rate": proc_res["target_signal_retention_rate"],
+        "disclaimer": (
+            "Synthetic benchmark measurements establish mathematical correctness and detector "
+            "behavior under controlled numerical assumptions. They do not claim astronomical "
+            "discovery probability or source classification for uncalibrated real-world observations."
+        ),
+    }
+    if "real_radio_autoencoder" in detector_reports:
+        conclusions["real_radio_autoencoder_target_recall"] = detector_reports[
+            "real_radio_autoencoder"
+        ].metrics.target_recall
+        conclusions["real_radio_autoencoder_noise_false_alarm_rate"] = detector_reports[
+            "real_radio_autoencoder"
+        ].metrics.noise_false_positive_rate
+
     full_report: dict[str, Any] = {
         "benchmark_id": "aethon_phase9_scientific_validation",
         "evaluated_at_utc": datetime.now(UTC).isoformat(),
@@ -368,40 +408,17 @@ def main() -> None:
             "platform": sys.platform,
         },
         "dataset_metadata": {
-            "dataset_version": "1.0.0",
+            "dataset_version": "2.0.0",
             "generator_name": "AETHON Synthetic Laboratory",
             "evaluation_base_seed": args.seed,
             "reference_split_base_seed": args.ref_seed,
-            "split_policy": "Strict observation-level separation (seeds 1000..1009 vs 42)",
+            "split_policy": "Strict observation-level separation (seeds 1000..1019 vs 42)",
             "leakage_protection": "Reference features extracted exclusively from pure background; zero targets exposed",
         },
         "detectors": {name: rep.model_dump() for name, rep in detector_reports.items()},
         "doppler_drift_analysis": drift_res,
         "signal_processing_preservation": proc_res,
-        "scientific_conclusions": {
-            "isolation_forest_target_recall": detector_reports[
-                "isolation_forest"
-            ].metrics.target_recall,
-            "statistical_baseline_target_recall": detector_reports[
-                "statistical_baseline"
-            ].metrics.target_recall,
-            "trivial_control_target_recall": detector_reports[
-                "trivial_control"
-            ].metrics.target_recall,
-            "noise_false_alarm_rate_iforest": detector_reports[
-                "isolation_forest"
-            ].metrics.noise_false_positive_rate,
-            "noise_false_alarm_rate_baseline": detector_reports[
-                "statistical_baseline"
-            ].metrics.noise_false_positive_rate,
-            "drift_mean_abs_error_hz_s": drift_res["mean_absolute_drift_error_hz_per_s"],
-            "target_signal_retention_rate": proc_res["target_signal_retention_rate"],
-            "disclaimer": (
-                "Synthetic benchmark measurements establish mathematical correctness and detector "
-                "behavior under controlled numerical assumptions. They do not claim astronomical "
-                "discovery probability or source classification for uncalibrated real-world observations."
-            ),
-        },
+        "scientific_conclusions": conclusions,
     }
 
     with open(output_report_path, "w", encoding="utf-8") as f:

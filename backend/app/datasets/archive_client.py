@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import ipaddress
+import socket
 import time
+from contextlib import nullcontext
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import httpx
 
@@ -19,51 +21,117 @@ from app.schemas.public_datasets import (
 
 logger = get_logger("datasets.archive_client")
 
+MAX_REDIRECT_HOPS: int = 5
+
 # Recognized Breakthrough Listen archive storage domains
 ALLOWED_DOWNLOAD_DOMAINS: set[str] = {
     "seti.berkeley.edu",
     "bldata.berkeley.edu",
     "storage.googleapis.com",
+    "berkeley.edu",
 }
 ALLOWED_DOWNLOAD_SUFFIXES: tuple[str, ...] = (
     ".berkeley.edu",
     ".ssl.berkeley.edu",
 )
+ALLOWED_PORTS: set[int] = {80, 443}
+FORBIDDEN_HOSTS: set[str] = {
+    "localhost",
+    "localhost.localdomain",
+    "127.0.0.1",
+    "0.0.0.0",
+    "::1",
+    "metadata.google.internal",
+    "169.254.169.254",
+}
 
 
-def is_safe_remote_url(url: str, archive_host: str) -> tuple[bool, str]:
+def is_safe_ip(ip_str: str) -> tuple[bool, str]:
+    """Check whether an IP address is public and safe to connect to."""
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False, f"Invalid IP address literal '{ip_str}'"
+
+    if (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    ):
+        return False, f"Access to private/internal/reserved IP address '{ip_str}' is forbidden"
+
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+        v4 = ip.ipv4_mapped
+        if (
+            v4.is_private
+            or v4.is_loopback
+            or v4.is_link_local
+            or v4.is_reserved
+            or v4.is_multicast
+            or v4.is_unspecified
+        ):
+            return (
+                False,
+                f"Access to private/internal IPv4-mapped IPv6 address '{ip_str}' is forbidden",
+            )
+
+    return True, ""
+
+
+def is_safe_remote_url(
+    url: str,
+    archive_host: str,
+    validate_dns: bool = True,
+) -> tuple[bool, str]:
     """Validate that a remote observation URL is safe and points to an authorized archive host.
 
-    Protects against SSRF, internal port scanning, and unauthorized data sources.
+    Protects against SSRF, internal port scanning, DNS rebinding, and unauthorized data sources.
     """
+    if not url or not isinstance(url, str):
+        return False, "URL must be a non-empty string"
+
     try:
-        parsed = urlparse(url)
+        parsed = urlparse(url.strip())
     except Exception as e:
         return False, f"Invalid URL structure: {e}"
 
-    if parsed.scheme not in ("http", "https"):
+    if parsed.scheme.lower() not in ("http", "https"):
         return False, f"Unsupported URL scheme '{parsed.scheme}'; must be http or https"
 
     hostname = (parsed.hostname or "").lower()
     if not hostname:
         return False, "URL lacks a valid hostname"
 
-    # Block localhost and loopback hostnames
-    if hostname in ("localhost", "127.0.0.1", "0.0.0.0", "::1"):
-        return False, "Access to localhost or loopback destinations is forbidden"
+    # Block well-known loopback, internal, and cloud metadata hostnames
+    if hostname in FORBIDDEN_HOSTS or any(
+        hostname.endswith("." + h) for h in ("localhost", "local", "internal")
+    ):
+        return False, f"Access to forbidden/internal destination '{hostname}' is rejected"
 
-    # Check IP addresses directly
+    # Port validation: only allow standard HTTP/HTTPS ports or unspecified
+    if parsed.port is not None and parsed.port not in ALLOWED_PORTS:
+        return (
+            False,
+            f"Access to non-standard port '{parsed.port}' is forbidden; "
+            "only ports 80/443 are allowed",
+        )
+
+    # Literal IP address checks
     try:
         ip = ipaddress.ip_address(hostname)
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
-            return False, f"Access to private/internal IP address '{hostname}' is forbidden"
+        is_safe, reason = is_safe_ip(str(ip))
+        if not is_safe:
+            return False, reason
     except ValueError:
-        # Not a raw IP literal; validate against authorized domain whitelist
         pass
 
     # Domain authorization check
+    archive_host_clean = archive_host.lower().strip()
     is_authorized = False
-    if hostname == archive_host or hostname in ALLOWED_DOWNLOAD_DOMAINS:
+    if hostname == archive_host_clean or hostname in ALLOWED_DOWNLOAD_DOMAINS:
         is_authorized = True
     elif any(hostname.endswith(suffix) for suffix in ALLOWED_DOWNLOAD_SUFFIXES):
         is_authorized = True
@@ -73,6 +141,25 @@ def is_safe_remote_url(url: str, archive_host: str) -> tuple[bool, str]:
             False,
             f"Hostname '{hostname}' is not an authorized Breakthrough Listen data repository",
         )
+
+    # DNS resolution check (protects against DNS rebinding to private/loopback IPs)
+    if validate_dns:
+        try:
+            port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+            addrinfo = socket.getaddrinfo(hostname, port)
+            for _, _, _, _, sockaddr in addrinfo:
+                resolved_ip = str(sockaddr[0])
+                is_safe, reason = is_safe_ip(resolved_ip)
+                if not is_safe:
+                    return (
+                        False,
+                        f"Hostname '{hostname}' resolves to forbidden IP '{resolved_ip}': {reason}",
+                    )
+        except socket.gaierror:
+            # If DNS resolution fails (e.g. offline mock testing), hostname has passed whitelist
+            pass
+        except Exception as e:
+            logger.warning("DNS resolution check error for %s: %s", hostname, e)
 
     return True, ""
 
@@ -112,10 +199,11 @@ class ArchiveClient:
             self._cache[key] = (time.monotonic(), value)
 
     async def _request(self, endpoint: str, params: dict[str, Any] | None = None) -> Any:
-        """Perform an HTTP GET request to the configured archive endpoint."""
+        """Perform an HTTP GET request with manual redirect validation and SSRF protection."""
         if not self.base_url:
             raise ValueError("Archive URL is not configured")
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+
+        initial_url = f"{self.base_url}/{endpoint.lstrip('/')}"
         headers = {
             "User-Agent": "AETHON-Radio-Discovery/1.0",
             "Accept": "application/json",
@@ -123,25 +211,58 @@ class ArchiveClient:
         if self.settings.breakthrough_listen_api_key:
             headers["Authorization"] = f"Bearer {self.settings.breakthrough_listen_api_key}"
 
-        if self._client is not None:
-            resp = await self._client.get(
-                url,
-                params=params,
-                headers=headers,
-                timeout=self.timeout_seconds,
-            )
-            resp.raise_for_status()
-            return resp.json()
+        current_url = initial_url
+        visited_urls: set[str] = {current_url}
+        redirect_count = 0
 
-        async with httpx.AsyncClient(follow_redirects=True) as client:
-            resp = await client.get(
-                url,
-                params=params,
-                headers=headers,
-                timeout=self.timeout_seconds,
-            )
-            resp.raise_for_status()
-            return resp.json()
+        # Validate initial URL
+        is_safe, error_msg = is_safe_remote_url(current_url, self.archive_host)
+        if not is_safe:
+            raise ValueError(f"Initial archive URL rejected for security: {error_msg}")
+
+        client_to_use = self._client
+        async with (
+            httpx.AsyncClient(follow_redirects=False)
+            if client_to_use is None
+            else nullcontext(client_to_use)
+        ) as client:
+            while True:
+                req = client.build_request(
+                    "GET",
+                    current_url,
+                    params=params if redirect_count == 0 else None,
+                    headers=headers,
+                )
+                resp = await client.send(req, follow_redirects=False)
+
+                if resp.status_code in (301, 302, 303, 307, 308):
+                    await resp.aclose()
+                    redirect_count += 1
+                    if redirect_count > MAX_REDIRECT_HOPS:
+                        raise ValueError(
+                            f"Too many redirects: exceeded maximum of {MAX_REDIRECT_HOPS} hops"
+                        )
+
+                    location = resp.headers.get("Location")
+                    if not location:
+                        raise ValueError("Redirect response missing Location header")
+
+                    next_url = urljoin(current_url, location)
+                    if next_url in visited_urls:
+                        raise ValueError(
+                            f"Redirect loop detected: '{next_url}' already visited in chain"
+                        )
+                    visited_urls.add(next_url)
+
+                    is_safe, error_msg = is_safe_remote_url(next_url, self.archive_host)
+                    if not is_safe:
+                        raise ValueError(f"Redirect destination rejected for security: {error_msg}")
+
+                    current_url = next_url
+                    continue
+
+                resp.raise_for_status()
+                return resp.json()
 
     async def check_status(self) -> PublicDatasetStatusResponse:
         """Check provider configuration and verify live reachability of the archive."""

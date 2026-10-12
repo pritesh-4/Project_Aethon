@@ -435,11 +435,11 @@ export const DATA_FORMAT_SPECS: DataFormatSpec[] = [
     extension: '.h5',
     name: 'Hierarchical Data Format 5 (HDF5)',
     role: 'Modern wideband spectral container utilized by Breakthrough Listen (blimpy) and high-throughput correlators.',
-    status: 'Prototype Simulated',
+    status: 'Future Roadmap (Not Ingestible)',
     strengths:
       'Internal chunking, built-in gzip/bitshuffle compression, hierarchical grouping of multi-beam Stokes parameters.',
     caveat:
-      'Complex I/O stack; requires dedicated HDF5 C-library backend bindings not yet integrated.',
+      'Complex I/O stack; not directly ingestible by AETHON pipeline in current release.',
   },
   {
     extension: '.fil',
@@ -455,10 +455,10 @@ export const DATA_FORMAT_SPECS: DataFormatSpec[] = [
     extension: '.csv / .json',
     name: 'Tabular / Structured Interchange Formats',
     role: 'Lightweight demonstration interchange formats for metadata exchange, candidate rosters, and telemetry export.',
-    status: 'Interchange Only',
+    status: 'Interchange Only (Not Ingestible)',
     strengths: 'Human-readable, browser-native JSON parsing, seamless web API transmission.',
     caveat:
-      'Completely unsuited for raw gigahertz radio spectra due to severe memory and parsing bottlenecks.',
+      'Metadata export and interchange only. Completely unsuited for raw gigahertz radio spectra.',
   },
 ];
 

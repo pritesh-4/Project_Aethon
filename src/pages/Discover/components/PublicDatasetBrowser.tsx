@@ -16,7 +16,6 @@ import { api } from '@/lib/api.ts';
 import type { PublicDatasetItem, PublicDatasetStatusResponse } from '@/types/schemas.ts';
 import type { DiscoveryObservationMeta } from '../types.ts';
 import { toast } from 'sonner';
-import { DemoSamplesSection } from './DemoSamplesSection.tsx';
 import { mapObservationToDiscoveryMeta } from '../utils.ts';
 
 export interface PublicDatasetBrowserProps {
@@ -318,13 +317,6 @@ export function PublicDatasetBrowser({
 
   return (
     <div className="space-y-4 font-sans select-none">
-      {/* 0. First-Class Guaranteed Offline Demo Samples */}
-      <DemoSamplesSection
-        selectedObservationId={selectedObservationId}
-        onObservationSelected={onObservationImported}
-        disabled={disabled || isImporting}
-      />
-
       {/* 1. Archive Status & Provenance Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-[4px] border border-[#D6D2C9] bg-[#FAF8F5]">
         <div className="flex items-center gap-2.5">
@@ -863,7 +855,7 @@ export function PublicDatasetBrowser({
                 </p>
                 <p className="text-[10px] text-[#7E8B96]">
                   Select an observation card to inspect its parameters and incompatibility reason,
-                  or load a guaranteed offline demo sample above.
+                  or switch to the Quick Demo tab for guaranteed offline demo datasets.
                 </p>
               </div>
             ) : (

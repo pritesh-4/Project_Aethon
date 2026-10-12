@@ -10,6 +10,7 @@ export interface SignalViewportProps {
   isPaused: boolean;
   scanProgress: number; // 0.0 to 1.0 during ANALYZING
   sliceData?: SpectralSliceResponse | null;
+  sliceError?: string | null;
   isLoadingSlice?: boolean;
   detectionData?: DetectionResponse | null;
   isDemoMode?: boolean;
@@ -21,6 +22,7 @@ export function SignalViewport({
   isPaused,
   scanProgress,
   sliceData = null,
+  sliceError = null,
   isLoadingSlice = false,
   detectionData = null,
   isDemoMode = false,
@@ -590,21 +592,38 @@ export function SignalViewport({
           </div>
         )}
 
-        {/* Real Backend: Spectral Slice Unavailable Overlay */}
-        {!isEffectiveDemoMode && !isLoadingSlice && !sliceData && status !== 'LOADING' && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0D141A]/92 px-6 text-center">
-            <div className="max-w-md space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border border-[#213240] bg-[#131E27] text-xs font-mono text-[#A6B7C6]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#7E8B96]" />
-                <span>SPECTRAL SLICE UNAVAILABLE</span>
+        {/* Slice Fetch Error Overlay */}
+        {sliceError && !isLoadingSlice && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0D141A]/95 px-6 text-center">
+            <div className="max-w-md space-y-2.5 p-4 rounded-[3px] border border-[#C93B2B]/40 bg-[#1A0E0E]">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border border-[#C93B2B]/30 bg-[#2A1414] text-xs font-mono text-[#E58074]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#C93B2B]" />
+                <span>SPECTRAL SLICE LOAD ERROR</span>
               </div>
-              <p className="text-xs text-[#6A7E8F] leading-relaxed">
-                Raw spectral matrix data is not available for this observation from the backend
-                service. Synthetic data generation is disabled in live mode.
-              </p>
+              <p className="text-xs text-[#C57A72] leading-relaxed">{sliceError}</p>
             </div>
           </div>
         )}
+
+        {/* Real Backend: Spectral Slice Unavailable Overlay */}
+        {!isEffectiveDemoMode &&
+          !isLoadingSlice &&
+          !sliceData &&
+          !sliceError &&
+          status !== 'LOADING' && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0D141A]/92 px-6 text-center">
+              <div className="max-w-md space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border border-[#213240] bg-[#131E27] text-xs font-mono text-[#A6B7C6]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#7E8B96]" />
+                  <span>SPECTRAL SLICE UNAVAILABLE</span>
+                </div>
+                <p className="text-xs text-[#6A7E8F] leading-relaxed">
+                  Raw spectral matrix data is not available for this observation from the backend
+                  service. Synthetic data generation is disabled in live mode.
+                </p>
+              </div>
+            </div>
+          )}
       </div>
     </div>
   );

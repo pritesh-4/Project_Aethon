@@ -181,6 +181,7 @@ export default function ObservatoryPage() {
   const [recordMap, setRecordMap] = useState<Record<string, ObservationRecordResponse>>({});
   const [observationList, setObservationList] = useState<{ id: string; name: string }[]>([]);
   const [sliceData, setSliceData] = useState<SpectralSliceResponse | null>(null);
+  const [sliceError, setSliceError] = useState<string | null>(null);
   const [isLoadingSlice, setIsLoadingSlice] = useState(false);
   const [detectionData, setDetectionData] = useState<DetectionResponse | null>(null);
   const [analysisData, setAnalysisData] = useState<AnalysisResponse | null>(null);
@@ -238,21 +239,33 @@ export default function ObservatoryPage() {
     const fetchSlice = async () => {
       if (!selectedObsId || !recordMap[selectedObsId]) {
         setSliceData(null);
+        setSliceError(null);
         return;
       }
 
+      const rec = recordMap[selectedObsId];
+      const maxTime = rec?.metadata?.time_sample_count ?? 64;
+      const maxFreq = rec?.metadata?.channel_count ?? 256;
+
       setIsLoadingSlice(true);
+      setSliceError(null);
       try {
         const slice = await api.getObservationSlice(selectedObsId, {
           time_start: 0,
+          time_stop: Math.min(maxTime, 64),
           frequency_start: 0,
+          frequency_stop: Math.min(maxFreq, 256),
         });
         if (!isCancelled) {
           setSliceData(slice);
         }
-      } catch {
+      } catch (err: unknown) {
         if (!isCancelled) {
           setSliceData(null);
+          setSliceError(
+            (err as { message?: string })?.message ||
+              'Failed to retrieve spectral slice from backend.'
+          );
         }
       } finally {
         if (!isCancelled) {
@@ -290,6 +303,8 @@ export default function ObservatoryPage() {
     setStatus('IDLE');
     setScanProgress(0);
     setIsPaused(false);
+    setSliceData(null);
+    setSliceError(null);
     setDetectionData(null);
     setAnalysisData(null);
     toast.info(`Observation ${id} loaded`);
@@ -504,6 +519,7 @@ export default function ObservatoryPage() {
           isPaused={isPaused}
           scanProgress={scanProgress}
           sliceData={sliceData}
+          sliceError={sliceError}
           isLoadingSlice={isLoadingSlice}
           detectionData={detectionData}
           isDemoMode={false}

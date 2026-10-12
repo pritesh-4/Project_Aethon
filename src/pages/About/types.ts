@@ -34,7 +34,12 @@ export interface DataFormatSpec {
   extension: string;
   name: string;
   role: string;
-  status: 'Prototype Simulated' | 'Target Native Support' | 'Interchange Only';
+  status:
+    | 'Prototype Simulated'
+    | 'Target Native Support'
+    | 'Interchange Only'
+    | 'Future Roadmap (Not Ingestible)'
+    | 'Interchange Only (Not Ingestible)';
   strengths: string;
   caveat: string;
 }

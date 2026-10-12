@@ -17,7 +17,7 @@ class FrequencyAxisModel:
     is_valid: bool = True
     derivation_notes: str | None = None
 
-    def compute_channel_center_hz(self, canonical_channel_idx: int) -> float | None:
+    def compute_channel_center_hz(self, canonical_channel_idx: int | float) -> float | None:
         """Compute the physical center frequency in Hz for a 0-based canonical channel index."""
         if (
             not self.is_valid

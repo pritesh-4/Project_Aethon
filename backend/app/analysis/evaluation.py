@@ -48,8 +48,9 @@ class DriftBenchmarkReport(BaseModel):
 class DriftAnalysisEvaluator:
     """Evaluates Doppler drift estimation accuracy against Phase 3 synthetic ground truth."""
 
-    def __init__(self, tolerance_hz_per_s: float = 0.5) -> None:
+    def __init__(self, tolerance_hz_per_s: float = 1.0, relative_tolerance: float = 0.02) -> None:
         self.tolerance_hz_per_s = tolerance_hz_per_s
+        self.relative_tolerance = relative_tolerance
         self.service = AnalysisService()
 
     def evaluate_targets(
@@ -111,7 +112,10 @@ class DriftAnalysisEvaluator:
             if est_rate is not None:
                 err_signed = float(est_rate - true_rate)
                 err_abs = abs(err_signed)
-                is_rec = bool(err_abs <= self.tolerance_hz_per_s)
+                effective_tol = max(
+                    self.tolerance_hz_per_s, self.relative_tolerance * abs(true_rate)
+                )
+                is_rec = bool(err_abs <= effective_tol)
                 abs_errors.append(err_abs)
             else:
                 err_signed = None

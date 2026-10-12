@@ -101,11 +101,11 @@ def extract_window_features(
     elevated_t_count = np.count_nonzero(peak_col > (med_val + 2.0 * denom_sigma))
     temporal_persistence = float(elevated_t_count / max(1, n_t))
 
-    # Temporal variability: MAD of time-integration profile across channels
+    # Temporal variability: MAD of time-integration profile normalized by robust noise floor
     time_profile = np.median(sanitized_2d, axis=1)
     time_profile_med = float(np.median(time_profile))
     time_profile_mad = compute_mad(time_profile, median=time_profile_med)
-    temporal_variability = float(time_profile_mad / max(1e-12, abs(time_profile_med)))
+    temporal_variability = float(time_profile_mad / denom_sigma)
 
     features = {
         "median_level": round(med_val, 6),

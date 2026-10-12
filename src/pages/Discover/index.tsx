@@ -73,6 +73,7 @@ export default function DiscoverPage() {
 
   const candidatesRef = useRef<HTMLDivElement | null>(null);
   const animTimerRef = useRef<number | null>(null);
+  const activeRequestIdRef = useRef<number>(0);
 
   // Load catalog observations from backend on mount
   useEffect(() => {
@@ -166,6 +167,7 @@ export default function DiscoverPage() {
 
   // Handle Observation Selection and Ingestion
   const handleSelectObservation = (obs: DiscoveryObservationMeta) => {
+    activeRequestIdRef.current += 1;
     setObservation(obs);
     setCatalogObservations((prev) => {
       if (prev.some((item) => item.id === obs.id)) {
@@ -178,9 +180,7 @@ export default function DiscoverPage() {
     setDiscoveredCandidates([]);
     setCandidateEvidenceRecords([]);
     setDiscoverySummary(null);
-    if (stage === 'complete') {
-      setStage('idle');
-    }
+    setStage('idle');
   };
 
   // Scroll to candidates section
@@ -192,7 +192,14 @@ export default function DiscoverPage() {
   // PREPARE -> REPRESENT -> SEARCH -> RANK -> COMPLETE
   const handleInitiateDiscovery = useCallback(async () => {
     if (!observation) return;
+    if (stage === 'prepare' || stage === 'represent' || stage === 'search' || stage === 'rank') {
+      return;
+    }
     if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
+
+    const currentRequestId = ++activeRequestIdRef.current;
+    const targetObsId = observation.id;
+    const startTime = performance.now();
 
     // 1. Reset all state and previous errors/results to prevent stale data
     setDiscoveredCandidates([]);
@@ -209,27 +216,31 @@ export default function DiscoverPage() {
     try {
       // Stage 1: PREPARE (Ingestion baseline check)
       await new Promise((r) => setTimeout(r, 450));
+      if (activeRequestIdRef.current !== currentRequestId) return;
 
       // Stage 2: REPRESENT (Process moments & RFI assessment)
       currentStep = 'represent';
       setStage('represent');
-      const procRes = await api.processObservation(observation.id);
+      const procRes = await api.processObservation(targetObsId);
+      if (activeRequestIdRef.current !== currentRequestId) return;
 
       // Stage 3: SEARCH (Run baseline & isolation forest anomaly search)
       currentStep = 'search';
       setStage('search');
-      const detRes = await api.detectAnomalies(observation.id);
+      const detRes = await api.detectAnomalies(targetObsId);
+      if (activeRequestIdRef.current !== currentRequestId) return;
 
       const regions = detRes?.anomalous_regions || [];
+      const elapsedSec = Number(((performance.now() - startTime) / 1000).toFixed(2));
 
       // Outcome C: Completed with NO detections (valid successful completed analysis)
       if (regions.length === 0) {
         const summary: DiscoveryResultSummary = {
-          observationId: observation.id,
+          observationId: targetObsId,
           samplesAnalyzed: observation.samplesCount,
           anomalousRegionsCount: 0,
           highPriorityCandidatesCount: 0,
-          totalTimeElapsedSec: 3.8,
+          totalTimeElapsedSec: elapsedSec,
           topCandidate: {} as DiscoveredCandidate,
           candidates: [],
         };
@@ -252,11 +263,12 @@ export default function DiscoverPage() {
       let driftError: string | null = null;
 
       try {
-        driftRes = await api.analyzeDrift(observation.id);
+        driftRes = await api.analyzeDrift(targetObsId);
       } catch (dErr: unknown) {
         driftError =
           (dErr as { message?: string })?.message || 'Doppler drift trajectory fitting failed.';
       }
+      if (activeRequestIdRef.current !== currentRequestId) return;
 
       // Extract candidate signals using verified API measurements without misleading zero fallbacks
       const evidenceRecords: CandidateEvidenceRecord[] = regions.slice(0, 6).map((reg, idx) => {
@@ -312,8 +324,10 @@ export default function DiscoverPage() {
         const rawLatentResidualSigma: number | null = null;
         const rawSpatialRejectionScore: number | null = null;
 
+        const tempId = `TEMP-REGION-${observation.id.slice(-6)}-${(idx + 1).toString().padStart(2, '0')}`;
+
         return {
-          id: `CAN-${observation.id.slice(-4)}-${(idx + 1).toString().padStart(2, '0')}`,
+          id: tempId,
           persistedCandidateId: null,
           rank: idx + 1,
           anomalyScore: rawAnomalyScore,
@@ -418,12 +432,14 @@ export default function DiscoverPage() {
         };
       });
 
+      const totalTimeElapsedSec = Number(((performance.now() - startTime) / 1000).toFixed(2));
+
       const summary: DiscoveryResultSummary = {
         observationId: observation.id,
         samplesAnalyzed: observation.samplesCount,
         anomalousRegionsCount: regions.length,
         highPriorityCandidatesCount: extracted.filter((c) => c.priority === 'HIGH').length,
-        totalTimeElapsedSec: 3.8,
+        totalTimeElapsedSec,
         topCandidate: extracted[0] || ({} as DiscoveredCandidate),
         candidates: extracted,
       };
@@ -451,8 +467,9 @@ export default function DiscoverPage() {
         });
       }
     } catch (err: unknown) {
-      // Outcome E: Failed during preprocessing or anomaly detection
-      setStage('idle');
+      if (activeRequestIdRef.current !== currentRequestId) return;
+      // Preserve currentStep so UI honestly displays the stage where execution halted
+      setStage(currentStep);
       const msg =
         (err as { message?: string })?.message ||
         'Server error encountered during screening procedure.';
@@ -461,7 +478,9 @@ export default function DiscoverPage() {
           ? 'Preprocessing & Quality Assessment'
           : currentStep === 'search'
             ? 'Anomaly Detection'
-            : 'Observation Preparation';
+            : currentStep === 'rank'
+              ? 'Doppler Drift Analysis'
+              : 'Observation Preparation';
 
       setPipelineError({
         stage: currentStep,
@@ -473,7 +492,7 @@ export default function DiscoverPage() {
         description: msg,
       });
     }
-  }, [observation]);
+  }, [observation, stage]);
 
   // Synchronize candidate persistence into local Discover state
   const handleCandidatePersisted = useCallback(
@@ -530,6 +549,7 @@ export default function DiscoverPage() {
 
   // Handle Reset to new discovery
   const handleReset = () => {
+    activeRequestIdRef.current += 1;
     if (animTimerRef.current) cancelAnimationFrame(animTimerRef.current);
     setPipelineError(null);
     setPartialWarning(null);
@@ -657,10 +677,10 @@ export default function DiscoverPage() {
         {/* ==================================================== */}
         {/* STAGE 4: ANALYSIS PROGRESS (PREPARE, REPRESENT, SEARCH, RANK) */}
         {/* ==================================================== */}
-        {(isAnalyzing || stage === 'complete') && observation && (
+        {(isAnalyzing || stage === 'complete' || pipelineError != null) && observation && (
           <div className="space-y-4">
             {/* 4-Stage Procedure Status */}
-            <DiscoveryPipeline stage={stage} />
+            <DiscoveryPipeline stage={stage} failedStage={pipelineError?.stage ?? null} />
 
             {/* Time-Frequency Spectrogram Viewport */}
             <SignalAnalysisViewport stage={stage} observation={observation} />

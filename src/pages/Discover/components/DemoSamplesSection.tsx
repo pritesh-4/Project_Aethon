@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Radio, Loader2, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
+import {
+  Sparkles,
+  Radio,
+  Loader2,
+  CheckCircle2,
+  AlertTriangle,
+  ExternalLink,
+  Server,
+} from 'lucide-react';
 import { api } from '@/lib/api.ts';
 import type { DemoSampleInfo } from '@/types/schemas.ts';
 import type { DiscoveryObservationMeta } from '../types.ts';
@@ -16,7 +24,7 @@ const DEFAULT_DEMO_SAMPLES: DemoSampleInfo[] = [
   {
     id: 'synthetic-drifting-beacon',
     name: 'AETHON Signal Lab — Synthetic Drifting Beacon',
-    label: 'SYNTHETIC DEMO',
+    label: 'SYNTHETIC BENCHMARK',
     format: '.fil',
     target: 'SYNTH-BEACON-01',
     telescope: 'Green Bank Telescope (GBT)',
@@ -31,12 +39,12 @@ const DEFAULT_DEMO_SAMPLES: DemoSampleInfo[] = [
     bandwidth_mhz: 3.2,
     source_url: null,
     provenance_note:
-      'Controlled synthetic data generated locally by AETHON Signal Lab for demonstrating the scientific pipeline. Not evidence of a real astronomical signal.',
+      'Controlled synthetic benchmark generated locally by AETHON Signal Lab for demonstrating the scientific pipeline. Not evidence of a real astronomical signal.',
   },
   {
     id: 'real-gbt-hip35136',
     name: 'Green Bank Telescope — HIP 35136',
-    label: 'REAL GBT DATA',
+    label: 'REAL GBT OBSERVATION',
     format: '.fil',
     target: 'HIP35136',
     telescope: 'Green Bank Telescope (GBT)',
@@ -63,42 +71,72 @@ export function DemoSamplesSection({
   const [samples, setSamples] = useState<DemoSampleInfo[]>(DEFAULT_DEMO_SAMPLES);
   const [loadingSampleId, setLoadingSampleId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [backendState, setBackendState] = useState<'checking' | 'connected' | 'disconnected'>(
+    'checking'
+  );
+  const [sampleObsMap, setSampleObsMap] = useState<Record<string, string>>({});
 
-  // Fetch updated catalog metadata if backend is running
+  // Check backend health and fetch remote sample catalog if backend is running
   useEffect(() => {
     let isCancelled = false;
-    const fetchSamples = async () => {
+
+    const checkBackendAndCatalog = async () => {
       try {
+        const health = await api.getHealth();
+        if (!isCancelled) {
+          setBackendState(health.status === 'ok' ? 'connected' : 'disconnected');
+        }
+
         const remoteSamples = await api.getDemoSamples();
         if (!isCancelled && remoteSamples && remoteSamples.length > 0) {
           setSamples(remoteSamples);
         }
       } catch {
-        // Fallback to static defaults is automatic
+        if (!isCancelled) {
+          setBackendState('disconnected');
+        }
       }
     };
-    void fetchSamples();
+
+    void checkBackendAndCatalog();
+
     return () => {
       isCancelled = true;
     };
   }, []);
 
   const handleLoadDemo = async (sample: DemoSampleInfo) => {
+    if (backendState === 'disconnected') {
+      const msg =
+        'AETHON backend server is unreachable. Please start or connect the backend service to ingest demo samples.';
+      setErrorMsg(msg);
+      toast.error('Backend Unavailable', { description: msg });
+      return;
+    }
+
     setLoadingSampleId(sample.id);
     setErrorMsg(null);
 
     try {
       const res = await api.loadDemoSample(sample.id);
+      if (!res || !res.observation || !res.observation.id) {
+        throw new Error('Backend failed to return a persisted observation ID.');
+      }
+
+      setSampleObsMap((prev) => ({ ...prev, [sample.id]: res.observation.id }));
+
       const customMeta = mapObservationToDiscoveryMeta(
         res.observation,
-        sample.is_synthetic ? 'AETHON Signal Lab (Synthetic Demo)' : 'Breakthrough Listen / GBT'
+        sample.is_synthetic
+          ? 'AETHON Signal Lab (Synthetic Benchmark)'
+          : 'Breakthrough Listen / GBT'
       );
 
       onObservationSelected(customMeta);
 
       const statusNote = res.is_duplicate
-        ? 'Deduplicated observation reused safely from local storage.'
-        : `Ingested ${sample.format} sample in ${res.duration_seconds.toFixed(2)}s.`;
+        ? `Observation ${res.observation.id} reused from local storage.`
+        : `Ingested ${sample.format} sample as ${res.observation.id} in ${res.duration_seconds.toFixed(2)}s.`;
 
       toast.success(`${sample.name} loaded into AETHON!`, {
         description: statusNote,
@@ -119,18 +157,31 @@ export function DemoSamplesSection({
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-[#376A9B]" />
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold text-[#17202A] tracking-tight uppercase font-mono">
                 Ready-to-Use Demo Samples
               </span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#3D7D54] bg-[#EFF7F2] px-1.5 py-0.5 rounded-[2px] border border-[#B2D8C0]">
-                <CheckCircle2 className="h-2.5 w-2.5" />
-                100% OFFLINE AVAILABLE
-              </span>
+              {backendState === 'connected' ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#3D7D54] bg-[#EFF7F2] px-1.5 py-0.5 rounded-[2px] border border-[#B2D8C0]">
+                  <CheckCircle2 className="h-2.5 w-2.5" />
+                  BACKEND CONNECTED · ARCHIVE INDEPENDENT
+                </span>
+              ) : backendState === 'disconnected' ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#B64B4B] bg-[#FDF0F0] px-1.5 py-0.5 rounded-[2px] border border-[#E5B5B5]">
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  BACKEND OFFLINE · SERVER REQUIRED TO INGEST
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#7E8B96] bg-[#FFFFFF] px-1.5 py-0.5 rounded-[2px] border border-[#D6D2C9]">
+                  <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                  CHECKING BACKEND...
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-[#56616A] mt-0.5">
-              Explore the entire spectral analysis and anomaly pipeline instantly without waiting
-              for remote archive queries.
+              Explore the entire spectral analysis and anomaly pipeline instantly with guaranteed
+              bundled data. Requires running AETHON FastAPI backend; zero external internet archive
+              queries needed.
             </p>
           </div>
         </div>
@@ -147,7 +198,10 @@ export function DemoSamplesSection({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {samples.map((sample) => {
           const isLoadingThis = loadingSampleId === sample.id;
-          const isCurrentlySelected = selectedObservationId === sample.id;
+          const isCurrentlySelected =
+            Boolean(selectedObservationId) &&
+            (selectedObservationId === sample.id ||
+              sampleObsMap[sample.id] === selectedObservationId);
 
           return (
             <div
@@ -210,7 +264,7 @@ export function DemoSamplesSection({
                     <Radio className="h-3 w-3 shrink-0 mt-0.5 text-[#B45309]" />
                     <span>
                       Controlled synthetic test signal with known ground truth beacon. Designed for
-                      verifying algorithm sensitivity.
+                      verifying algorithm sensitivity. Not evidence of extraterrestrial life.
                     </span>
                   </div>
                 ) : (
@@ -236,9 +290,9 @@ export function DemoSamplesSection({
               <div className="pt-3 border-t border-[#EAE7E0] mt-3">
                 <button
                   type="button"
-                  disabled={isLoadingThis || disabled}
+                  disabled={isLoadingThis || disabled || backendState === 'disconnected'}
                   onClick={() => handleLoadDemo(sample)}
-                  className={`w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-[3px] text-xs font-mono font-semibold transition-all cursor-pointer disabled:opacity-50 ${
+                  className={`w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-[3px] text-xs font-mono font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     isCurrentlySelected
                       ? 'bg-[#EFF7F2] border border-[#B2D8C0] text-[#3D7D54]'
                       : 'bg-[#376A9B] hover:bg-[#2A547C] text-white border border-[#376A9B] shadow-2xs'
@@ -253,6 +307,11 @@ export function DemoSamplesSection({
                     <>
                       <CheckCircle2 className="h-3.5 w-3.5 text-[#3D7D54]" />
                       <span>Active In Pipeline</span>
+                    </>
+                  ) : backendState === 'disconnected' ? (
+                    <>
+                      <Server className="h-3.5 w-3.5 text-[#B64B4B]" />
+                      <span>Backend Unavailable</span>
                     </>
                   ) : (
                     <>

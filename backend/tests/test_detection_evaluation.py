@@ -165,3 +165,110 @@ def test_evaluator_baseline_on_synthetic_injections() -> None:
     assert report.family_breakdown["stationary_tone"]["recovery_rate"] == 1.0
     assert "finite_burst" in report.family_breakdown
     assert report.family_breakdown["finite_burst"]["recovery_rate"] == 1.0
+
+
+def test_evaluator_isolation_forest_on_synthetic_injections() -> None:
+    """Isolation Forest must train on reference features and detect positive targets."""
+    evaluator = DetectionBenchmarkEvaluator(min_overlap_iou=0.01)
+    rng = np.random.default_rng(300)
+
+    # Reference samples for training Isolation Forest
+    ref_samples = [
+        EvaluationSample(
+            observation_id=f"ref_{i}",
+            values=rng.normal(0.0, 1.0, (32, 64)),
+            ground_truth=ObservationGroundTruth(
+                dataset_id="bench_if",
+                observation_id=f"ref_{i}",
+                is_negative_control=True,
+            ),
+        )
+        for i in range(5)
+    ]
+
+    neg_eval = EvaluationSample(
+        observation_id="eval_neg",
+        values=rng.normal(0.0, 1.0, (32, 64)),
+        ground_truth=ObservationGroundTruth(
+            dataset_id="bench_if",
+            observation_id="eval_neg",
+            is_negative_control=True,
+        ),
+    )
+
+    pos_val = rng.normal(0.0, 1.0, (32, 64))
+    pos_val[10:25, 20:30] += 30.0
+    sig = _create_mock_signal("sig_pos", "stationary_tone", 10, 25, 20, 30, snr=30.0)
+    pos_eval = EvaluationSample(
+        observation_id="eval_pos",
+        values=pos_val,
+        ground_truth=ObservationGroundTruth(
+            dataset_id="bench_if",
+            observation_id="eval_pos",
+            is_negative_control=False,
+            target_count=1,
+            signals=[sig],
+        ),
+    )
+
+    cfg = DetectionPipelineConfig(
+        window=WindowConfig(time_size=16, freq_size=16, time_stride=8, freq_stride=8)
+    )
+
+    report = evaluator.evaluate_detector(
+        detector_name="isolation_forest",
+        reference_samples=ref_samples,
+        evaluation_samples=[neg_eval, pos_eval],
+        config=cfg,
+    )
+
+    assert report.detector_name == "isolation_forest"
+    assert report.metrics.positive_observations_count == 1
+    assert report.metrics.negative_control_count == 1
+    assert report.metrics.target_recall >= 0.5
+
+
+def test_evaluator_greedy_iou_matching_fixtures() -> None:
+    """Greedy IoU matching must accurately pair predictions to ground truth targets."""
+    evaluator = DetectionBenchmarkEvaluator(min_overlap_iou=0.1)
+    rng = np.random.default_rng(400)
+
+    ref_samples = [
+        EvaluationSample(
+            observation_id="ref_0",
+            values=rng.normal(0, 1, (32, 32)),
+            ground_truth=ObservationGroundTruth(
+                dataset_id="test", observation_id="ref_0", is_negative_control=True
+            ),
+        )
+    ]
+
+    pos_val = rng.normal(0, 1, (32, 32))
+    pos_val[0:16, 0:16] += 20.0
+    sig = _create_mock_signal("sig_box", "stationary_tone", 0, 16, 0, 16, snr=20.0)
+    pos_eval = EvaluationSample(
+        observation_id="eval_box",
+        values=pos_val,
+        ground_truth=ObservationGroundTruth(
+            dataset_id="test",
+            observation_id="eval_box",
+            is_negative_control=False,
+            target_count=1,
+            signals=[sig],
+        ),
+    )
+
+    cfg = DetectionPipelineConfig(
+        window=WindowConfig(time_size=16, freq_size=16, time_stride=16, freq_stride=16)
+    )
+
+    report = evaluator.evaluate_detector(
+        detector_name="statistical_baseline",
+        reference_samples=ref_samples,
+        evaluation_samples=[pos_eval],
+        config=cfg,
+    )
+
+    assert report.metrics.matched_targets_count == 1
+    assert report.metrics.target_recall == 1.0
+    assert report.metrics.mean_matched_iou > 0.0

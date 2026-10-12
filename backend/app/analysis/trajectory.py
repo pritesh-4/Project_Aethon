@@ -101,6 +101,7 @@ def extract_frequency_trajectory(
         peak_valid_subidx = int(np.argmax(valid_vals))
         peak_f_rel = int(valid_indices[peak_valid_subidx])
         peak_amp = float(row[peak_f_rel])
+        continuous_f_rel = float(peak_f_rel)
 
         # 2. Centroid refinement if configured
         if cfg.method == "centroid" and valid_indices.size >= 3:
@@ -110,16 +111,16 @@ def extract_frequency_trajectory(
             sub_f = np.arange(w_start, w_stop)
             sub_w = np.maximum(0.0, row[sub_f] - row_med)
             if np.sum(sub_w) > 1e-12:
-                refined_f = float(np.sum(sub_f * sub_w) / np.sum(sub_w))
-                peak_f_rel = round(refined_f)
+                continuous_f_rel = float(np.sum(sub_f * sub_w) / np.sum(sub_w))
 
-        abs_f = frequency_offset_index + peak_f_rel
+        abs_f = frequency_offset_index + round(continuous_f_rel)
+        continuous_abs_f = frequency_offset_index + continuous_f_rel
         snr = float(max(0.0, (peak_amp - row_med) / row_sigma))
         is_valid_point = bool(snr >= cfg.snr_threshold)
 
         phys_f_hz = None
         if frequency_axis is not None and frequency_axis.is_valid:
-            phys_f_hz = frequency_axis.compute_channel_center_hz(abs_f)
+            phys_f_hz = frequency_axis.compute_channel_center_hz(continuous_abs_f)
 
         point = TrajectoryPoint(
             time_index=abs_t,

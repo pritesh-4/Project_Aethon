@@ -58,6 +58,7 @@ def assess_candidate_evidence(
     component_contributions: dict[str, float] = {}
     contributing_ids: list[str] = []
     missing_evidence: list[str] = []
+    disposition_rationale: list[str] = []
     warnings: list[str] = []
 
     # Partition evidence by type
@@ -167,14 +168,17 @@ def assess_candidate_evidence(
         if flagged_frac > 0.30:
             warnings.append(f"Candidate region exhibits elevated RFI flags ({flagged_frac:.1%}).")
     else:
-        # Neutral default if RFI assessment omitted
-        quality_pts = round(0.50 * cfg.weight_quality, 2)
+        # Zero points if data quality evidence is missing (no silent favorable score)
+        quality_pts = 0.0
         missing_evidence.append("rfi_quality_assessment")
+        warnings.append(
+            "Data quality / RFI evidence unavailable; quality score contribution is 0.0."
+        )
 
     component_contributions["data_quality"] = quality_pts
 
     # 5. Multi-Observation Recurrence Bonus (bonus, up to 10 pts)
-    rec_evs = ev_by_type[EvidenceType.RECURRENCE]
+    rec_evs = ev_by_type.get(EvidenceType.RECURRENCE, [])
     bonus_pts = 0.0
     if rec_evs:
         for rev in rec_evs:
@@ -187,8 +191,43 @@ def assess_candidate_evidence(
 
     component_contributions["recurrence_bonus"] = bonus_pts
 
+    # 6. Multi-Cadence Verification Evidence (REQ-RFI-01)
+    cad_evs = ev_by_type.get(EvidenceType.CADENCE, [])
+    cadence_multiplier = 1.0
+    if cad_evs:
+        for cev in cad_evs:
+            contributing_ids.append(cev.evidence_id)
+            c_params = cev.scores_or_parameters
+            c_mult = float(c_params.get("score_multiplier", 1.0))
+            cadence_multiplier = min(cadence_multiplier, c_mult)
+            c_expls = c_params.get("explanations", [])
+            disposition_rationale.extend(c_expls)
+            if c_params.get("persists_in_off_target", False):
+                warnings.append(
+                    "Cadence verification failure: signal persists in OFF-target pointing."
+                )
+
+    # 7. Terrestrial RFI Rule Evidence (REQ-RFI-02)
+    rfi_rule_evs = ev_by_type.get(EvidenceType.RFI_RULE, [])
+    rfi_multiplier = 1.0
+    if rfi_rule_evs:
+        for rev in rfi_rule_evs:
+            contributing_ids.append(rev.evidence_id)
+            rf_params = rev.scores_or_parameters
+            if rf_params.get("is_flagged_as_rfi", False):
+                conf = float(rf_params.get("overall_rfi_confidence", 0.9))
+                rfi_multiplier = min(rfi_multiplier, max(0.1, 1.0 - conf))
+                matched_rules = rf_params.get("matched_rule_ids", [])
+                warnings.append(f"Terrestrial RFI rule triggered ({', '.join(matched_rules)}).")
+                disposition_rationale.extend(rf_params.get("explanations", []))
+
+    component_contributions["cadence_multiplier"] = round(cadence_multiplier, 4)
+    component_contributions["rfi_multiplier"] = round(rfi_multiplier, 4)
+
     # Calculate final composite score [0.0, 100.0]
-    raw_total = anomaly_pts + drift_pts + temporal_pts + quality_pts + bonus_pts
+    base_subtotal = anomaly_pts + drift_pts + temporal_pts + quality_pts
+    scaled_subtotal = base_subtotal * cadence_multiplier * rfi_multiplier
+    raw_total = scaled_subtotal + bonus_pts
     final_score = round(min(100.0, max(0.0, raw_total)), 2)
 
     # Map to priority band
@@ -209,10 +248,20 @@ def assess_candidate_evidence(
         f"Temporal continuity: {temporal_pts}/{cfg.weight_temporal}, "
         f"Data quality: {quality_pts}/{cfg.weight_quality}"
     )
+    if cadence_multiplier < 1.0:
+        explanation += f", Cadence scaling: x{cadence_multiplier:.2f}"
+    if rfi_multiplier < 1.0:
+        explanation += f", RFI rule scaling: x{rfi_multiplier:.2f}"
     if bonus_pts > 0:
         explanation += f", Recurrence bonus: +{bonus_pts} pts."
     else:
         explanation += "."
+
+    if not disposition_rationale:
+        disposition_rationale.append(
+            "Candidate retained for scientific review; "
+            "no conclusive terrestrial RFI downgrade triggered."
+        )
 
     return CandidateAssessment(
         assessment_id=f"assess_{uuid.uuid4().hex[:12]}",
@@ -227,5 +276,6 @@ def assess_candidate_evidence(
         missing_evidence=missing_evidence,
         detector_disagreement=detector_disagreement,
         explanation=explanation,
+        disposition_rationale=disposition_rationale,
         warnings=warnings,
     )

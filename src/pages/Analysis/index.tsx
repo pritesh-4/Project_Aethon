@@ -407,12 +407,20 @@ export default function AnalysisPage() {
               </span>
               .
             </p>
-            <div className="mt-4 flex items-center gap-3">
-              <Link to="/analysis/AET-04721">
-                <Button variant="primary" size="sm" icon={<RefreshCw className="h-3.5 w-3.5" />}>
-                  Load reference candidate AET-04721
-                </Button>
-              </Link>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              {backendCandidateIds.length > 0 ? (
+                <Link to={`/analysis/${backendCandidateIds[0]}`}>
+                  <Button variant="primary" size="sm" icon={<RefreshCw className="h-3.5 w-3.5" />}>
+                    Load candidate {backendCandidateIds[0]}
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/discover">
+                  <Button variant="primary" size="sm">
+                    Screen observations in Discover
+                  </Button>
+                </Link>
+              )}
               <Link to="/candidates">
                 <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-3.5 w-3.5" />}>
                   Return to candidate ledger

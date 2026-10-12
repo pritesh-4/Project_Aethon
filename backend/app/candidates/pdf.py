@@ -59,6 +59,17 @@ def generate_candidate_pdf(
                 color="#5A6D7C",
                 transform=fig1.transFigure,
             )
+            if cand.is_synthetic:
+                plt.text(
+                    0.95,
+                    0.96,
+                    "[SYNTHETIC BENCHMARK - CONTROLLED INJECTION]",
+                    fontsize=8.5,
+                    fontweight="bold",
+                    color="#9C4221",
+                    horizontalalignment="right",
+                    transform=fig1.transFigure,
+                )
 
             # Metadata Box
             plt.text(
@@ -250,6 +261,17 @@ def generate_candidate_pdf(
                 color="#1B2A32",
                 transform=fig2.transFigure,
             )
+            if cand.is_synthetic:
+                plt.text(
+                    0.95,
+                    0.95,
+                    "[SYNTHETIC BENCHMARK DATA]",
+                    fontsize=8.5,
+                    fontweight="bold",
+                    color="#9C4221",
+                    horizontalalignment="right",
+                    transform=fig2.transFigure,
+                )
 
             line2 = plt.Line2D(
                 [0.05, 0.95], [0.93, 0.93], transform=fig2.transFigure, color="#D6D2C9", lw=1.5

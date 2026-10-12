@@ -6,15 +6,16 @@ import hashlib
 import os
 import time
 import uuid
+from contextlib import nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import httpx
 
 from app.core.config import Settings
 from app.core.logging import get_logger
-from app.datasets.archive_client import is_safe_remote_url
+from app.datasets.archive_client import MAX_REDIRECT_HOPS, is_safe_remote_url
 from app.ingestion.adapters.base import BaseFormatAdapter
 from app.ingestion.adapters.filterbank import FilterbankAdapter
 from app.ingestion.adapters.fits import FitsAdapter
@@ -124,7 +125,7 @@ class DatasetImportService:
                 },
             )
 
-        # 4. Stream remote file into temporary staging file
+        # 4. Stream remote file into temporary staging file with manual redirect handling
         temp_id = f"import_{uuid.uuid4().hex}"
         temp_path = self.temp_upload_dir / f"{temp_id}.tmp"
 
@@ -132,31 +133,111 @@ class DatasetImportService:
         md5_hasher = hashlib.md5()
         bytes_downloaded = 0
         chunk_size = 64 * 1024  # 64 KB streaming buffer
+        declared_content_length: int | None = None
+
+        current_url = url
+        visited_urls: set[str] = {current_url}
+        redirect_count = 0
 
         try:
             logger.info("Starting streaming import from %s to %s", url, temp_path.name)
 
-            if self._client is not None:
-                async with self._client.stream("GET", url, timeout=self.timeout_seconds) as resp:
-                    resp.raise_for_status()
-                    with open(temp_path, "wb") as f_out:
-                        async for chunk in resp.aiter_bytes(chunk_size):
-                            bytes_downloaded += len(chunk)
-                            if bytes_downloaded > self.max_import_bytes:
+            client_to_use = self._client
+
+            async with (
+                httpx.AsyncClient(follow_redirects=False)
+                if client_to_use is None
+                else nullcontext(client_to_use)
+            ) as client:
+                while True:
+                    # Validate URL before every request/hop
+                    is_safe, error_msg = is_safe_remote_url(current_url, self.archive_host)
+                    if not is_safe:
+                        raise ValueError(
+                            f"Remote import destination rejected for security: {error_msg}"
+                        )
+
+                    req = client.build_request("GET", current_url)
+                    resp = await client.send(req, stream=True, follow_redirects=False)
+
+                    # 1. Manual redirect handling
+                    if resp.status_code in (301, 302, 303, 307, 308):
+                        await resp.aclose()
+                        redirect_count += 1
+                        if redirect_count > MAX_REDIRECT_HOPS:
+                            raise ValueError(
+                                f"Too many redirects: exceeded maximum of {MAX_REDIRECT_HOPS} hops"
+                            )
+
+                        location = resp.headers.get("Location")
+                        if not location:
+                            raise ValueError("Redirect response missing Location header")
+
+                        next_url = urljoin(current_url, location)
+                        if next_url in visited_urls:
+                            raise ValueError(
+                                f"Redirect loop detected: '{next_url}' already visited in chain"
+                            )
+                        visited_urls.add(next_url)
+
+                        # Validate next hop immediately before proceeding
+                        is_safe, error_msg = is_safe_remote_url(next_url, self.archive_host)
+                        if not is_safe:
+                            raise ValueError(
+                                f"Redirect destination rejected for security: {error_msg}"
+                            )
+
+                        current_url = next_url
+                        continue
+
+                    # 2. HTTP error response handling
+                    if resp.status_code >= 400:
+                        await resp.aclose()
+                        raise InvalidFileContentError(
+                            message=f"Remote server returned HTTP error status {resp.status_code}",
+                            details={"status_code": resp.status_code, "url": current_url},
+                        )
+
+                    # 3. Successful 200 response headers validation
+                    content_length_str = resp.headers.get("Content-Length")
+                    if content_length_str:
+                        try:
+                            declared_content_length = int(content_length_str)
+                            if declared_content_length > self.max_import_bytes:
+                                await resp.aclose()
                                 raise FileSizeExceededError(
                                     message=(
-                                        f"Remote download exceeded maximum import limit of "
-                                        f"{self.max_import_bytes} bytes."
+                                        f"Remote file declares Content-Length "
+                                        f"({declared_content_length} bytes) exceeding maximum "
+                                        f"import limit of {self.max_import_bytes} bytes."
                                     ),
-                                    details={"bytes_received": bytes_downloaded},
+                                    details={
+                                        "declared_content_length": declared_content_length,
+                                        "max_allowed_bytes": self.max_import_bytes,
+                                    },
                                 )
-                            sha256_hasher.update(chunk)
-                            md5_hasher.update(chunk)
-                            f_out.write(chunk)
-            else:
-                async with httpx.AsyncClient(follow_redirects=True) as client:
-                    async with client.stream("GET", url, timeout=self.timeout_seconds) as resp:
-                        resp.raise_for_status()
+                            if declared_content_length == 0:
+                                await resp.aclose()
+                                raise EmptyFileError(
+                                    message="Remote Content-Length indicates empty file (0 B).",
+                                    details={"url": current_url},
+                                )
+                        except ValueError:
+                            pass
+
+                    content_type = (resp.headers.get("Content-Type") or "").lower()
+                    if content_type.startswith("text/html"):
+                        await resp.aclose()
+                        raise InvalidFileContentError(
+                            message=(
+                                "Remote server returned HTML content instead of binary "
+                                "astronomical telemetry."
+                            ),
+                            details={"content_type": content_type, "url": current_url},
+                        )
+
+                    # 4. Stream response body in chunks
+                    try:
                         with open(temp_path, "wb") as f_out:
                             async for chunk in resp.aiter_bytes(chunk_size):
                                 bytes_downloaded += len(chunk)
@@ -166,16 +247,52 @@ class DatasetImportService:
                                             f"Remote download exceeded maximum import limit of "
                                             f"{self.max_import_bytes} bytes."
                                         ),
-                                        details={"bytes_received": bytes_downloaded},
+                                        details={
+                                            "bytes_received": bytes_downloaded,
+                                            "max_allowed_bytes": self.max_import_bytes,
+                                        },
                                     )
                                 sha256_hasher.update(chunk)
                                 md5_hasher.update(chunk)
                                 f_out.write(chunk)
+                    finally:
+                        await resp.aclose()
+
+                    break
 
             if bytes_downloaded == 0:
                 raise EmptyFileError(
                     message=f"Remote file at '{url}' contained zero bytes.",
                     details={"url": url},
+                )
+
+            # Validate declared content length vs actual bytes (detect truncated stream)
+            if declared_content_length is not None and bytes_downloaded != declared_content_length:
+                raise InvalidFileContentError(
+                    message=(
+                        f"Download incomplete or truncated: received {bytes_downloaded} bytes, "
+                        f"expected {declared_content_length} bytes from server Content-Length."
+                    ),
+                    details={
+                        "bytes_downloaded": bytes_downloaded,
+                        "declared_content_length": declared_content_length,
+                    },
+                )
+
+            # Validate expected size if requested
+            if (
+                request.expected_size_bytes is not None
+                and bytes_downloaded != request.expected_size_bytes
+            ):
+                raise InvalidFileContentError(
+                    message=(
+                        f"Downloaded size ({bytes_downloaded} bytes) did not match "
+                        f"expected size ({request.expected_size_bytes} bytes)."
+                    ),
+                    details={
+                        "bytes_downloaded": bytes_downloaded,
+                        "expected_size_bytes": request.expected_size_bytes,
+                    },
                 )
 
             # 5. Checksum verifications

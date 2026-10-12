@@ -51,19 +51,49 @@ function getEnvVar(key: string): string | undefined {
   return undefined;
 }
 
+export interface DeploymentConfigStatus {
+  isProduction: boolean;
+  baseUrl: string;
+  isCustomConfigured: boolean;
+  isLocalhostTarget: boolean;
+  warnings: string[];
+}
+
+function isProdEnvironment(): boolean {
+  if (
+    typeof import.meta !== 'undefined' &&
+    (import.meta as unknown as { env?: { PROD?: boolean } }).env
+  ) {
+    return Boolean((import.meta as unknown as { env: { PROD?: boolean } }).env.PROD);
+  }
+  const proc =
+    typeof globalThis !== 'undefined'
+      ? (globalThis as unknown as { process?: { env?: Record<string, string> } }).process
+      : undefined;
+  return proc?.env?.NODE_ENV === 'production';
+}
+
 /**
  * Normalizes configured base URL from environment.
  * Prevents path duplication such as /api/api/observations.
  *
  * Config resolution:
- * - VITE_API_BASE_URL: e.g. "http://localhost:8000/api" or "http://localhost:8000"
- * - Defaults to "http://localhost:8000/api" in local development.
+ * - VITE_API_BASE_URL: e.g. "https://api.aethon.astronomy.org/api"
+ * - In production without explicit VITE_API_BASE_URL: defaults to relative "/api" (reverse-proxy rewrite)
+ * - In local development: defaults to "http://localhost:8000/api"
  */
 function resolveBaseUrl(): string {
   const envUrl = getEnvVar('VITE_API_BASE_URL')?.trim();
+  const prod = isProdEnvironment();
+
   if (!envUrl) {
+    if (prod) {
+      // In production without an explicit URL, use relative /api for reverse proxying rather than client localhost
+      return '/api';
+    }
     return 'http://localhost:8000/api';
   }
+
   // Strip trailing slashes
   const clean = envUrl.replace(/\/+$/, '');
   // If user provided origin without /api, we ensure /api prefix is present since FastAPI mounts routes at /api
@@ -71,6 +101,32 @@ function resolveBaseUrl(): string {
     return `${clean}/api`;
   }
   return clean;
+}
+
+export function getDeploymentConfigStatus(): DeploymentConfigStatus {
+  const envUrl = getEnvVar('VITE_API_BASE_URL')?.trim();
+  const prod = isProdEnvironment();
+  const resolved = resolveBaseUrl();
+  const isLocalhost = resolved.includes('localhost') || resolved.includes('127.0.0.1');
+  const warnings: string[] = [];
+
+  if (prod && !envUrl) {
+    warnings.push(
+      'VITE_API_BASE_URL is not set in production. Defaulting to relative "/api". Configure VITE_API_BASE_URL in your hosting provider settings (e.g. Vercel Project Settings > Environment Variables).'
+    );
+  } else if (prod && isLocalhost) {
+    warnings.push(
+      `Production build is configured with localhost API URL (${resolved}). Ensure your public production backend is set in hosting environment variables.`
+    );
+  }
+
+  return {
+    isProduction: prod,
+    baseUrl: resolved,
+    isCustomConfigured: Boolean(envUrl),
+    isLocalhostTarget: isLocalhost,
+    warnings,
+  };
 }
 
 export function getBaseUrl(): string {

@@ -931,3 +931,107 @@ ruff check .
 # Static type verification
 mypy --ignore-missing-imports app
 ```
+
+---
+
+## Clean Installation & Dependency Management
+
+AETHON uses explicit dependency management with strict separation between lightweight production runtime, deep learning optional modules, and development tools.
+
+### 1. Authoritative Backend Installation Paths
+
+#### Standard Lightweight Production Runtime
+
+Installs all required scientific packages (`numpy`, `astropy`, `blimpy`, `setigen`, `scikit-learn`, `fastapi`, `uvicorn`, `pydantic`, `httpx`) without PyTorch:
+
+```bash
+# Linux / macOS
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install -e .
+
+# Windows PowerShell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -e .
+```
+
+#### Optional Deep Learning / CNN Module (`[cnn]`)
+
+For training or evaluating convolutional autoencoders on GPU/CPU:
+
+```bash
+# Recommended: install PyTorch with appropriate compute backend (e.g., CPU wheel for CI/minimal environments)
+pip install --index-url https://download.pytorch.org/whl/cpu torch
+pip install -e ".[cnn]"
+```
+
+#### Development & Testing Environment
+
+Installs all development tools (`pytest`, `ruff`, `mypy`, `coverage`):
+
+```bash
+pip install -r requirements-dev.txt
+pip install -e ".[dev]"
+```
+
+### 2. Authoritative Frontend Installation
+
+From the repository root:
+
+```bash
+npm ci
+npm run check
+```
+
+---
+
+## Configuration & Environment Variables Reference
+
+AETHON configuration is managed by Pydantic Settings (`backend/app/core/config.py`).
+
+### Precedence Order
+
+1. Operating system environment variables.
+2. Local backend `.env` file (`backend/.env`).
+3. Root `.env` file (`.env`).
+4. Hardcoded safe defaults in `Settings`.
+
+### Security Boundary
+
+- **Backend Secrets:** Server-side settings (`SECRET_KEY`, `BREAKTHROUGH_LISTEN_API_KEY`, database paths) must never be prefixed with `VITE_` and are never exposed to browser bundles.
+- **Frontend Variables:** Only variables starting with `VITE_` (e.g. `VITE_API_BASE_URL`, `VITE_DEMO_MODE`) are accessible in frontend code.
+
+### Variable Taxonomy
+
+| Variable Name                               | Classification        | Default Value                                        | Description                                             |
+| :------------------------------------------ | :-------------------- | :--------------------------------------------------- | :------------------------------------------------------ |
+| `APP_NAME`                                  | Optional              | `"AETHON Radio Signal Discovery API"`                | Service title in OpenAPI documentation                  |
+| `APP_VERSION`                               | Optional              | `"0.1.0"`                                            | Application semantic version                            |
+| `ENVIRONMENT`                               | Deployment-Specific   | `"development"`                                      | Context (`"development"`, `"test"`, `"production"`)     |
+| `DEBUG`                                     | Deployment-Specific   | `true`                                               | Controls verbose diagnostics and stack traces           |
+| `HOST`                                      | Deployment-Specific   | `"127.0.0.1"`                                        | Network interface to bind HTTP listener                 |
+| `PORT`                                      | Deployment-Specific   | `8000`                                               | Port for HTTP listener                                  |
+| `API_PREFIX`                                | Optional              | `"/api"`                                             | Base path prefix for REST routes                        |
+| `CORS_ORIGINS`                              | Deployment-Specific   | `["http://localhost:5173", "http://127.0.0.1:5173"]` | Allowed origins (JSON array or comma-separated string)  |
+| `LOG_LEVEL`                                 | Optional              | `"INFO"`                                             | Logging threshold (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `DATA_DIR`                                  | Optional              | `"data"`                                             | Base directory for file storage                         |
+| `OBSERVATIONS_DIR`                          | Optional              | `"data/observations"`                                | Path for preserved raw Filterbank/FITS files            |
+| `TEMP_UPLOAD_DIR`                           | Optional              | `"data/tmp"`                                         | Staging directory for in-flight uploads                 |
+| `DB_PATH`                                   | Optional              | `"data/aethon.db"`                                   | SQLite metadata database filepath                       |
+| `MAX_UPLOAD_SIZE_BYTES`                     | Optional              | `104857600` (100MB)                                  | Hard ceiling on single file upload size                 |
+| `MAX_SLICE_CELLS`                           | Optional              | `250000`                                             | Maximum cells ($T \times F$) per slice request          |
+| `SECRET_KEY`                                | Optional / Production | `None`                                               | Cryptographic secret for signing dossiers / sessions    |
+| `BREAKTHROUGH_LISTEN_ARCHIVE_URL`           | Optional              | `None`                                               | Remote URL for public dataset catalog queries           |
+| `BREAKTHROUGH_LISTEN_API_KEY`               | Optional / Deployment | `None`                                               | Authentication key for remote astronomical APIs         |
+| `BREAKTHROUGH_LISTEN_MAX_IMPORT_BYTES`      | Optional              | `83886080` (80MiB)                                   | Maximum allowed size for streaming remote downloads     |
+| `BREAKTHROUGH_LISTEN_TIMEOUT_SECONDS`       | Optional              | `20.0`                                               | Timeout in seconds for remote HTTP operations           |
+| `BREAKTHROUGH_LISTEN_CATALOG_CACHE_SECONDS` | Optional              | `300` (5 min)                                        | Cache TTL for astronomical catalog listings             |
+| `VITE_API_BASE_URL`                         | Frontend              | `http://localhost:8000/api`                          | REST API URL target consumed by Vite frontend           |
+| `VITE_DEMO_MODE`                            | Frontend              | `false`                                              | Fallback to offline synthetic client-side mocks         |
