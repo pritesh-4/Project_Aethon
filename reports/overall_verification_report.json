@@ -1,83 +1,175 @@
 {
   "report_id": "aethon_master_verification",
-  "generated_at_utc": "2026-10-12T12:51:46.568029+00:00",
+  "generated_at_utc": "2026-10-12T13:31:12.400150+00:00",
   "overall_status": "PASS",
   "environment": {
     "python_version": "3.14.6 (Windows-11-10.0.26200-SP0)",
     "node_version": "v24.15.0",
     "platform": "Windows-11-10.0.26200-SP0",
-    "git_commit": "65bbacba6d7859e5aed24a9b07ecd35b464705c3",
+    "git_commit": "f71d3d56ce9e3003b4f7b8d6b2265b6c8f6c1772",
     "working_directory": "C:\\Users\\HP\\Documents\\c_programm\\Hackathon\\Aethon"
   },
   "gates": [
     {
-      "gate_name": "test_gate",
+      "gate_name": "backend_pytest",
       "status": "PASS",
-      "command": "python --version",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest -q",
       "exit_code": 0,
-      "duration_seconds": 0.05,
-      "summary": "",
+      "duration_seconds": 26.1,
+      "summary": "return asyncio.get_event_loop_policy() | -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html | ==================== 260 passed, 17919 warnings in 20.46s =====================",
       "error": null,
       "details": {
-        "passed": 0,
+        "passed": 260,
         "failed": 0,
         "skipped": 0,
         "errors": 0,
-        "total": 0
+        "total": 260
       }
     },
     {
-      "gate_name": "test_gate",
+      "gate_name": "backend_ruff_format",
       "status": "PASS",
-      "command": "python --version",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m ruff format --check app tests",
       "exit_code": 0,
-      "duration_seconds": 0.05,
-      "summary": "",
+      "duration_seconds": 0.12,
+      "summary": "160 files already formatted",
+      "error": null,
+      "details": {}
+    },
+    {
+      "gate_name": "backend_ruff_lint",
+      "status": "PASS",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m ruff check app tests",
+      "exit_code": 0,
+      "duration_seconds": 0.08,
+      "summary": "All checks passed!",
+      "error": null,
+      "details": {}
+    },
+    {
+      "gate_name": "backend_mypy",
+      "status": "PASS",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m mypy app",
+      "exit_code": 0,
+      "duration_seconds": 0.98,
+      "summary": "Success: no issues found in 109 source files",
+      "error": null,
+      "details": {}
+    },
+    {
+      "gate_name": "frontend_prettier",
+      "status": "PASS",
+      "command": "C:\\Program Files\\nodejs\\npm.CMD run format:check",
+      "exit_code": 0,
+      "duration_seconds": 5.19,
+      "summary": "> prettier . --check | Checking formatting... | All matched files use Prettier code style!",
+      "error": null,
+      "details": {}
+    },
+    {
+      "gate_name": "frontend_eslint",
+      "status": "PASS",
+      "command": "C:\\Program Files\\nodejs\\npm.CMD run lint",
+      "exit_code": 0,
+      "duration_seconds": 9.0,
+      "summary": "> aethon@0.0.0 lint | > eslint .",
+      "error": null,
+      "details": {}
+    },
+    {
+      "gate_name": "frontend_typecheck",
+      "status": "PASS",
+      "command": "C:\\Program Files\\nodejs\\npm.CMD run typecheck",
+      "exit_code": 0,
+      "duration_seconds": 6.75,
+      "summary": "> aethon@0.0.0 typecheck | > tsc -b",
+      "error": null,
+      "details": {}
+    },
+    {
+      "gate_name": "frontend_unit_tests",
+      "status": "PASS",
+      "command": "C:\\Program Files\\nodejs\\npm.CMD run test:unit",
+      "exit_code": 0,
+      "duration_seconds": 0.81,
+      "summary": "\u2139 skipped 9 | \u2139 todo 0 | \u2139 duration_ms 364.3845",
       "error": null,
       "details": {
-        "passed": 0,
+        "passed": 11,
         "failed": 0,
-        "skipped": 0,
-        "errors": 0,
-        "total": 0
+        "skipped": 9,
+        "total": 20
       }
     },
     {
-      "gate_name": "test_gate",
+      "gate_name": "frontend_production_build",
       "status": "PASS",
-      "command": "python --version",
+      "command": "C:\\Program Files\\nodejs\\npm.CMD run build",
       "exit_code": 0,
-      "duration_seconds": 0.05,
-      "summary": "",
+      "duration_seconds": 8.55,
+      "summary": "dist/assets/vendor-charts-sx_MT_Un.js     364.58 kB \u2502 gzip: 106.11 kB | dist/assets/vendor-three-CPGyRR14.js      537.73 kB \u2502 gzip: 133.78 kB | \u001b[32m\u2713 built in 1.32s\u001b[39m",
+      "error": null,
+      "details": {}
+    },
+    {
+      "gate_name": "browser_e2e_acceptance",
+      "status": "PASS",
+      "command": "C:\\Program Files\\nodejs\\npm.CMD run test:e2e",
+      "exit_code": 0,
+      "duration_seconds": 64.61,
+      "summary": "\u2139 skipped 0 | \u2139 todo 0 | \u2139 duration_ms 64061.6849",
       "error": null,
       "details": {
-        "passed": 0,
+        "passed": 6,
         "failed": 0,
         "skipped": 0,
-        "errors": 0,
-        "total": 0
+        "total": 6
       }
     },
     {
-      "gate_name": "test_gate",
+      "gate_name": "scientific_pipeline_verification",
       "status": "PASS",
-      "command": "python --version",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\python.exe C:\\Users\\HP\\Documents\\c_programm\\Hackathon\\Aethon\\backend\\scripts\\verify_scientific_pipeline.py",
       "exit_code": 0,
-      "duration_seconds": 0.05,
-      "summary": "",
+      "duration_seconds": 4.31,
+      "summary": "===================================================================== | C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead. | from starlette.testclient import TestClient as TestClient  # noqa",
       "error": null,
-      "details": {
-        "passed": 0,
-        "failed": 0,
-        "skipped": 0,
-        "errors": 0,
-        "total": 0
-      }
+      "details": {}
+    },
+    {
+      "gate_name": "scientific_benchmark_evaluation",
+      "status": "PASS",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\python.exe C:\\Users\\HP\\Documents\\c_programm\\Hackathon\\Aethon\\backend\\scripts\\run_benchmark_evaluation.py",
+      "exit_code": 0,
+      "duration_seconds": 6.7,
+      "summary": "Report written successfully to: C:\\Users\\HP\\Documents\\c_programm\\Hackathon\\Aethon\\backend\\reports\\benchmark_evaluation_report.json | Benchmark evaluation completed with verified scientific integrity. | =====================================================================",
+      "error": null,
+      "details": {}
+    },
+    {
+      "gate_name": "synthetic_benchmark_smoke",
+      "status": "PASS",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\python.exe C:\\Users\\HP\\Documents\\c_programm\\Hackathon\\Aethon\\backend\\scripts\\generate_synthetic_benchmark.py --output-dir C:\\Users\\HP\\AppData\\Local\\Temp\\tmpp9ov74hq --seed 42 --dataset-id master_gate_smoke --verify",
+      "exit_code": 0,
+      "duration_seconds": 2.36,
+      "summary": "Verifying SHA-256 checksums from disk... | Verified 9 observation files successfully. | Generation completed successfully. All artifacts marked as synthetic.",
+      "error": null,
+      "details": {}
+    },
+    {
+      "gate_name": "offline_demo_acceptance",
+      "status": "PASS",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\python.exe C:\\Users\\HP\\Documents\\c_programm\\Hackathon\\Aethon\\scripts\\run_offline_demo.py --output-dir C:\\Users\\HP\\AppData\\Local\\Temp\\tmpv_mzlw0q --seed 42",
+      "exit_code": 0,
+      "duration_seconds": 3.95,
+      "summary": "===================================================================== | C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead. | from starlette.testclient import TestClient as TestClient  # noqa",
+      "error": null,
+      "details": {}
     }
   ],
   "summary": {
-    "total_gates": 4,
-    "passed_gates": 4,
+    "total_gates": 14,
+    "passed_gates": 14,
     "failed_gates": 0,
     "skipped_gates": 0
   }

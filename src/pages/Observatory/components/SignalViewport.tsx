@@ -178,15 +178,25 @@ export function SignalViewport({
       ctx.fillRect(paddingLeft, paddingTop, plotW, plotH);
 
       // 2. Render Spectrogram Matrix with rich scientific colormap (deep slate -> observatory blue -> solar gold -> white)
+      const isZoomed = current.zoomLevel === 2;
+
       if (current.sliceData && current.sliceStats && plotW > 0 && plotH > 0) {
         // Real numerical spectral matrix from backend
         const { min, max, n_time, n_freq } = current.sliceStats;
-        const cellW = plotW / n_time;
-        const cellH = plotH / n_freq;
+        const tStart = isZoomed ? Math.floor(n_time / 4) : 0;
+        const tEnd = isZoomed ? Math.min(n_time, tStart + Math.ceil(n_time / 2)) : n_time;
+        const visibleTime = Math.max(1, tEnd - tStart);
+
+        const fStart = isZoomed ? Math.floor(n_freq / 4) : 0;
+        const fEnd = isZoomed ? Math.min(n_freq, fStart + Math.ceil(n_freq / 2)) : n_freq;
+        const visibleFreq = Math.max(1, fEnd - fStart);
+
+        const cellW = plotW / visibleTime;
+        const cellH = plotH / visibleFreq;
         const range = max - min || 1;
 
-        for (let t_idx = 0; t_idx < n_time; t_idx++) {
-          for (let f_idx = 0; f_idx < n_freq; f_idx++) {
+        for (let t_idx = tStart; t_idx < tEnd; t_idx++) {
+          for (let f_idx = fStart; f_idx < fEnd; f_idx++) {
             const rawVal = current.sliceData.values[t_idx][f_idx];
             if (rawVal === null || rawVal === undefined || Number.isNaN(rawVal)) continue;
             const cl = Math.max(0, Math.min(1, (rawVal - min) / range));
@@ -212,11 +222,11 @@ export function SignalViewport({
                 cb = Math.floor(70 + 185 * factor);
               }
 
-              // High frequency at top
-              const r = n_freq - 1 - f_idx;
+              // High frequency at top: map relative to visible frequency window
+              const r = fEnd - 1 - f_idx;
               ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
               ctx.fillRect(
-                paddingLeft + t_idx * cellW,
+                paddingLeft + (t_idx - tStart) * cellW,
                 paddingTop + r * cellH,
                 cellW + 0.6,
                 cellH + 0.6
@@ -326,13 +336,17 @@ export function SignalViewport({
       // Frequency Axis Ticks (Left)
       let freqLabels: string[];
       const coords = current.sliceData?.frequency_coordinates_hz;
+      const n_freq = current.sliceStats?.n_freq || 1;
+      const fStartIdx = isZoomed ? Math.floor(n_freq / 4) : 0;
+      const fEndIdx = isZoomed ? Math.min(n_freq, fStartIdx + Math.ceil(n_freq / 2)) : n_freq;
+
       if (current.sliceData && coords && coords.length > 0) {
-        const fMin = coords[0] / 1e6;
-        const fMax = coords[coords.length - 1] / 1e6;
+        const fMin = (coords[fStartIdx] ?? coords[0]) / 1e6;
+        const fMax = (coords[fEndIdx - 1] ?? coords[coords.length - 1]) / 1e6;
         freqLabels = [
           fMax.toFixed(4),
           ((fMax * 3 + fMin) / 4).toFixed(4),
-          ((fMax + fMin) / 2).toFixed(4) + ' f₀',
+          ((fMax + fMin) / 2).toFixed(4) + (isZoomed ? ' [2x]' : ' f₀'),
           ((fMax + fMin * 3) / 4).toFixed(4),
           fMin.toFixed(4),
         ];
@@ -341,16 +355,22 @@ export function SignalViewport({
         current.observation.bandwidthMHz != null
       ) {
         const centerF = current.observation.frequencyMHz;
-        const spanF = current.observation.bandwidthMHz;
+        const spanF = current.observation.bandwidthMHz * (isZoomed ? 0.5 : 1.0);
         freqLabels = [
           (centerF + spanF * 0.5).toFixed(2),
           (centerF + spanF * 0.25).toFixed(2),
-          centerF.toFixed(4) + ' f₀',
+          centerF.toFixed(4) + (isZoomed ? ' [2x]' : ' f₀'),
           (centerF - spanF * 0.25).toFixed(2),
           (centerF - spanF * 0.5).toFixed(2),
         ];
       } else if (current.observation.frequencyMHz != null) {
-        freqLabels = ['—', '—', `${current.observation.frequencyMHz.toFixed(4)} f₀`, '—', '—'];
+        freqLabels = [
+          '—',
+          '—',
+          `${current.observation.frequencyMHz.toFixed(4)}${isZoomed ? ' [2x]' : ' f₀'}`,
+          '—',
+          '—',
+        ];
       } else {
         freqLabels = ['—', '—', 'Unavailable', '—', '—'];
       }
@@ -368,20 +388,28 @@ export function SignalViewport({
       });
 
       // Time Axis Ticks (Bottom)
-      let tStart = 0;
-      let tSpan = current.observation.durationSeconds;
+      const n_time = current.sliceStats?.n_time || 1;
+      const tStartIdx = isZoomed ? Math.floor(n_time / 4) : 0;
+      const tEndIdx = isZoomed ? Math.min(n_time, tStartIdx + Math.ceil(n_time / 2)) : n_time;
+
+      let tStartSec = 0;
+      let tSpanSec = current.observation.durationSeconds;
       const tCoords = current.sliceData?.time_coordinates_seconds;
       if (current.sliceData && tCoords && tCoords.length > 0) {
-        tStart = tCoords[0];
-        tSpan = tCoords[tCoords.length - 1] - tStart || 1;
+        tStartSec = tCoords[tStartIdx] ?? tCoords[0];
+        const tEndVal = tCoords[tEndIdx - 1] ?? tCoords[tCoords.length - 1];
+        tSpanSec = tEndVal - tStartSec || 1;
+      } else if (tSpanSec != null && isZoomed) {
+        tStartSec = tSpanSec * 0.25;
+        tSpanSec = tSpanSec * 0.5;
       }
       const timeSteps = 5;
       ctx.textAlign = 'center';
 
       for (let i = 0; i <= timeSteps; i++) {
         const x = paddingLeft + (plotW / timeSteps) * i;
-        if (tSpan != null && tSpan > 0) {
-          const sec = Math.floor(tStart + (tSpan / timeSteps) * i);
+        if (tSpanSec != null && tSpanSec > 0) {
+          const sec = Math.floor(tStartSec + (tSpanSec / timeSteps) * i);
           const m = Math.floor(sec / 60);
           const s = sec % 60;
           const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
@@ -442,14 +470,17 @@ export function SignalViewport({
       const normX = (x - paddingLeft) / plotW;
       const normY = 1 - (y - paddingTop) / plotH;
 
-      const t_idx = Math.max(
-        0,
-        Math.min(current.sliceStats.n_time - 1, Math.floor(normX * current.sliceStats.n_time))
-      );
-      const f_idx = Math.max(
-        0,
-        Math.min(current.sliceStats.n_freq - 1, Math.floor(normY * current.sliceStats.n_freq))
-      );
+      const isZoomed = current.zoomLevel === 2;
+      const n_time = current.sliceStats.n_time;
+      const n_freq = current.sliceStats.n_freq;
+
+      const tStart = isZoomed ? Math.floor(n_time / 4) : 0;
+      const tSpan = isZoomed ? Math.max(1, Math.ceil(n_time / 2)) : n_time;
+      const fStart = isZoomed ? Math.floor(n_freq / 4) : 0;
+      const fSpan = isZoomed ? Math.max(1, Math.ceil(n_freq / 2)) : n_freq;
+
+      const t_idx = Math.max(0, Math.min(n_time - 1, Math.floor(tStart + normX * tSpan)));
+      const f_idx = Math.max(0, Math.min(n_freq - 1, Math.floor(fStart + normY * fSpan)));
       const freqMHz =
         current.sliceData.frequency_coordinates_hz &&
         current.sliceData.frequency_coordinates_hz[f_idx] != null

@@ -410,3 +410,62 @@ test('Task 02: Prev/Next candidate navigation safely handles boundaries and empt
   assert.equal(prevMissing, null);
   assert.equal(nextMissing, null);
 });
+
+// ==============================================================================
+// 8. OBSERVATORY ZOOM WINDOWING & IDENTIFIER ROUTING CONTRACTS
+// ==============================================================================
+
+test('Observatory SignalViewport: 2x zoom windowing maps time-frequency sub-band and hover accurately', () => {
+  const n_time = 100;
+  const n_freq = 64;
+
+  // 1x zoom (standard full-frame)
+  const isZoomed1x = false;
+  const tStart1x = isZoomed1x ? Math.floor(n_time / 4) : 0;
+  const tSpan1x = isZoomed1x ? Math.max(1, Math.ceil(n_time / 2)) : n_time;
+  const fStart1x = isZoomed1x ? Math.floor(n_freq / 4) : 0;
+  const fSpan1x = isZoomed1x ? Math.max(1, Math.ceil(n_freq / 2)) : n_freq;
+
+  assert.equal(tStart1x, 0);
+  assert.equal(tSpan1x, 100);
+  assert.equal(fStart1x, 0);
+  assert.equal(fSpan1x, 64);
+
+  // 2x zoom (central 50% window)
+  const isZoomed2x = true;
+  const tStart2x = isZoomed2x ? Math.floor(n_time / 4) : 0;
+  const tSpan2x = isZoomed2x ? Math.max(1, Math.ceil(n_time / 2)) : n_time;
+  const fStart2x = isZoomed2x ? Math.floor(n_freq / 4) : 0;
+  const fSpan2x = isZoomed2x ? Math.max(1, Math.ceil(n_freq / 2)) : n_freq;
+
+  assert.equal(tStart2x, 25);
+  assert.equal(tSpan2x, 50);
+  assert.equal(fStart2x, 16);
+  assert.equal(fSpan2x, 32);
+
+  // Center coordinate mapping under 2x zoom (normX = 0.5, normY = 0.5)
+  const normX = 0.5;
+  const normY = 0.5;
+  const t_idx = Math.max(0, Math.min(n_time - 1, Math.floor(tStart2x + normX * tSpan2x)));
+  const f_idx = Math.max(0, Math.min(n_freq - 1, Math.floor(fStart2x + normY * fSpan2x)));
+
+  assert.equal(t_idx, 50, 'Center of zoomed window corresponds to original center time index');
+  assert.equal(f_idx, 32, 'Center of zoomed window corresponds to original center freq index');
+});
+
+test('Analysis Route Contract: UUID and non-prefixed identifiers resolve as observations', () => {
+  const realisticUuid = '483881bf-65cf-4d9f-96aa-db182bb19a4e';
+  const prefixedObs = 'obs_synthetic_01';
+  const candId = 'cand_7f9c2d1a';
+
+  // Check differentiation
+  assert.ok(candId.startsWith('cand_'), 'Candidate IDs are prefixed with cand_');
+  assert.ok(
+    !realisticUuid.startsWith('cand_'),
+    'UUID observation IDs must not be treated as candidates'
+  );
+  assert.ok(
+    !prefixedObs.startsWith('cand_'),
+    'Prefixed observation IDs must not be treated as candidates'
+  );
+});

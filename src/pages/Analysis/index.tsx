@@ -300,44 +300,97 @@ export default function AnalysisPage() {
         // Backend candidate not found, proceed to observation check
       }
 
-      // 2. Try observation ID lookup
-      if (targetId.startsWith('obs_')) {
-        try {
-          const obs = await api.getObservation(targetId);
-          if (!isMounted) return;
+      // 2. Try observation ID lookup (supports standard UUIDs and arbitrary observation IDs)
+      try {
+        const obs = await api.getObservation(targetId);
+        if (!isMounted) return;
 
-          // Check if real candidate exists for this observation
-          const candRes = await api.getCandidates({ limit: 100 });
-          const existingCand = candRes.items?.find((c) =>
-            c.source_observation_ids.includes(obs.id)
-          );
+        // Check if real candidate exists for this observation
+        const candRes = await api.getCandidates({ observation_id: obs.id, limit: 10 });
+        const existingCand = candRes.items?.[0];
 
-          if (existingCand) {
-            try {
-              const fullCand = await api.getCandidate(existingCand.candidate_id);
-              if (isMounted) {
-                setRecord(candidateToAnalysisRecord(fullCand, obs));
-                setIsLoading(false);
-              }
-              return;
-            } catch {
-              if (isMounted) {
-                setRecord(candidateToAnalysisRecord(existingCand, obs));
-                setIsLoading(false);
-              }
-              return;
+        if (existingCand) {
+          try {
+            const fullCand = await api.getCandidate(existingCand.candidate_id);
+            if (!isMounted) return;
+            const slice = await api
+              .getObservationSlice(obs.id, {
+                time_start: fullCand.target_region.time_start,
+                time_stop: fullCand.target_region.time_stop,
+                frequency_start: fullCand.target_region.freq_start,
+                frequency_stop: fullCand.target_region.freq_stop,
+              })
+              .catch(() => null);
+            if (isMounted) {
+              setSliceData(slice);
+              setRecord(candidateToAnalysisRecord(fullCand, obs));
+              setIsLoading(false);
             }
+            return;
+          } catch {
+            if (isMounted) {
+              setRecord(candidateToAnalysisRecord(existingCand, obs));
+              setIsLoading(false);
+            }
+            return;
           }
-
-          // Operational mode: observation exists but has no candidate yet
-          if (isMounted) {
-            setRecord(null);
-            setIsLoading(false);
-          }
-          return;
-        } catch {
-          // Observation lookup failed
         }
+
+        // Observation exists without candidate: provide direct observation inspection
+        const primarySlice = await api.getObservationSlice(obs.id).catch(() => null);
+        if (isMounted) {
+          setSliceData(primarySlice);
+          setRecord({
+            candidateId: `obs_${obs.id}`,
+            observationId: obs.id,
+            targetName: obs.metadata?.source_name || obs.original_filename || 'Radio Survey Source',
+            frequencyMHz: obs.metadata?.frequency_reference_mhz ?? null,
+            bandwidthKHz:
+              obs.metadata?.bandwidth_mhz != null ? obs.metadata.bandwidth_mhz * 1000 : null,
+            durationSeconds:
+              obs.metadata?.time_sample_count != null && obs.metadata?.time_step_seconds != null
+                ? obs.metadata.time_sample_count * obs.metadata.time_step_seconds
+                : null,
+            snrDb: null,
+            peakPowerDbm: null,
+            noiseFloorDbm: null,
+            samplesCount: obs.metadata?.time_sample_count ?? null,
+            driftRateHzPerSec: null,
+            firstDetectedTime: obs.ingested_at,
+            anomalyStartSec: null,
+            anomalyEndSec: null,
+            coordinates: {
+              ra:
+                obs.metadata?.ra_str ||
+                (obs.metadata?.ra_deg != null ? `${obs.metadata.ra_deg.toFixed(4)}°` : null),
+              dec:
+                obs.metadata?.dec_str ||
+                (obs.metadata?.dec_deg != null ? `${obs.metadata.dec_deg.toFixed(4)}°` : null),
+            },
+            telescope: obs.metadata?.telescope_name || null,
+            priority: 'LOW',
+            anomalyIndex: null,
+            knownPatternSimilarity: null,
+            interferenceProbability: null,
+            persistence: null,
+            classificationTaxonomy: 'Direct Observation Telemetry / Unscreened',
+            morphology: {
+              temporalCoherence: 'MODERATE',
+              frequencyStability: 'MODERATE',
+              bandwidthCategory: 'MODERATE',
+              persistenceState: 'TRANSIENT',
+              morphologicalDeviation: 'MODERATE',
+              description: 'Direct observation inspection without isolated anomaly candidates.',
+            },
+            comparison: null,
+            timelineEvents: [],
+            flaggedReasons: [],
+          });
+          setIsLoading(false);
+        }
+        return;
+      } catch {
+        // Observation lookup failed
       }
 
       // 3. Candidate record not found

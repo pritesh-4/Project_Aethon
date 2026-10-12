@@ -8,10 +8,13 @@
 
 ## Phase 0 — Project State Reconciliation (P0 · Active)
 
-- [x] Create canonical execution roadmap in `.gsd/ROADMAP.md` establishing the Phase 0–13 sequence.
-- [x] Synchronize `.gsd/STATE.md` with current checkout position (`f0d35ec4`) and active phase.
+- [x] Create canonical execution roadmap in `.gsd/ROADMAP.md` establishing the Phase 0–14 sequence.
+- [x] Synchronize `.gsd/STATE.md` with current checkout position (`f71d3d5`) and active phase baseline.
 - [x] Reconcile `.gsd/TODO.md` backlog with authoritative roadmap and verifiable implementation evidence.
-- [ ] Align `.gsd/REQUIREMENTS.md` traceability table phase references with canonical roadmap phases.
+- [x] Align `.gsd/REQUIREMENTS.md` traceability table phase references with canonical roadmap phases.
+- [x] Resolve observation UUID navigation in `Analysis` without assuming `obs_` prefix.
+- [x] Implement true 2x time-frequency spectrogram windowing, scaled cell dimensions, and synchronized hover coordinates in `SignalViewport.tsx`.
+- [x] Reconcile Python 3.14 dependencies (`scipy`, `blimpy`, `astropy`, `scikit-learn`) and dynamic 14/14 master verification gate execution.
 
 ---
 
