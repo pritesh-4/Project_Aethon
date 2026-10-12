@@ -2,7 +2,15 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import type { SignalAnalysisRecord } from '../types.ts';
 import { Button } from '@/components/ui/Button.tsx';
-import { CheckCircle2, Clock, ArrowLeft, Download, ArrowRight } from 'lucide-react';
+import {
+  CheckCircle2,
+  Clock,
+  ArrowLeft,
+  Download,
+  ArrowRight,
+  FileJson,
+  Loader2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api.ts';
 
@@ -12,9 +20,12 @@ export interface AnalysisVerdictBarProps {
 
 export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
   const [isMarked, setIsMarked] = useState(false);
+  const [isReviewPending, setIsReviewPending] = useState(false);
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
 
   const handleMarkForInvestigation = async () => {
-    setIsMarked(true);
+    if (isReviewPending || isMarked) return;
+    setIsReviewPending(true);
     try {
       await api.reviewCandidate(record.candidateId, {
         new_status: 'under_review',
@@ -22,13 +33,52 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
         reviewer_id: 'researcher_desk',
         notes: 'Marked for follow-up via Analysis view',
       });
+      // Set marked state only after backend confirms successful persistence
+      setIsMarked(true);
       toast.success(`Candidate ${record.candidateId} marked for review`);
-    } catch {
-      toast.info(`Candidate ${record.candidateId} marked locally for review`);
+    } catch (err: unknown) {
+      // Truthful failure state: never show candidate as marked if persistence failed
+      setIsMarked(false);
+      const normalized = api.normalizeApiError(err);
+      toast.error(
+        `Failed to persist review status for ${record.candidateId}: ${normalized.message || 'Server error. Please retry.'}`
+      );
+    } finally {
+      setIsReviewPending(false);
     }
   };
 
-  const handleExportAnalysis = () => {
+  const handleExportPdf = async () => {
+    if (isPdfExporting) return;
+    setIsPdfExporting(true);
+    try {
+      const blob = await api.downloadCandidatePdf(record.candidateId);
+      if (blob.type && !blob.type.includes('pdf') && !blob.type.includes('octet-stream')) {
+        throw new Error(
+          `Unexpected response format (${blob.type}) received from dossier endpoint. Expected application/pdf.`
+        );
+      }
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `candidate_${record.candidateId}_dossier.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(`Dossier PDF downloaded for ${record.candidateId}`);
+    } catch (err: unknown) {
+      // Strict separation: never silently produce JSON on PDF failure
+      const normalized = api.normalizeApiError(err);
+      toast.error(
+        `PDF dossier generation failed: ${normalized.message || 'Unable to generate PDF dossier. Use Export Raw JSON if PDF service is unavailable.'}`
+      );
+    } finally {
+      setIsPdfExporting(false);
+    }
+  };
+
+  const handleExportJson = () => {
     const analysisPayload = {
       candidateId: record.candidateId,
       observationId: record.observationId,
@@ -67,7 +117,7 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
     link.click();
     URL.revokeObjectURL(url);
 
-    toast.info(`Exported analysis record for ${record.candidateId}`);
+    toast.info(`Exported raw JSON record for ${record.candidateId}`);
   };
 
   return (
@@ -75,7 +125,12 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Review Status */}
         <div className="flex items-center gap-2 text-xs">
-          {isMarked ? (
+          {isReviewPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin text-[#376A9B]" />
+              <span className="font-medium text-[#376A9B]">Persisting review to backend...</span>
+            </>
+          ) : isMarked ? (
             <>
               <CheckCircle2 className="h-4 w-4 text-[#3D7D54]" />
               <span className="font-semibold text-[#17202A]">Marked for follow-up</span>
@@ -93,41 +148,44 @@ export function AnalysisVerdictBar({ record }: AnalysisVerdictBarProps) {
           <Button
             variant={isMarked ? 'secondary' : 'primary'}
             size="sm"
+            disabled={isReviewPending || isMarked}
             onClick={handleMarkForInvestigation}
             icon={
-              isMarked ? (
+              isReviewPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : isMarked ? (
                 <CheckCircle2 className="h-3.5 w-3.5 text-[#3D7D54]" />
               ) : (
                 <ArrowRight className="h-3.5 w-3.5" />
               )
             }
           >
-            {isMarked ? 'Marked' : 'Mark for follow-up'}
+            {isReviewPending ? 'Persisting...' : isMarked ? 'Marked' : 'Mark for follow-up'}
           </Button>
 
           <Button
             variant="secondary"
             size="sm"
-            icon={<Download className="h-3.5 w-3.5" />}
-            onClick={async () => {
-              try {
-                const blob = await api.downloadCandidatePdf(record.candidateId);
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `candidate_${record.candidateId}_dossier.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                toast.success(`Dossier PDF downloaded for ${record.candidateId}`);
-              } catch {
-                // If PDF generation is not available (e.g. observation without candidate dossier), fallback to JSON
-                handleExportAnalysis();
-              }
-            }}
+            disabled={isPdfExporting}
+            icon={
+              isPdfExporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )
+            }
+            onClick={handleExportPdf}
           >
-            Export Dossier
+            {isPdfExporting ? 'Generating PDF...' : 'Export PDF Dossier'}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<FileJson className="h-3.5 w-3.5" />}
+            onClick={handleExportJson}
+          >
+            Export Raw JSON
           </Button>
 
           <Link to="/candidates">

@@ -189,3 +189,114 @@ def test_list_observations_pagination(tmp_path: Path) -> None:
     items_p3, total_p3 = repo.list_observations(limit=2, offset=4)
     assert total_p3 == 5
     assert len(items_p3) == 1
+
+
+# -----------------------------------------------------------------------------
+# ARCH-001: Durable Analysis Run Execution Lifecycle Tests
+# -----------------------------------------------------------------------------
+
+
+def test_analysis_run_lifecycle_success(tmp_path: Path) -> None:
+    """ARCH-001: Verify durable analysis run creation, progress updates, and completion."""
+    db_path = tmp_path / "test.db"
+    obs_dir = tmp_path / "obs"
+    repo = ObservationRepository(db_path=db_path, observations_dir=obs_dir)
+
+    obs_id = "obs_archive_001"
+    # 1. Create run
+    run = repo.create_analysis_run(
+        observation_id=obs_id,
+        config={"snr_threshold": 3.5, "fft_window": 64},
+    )
+    assert run.run_id.startswith("run_")
+    assert run.observation_id == obs_id
+    assert run.status == "pending"
+    assert run.stage == "initialization"
+    assert run.progress_fraction == 0.0
+    assert run.config["snr_threshold"] == 3.5
+
+    # 2. Update progress
+    updated = repo.update_analysis_run_progress(
+        run_id=run.run_id,
+        stage="spectral_processing",
+        progress_fraction=0.45,
+    )
+    assert updated is not None
+    assert updated.status == "running"
+    assert updated.stage == "spectral_processing"
+    assert updated.progress_fraction == 0.45
+
+    # 3. Complete run
+    completed = repo.complete_analysis_run(
+        run_id=run.run_id,
+        results_summary={"candidates_found": 2, "drift_rates": [1.5, -0.4]},
+        candidate_ids=["cand_01", "cand_02"],
+        warnings=["Slight frequency edge truncation"],
+    )
+    assert completed is not None
+    assert completed.status == "completed_with_warnings"
+    assert completed.stage == "completed"
+    assert completed.progress_fraction == 1.0
+    assert completed.completed_at is not None
+    assert completed.candidate_ids == ["cand_01", "cand_02"]
+    assert completed.results_summary["candidates_found"] == 2
+    assert "Slight frequency edge truncation" in completed.warnings
+
+    # 4. Retrieve by ID
+    retrieved = repo.get_analysis_run(run.run_id)
+    assert retrieved is not None
+    assert retrieved.run_id == run.run_id
+    assert retrieved.status == "completed_with_warnings"
+
+
+def test_analysis_run_lifecycle_failure(tmp_path: Path) -> None:
+    """ARCH-001: Verify durable analysis run failure record preservation."""
+    db_path = tmp_path / "test.db"
+    obs_dir = tmp_path / "obs"
+    repo = ObservationRepository(db_path=db_path, observations_dir=obs_dir)
+
+    run = repo.create_analysis_run(observation_id="obs_fail_01")
+    failed = repo.fail_analysis_run(
+        run_id=run.run_id,
+        error_message="Matrix dimension exceeded permissible memory ceiling",
+        stage="slicing",
+    )
+    assert failed is not None
+    assert failed.status == "failed"
+    assert failed.stage == "slicing"
+    assert failed.error_message == "Matrix dimension exceeded permissible memory ceiling"
+    assert failed.completed_at is not None
+
+    # Survives retrieval
+    retrieved = repo.get_analysis_run(run.run_id)
+    assert retrieved is not None
+    assert retrieved.status == "failed"
+    assert retrieved.error_message == "Matrix dimension exceeded permissible memory ceiling"
+
+
+def test_analysis_run_idempotency_and_listing(tmp_path: Path) -> None:
+    """ARCH-001: Verify idempotency on repeated run IDs and observation filtering."""
+    db_path = tmp_path / "test.db"
+    obs_dir = tmp_path / "obs"
+    repo = ObservationRepository(db_path=db_path, observations_dir=obs_dir)
+
+    custom_run_id = "run_custom_deterministic_123"
+    r1 = repo.create_analysis_run(observation_id="obs_idemp", run_id=custom_run_id)
+    r2 = repo.create_analysis_run(observation_id="obs_idemp", run_id=custom_run_id)
+
+    assert r1.run_id == custom_run_id
+    assert r2.run_id == custom_run_id
+
+    # Create another run for different observation
+    repo.create_analysis_run(observation_id="obs_other")
+
+    # List filtered by observation
+    runs_idemp, total_idemp = repo.list_analysis_runs(observation_id="obs_idemp")
+    assert total_idemp == 1
+    assert len(runs_idemp) == 1
+    assert runs_idemp[0].run_id == custom_run_id
+
+    # List all
+    all_runs, total_all = repo.list_analysis_runs()
+    assert total_all == 2
+    assert len(all_runs) == 2

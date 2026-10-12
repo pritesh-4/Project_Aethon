@@ -54,6 +54,25 @@ def create_app(custom_settings: Settings | None = None) -> FastAPI:
             app_settings.app_version,
             app_settings.environment,
         )
+
+        # SEC-001: Production CORS diagnostic guard
+        if app_settings.is_production:
+            is_empty = not app_settings.cors_origins
+            is_all_local = all(
+                "localhost" in origin
+                or "127.0.0.1" in origin
+                or "0.0.0.0" in origin
+                or "[::1]" in origin
+                for origin in app_settings.cors_origins
+            )
+            if is_empty or is_all_local:
+                logger.warning(
+                    "Production CORS configuration alert: cors_origins is currently set to %s. "
+                    "Browser requests from hosted frontends will be blocked by CORS policy. "
+                    "Configure CORS_ORIGINS environment variable with the public frontend "
+                    "origin(s) (e.g. CORS_ORIGINS='[\"https://aethon.astronomy.org\"]').",
+                    app_settings.cors_origins,
+                )
         # Ensure observation storage directories and SQLite database are initialized
         Path(app_settings.observations_dir).mkdir(parents=True, exist_ok=True)
         Path(app_settings.temp_upload_dir).mkdir(parents=True, exist_ok=True)

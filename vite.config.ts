@@ -6,6 +6,20 @@ import { defineConfig } from 'vite';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Hosted Deployment Configuration Guard (CICD-002)
+const isHostedProductionCheck =
+  process.env.REQUIRE_HOSTED_API_CONFIG === 'true' ||
+  (process.env.VERCEL_ENV === 'production' && process.env.ENFORCE_PROD_CONFIG === 'true');
+
+if (isHostedProductionCheck) {
+  const apiUrl = process.env.VITE_API_BASE_URL?.trim();
+  if (!apiUrl || apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
+    throw new Error(
+      `[AETHON Config Error] Hosted production build requires an explicit non-localhost VITE_API_BASE_URL. Provided: "${apiUrl || '<unset>'}". Configure VITE_API_BASE_URL in your hosting environment settings.`
+    );
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [tailwindcss(), react()],

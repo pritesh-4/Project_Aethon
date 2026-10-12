@@ -26,6 +26,9 @@ from app.schemas.analysis import AnalysisRequestPayload, AnalysisResponse
 from app.schemas.detection import DetectionRequestPayload, DetectionResponse
 from app.schemas.error import ApiErrorResponse
 from app.schemas.observations import (
+    AnalysisRunListResponse,
+    AnalysisRunRecord,
+    CreateAnalysisRunRequest,
     ObservationListResponse,
     ObservationRecordResponse,
 )
@@ -407,3 +410,93 @@ def analyze_observation_drift(
     )
 
     return AnalysisResponse(**result.model_dump())
+
+
+# -----------------------------------------------------------------------------
+# ARCH-001: Durable Analysis Run Execution Endpoints
+# -----------------------------------------------------------------------------
+
+
+@router.post(
+    "/{observation_id}/runs",
+    status_code=status.HTTP_201_CREATED,
+    response_model=AnalysisRunRecord,
+    summary="Create or register durable analysis execution run",
+    description="Registers a new analysis run or idempotently retrieves an existing run by ID.",
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ApiErrorResponse},
+    },
+)
+def create_observation_analysis_run(
+    request: Request,
+    observation_id: str = PathParam(..., description="Target observation UUID"),
+    payload: CreateAnalysisRunRequest | None = None,
+) -> AnalysisRunRecord:
+    """Create a durable analysis run record associated with this observation."""
+    repo = _get_repository(request)
+    obs = repo.get_internal_record(observation_id)
+    if not obs:
+        raise ObservationNotFoundError(f"Observation {observation_id} not found")
+
+    req_payload = payload or CreateAnalysisRunRequest()
+    return repo.create_analysis_run(
+        observation_id=observation_id,
+        run_id=req_payload.run_id,
+        config=req_payload.config,
+    )
+
+
+@router.get(
+    "/{observation_id}/runs",
+    status_code=status.HTTP_200_OK,
+    response_model=AnalysisRunListResponse,
+    summary="List analysis execution runs for observation",
+    description="Lists all durable execution runs associated with this observation.",
+)
+def list_observation_analysis_runs(
+    request: Request,
+    observation_id: str = PathParam(..., description="Target observation UUID"),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> AnalysisRunListResponse:
+    """List durable execution runs for observation."""
+    repo = _get_repository(request)
+    items, total = repo.list_analysis_runs(
+        observation_id=observation_id,
+        limit=limit,
+        offset=offset,
+    )
+    return AnalysisRunListResponse(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get(
+    "/{observation_id}/runs/{run_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=AnalysisRunRecord,
+    summary="Get durable analysis execution run status",
+    description="Retrieves durable execution run status, stage, and results by UUID.",
+    responses={
+        status.HTTP_404_NOT_FOUND: {"model": ApiErrorResponse},
+    },
+)
+def get_observation_analysis_run(
+    request: Request,
+    observation_id: str = PathParam(..., description="Target observation UUID"),
+    run_id: str = PathParam(..., description="Target run UUID"),
+) -> AnalysisRunRecord:
+    """Retrieve execution record status and lifecycle stage."""
+    repo = _get_repository(request)
+    run_record = repo.get_analysis_run(run_id)
+    if not run_record or run_record.observation_id != observation_id:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Analysis run {run_id} not found for observation {observation_id}",
+        )
+    return run_record

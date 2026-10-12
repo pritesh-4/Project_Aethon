@@ -82,25 +82,21 @@ function isProdEnvironment(): boolean {
  * - In production without explicit VITE_API_BASE_URL: defaults to relative "/api" (reverse-proxy rewrite)
  * - In local development: defaults to "http://localhost:8000/api"
  */
-function resolveBaseUrl(): string {
-  const envUrl = getEnvVar('VITE_API_BASE_URL')?.trim();
-  const prod = isProdEnvironment();
-
-  if (!envUrl) {
-    if (prod) {
-      // In production without an explicit URL, use relative /api for reverse proxying rather than client localhost
-      return '/api';
-    }
-    return 'http://localhost:8000/api';
+export function normalizeApiUrl(rawUrl: string | undefined, isProd: boolean = false): string {
+  if (!rawUrl || !rawUrl.trim()) {
+    return isProd ? '/api' : 'http://localhost:8000/api';
   }
-
-  // Strip trailing slashes
-  const clean = envUrl.replace(/\/+$/, '');
-  // If user provided origin without /api, we ensure /api prefix is present since FastAPI mounts routes at /api
+  const clean = rawUrl.trim().replace(/\/+$/, '');
   if (!clean.endsWith('/api')) {
     return `${clean}/api`;
   }
   return clean;
+}
+
+function resolveBaseUrl(): string {
+  const envUrl = getEnvVar('VITE_API_BASE_URL');
+  const prod = isProdEnvironment();
+  return normalizeApiUrl(envUrl, prod);
 }
 
 export function getDeploymentConfigStatus(): DeploymentConfigStatus {
@@ -177,10 +173,34 @@ apiClient.interceptors.request.use(
  * Extracts useful validation details without leaking filesystem paths or stack traces.
  */
 export function normalizeApiError(error: unknown): ApiErrorPayload {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    'message' in error &&
+    'timestamp' in error
+  ) {
+    return error as ApiErrorPayload;
+  }
+
   if (axios.isAxiosError(error)) {
-    const axiosErr = error as AxiosError<Record<string, unknown>>;
+    const axiosErr = error as AxiosError<Record<string, unknown> | string>;
     const data = axiosErr.response?.data;
     const status = axiosErr.response?.status;
+
+    // Handle HTML fallthrough in error response
+    if (
+      typeof data === 'string' &&
+      (data.includes('<!DOCTYPE') || data.includes('<!doctype') || data.includes('<html'))
+    ) {
+      return {
+        message:
+          'API route returned an HTML document instead of expected JSON payload. Check backend API URL and proxy routing.',
+        code: 'HTML_ROUTING_FALLTHROUGH',
+        status,
+        timestamp: new Date().toISOString(),
+      };
+    }
 
     // Handle FastAPI 422 RequestValidationError structure { detail: [...] } or { message, details: { errors: [...] } }
     let message = 'An unexpected server error occurred during telemetry processing.';
@@ -224,7 +244,9 @@ export function normalizeApiError(error: unknown): ApiErrorPayload {
     }
 
     // Specific HTTP status fallback guidance
-    const hasDataMessage = Boolean(data && (data.message || data.detail));
+    const hasDataMessage = Boolean(
+      data && typeof data === 'object' && (data.message || data.detail)
+    );
     if (status === 404 && !hasDataMessage) {
       message = 'The requested scientific observation, candidate, or slice was not found.';
       code = 'NOT_FOUND';
@@ -268,6 +290,25 @@ export function normalizeApiError(error: unknown): ApiErrorPayload {
 // Response interceptor
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
+    // Detect HTML response payload from fallthrough routing
+    const contentType = (response.headers?.['content-type'] as string) || '';
+    const isHtmlHeader = contentType.toLowerCase().includes('text/html');
+    const isStringHtml =
+      typeof response.data === 'string' &&
+      (response.data.includes('<!DOCTYPE') ||
+        response.data.includes('<!doctype') ||
+        response.data.includes('<html'));
+
+    if (isHtmlHeader || isStringHtml) {
+      const normalizedHtmlErr: ApiErrorPayload = {
+        message:
+          'API route returned an HTML document instead of expected JSON payload. Check backend API URL and proxy routing.',
+        code: 'HTML_ROUTING_FALLTHROUGH',
+        status: response.status,
+        timestamp: new Date().toISOString(),
+      };
+      return Promise.reject(normalizedHtmlErr);
+    }
     return response;
   },
   (error: AxiosError) => {

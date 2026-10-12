@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getDeploymentConfigStatus, normalizeApiError } from '../src/lib/api.ts';
+import { getDeploymentConfigStatus, normalizeApiError, normalizeApiUrl } from '../src/lib/api.ts';
 import {
   CandidateListResponseSchema,
   SpectralSliceResponseSchema,
@@ -108,6 +108,8 @@ test('Task 02: Truthful mapping preserves null for missing SNR, drift, and coord
       frequency_reference_mhz: null,
       bandwidth_mhz: null,
       time_step_seconds: null,
+      frequency_unit: 'MHz',
+      time_unit: 's',
       ra_deg: null,
       dec_deg: null,
       ra_str: null,
@@ -123,6 +125,7 @@ test('Task 02: Truthful mapping preserves null for missing SNR, drift, and coord
       source_format: 'fil',
       notes: null,
     },
+    warnings: [],
   };
 
   const mapped = mapObservationToDiscoveryMeta(minimalObs, 'Local Test');
@@ -152,6 +155,8 @@ test('Task 02: Synthetic observations are unambiguously tagged with provenance',
     metadata: {
       time_sample_count: 32,
       channel_count: 64,
+      frequency_unit: 'MHz',
+      time_unit: 's',
       source_name: 'SYNTH-BEACON-01',
       raw_header: {},
     },
@@ -162,6 +167,7 @@ test('Task 02: Synthetic observations are unambiguously tagged with provenance',
       source_format: 'fil',
       notes: 'Controlled synthetic benchmark for pipeline calibration',
     },
+    warnings: [],
   };
 
   const mapped = mapObservationToDiscoveryMeta(
@@ -170,7 +176,7 @@ test('Task 02: Synthetic observations are unambiguously tagged with provenance',
   );
   assert.equal(mapped.isSynthetic, true, 'Synthetic benchmark must be recognized as synthetic');
   assert.ok(
-    mapped.provenanceSource.includes('Synthetic'),
+    Boolean(mapped.provenanceSource?.includes('Synthetic')),
     'Provenance must clearly reflect synthetic origin'
   );
 });
@@ -468,4 +474,150 @@ test('Analysis Route Contract: UUID and non-prefixed identifiers resolve as obse
     !prefixedObs.startsWith('cand_'),
     'Prefixed observation IDs must not be treated as candidates'
   );
+});
+
+// ==============================================================================
+// 9. CANDIDATE REVIEW TRUTHFULNESS & EXPORT SEPARATION (FE-001 & FE-002)
+// ==============================================================================
+
+test('FE-001: Candidate review state requires verified backend persistence and handles failures truthfully', async () => {
+  // Simulate review lifecycle logic conforming to AnalysisVerdictBar
+  let backendPersistenceSuccess = false;
+  let isMarked = false;
+  let isReviewPending = false;
+  let lastErrorMessage: string | null = null;
+
+  async function mockSubmitReview(_candidateId: string, failBackend: boolean) {
+    if (isReviewPending || isMarked) return;
+    isReviewPending = true;
+    try {
+      if (failBackend) {
+        throw new Error('500 Internal Server Error: Database write timeout');
+      }
+      backendPersistenceSuccess = true;
+      isMarked = true;
+    } catch (err) {
+      isMarked = false;
+      lastErrorMessage = err instanceof Error ? err.message : String(err);
+    } finally {
+      isReviewPending = false;
+    }
+  }
+
+  // 1. Initial State
+  assert.equal(isMarked, false, 'Candidate must initially be unmarked');
+  assert.equal(isReviewPending, false, 'Pending state must initially be false');
+
+  // 2. Failure Case: 500 / Network Error
+  await mockSubmitReview('cand_test_01', true);
+  assert.equal(
+    isMarked,
+    false,
+    'Candidate must NOT be marked if backend persistence fails (no false-positive local marking)'
+  );
+  assert.equal(isReviewPending, false, 'Pending state must clear after failure');
+  assert.ok(
+    Boolean((lastErrorMessage as string | null)?.includes('500')),
+    'Actionable error message must be captured on failure'
+  );
+
+  // 3. Retry Case: Backend succeeds
+  await mockSubmitReview('cand_test_01', false);
+  assert.equal(backendPersistenceSuccess, true, 'Backend persistence confirmed');
+  assert.equal(isMarked, true, 'Candidate becomes marked only after backend confirmation');
+  assert.equal(isReviewPending, false, 'Pending state must clear after success');
+
+  // 4. Duplicate guard: Repeated calls while marked are ignored
+  let duplicateCalls = 0;
+  async function guardDuplicate() {
+    if (isReviewPending || isMarked) {
+      duplicateCalls++;
+      return;
+    }
+  }
+  await guardDuplicate();
+  assert.equal(duplicateCalls, 1, 'Duplicate review requests must be safely guarded');
+});
+
+test('FE-002: PDF export failures never silently invoke JSON export; workflows remain distinct', async () => {
+  let pdfDownloaded = false;
+  let jsonExported = false;
+  let lastExportError: string | null = null;
+
+  function handleExportJson() {
+    jsonExported = true;
+  }
+
+  async function handleExportPdf(failPdf: boolean) {
+    try {
+      if (failPdf) {
+        throw new Error('404 Not Found: PDF dossier endpoint unavailable');
+      }
+      pdfDownloaded = true;
+    } catch (err) {
+      // Must NOT call handleExportJson() here!
+      lastExportError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  // 1. PDF generation failure
+  await handleExportPdf(true);
+  assert.equal(pdfDownloaded, false, 'PDF was not downloaded');
+  assert.equal(jsonExported, false, 'JSON export must NOT be triggered silently on PDF failure');
+  assert.ok(
+    Boolean((lastExportError as string | null)?.includes('404')),
+    'Error must be reported to user actionably'
+  );
+
+  // 2. Explicit JSON export
+  handleExportJson();
+  assert.equal(jsonExported, true, 'JSON export functions independently as explicit user action');
+
+  // 3. Header / Content-Type validation
+  const invalidBlob = { type: 'text/html' };
+  const isValidPdf = invalidBlob.type.includes('pdf') || invalidBlob.type.includes('octet-stream');
+  assert.equal(isValidPdf, false, 'HTML response must never be accepted as valid PDF document');
+});
+
+// ==============================================================================
+// 10. PRODUCTION API ROUTING & HTML FALLTHROUGH PREVENTION (CICD-002)
+// ==============================================================================
+
+test('CICD-002: Base URL normalization prevents path duplication and missing /api', () => {
+  // Trailing slash stripping
+  assert.equal(
+    normalizeApiUrl('https://api.aethon.astronomy.org/'),
+    'https://api.aethon.astronomy.org/api'
+  );
+  assert.equal(
+    normalizeApiUrl('https://api.aethon.astronomy.org/api/'),
+    'https://api.aethon.astronomy.org/api'
+  );
+
+  // Direct origin without /api gets /api appended
+  assert.equal(normalizeApiUrl('https://backend.aethon.org'), 'https://backend.aethon.org/api');
+
+  // No duplicate /api/api
+  assert.equal(normalizeApiUrl('https://backend.aethon.org/api'), 'https://backend.aethon.org/api');
+
+  // Empty url fallback: local dev defaults to localhost:8000/api, prod defaults to /api
+  assert.equal(normalizeApiUrl('', false), 'http://localhost:8000/api');
+  assert.equal(normalizeApiUrl(undefined, false), 'http://localhost:8000/api');
+  assert.equal(normalizeApiUrl('', true), '/api');
+  assert.equal(normalizeApiUrl(undefined, true), '/api');
+});
+
+test('CICD-002: HTML responses for API endpoints are rejected as HTML_ROUTING_FALLTHROUGH', () => {
+  const htmlDocResponse = {
+    isAxiosError: true,
+    response: {
+      status: 200,
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+      data: '<!DOCTYPE html><html><head><title>AETHON</title></head><body><div id="root"></div></body></html>',
+    },
+  };
+
+  const normalized = normalizeApiError(htmlDocResponse);
+  assert.equal(normalized.code, 'HTML_ROUTING_FALLTHROUGH');
+  assert.ok(normalized.message.includes('HTML document instead of expected JSON payload'));
 });

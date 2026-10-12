@@ -230,6 +230,21 @@ def assess_candidate_evidence(
     raw_total = scaled_subtotal + bonus_pts
     final_score = round(min(100.0, max(0.0, raw_total)), 2)
 
+    # SCI-001: Physical Corroboration Guard
+    # An anomaly screen without Doppler drift coherence or temporal persistence
+    # cannot be promoted to Moderate or Higher priority bands based on anomaly score alone.
+    is_uncorroborated = (drift_pts == 0.0) and (temporal_pts == 0.0)
+    if is_uncorroborated and final_score >= cfg.threshold_moderate:
+        final_score = min(final_score, round(cfg.threshold_moderate - 1.0, 2))
+        warnings.append(
+            "Uncorroborated anomaly screen: Candidate lacks physical Doppler drift coherence "
+            "and temporal persistence evidence; priority capped in Low band."
+        )
+        disposition_rationale.append(
+            "Anomaly flagged by initial statistical screen without corroborating physical Doppler "
+            "drift or temporal persistence; retained in Low priority triage."
+        )
+
     # Map to priority band
     if final_score >= cfg.threshold_exceptional:
         band = PriorityBand.EXCEPTIONAL

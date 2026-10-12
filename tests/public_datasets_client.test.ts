@@ -191,7 +191,16 @@ test('Spectral mathematical derivation correctly computes 1D frequency and time 
   // t=2: [14, 24, 32, 44]
   const mockSlice: SpectralSliceResponse = {
     observation_id: 'OBS_TEST_001',
-    slice_bounds: {
+    source_format: 'fil',
+    matrix_shape: [3, 4],
+    canonical_axis_convention: 'time_major',
+    requested_range: {
+      time_start: 0,
+      time_stop: 3,
+      frequency_start: 0,
+      frequency_stop: 4,
+    },
+    actual_range: {
       time_start: 0,
       time_stop: 3,
       frequency_start: 0,
@@ -199,12 +208,21 @@ test('Spectral mathematical derivation correctly computes 1D frequency and time 
     },
     time_coordinates_seconds: [0.0, 1.0, 2.0],
     frequency_coordinates_hz: [1420000000, 1420100000, 1420200000, 1420300000],
+    frequency_unit: 'MHz',
+    time_unit: 's',
     data_quality: {
       total_samples: 12,
       non_finite_sample_count: 2,
       has_non_finite_samples: true,
-      non_finite_fraction: 2 / 12,
+      null_representation: 'NaN or null',
     },
+    provenance: {
+      source_channel_order: 'ascending',
+      frequency_axis_reversed: false,
+      reader_backend: 'sigproc',
+      source_sha256: 'mock',
+    },
+    warnings: [],
     sample_value_semantics: 'relative_linear_power',
     sample_value_unit: 'counts',
     values: [

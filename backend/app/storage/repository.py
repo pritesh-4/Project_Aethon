@@ -3,13 +3,16 @@ from __future__ import annotations
 import json
 import shutil
 import sqlite3
+import uuid
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from app.ingestion.models import ObservationRecordInternal
 from app.schemas.observations import (
+    AnalysisRunRecord,
     ObservationRecordResponse,
     Provenance,
     ScientificMetadata,
@@ -78,6 +81,32 @@ class ObservationRepository:
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_obs_ingested_at ON observations (ingested_at);"
             )
+
+            # ARCH-001: Durable execution lifecycle table
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS analysis_runs (
+                    run_id TEXT PRIMARY KEY,
+                    observation_id TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    stage TEXT NOT NULL,
+                    progress_fraction REAL NOT NULL DEFAULT 0.0,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    completed_at TEXT,
+                    config_json TEXT NOT NULL DEFAULT '{}',
+                    results_summary_json TEXT,
+                    error_message TEXT,
+                    candidate_ids_json TEXT NOT NULL DEFAULT '[]',
+                    warnings_json TEXT NOT NULL DEFAULT '[]',
+                    FOREIGN KEY (observation_id) REFERENCES observations(id) ON DELETE CASCADE
+                );
+                """
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_runs_observation ON analysis_runs (observation_id);"
+            )
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_status ON analysis_runs (status);")
 
     def save_observation(
         self,
@@ -276,5 +305,235 @@ class ObservationRepository:
             status=row["status"],
             metadata=metadata,
             provenance=provenance,
+            warnings=warnings,
+        )
+
+    # -------------------------------------------------------------------------
+    # ARCH-001: Durable Analysis Run Execution Lifecycle Methods
+    # -------------------------------------------------------------------------
+
+    def create_analysis_run(
+        self,
+        observation_id: str,
+        run_id: str | None = None,
+        config: dict[str, Any] | None = None,
+    ) -> AnalysisRunRecord:
+        """Create or idempotently retrieve a durable analysis execution run."""
+        effective_run_id = run_id or f"run_{uuid.uuid4().hex[:12]}"
+        now = datetime.now(UTC).isoformat()
+        cfg_dict = config or {}
+
+        with self._get_connection() as conn:
+            # Check existing for idempotency
+            cursor = conn.execute(
+                "SELECT * FROM analysis_runs WHERE run_id = ?",
+                (effective_run_id,),
+            )
+            existing = cursor.fetchone()
+            if existing is not None:
+                return self._row_to_analysis_run(existing)
+
+            conn.execute(
+                """
+                INSERT INTO analysis_runs (
+                    run_id, observation_id, status, stage, progress_fraction,
+                    created_at, updated_at, completed_at, config_json,
+                    results_summary_json, error_message, candidate_ids_json, warnings_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    effective_run_id,
+                    observation_id,
+                    "pending",
+                    "initialization",
+                    0.0,
+                    now,
+                    now,
+                    None,
+                    json.dumps(cfg_dict),
+                    None,
+                    None,
+                    json.dumps([]),
+                    json.dumps([]),
+                ),
+            )
+
+        run_record = self.get_analysis_run(effective_run_id)
+        assert run_record is not None, f"Failed to retrieve created run {effective_run_id}"
+        return run_record
+
+    def update_analysis_run_progress(
+        self,
+        run_id: str,
+        stage: str,
+        progress_fraction: float,
+        warnings: list[str] | None = None,
+    ) -> AnalysisRunRecord | None:
+        """Update progress and stage for an active analysis run."""
+        now = datetime.now(UTC).isoformat()
+        clamped_progress = min(1.0, max(0.0, progress_fraction))
+
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT * FROM analysis_runs WHERE run_id = ?", (run_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            warns = json.loads(row["warnings_json"])
+            if warnings:
+                warns.extend(warnings)
+
+            conn.execute(
+                """
+                UPDATE analysis_runs
+                SET status = 'running', stage = ?, progress_fraction = ?,
+                    updated_at = ?, warnings_json = ?
+                WHERE run_id = ?
+                """,
+                (stage, clamped_progress, now, json.dumps(warns), run_id),
+            )
+
+        return self.get_analysis_run(run_id)
+
+    def complete_analysis_run(
+        self,
+        run_id: str,
+        results_summary: dict[str, Any] | None = None,
+        candidate_ids: list[str] | None = None,
+        warnings: list[str] | None = None,
+    ) -> AnalysisRunRecord | None:
+        """Mark run as completed with associated candidate references and summaries."""
+        now = datetime.now(UTC).isoformat()
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT * FROM analysis_runs WHERE run_id = ?", (run_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            warns = json.loads(row["warnings_json"])
+            if warnings:
+                warns.extend(warnings)
+
+            cand_ids = candidate_ids or []
+            status = "completed_with_warnings" if warns else "completed"
+
+            conn.execute(
+                """
+                UPDATE analysis_runs
+                SET status = ?, stage = 'completed', progress_fraction = 1.0,
+                    updated_at = ?, completed_at = ?, results_summary_json = ?,
+                    candidate_ids_json = ?, warnings_json = ?
+                WHERE run_id = ?
+                """,
+                (
+                    status,
+                    now,
+                    now,
+                    json.dumps(results_summary) if results_summary else None,
+                    json.dumps(cand_ids),
+                    json.dumps(warns),
+                    run_id,
+                ),
+            )
+
+        return self.get_analysis_run(run_id)
+
+    def fail_analysis_run(
+        self,
+        run_id: str,
+        error_message: str,
+        stage: str | None = None,
+    ) -> AnalysisRunRecord | None:
+        """Mark run as failed with clear, safe error notification."""
+        now = datetime.now(UTC).isoformat()
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT * FROM analysis_runs WHERE run_id = ?", (run_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            conn.execute(
+                """
+                UPDATE analysis_runs
+                SET status = 'failed', stage = ?, updated_at = ?,
+                    completed_at = ?, error_message = ?
+                WHERE run_id = ?
+                """,
+                (stage or "failed", now, now, error_message, run_id),
+            )
+
+        return self.get_analysis_run(run_id)
+
+    def get_analysis_run(self, run_id: str) -> AnalysisRunRecord | None:
+        """Retrieve durable analysis run by UUID."""
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT * FROM analysis_runs WHERE run_id = ?", (run_id,))
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            return self._row_to_analysis_run(row)
+
+    def list_analysis_runs(
+        self,
+        observation_id: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[AnalysisRunRecord], int]:
+        """List analysis runs, optionally filtered by observation."""
+        with self._get_connection() as conn:
+            if observation_id:
+                count_cursor = conn.execute(
+                    "SELECT COUNT(*) FROM analysis_runs WHERE observation_id = ?",
+                    (observation_id,),
+                )
+                total = count_cursor.fetchone()[0]
+                cursor = conn.execute(
+                    """
+                    SELECT * FROM analysis_runs
+                    WHERE observation_id = ?
+                    ORDER BY created_at DESC
+                    LIMIT ? OFFSET ?
+                    """,
+                    (observation_id, limit, offset),
+                )
+            else:
+                count_cursor = conn.execute("SELECT COUNT(*) FROM analysis_runs")
+                total = count_cursor.fetchone()[0]
+                cursor = conn.execute(
+                    """
+                    SELECT * FROM analysis_runs
+                    ORDER BY created_at DESC
+                    LIMIT ? OFFSET ?
+                    """,
+                    (limit, offset),
+                )
+            rows = cursor.fetchall()
+
+        items = [self._row_to_analysis_run(row) for row in rows]
+        return items, total
+
+    @staticmethod
+    def _row_to_analysis_run(row: sqlite3.Row) -> AnalysisRunRecord:
+        """Helper to convert database row into AnalysisRunRecord."""
+        config = json.loads(row["config_json"]) if row["config_json"] else {}
+        results_summary = (
+            json.loads(row["results_summary_json"]) if row["results_summary_json"] else None
+        )
+        candidate_ids = json.loads(row["candidate_ids_json"]) if row["candidate_ids_json"] else []
+        warnings = json.loads(row["warnings_json"]) if row["warnings_json"] else []
+
+        return AnalysisRunRecord(
+            run_id=row["run_id"],
+            observation_id=row["observation_id"],
+            status=row["status"],
+            stage=row["stage"],
+            progress_fraction=float(row["progress_fraction"]),
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            completed_at=row["completed_at"],
+            config=config,
+            results_summary=results_summary,
+            error_message=row["error_message"],
+            candidate_ids=candidate_ids,
             warnings=warnings,
         )

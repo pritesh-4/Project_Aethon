@@ -38,8 +38,8 @@ jobs:
       - name: Type-check TypeScript
         run: npm run typecheck
 
-      - name: Run automated tests
-        run: npm test
+      - name: Run offline unit and contract tests
+        run: npm run test:unit
 
       - name: Build production bundle
         run: npm run build

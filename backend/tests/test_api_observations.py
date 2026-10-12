@@ -379,3 +379,52 @@ def test_data_persistence_across_app_restart(tmp_path: Path) -> None:
         list_resp = client2.get("/api/observations")
         assert list_resp.status_code == 200
         assert list_resp.json()["total"] == 1
+
+
+def test_create_and_get_analysis_run_endpoint(
+    test_client_and_settings: tuple[TestClient, Settings], tmp_path: Path
+) -> None:
+    """ARCH-001: Validate REST API endpoints for durable execution lifecycle."""
+    client, _ = test_client_and_settings
+    fil_path = tmp_path / "run_obs.fil"
+    create_synthetic_filterbank(
+        file_path=fil_path,
+        nchans=16,
+        n_ints=4,
+        source_name="RUN_TARGET",
+    )
+
+    with open(fil_path, "rb") as f:
+        ingest_resp = client.post(
+            "/api/observations",
+            files={"file": (fil_path.name, f, "application/octet-stream")},
+        )
+    assert ingest_resp.status_code == 201
+    obs_id = ingest_resp.json()["id"]
+
+    # 1. Create durable run
+    create_resp = client.post(
+        f"/api/observations/{obs_id}/runs",
+        json={"run_id": "run_test_api_01", "config": {"threshold": 4.0}},
+    )
+    assert create_resp.status_code == 201
+    run_data = create_resp.json()
+    assert run_data["run_id"] == "run_test_api_01"
+    assert run_data["observation_id"] == obs_id
+    assert run_data["status"] == "pending"
+
+    # 2. Retrieve durable run by ID
+    get_resp = client.get(f"/api/observations/{obs_id}/runs/run_test_api_01")
+    assert get_resp.status_code == 200
+    assert get_resp.json()["run_id"] == "run_test_api_01"
+
+    # 3. List durable runs for observation
+    list_resp = client.get(f"/api/observations/{obs_id}/runs")
+    assert list_resp.status_code == 200
+    list_data = list_resp.json()
+    assert list_data["total"] >= 1
+    assert any(r["run_id"] == "run_test_api_01" for r in list_data["items"])
+
+    # 4. 404 for nonexistent run or mismatched observation
+    not_found_resp = client.get(f"/api/observations/{obs_id}/runs/run_nonexistent")
+    assert not_found_resp.status_code == 404

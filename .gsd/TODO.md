@@ -1,15 +1,29 @@
 # TODO.md — AETHON Active Engineering & Scientific Backlog
 
-> **Milestone:** Authoritative Master Development Roadmap (Phases 0–13)  
-> **Status:** Phase 0 Active · Reconciled against commit `f0d35ec4`  
+> **Milestone:** Complete Audit Remediation, Engineering Hardening & Release Certification  
+> **Status:** All Findings Resolved & Certified (14/14 Quality Gates Passing)  
 > **Governing Principle:** Prioritize truthful scientific outputs, reproducibility, and measurable detection quality over additional UI features or premature deep-learning models.
 
 ---
 
-## Phase 0 — Project State Reconciliation (P0 · Active)
+## Audit Findings Remediation & Engineering Hardening (P0/P1/P2/P3 — All Completed)
+
+- [x] **`FE-001` (Candidate Review Persistence):** Added `isReviewPending` loading guard, prevented duplicate clicks, updated `isMarked` strictly after backend resolution, and surfaced actionable error toast on network/server failure (`src/pages/Analysis/components/AnalysisVerdictBar.tsx`).
+- [x] **`FE-002` (Separate PDF and JSON Exports):** Decoupled workflows into independent actions: "Export PDF Dossier" (with dedicated `isPdfExporting` loading state, download verification, and error toast) and "Export Raw JSON" (`src/pages/Analysis/components/AnalysisVerdictBar.tsx`).
+- [x] **`TEST-001` (Complete Offline Unit Testing):** Unified all offline unit test files under `npm run test:unit:offline` (aliased by `npm run test:unit`), covering 35 offline tests with zero skips and zero backend dependencies (`package.json`).
+- [x] **`CICD-001` (Eliminate Silent CI Test Skipping):** Established explicit test tiers: Tier A (`npm run test:unit:offline`) for CI frontend job, Tier B (`npm run test:integration` with `REQUIRE_BACKEND=true`) for Integration CI (`.github/workflows/ci.yml`, `.github/workflows/integration.yml`).
+- [x] **`CICD-002` (Protect Production API Routing):** Updated `vercel.json` rewrite with negative lookahead `/((?!api/).*)`, added Axios response interceptor detecting HTML payloads (`HTML_ROUTING_FALLTHROUGH` error code), and added `REQUIRE_HOSTED_API_CONFIG` build guard (`src/lib/api.ts`, `vite.config.ts`, `vercel.json`).
+- [x] **`SEC-001` (Detect Invalid Production CORS):** Added lifespan startup diagnostic in `backend/app/main.py` logging actionable warning if `is_production` is true but `cors_origins` is empty or localhost-only without leaking secrets.
+- [x] **`SCI-001` (Reduce Noise-Only Candidate Promotion):** Added physical corroboration guard in `assess_candidate_evidence`: anomalies lacking both Doppler coherence and temporal persistence are capped in `LOW` priority (<35.0) with explicit explanation (`backend/app/candidates/scoring.py`).
+- [x] **`ARCH-001` (Durable Execution Records for Analysis):** Implemented `AnalysisRunRecord` schema, SQLite `analysis_runs` table, idempotent repository methods, and REST endpoints `POST /runs`, `GET /runs`, `GET /runs/{run_id}` (`backend/app/storage/repository.py`, `backend/app/api/routes/observations.py`).
+- [x] **`PERF-001` (Landing-Page Bundle Profiling):** Profiled production bundle via `npm run build`: `vendor-three-*.js` (537.73 kB, 133.78 kB gzip) is strictly code-split to `/` Landing page; all operational pages are lazy-loaded without Three.js. Isolation verified optimal (`vite.config.ts`, `src/app/router.tsx`).
+
+---
+
+## Phase 0 — Project State Reconciliation (P0 · Completed)
 
 - [x] Create canonical execution roadmap in `.gsd/ROADMAP.md` establishing the Phase 0–14 sequence.
-- [x] Synchronize `.gsd/STATE.md` with current checkout position (`f71d3d5`) and active phase baseline.
+- [x] Synchronize `.gsd/STATE.md` with current checkout position (`44a2d93`) and active phase baseline.
 - [x] Reconcile `.gsd/TODO.md` backlog with authoritative roadmap and verifiable implementation evidence.
 - [x] Align `.gsd/REQUIREMENTS.md` traceability table phase references with canonical roadmap phases.
 - [x] Resolve observation UUID navigation in `Analysis` without assuming `obs_` prefix.

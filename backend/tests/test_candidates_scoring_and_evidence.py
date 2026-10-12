@@ -211,3 +211,20 @@ def test_assess_candidate_detector_disagreement_detection() -> None:
 
     assert assessment.detector_disagreement is True
     assert any("disagreement" in w.lower() for w in assessment.warnings)
+
+
+def test_assess_candidate_uncorroborated_noise_anomaly_capped_at_low() -> None:
+    """SCI-001: Noise anomalies without Doppler drift cannot exceed Low priority."""
+    det = _make_sample_detection(stat_score=6.0, iso_score=1.0)
+    ev_items = create_detection_evidence(det, observation_id="obs_noise_01")
+
+    assessment = assess_candidate_evidence(
+        candidate_id="cand_noise_screen",
+        evidence_items=ev_items,
+    )
+
+    # Must be capped in Low band (< 35.0)
+    assert assessment.overall_score < 35.0
+    assert assessment.priority_band == PriorityBand.LOW
+    assert any("uncorroborated anomaly screen" in w.lower() for w in assessment.warnings)
+    assert any("without corroborating" in r.lower() for r in assessment.disposition_rationale)

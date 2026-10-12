@@ -231,3 +231,68 @@ class ObservationListResponse(BaseModel):
         description="Zero-indexed pagination offset",
         examples=[0],
     )
+
+
+class AnalysisRunRecord(BaseModel):
+    """Durable lifecycle execution record for long-running observation analysis (ARCH-001)."""
+
+    run_id: str = Field(..., description="Unique stable run identifier UUID")
+    observation_id: str = Field(..., description="Associated target observation identifier")
+    status: str = Field(
+        ...,
+        description=(
+            "Current run status: 'pending', 'running', 'completed', "
+            "'completed_with_warnings', 'failed', 'cancelled'"
+        ),
+    )
+    stage: str = Field(
+        ...,
+        description="Current processing pipeline stage",
+    )
+    progress_fraction: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Execution progress from 0.0 to 1.0",
+    )
+    created_at: str = Field(..., description="ISO UTC timestamp of run creation")
+    updated_at: str = Field(..., description="ISO UTC timestamp of last progress update")
+    completed_at: str | None = Field(
+        default=None, description="ISO UTC timestamp of run termination"
+    )
+    config: dict[str, Any] = Field(
+        default_factory=dict, description="Pipeline configuration snapshot"
+    )
+    results_summary: dict[str, Any] | None = Field(
+        default=None, description="Summary of generated detection or analysis results"
+    )
+    error_message: str | None = Field(
+        default=None, description="Actionable failure information if status is failed"
+    )
+    candidate_ids: list[str] = Field(
+        default_factory=list,
+        description="IDs of candidates discovered or generated during this run",
+    )
+    warnings: list[str] = Field(default_factory=list, description="Non-fatal execution warnings")
+
+
+class CreateAnalysisRunRequest(BaseModel):
+    """Request payload to initiate or register a durable analysis execution run."""
+
+    run_id: str | None = Field(
+        default=None,
+        description="Optional client-provided idempotency key or run ID",
+    )
+    config: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Optional analysis pipeline parameters",
+    )
+
+
+class AnalysisRunListResponse(BaseModel):
+    """Paginated collection of durable analysis execution records."""
+
+    items: list[AnalysisRunRecord] = Field(..., description="List of execution records")
+    total: int = Field(..., description="Total execution records matching query")
+    limit: int = Field(default=50, description="Items per page")
+    offset: int = Field(default=0, description="Pagination offset")

@@ -39,8 +39,8 @@ def setup_logging(log_level: str = "INFO") -> None:
     root_logger = logging.getLogger()
     root_logger.setLevel(numeric_level)
 
-    # Avoid duplicate handlers if setup_logging is called multiple times
-    root_logger.handlers.clear()
+    # Avoid duplicate stream handlers while preserving test capture handlers
+    root_logger.handlers = [h for h in root_logger.handlers if type(h) is not logging.StreamHandler]
     root_logger.addHandler(handler)
 
     # Configure uvicorn and fastapi loggers

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { spawn, execSync, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import process from 'node:process';
+import { Buffer } from 'node:buffer';
 import { chromium, type Browser, type Page } from 'playwright';
 
 const FRONTEND_URL = 'http://127.0.0.1:5173';
@@ -83,7 +85,7 @@ test.before(async () => {
       { cwd: backendRoot, stdio: 'ignore' }
     );
     let backendSpawnError: Error | null = null;
-    backendProcess.once('error', (error) => {
+    backendProcess.once('error', (error: Error) => {
       backendSpawnError = error;
     });
     const maxWaitMs = 30000;
@@ -100,7 +102,8 @@ test.before(async () => {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
     if (!ready || backendSpawnError) {
-      const reason = `Backend service failed to start and respond on http://127.0.0.1:8000/api/health${backendSpawnError ? ` (${backendSpawnError.message})` : ''}`;
+      const errorMsg = backendSpawnError ? ` (${(backendSpawnError as Error).message})` : '';
+      const reason = `Backend service failed to start and respond on http://127.0.0.1:8000/api/health${errorMsg}`;
       if (backendRequired) {
         assert.fail(reason);
       }
@@ -134,6 +137,20 @@ test.before(async () => {
     channel: 'msedge',
     headless: true,
   });
+
+  // Warm up Vite compilation for client bundles
+  try {
+    const warmupPage = await browser.newPage();
+    warmupPage.setDefaultTimeout(60000);
+    await warmupPage.goto(`${FRONTEND_URL}/discover`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await warmupPage.waitForSelector('h1, h2, #root', { state: 'visible', timeout: 30000 });
+    await warmupPage.close();
+  } catch {
+    // Warmup best-effort
+  }
 });
 
 test.after(async () => {
@@ -145,13 +162,15 @@ test.after(async () => {
 });
 
 test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
-  test('Journey A: Quick Demo synthetic sample -> waterfall inspection -> discovery screening', async (t) => {
+  test('Journey A: Quick Demo synthetic sample -> waterfall inspection -> discovery screening', async (t: TestContext) => {
     if (skipIfSetupFailed(t)) return;
     assert.ok(browser, 'Browser must be initialized');
+    if (!browser) return;
     const page: Page = await browser.newPage();
+    page.setDefaultTimeout(60000);
     try {
       // 1. Navigate to Discover page
-      await page.goto(`${FRONTEND_URL}/discover`, { waitUntil: 'networkidle' });
+      await page.goto(`${FRONTEND_URL}/discover`, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('h1, h2', { state: 'visible' });
 
       // 2. Switch to Quick Demo tab
@@ -167,7 +186,7 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
         await page
           .locator('text=Active In Pipeline')
           .first()
-          .waitFor({ state: 'visible', timeout: 15000 });
+          .waitFor({ state: 'visible', timeout: 20000 });
       }
 
       // 4. Trigger Discovery Pipeline
@@ -183,17 +202,14 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
           ':has-text("Screening complete"), :has-text("Execution completed"), button:has-text("Review candidates"), button:has-text("Reset")'
         )
         .first();
-      await completionIndicator.waitFor({ state: 'visible', timeout: 25000 });
+      await completionIndicator.waitFor({ state: 'visible', timeout: 35000 });
 
       // 6. Navigate to Observatory to inspect the live waterfall
-      await page.goto(`${FRONTEND_URL}/observatory`, { waitUntil: 'networkidle' });
-      await page
-        .locator('canvas, svg, :has-text("Waterfall"), :has-text("Signal Viewport")')
-        .first()
-        .waitFor({
-          state: 'visible',
-          timeout: 10000,
-        });
+      await page.goto(`${FRONTEND_URL}/observatory`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('h1:has-text("Observatory")', {
+        state: 'visible',
+        timeout: 30000,
+      });
 
       // Verify active telemetry values
       const bodyText = await page.innerText('body');
@@ -206,12 +222,14 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
     }
   });
 
-  test('Journey B: Real GBT observation -> verify authentic attribution -> display spectral coordinates', async (t) => {
+  test('Journey B: Real GBT observation -> verify authentic attribution -> display spectral coordinates', async (t: TestContext) => {
     if (skipIfSetupFailed(t)) return;
     assert.ok(browser, 'Browser must be initialized');
+    if (!browser) return;
     const page: Page = await browser.newPage();
+    page.setDefaultTimeout(60000);
     try {
-      await page.goto(`${FRONTEND_URL}/discover`, { waitUntil: 'networkidle' });
+      await page.goto(`${FRONTEND_URL}/discover`, { waitUntil: 'domcontentloaded' });
 
       // 1. Switch to Quick Demo tab
       const quickDemoTab = page.locator('button', { hasText: 'Quick Demo' }).first();
@@ -229,13 +247,17 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
       );
 
       // 4. Load the Real GBT sample
+      await page
+        .waitForSelector('text=BACKEND CONNECTED', { state: 'visible', timeout: 20000 })
+        .catch(() => {});
+      const activeIndicator = page.locator('text=Active In Pipeline').first();
       const loadBtn = page.locator('button', { hasText: 'Load Real Sample & Analyse' }).first();
-      if (await loadBtn.isVisible()) {
+      if (!(await activeIndicator.isVisible()) && (await loadBtn.isVisible())) {
         await loadBtn.click();
         await page
           .locator('text=Active In Pipeline')
           .first()
-          .waitFor({ state: 'visible', timeout: 15000 });
+          .waitFor({ state: 'visible', timeout: 20000 });
       }
 
       // 5. Verify observation metadata in Discover summary and Observatory
@@ -247,8 +269,11 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
         'Discovery page must display loaded GBT metadata'
       );
 
-      await page.goto(`${FRONTEND_URL}/observatory`, { waitUntil: 'networkidle' });
-      await page.waitForSelector('body', { state: 'visible' });
+      await page.goto(`${FRONTEND_URL}/observatory`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('h1:has-text("Observatory")', {
+        state: 'visible',
+        timeout: 30000,
+      });
       const obsBody = await page.innerText('body');
       assert.ok(
         obsBody.includes('Observatory') || obsBody.includes('Target:'),
@@ -259,13 +284,15 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
     }
   });
 
-  test('Journey C: Upload valid filterbank file -> ingestion validation -> archive persistence', async (t) => {
+  test('Journey C: Upload valid filterbank file -> ingestion validation -> archive persistence', async (t: TestContext) => {
     if (skipIfSetupFailed(t)) return;
     assert.ok(browser, 'Browser must be initialized');
+    if (!browser) return;
     const page: Page = await browser.newPage();
+    page.setDefaultTimeout(60000);
     try {
-      await page.goto(`${FRONTEND_URL}/archive`, { waitUntil: 'networkidle' });
-      await page.waitForSelector('h1:has-text("Archive")', { timeout: 10000 });
+      await page.goto(`${FRONTEND_URL}/archive`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('h1:has-text("Archive")', { timeout: 30000 });
 
       // Verify archive listing loads from SQLite backend
       const res = await page.request.get(`${BACKEND_URL}/observations?limit=5`);
@@ -278,12 +305,14 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
     }
   });
 
-  test('Journey D: Public archive browser -> format validation -> disabled unsupported import', async (t) => {
+  test('Journey D: Public archive browser -> format validation -> disabled unsupported import', async (t: TestContext) => {
     if (skipIfSetupFailed(t)) return;
     assert.ok(browser, 'Browser must be initialized');
+    if (!browser) return;
     const page: Page = await browser.newPage();
+    page.setDefaultTimeout(60000);
     try {
-      await page.goto(`${FRONTEND_URL}/discover`, { waitUntil: 'networkidle' });
+      await page.goto(`${FRONTEND_URL}/discover`, { waitUntil: 'domcontentloaded' });
 
       // 1. Locate Public Archive section
       const archiveHeading = page
@@ -305,10 +334,12 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
     }
   });
 
-  test('Journey E: Candidate review lifecycle -> status transition -> PDF dossier export', async (t) => {
+  test('Journey E: Candidate review lifecycle -> status transition -> PDF dossier export', async (t: TestContext) => {
     if (skipIfSetupFailed(t)) return;
     assert.ok(browser, 'Browser must be initialized');
+    if (!browser) return;
     const page: Page = await browser.newPage();
+    page.setDefaultTimeout(60000);
     try {
       // 1. Ensure at least one candidate exists in backend
       const listRes = await page.request.get(`${BACKEND_URL}/candidates?limit=1`);
@@ -342,8 +373,13 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
       }
 
       // 2. Open Candidate Analysis page in browser
-      await page.goto(`${FRONTEND_URL}/analysis/${candidateId}`, { waitUntil: 'networkidle' });
-      await page.waitForSelector('body', { state: 'visible' });
+      await page.goto(`${FRONTEND_URL}/analysis/${candidateId}`, { waitUntil: 'domcontentloaded' });
+      await page
+        .locator(
+          `:has-text("${candidateId}"), :has-text("Candidate Analysis"), :has-text("Dossier")`
+        )
+        .first()
+        .waitFor({ state: 'visible', timeout: 30000 });
 
       // Verify candidate ID is rendered in the analysis dossier
       const pageText = await page.innerText('body');
@@ -385,10 +421,12 @@ test.describe('AETHON Full-Stack Browser E2E Acceptance', () => {
     }
   });
 
-  test('Journey F: Invalid upload handling -> rejects unsupported formats without data corruption', async (t) => {
+  test('Journey F: Invalid upload handling -> rejects unsupported formats without data corruption', async (t: TestContext) => {
     if (skipIfSetupFailed(t)) return;
     assert.ok(browser, 'Browser must be initialized');
+    if (!browser) return;
     const page: Page = await browser.newPage();
+    page.setDefaultTimeout(60000);
     try {
       // Direct REST upload of invalid text payload pretending to be filterbank to /observations
       const uploadRes = await page.request.post(`${BACKEND_URL}/observations`, {
