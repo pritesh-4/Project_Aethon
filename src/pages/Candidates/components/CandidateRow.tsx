@@ -15,21 +15,21 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
         return (
           <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#76828D]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#76828D]" />
-            PENDING
+            Pending
           </span>
         );
       case 'INVESTIGATING':
         return (
           <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#9E6E20] font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-[#C19348]" />
-            IN REVIEW
+            In review
           </span>
         );
       case 'CONFIRMED':
         return (
           <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#3D7D54] font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-[#3D7D54]" />
-            CONFIRMED
+            Confirmed
           </span>
         );
       case 'FLAGGED_RFI':
@@ -43,7 +43,7 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
         return (
           <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#76828D]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#76828D]" />
-            CATALOGED
+            Cataloged
           </span>
         );
     }
@@ -68,11 +68,11 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
           : 'hover:bg-[#F4F1EA] text-[#56616A]'
       }`}
     >
-      {/* 1. CANDIDATE IDENTIFIER & TARGET */}
-      <td className="py-3 px-3.5 sm:px-4">
+      {/* 1. Candidate Identifier & Target */}
+      <td className="py-2.5 px-3 sm:px-4">
         <div className="flex items-center gap-2.5">
           {isSelected ? (
-            <span className="h-2 w-2 rounded-full bg-[#376A9B] shrink-0" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#376A9B] shrink-0" />
           ) : isHigh ? (
             <span
               className="h-1.5 w-1.5 rounded-full bg-[#C19348] shrink-0"
@@ -83,7 +83,7 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
           )}
           <div className="flex flex-col">
             <span
-              className={`font-mono text-xs font-semibold transition-colors ${
+              className={`font-mono text-xs font-medium transition-colors ${
                 isSelected ? 'text-[#376A9B]' : 'text-[#17202A] group-hover:text-[#376A9B]'
               }`}
             >
@@ -94,16 +94,16 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
         </div>
       </td>
 
-      {/* 2. ANOMALY EVIDENCE SUMMARY */}
-      <td className="py-3 px-3.5">
+      {/* 2. Anomaly Evidence Summary */}
+      <td className="py-2.5 px-3">
         <div className="flex flex-col">
           <div className="flex items-baseline gap-1.5">
-            <span className="font-mono text-xs font-semibold text-[#9E6E20]">
+            <span className="font-mono text-xs font-semibold text-[#9E6E20] tabular-nums">
               {candidate.anomalyIndex != null
                 ? `${(candidate.anomalyIndex * 100).toFixed(1)}%`
                 : '—'}
             </span>
-            <span className="text-[10px] text-[#76828D] uppercase font-mono">anomaly</span>
+            <span className="text-[10px] text-[#76828D] font-mono">anomaly</span>
           </div>
           <span className="text-[11px] text-[#56616A] line-clamp-1">
             {candidate.persistence != null
@@ -115,27 +115,27 @@ export function CandidateRow({ candidate, isSelected, onSelect }: CandidateRowPr
         </div>
       </td>
 
-      {/* 3. PRIORITY TAG */}
-      <td className="py-3 px-3.5 text-center">
+      {/* 3. Priority Tag */}
+      <td className="py-2.5 px-3 text-center">
         {candidate.priority === 'HIGH' && (
-          <span className="font-mono text-[10px] uppercase tracking-wider text-[#9E6E20] bg-[#FDF6E9] px-2 py-0.5 rounded-[2px] border border-[#E8CFA0] font-semibold">
-            HIGH
+          <span className="font-mono text-[10px] text-[#9E6E20] bg-[#FDF6E9] px-2 py-0.5 rounded-[2px] border border-[#E8CFA0] font-medium">
+            High
           </span>
         )}
         {candidate.priority === 'MEDIUM' && (
-          <span className="font-mono text-[10px] uppercase tracking-wider text-[#56616A] bg-[#EAE7E0] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
-            MED
+          <span className="font-mono text-[10px] text-[#56616A] bg-[#EAE7E0] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
+            Med
           </span>
         )}
         {candidate.priority === 'LOW' && (
-          <span className="font-mono text-[10px] uppercase tracking-wider text-[#76828D] bg-[#F4F1EA] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
-            LOW
+          <span className="font-mono text-[10px] text-[#76828D] bg-[#F4F1EA] px-2 py-0.5 rounded-[2px] border border-[#D6D2C9]">
+            Low
           </span>
         )}
       </td>
 
-      {/* 4. REVIEW STATE */}
-      <td className="py-3 px-3.5 sm:px-4 text-right">{formatReviewState(candidate.status)}</td>
+      {/* 4. Review State */}
+      <td className="py-2.5 px-3 sm:px-4 text-right">{formatReviewState(candidate.status)}</td>
     </tr>
   );
 }

@@ -29,11 +29,11 @@ export function SidebarItem({
           'group relative flex items-center transition-colors duration-150 select-none font-sans outline-none',
           'focus-visible:ring-1 focus-visible:ring-[#376A9B] focus-visible:ring-offset-1 focus-visible:ring-offset-[#EAE7E0]',
           isCollapsed
-            ? 'h-8.5 w-8.5 mx-auto justify-center rounded-[3px]'
-            : 'h-8.5 w-full px-3 gap-3 rounded-[3px] text-xs',
+            ? 'h-8 w-8 mx-auto justify-center rounded-[2px]'
+            : 'h-8 w-full px-2.5 gap-2.5 rounded-[2px] text-xs',
           isActive
-            ? 'bg-[#FAF8F5] text-[#17202A] font-medium shadow-2xs'
-            : 'text-[#56616A] hover:text-[#17202A] hover:bg-[#E2DFD7]'
+            ? 'bg-[#FAF8F5] text-[#17202A] font-medium'
+            : 'text-[#56616A] hover:text-[#17202A] hover:bg-[#DFDCD5]'
         )
       }
     >
@@ -43,13 +43,13 @@ export function SidebarItem({
           {isActive && (
             <motion.span
               layoutId="activeNavIndicator"
-              className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-[#376A9B]"
+              className="absolute left-0 top-1 bottom-1 w-[2px] bg-[#376A9B] rounded-r-[1px]"
               transition={{ duration: 0.15, ease: 'easeOut' }}
             />
           )}
 
           {/* Icon */}
-          <span className="relative shrink-0">
+          <span className="relative shrink-0 flex items-center justify-center">
             <Icon
               className={cn(
                 'h-3.5 w-3.5 transition-colors duration-150',

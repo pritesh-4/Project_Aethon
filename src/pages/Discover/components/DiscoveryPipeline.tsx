@@ -47,14 +47,12 @@ export function DiscoveryPipeline({ stage, failedStage }: DiscoveryPipelineProps
   };
 
   return (
-    <div className="select-none font-sans border border-[#D6D2C9] bg-[#FAF8F5] rounded-[3px] p-4 my-2 shadow-xs">
+    <div className="select-none font-sans border border-[#D6D2C9] bg-[#FAF8F5] rounded-[2px] p-4 my-2 shadow-xs">
       <div className="flex items-center justify-between pb-3 border-b border-[#D6D2C9] text-xs">
-        <span className="font-mono text-[11px] uppercase tracking-wider text-[#76828D]">
-          Execution Pipeline
-        </span>
+        <span className="font-mono text-[11px] text-[#76828D]">Execution pipeline</span>
         <span className="text-[11px] font-mono text-[#56616A]">
           {failedStage
-            ? `Execution halted at stage ${failedStage.toUpperCase()}`
+            ? `Execution halted at stage ${failedStage}`
             : stage === 'complete'
               ? 'Execution completed'
               : stage === 'idle'
@@ -79,30 +77,30 @@ export function DiscoveryPipeline({ stage, failedStage }: DiscoveryPipelineProps
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] text-[#76828D] font-mono">0{idx + 1}</span>
                   {isFailed ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#C93B2B] font-mono">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#C93B2B] font-mono">
                       <AlertCircle className="h-3 w-3" />
-                      FAIL
+                      Failed
                     </span>
                   ) : isComplete ? (
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#3D7D54] font-mono">
                       <Check className="h-3 w-3" />
-                      OK
+                      Complete
                     </span>
                   ) : isActive ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#376A9B] font-mono">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#376A9B] font-mono">
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      RUN
+                      Active
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[11px] text-[#76828D] font-mono">
                       <Circle className="h-2 w-2" />
-                      IDLE
+                      Waiting
                     </span>
                   )}
                 </div>
 
                 <div
-                  className={`text-xs font-semibold tracking-normal ${
+                  className={`text-xs font-medium tracking-normal ${
                     isFailed
                       ? 'text-[#C93B2B]'
                       : isActive

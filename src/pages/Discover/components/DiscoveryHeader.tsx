@@ -9,7 +9,7 @@ export function DiscoveryHeader({ stage }: DiscoveryHeaderProps) {
     stage === 'prepare' || stage === 'represent' || stage === 'search' || stage === 'rank';
 
   const statusDot = isAnalyzing
-    ? 'bg-[#376A9B] animate-pulse'
+    ? 'bg-[#376A9B]'
     : stage === 'complete'
       ? 'bg-[#3D7D54]'
       : 'bg-[#7E8B96]';
@@ -30,10 +30,10 @@ export function DiscoveryHeader({ stage }: DiscoveryHeaderProps) {
     <header className="border-b border-[#D6D2C9] bg-[#FAF8F5] px-4 sm:px-6 py-5 sm:py-6 select-none font-sans">
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-mono text-[#7E8B96] uppercase tracking-wider">
-            <span>AETHON WORKSPACE</span>
+          <div className="flex items-center gap-2 text-xs font-mono text-[#7E8B96]">
+            <span>Aethon</span>
             <span>/</span>
-            <span>DATA INTAKE</span>
+            <span>Data intake</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#17202A]">
             Discovery
@@ -47,12 +47,10 @@ export function DiscoveryHeader({ stage }: DiscoveryHeaderProps) {
         {/* Technical Status */}
         <div className="flex items-center gap-2 self-start sm:self-end pb-1 font-mono text-xs">
           <span
-            className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-[3px] border ${statusStyle}`}
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] border ${statusStyle}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${statusDot}`} />
-            <span className="text-[11px] font-sans font-medium uppercase tracking-wider">
-              {statusLabel}
-            </span>
+            <span className="text-[11px] font-sans font-medium">{statusLabel}</span>
           </span>
         </div>
       </div>

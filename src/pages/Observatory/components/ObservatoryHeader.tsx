@@ -44,13 +44,13 @@ export function ObservatoryHeader({
         };
       case 'LOADING':
         return {
-          dot: 'bg-[#376A9B] animate-pulse',
+          dot: 'bg-[#376A9B]',
           label: 'Buffering stream',
           color: 'text-[#376A9B] bg-[#EAF1F8] border-[#B6CDE2]',
         };
       case 'ANALYZING':
         return {
-          dot: 'bg-[#376A9B] animate-pulse',
+          dot: 'bg-[#376A9B]',
           label: 'Scanning baseline',
           color: 'text-[#376A9B] bg-[#EAF1F8] border-[#B6CDE2]',
         };
@@ -77,10 +77,10 @@ export function ObservatoryHeader({
         {/* Top: Page Identity & Description */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-mono text-[#7E8B96] uppercase tracking-wider">
-              <span>AETHON WORKSPACE</span>
+            <div className="flex items-center gap-2 text-xs font-mono text-[#7E8B96]">
+              <span>Aethon</span>
               <span>/</span>
-              <span>LIVE OBSERVATION</span>
+              <span>Live observation</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#17202A]">
               Observatory
@@ -94,30 +94,26 @@ export function ObservatoryHeader({
           {/* Status Display */}
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-end pb-1 font-mono text-xs">
             {isDemoMode && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[3px] border border-[#E8CFA0] bg-[#FDF6E9] text-[10px] font-mono text-[#9E6E20] font-semibold">
-                DEMO MODE: Synthetic Data
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] border border-[#E8D2A3] bg-[#FDF8EE] text-[10px] font-mono text-[#9E6E20] font-medium">
+                Demo · Synthetic data
               </span>
             )}
             <span
-              className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-[3px] border ${statusInfo.color}`}
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] border ${statusInfo.color}`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
-              <span className="text-[11px] font-sans font-medium uppercase tracking-wider">
-                {statusInfo.label}
-              </span>
+              <span className="text-[11px] font-sans font-medium">{statusInfo.label}</span>
             </span>
           </div>
         </div>
 
-        {/* 1. WHAT OBSERVATION IS ACTIVE + 4. WHAT CAN I DO? */}
+        {/* Observation Target & Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-4 border-t border-[#D6D2C9]">
           {/* Active Target Information */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Radio className="h-3.5 w-3.5 text-[#376A9B]" />
-              <span className="font-mono text-[11px] uppercase tracking-wider text-[#7E8B96]">
-                Target:
-              </span>
+              <span className="font-mono text-[11px] text-[#7E8B96]">Target:</span>
             </div>
 
             {/* Target Selector Control */}
@@ -127,7 +123,7 @@ export function ObservatoryHeader({
                 value={observationId}
                 onChange={(e) => onSelectObservation(e.target.value)}
                 disabled={isAnalyzing}
-                className="h-8 rounded-[3px] border border-[#D6D2C9] bg-[#FFFFFF] px-2.5 pr-8 text-xs font-mono text-[#17202A] focus:border-[#376A9B] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] transition-colors cursor-pointer"
+                className="h-8 rounded-[2px] border border-[#D6D2C9] bg-[#FAF8F5] px-2.5 pr-8 text-xs font-mono text-[#17202A] focus:border-[#376A9B] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#376A9B] transition-colors cursor-pointer"
               >
                 {observationList.map((obs) => (
                   <option key={obs.id} value={obs.id}>
@@ -143,16 +139,16 @@ export function ObservatoryHeader({
                 onClick={onOpenUpload}
                 disabled={isAnalyzing}
                 title="Ingest new astronomical observation file (.fil, .fits)"
-                className="h-8 px-2.5 flex items-center gap-1.5 rounded-[3px] border border-[#B6CDE2] bg-[#EAF1F8] text-xs font-mono text-[#376A9B] hover:bg-[#D8E6F3] transition-colors cursor-pointer disabled:opacity-40"
+                className="h-8 px-2.5 flex items-center gap-1.5 rounded-[2px] border border-[#B6CDE2] bg-[#EAF1F8] text-xs font-mono text-[#376A9B] hover:bg-[#D8E6F3] transition-colors cursor-pointer disabled:opacity-40"
               >
                 <Upload className="h-3.5 w-3.5" />
-                <span>INGEST FILE</span>
+                <span>Ingest file</span>
               </button>
             )}
 
             <span className="text-[#D6D2C9] hidden sm:inline">•</span>
 
-            <span className="font-mono text-[#17202A] text-xs font-medium">
+            <span className="font-mono text-[#17202A] text-xs font-medium tabular-nums">
               {frequencyMHz != null ? `${frequencyMHz.toFixed(4)} MHz` : 'Unavailable'}
             </span>
 
@@ -170,10 +166,10 @@ export function ObservatoryHeader({
                 onClick={onReset}
                 disabled={isAnalyzing}
                 title="Reset observation"
-                className="h-8 px-2.5 flex items-center gap-1.5 rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] text-xs font-mono text-[#56616A] hover:text-[#17202A] hover:border-[#BCB6A8] hover:bg-[#EAE7E0] transition-colors cursor-pointer disabled:opacity-40"
+                className="h-8 px-2.5 flex items-center gap-1.5 rounded-[2px] border border-[#D6D2C9] bg-[#FAF8F5] text-xs font-mono text-[#56616A] hover:text-[#17202A] hover:border-[#BCB6A8] hover:bg-[#EAE7E0] transition-colors cursor-pointer disabled:opacity-40"
               >
                 <RotateCcw className="h-3 w-3" />
-                <span className="hidden sm:inline">RESET</span>
+                <span className="hidden sm:inline">Reset</span>
               </button>
             )}
 
@@ -183,14 +179,14 @@ export function ObservatoryHeader({
                 type="button"
                 onClick={onTogglePause}
                 title={isPaused ? 'Resume playback' : 'Pause playback'}
-                className="h-8 px-2.5 flex items-center gap-1.5 rounded-[3px] border border-[#D6D2C9] bg-[#FAF8F5] text-xs font-mono text-[#56616A] hover:text-[#17202A] hover:border-[#BCB6A8] hover:bg-[#EAE7E0] transition-colors cursor-pointer"
+                className="h-8 px-2.5 flex items-center gap-1.5 rounded-[2px] border border-[#D6D2C9] bg-[#FAF8F5] text-xs font-mono text-[#56616A] hover:text-[#17202A] hover:border-[#BCB6A8] hover:bg-[#EAE7E0] transition-colors cursor-pointer"
               >
                 {isPaused ? (
                   <Play className="h-3 w-3 text-[#3D7D54]" />
                 ) : (
                   <Pause className="h-3 w-3" />
                 )}
-                <span className="hidden sm:inline">{isPaused ? 'RESUME' : 'PAUSE'}</span>
+                <span className="hidden sm:inline">{isPaused ? 'Resume' : 'Pause'}</span>
               </button>
             )}
 
